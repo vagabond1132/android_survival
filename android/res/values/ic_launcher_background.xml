@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 深蓝紫色, 与图标天空顶部一致. Adaptive icon 圆/方 mask 之外的背景.
+         由 scripts/generate_icons.py 自动生成图标时同步选定. -->
+    <color name="ic_launcher_background">#1C3359</color>
+</resources>

@@ -1,0 +1,58 @@
+# Docker Compose for building OutdoorSurvival Android APK
+#
+# 使用方法：
+#   docker-compose build android-builder
+#   docker-compose run --rm android-builder bash -c "cd /project && bash build_apk.sh release arm64-v8a"
+#
+# 输出 APK：
+#   ./dist/OutdoorSurvival-v1.0.0-release-arm64-v8a.apk
+
+services:
+  android-builder:
+    build:
+      context: .
+      dockerfile: Dockerfile.android
+    image: outdoor-survival-android-builder:latest
+    container_name: outdoor-survival-builder
+    volumes:
+      # 共享项目代码（只读）
+      - ./:/project:rw
+      # 输出 APK 到主机
+      - ./dist:/project/dist:rw
+      # 缓存 Gradle
+      - gradle-cache:/root/.gradle:rw
+      # 缓存 ccache (C++ 增量编译加速)
+      - ccache-cache:/root/.ccache:rw
+    environment:
+      - ANDROID_HOME=/opt/android-sdk
+      - ANDROID_NDK_HOME=/opt/android-sdk/ndk/26.1.10909125
+      - QT_PATH=/opt/Qt/6.7.2
+      - JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+    working_dir: /project
+    stdin_open: true
+    tty: true
+    dns:
+      - 223.5.5.5
+      - 114.114.114.114
+    dns_search: []
+
+  # 桌面端单元测试 (Qt gcc_64 + qtpositioning, 见 Dockerfile.hosttests)
+  #   docker compose run --rm unit-test
+  # 注意: build-host 必须是容器内的 Linux 卷, 不能落在 Windows bind mount 上 ——
+  # Docker Desktop 挂载 NTFS 时链接出来的 ELF 可执行文件会变成 0 字节,
+  # ctest 报 "Unable to find executable ... /test_xxx_test"。
+  unit-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.hosttests
+    image: outdoor-survival-unit-test:latest
+    volumes:
+      - ./:/project:rw
+      - unittest-build:/project/build-host:rw
+    working_dir: /project
+    profiles: ["test"]
+
+volumes:
+  gradle-cache:
+  ccache-cache:
+  unittest-build:

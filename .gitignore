@@ -1,0 +1,57 @@
+# 构建产物 / IDE
+build/
+build-host/
+dist/
+android-build/
+.gradle/
+*.o
+*.so
+*.obj
+*.user
+.idea/
+.vscode/
+.qoder/
+.cache/
+Testing/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CTestTestfile.cmake
+*.qmlc
+*.jsc
+moc_*.cpp
+*.moc
+*_autogen/
+
+# Android
+local.properties
+*.apk
+*.aab
+*.keystore
+*.jks
+keystore/
+gradle-*.zip
+
+# 第三方大体积包 (由 Docker 镜像/脚本单独拉取)
+third_party/*.zip
+qtquick3d-*.zip
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# 日志 / 临时
+logs/
+*.log
+*.tmp
+PasteFile
+verify_only.sh.bak
+Dockerfile - 副本.*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 备份目录 (约定: .bak_* 不入库)
+.bak_*

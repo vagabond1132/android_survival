@@ -1,0 +1,402 @@
+{
+  "version": "0.1.0",
+  "updated_at": "2026-08-24",
+  "description": "P0+P1 装备基础库 - 户外应急装备",
+  "categories": [
+    "rescue", "protection", "warmth", "altitude",
+    "water", "food", "light", "tools", "navigation"
+  ],
+  "items": [
+    {
+      "id": "first_aid_kit",
+      "name": "急救包",
+      "category": "rescue",
+      "weight_g": 300,
+      "description": "包含创可贴、消毒湿巾、绷带、纱布、医用胶带等",
+      "is_critical": true,
+      "specs": {"min_items": 10}
+    },
+    {
+      "id": "whistle",
+      "name": "求生口哨",
+      "category": "rescue",
+      "weight_g": 10,
+      "description": "高频哨子，可发出 100+ dB 声音",
+      "is_critical": true,
+      "specs": {"min_db": 100}
+    },
+    {
+      "id": "emergency_blanket",
+      "name": "应急毯",
+      "category": "rescue",
+      "weight_g": 60,
+      "description": "铝箔反射保温毯，防止失温",
+      "is_critical": false,
+      "specs": {}
+    },
+    {
+      "id": "signal_mirror",
+      "name": "信号镜",
+      "category": "rescue",
+      "weight_g": 30,
+      "description": "反射太阳光，10km 外可见",
+      "is_critical": false,
+      "specs": {}
+    },
+    {
+      "id": "headlamp",
+      "name": "头灯",
+      "category": "rescue",
+      "weight_g": 80,
+      "description": "LED 头灯，解放双手",
+      "is_critical": true,
+      "specs": {"min_lumens": 200}
+    },
+    {
+      "id": "spf50_sunscreen",
+      "name": "SPF50+ 防晒霜",
+      "category": "protection",
+      "weight_g": 50,
+      "description": "高倍防晒，UVA/UVB 双防",
+      "is_critical": false,
+      "specs": {"min_spf": 50}
+    },
+    {
+      "id": "uv400_sunglasses",
+      "name": "UV400 太阳镜",
+      "category": "protection",
+      "weight_g": 30,
+      "description": "100% 阻挡 UV，防止雪盲",
+      "is_critical": false,
+      "specs": {"uv_rating": 400}
+    },
+    {
+      "id": "sunhat",
+      "name": "遮阳帽",
+      "category": "protection",
+      "weight_g": 50,
+      "description": "宽檐帽，防晒防风",
+      "is_critical": false,
+      "specs": {}
+    },
+    {
+      "id": "lip_balm",
+      "name": "防晒唇膏",
+      "category": "protection",
+      "weight_g": 10,
+      "description": "防晒+滋润",
+      "is_critical": false,
+      "specs": {"min_spf": 30}
+    },
+    {
+      "id": "face_mask",
+      "name": "防晒面罩",
+      "category": "protection",
+      "weight_g": 30,
+      "description": "UPF50+ 防晒面罩",
+      "is_critical": false,
+      "specs": {}
+    },
+    {
+      "id": "fleece_jacket",
+      "name": "抓绒衣",
+      "category": "warmth",
+      "weight_g": 300,
+      "description": "聚酯纤维抓绒，保暖中间层",
+      "is_critical": false,
+      "specs": {}
+    },
+    {
+      "id": "softshell",
+      "name": "软壳外套",
+      "category": "warmth",
+      "weight_g": 400,
+      "description": "防风+透气+保暖",
+      "is_critical": false,
+      "specs": {}
+    },
+    {
+      "id": "light_down_jacket",
+      "name": "轻薄羽绒服",
+      "category": "warmth",
+      "weight_g": 250,
+      "description": "650+ 蓬松度，轻便保暖",
+      "is_critical": false,
+      "specs": {"min_fill_power": 600}
+    },
+    {
+      "id": "down_jacket",
+      "name": "厚羽绒服",
+      "category": "warmth",
+      "weight_g": 600,
+      "description": "800+ 蓬松度，冬季保暖",
+      "is_critical": true,
+      "specs": {"min_fill_power": 700}
+    },
+    {
+      "id": "expedition_down",
+      "name": "极地羽绒服",
+      "category": "warmth",
+      "weight_g": 1000,
+      "description": "850+ 蓬松度，极寒环境",
+      "is_critical": true,
+      "specs": {"min_fill_power": 800}
+    },
+    {
+      "id": "down_pants",
+      "name": "羽绒裤",
+      "category": "warmth",
+      "weight_g": 500,
+      "description": "高蓬松度羽绒裤",
+      "is_critical": false,
+      "specs": {"min_fill_power": 700}
+    },
+    {
+      "id": "base_layer",
+      "name": "速干内衣",
+      "category": "warmth",
+      "weight_g": 200,
+      "description": "美利奴羊毛或聚酯纤维",
+      "is_critical": false,
+      "specs": {}
+    },
+    {
+      "id": "rhodiola",
+      "name": "红景天",
+      "category": "altitude",
+      "weight_g": 30,
+      "description": "OTC 抗高反中成药",
+      "is_critical": false,
+      "specs": {"type": "OTC"},
+      "otc": true
+    },
+    {
+      "id": "glucose",
+      "name": "葡萄糖",
+      "category": "altitude",
+      "weight_g": 50,
+      "description": "能量补充，快速吸收",
+      "is_critical": false,
+      "specs": {"type": "OTC"},
+      "otc": true
+    },
+    {
+      "id": "ibuprofen",
+      "name": "布洛芬",
+      "category": "altitude",
+      "weight_g": 20,
+      "description": "OTC 止痛退烧",
+      "is_critical": false,
+      "specs": {"type": "OTC"},
+      "otc": true
+    },
+    {
+      "id": "antihistamine",
+      "name": "抗过敏药",
+      "category": "altitude",
+      "weight_g": 15,
+      "description": "如氯雷他定，OTC",
+      "is_critical": false,
+      "specs": {"type": "OTC"},
+      "otc": true
+    },
+    {
+      "id": "water_purifier",
+      "name": "净水器",
+      "category": "water",
+      "weight_g": 100,
+      "description": "便携式滤水器",
+      "is_critical": false,
+      "specs": {}
+    },
+    {
+      "id": "water_pills",
+      "name": "净水片",
+      "category": "water",
+      "weight_g": 10,
+      "description": "碘片或氯片，消毒",
+      "is_critical": false,
+      "specs": {}
+    },
+    {
+      "id": "thermos",
+      "name": "保温水壶",
+      "category": "water",
+      "weight_g": 400,
+      "description": "1L 真空保温",
+      "is_critical": false,
+      "specs": {"min_capacity_ml": 1000}
+    },
+    {
+      "id": "pressure_kettle",
+      "name": "压力水壶",
+      "category": "water",
+      "weight_g": 350,
+      "description": "提高沸点，高海拔煮沸用",
+      "is_critical": false,
+      "specs": {}
+    },
+    {
+      "id": "energy_bar",
+      "name": "能量棒",
+      "category": "food",
+      "weight_g": 50,
+      "description": "高热量，200kcal/根",
+      "is_critical": false,
+      "specs": {"min_kcal": 200}
+    },
+    {
+      "id": "electrolyte",
+      "name": "电解质冲剂",
+      "category": "food",
+      "weight_g": 20,
+      "description": "补充电解质",
+      "is_critical": false,
+      "specs": {}
+    },
+    {
+      "id": "flashlight",
+      "name": "手电筒",
+      "category": "light",
+      "weight_g": 150,
+      "description": "备用光源",
+      "is_critical": false,
+      "specs": {}
+    },
+    {
+      "id": "spare_batteries",
+      "name": "备用电池",
+      "category": "light",
+      "weight_g": 30,
+      "description": "AAA/CR2032 备用",
+      "is_critical": false,
+      "specs": {}
+    },
+    {
+      "id": "power_bank",
+      "name": "充电宝",
+      "category": "light",
+      "weight_g": 350,
+      "description": "10000mAh 移动电源",
+      "is_critical": false,
+      "specs": {"min_capacity_mah": 10000}
+    },
+    {
+      "id": "large_power_bank",
+      "name": "大容量充电宝",
+      "category": "light",
+      "weight_g": 500,
+      "description": "20000mAh+",
+      "is_critical": false,
+      "specs": {"min_capacity_mah": 20000}
+    },
+    {
+      "id": "knife",
+      "name": "折叠刀",
+      "category": "tools",
+      "weight_g": 100,
+      "description": "便携折叠工具刀",
+      "is_critical": false,
+      "specs": {}
+    },
+    {
+      "id": "multi_tool",
+      "name": "多功能刀具",
+      "category": "tools",
+      "weight_g": 200,
+      "description": "瑞士军刀类",
+      "is_critical": false,
+      "specs": {}
+    },
+    {
+      "id": "paracord",
+      "name": "伞绳",
+      "category": "tools",
+      "weight_g": 50,
+      "description": "5m 伞绳，多用途",
+      "is_critical": false,
+      "specs": {"min_length_m": 5}
+    },
+    {
+      "id": "duct_tape",
+      "name": "铝箔胶带",
+      "category": "tools",
+      "weight_g": 30,
+      "description": "万能维修胶带",
+      "is_critical": false,
+      "specs": {}
+    },
+    {
+      "id": "repair_kit",
+      "name": "修理包",
+      "category": "tools",
+      "weight_g": 100,
+      "description": "帐篷/装备修理工具",
+      "is_critical": false,
+      "specs": {}
+    },
+    {
+      "id": "ice_axe",
+      "name": "冰镐",
+      "category": "tools",
+      "weight_g": 500,
+      "description": "技术攀登用",
+      "is_critical": false,
+      "specs": {}
+    },
+    {
+      "id": "crampons",
+      "name": "冰爪",
+      "category": "tools",
+      "weight_g": 800,
+      "description": "雪地/冰面防滑",
+      "is_critical": false,
+      "specs": {}
+    },
+    {
+      "id": "snow_goggles",
+      "name": "雪镜",
+      "category": "tools",
+      "weight_g": 150,
+      "description": "100% UV 防护",
+      "is_critical": false,
+      "specs": {}
+    },
+    {
+      "id": "helmet",
+      "name": "头盔",
+      "category": "tools",
+      "weight_g": 300,
+      "description": "攀登头盔",
+      "is_critical": false,
+      "specs": {}
+    },
+    {
+      "id": "compass",
+      "name": "指北针",
+      "category": "navigation",
+      "weight_g": 30,
+      "description": "机械指北针",
+      "is_critical": false,
+      "specs": {}
+    },
+    {
+      "id": "offline_gps",
+      "name": "离线 GPS",
+      "category": "navigation",
+      "weight_g": 200,
+      "description": "无信号区域导航",
+      "is_critical": false,
+      "specs": {}
+    },
+    {
+      "id": "satellite_communicator",
+      "name": "卫星通讯器",
+      "category": "navigation",
+      "weight_g": 200,
+      "description": "卫星 SOS（如 Garmin inReach）",
+      "is_critical": false,
+      "specs": {}
+    }
+  ]
+}

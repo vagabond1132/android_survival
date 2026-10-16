@@ -1,0 +1,251 @@
+FROM docker.1ms.run/library/ubuntu:22.04
+
+LABEL maintainer="OutdoorSurvival"
+LABEL description="Build environment for OutdoorSurvival Android APK"
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# 设置 UTF-8 locale, 避免 Qt 反复警告:
+#   "Detected locale C with character encoding ANSI_X3.4-1968, which is not UTF-8.
+#    Qt depends on a UTF-8 locale, and has switched to C.UTF-8 instead."
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
+ENV LANGUAGE=C.UTF-8
+
+# 替换为清华镜像源 (阿里云 mirrors.aliyun.com 偶尔连接失败, 清华 tuna 更稳定)
+# 备用源: 阿里云 http://mirrors.aliyun.com/ubuntu, 网易 http://mirrors.163.com/ubuntu
+# 用 http:// 而非 https://: 80 端口在国内镜像通常更稳, 避免 TLS 握手导致的慢速/超时.
+RUN sed -i 's|http://archive.ubuntu.com|http://mirrors.tuna.tsinghua.edu.cn/ubuntu|g' /etc/apt/sources.list \
+    && sed -i 's|http://security.ubuntu.com|http://mirrors.tuna.tsinghua.edu.cn/ubuntu|g' /etc/apt/sources.list \
+    && sed -i 's|http://mirrors.aliyun.com|http://mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list
+
+# 系统依赖
+# 注意: openjdk-17-jdk-headless 等包较大 (~50MB), 国内镜像偶尔连接失败.
+#       用 --fix-missing + 重试 3 次, 任一次成功即继续; 都失败才退出.
+RUN for i in 1 2 3; do \
+        apt-get update \
+        && apt-get install -y --fix-missing --no-install-recommends \
+            build-essential cmake git wget unzip curl \
+            openjdk-17-jdk \
+            python3 python3-pip \
+            libgl1-mesa-dev libxkbcommon-dev libfontconfig1 \
+            libssl-dev libcurl4-openssl-dev \
+            ninja-build \
+            ca-certificates \
+            ccache \
+            zlib1g-dev \
+            libassimp-dev \
+        && break \
+        || { echo "apt install attempt $i failed, retrying..."; sleep 5; }; \
+    done \
+    && rm -rf /var/lib/apt/lists/*
+
+# ccache 配置: 最大缓存 2GB, 启用压缩
+# 注意: ccache 4.x 的键名是 "compression" 不是 "compress", 用 --set-config=compress 会报
+#       "unknown configuration option 'compress'" 让镜像构建失败.
+#       用 || true 容错, 防止 ccache 配置失败中断镜像构建 (即使没配成功也能用)
+ENV CCACHE_DIR=/root/.ccache
+ENV CCACHE_MAXSIZE=2G
+ENV CCACHE_COMPRESS=1
+RUN ccache --set-config=max_size=2G || true \
+    && ccache --set-config=compression=true || true \
+    && ccache --set-config=cache_dir=/root/.ccache || true
+
+# Android SDK
+ENV ANDROID_HOME=/opt/android-sdk
+ENV ANDROID_SDK_ROOT=/opt/android-sdk
+ENV ANDROID_NDK_HOME=/opt/android-sdk/ndk/26.1.10909125
+ENV PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
+
+RUN mkdir -p ${ANDROID_HOME}/cmdline-tools && \
+    cd ${ANDROID_HOME}/cmdline-tools && \
+    wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip && \
+    unzip -q commandlinetools-linux-11076708_latest.zip && \
+    mv cmdline-tools latest && \
+    rm commandlinetools-linux-11076708_latest.zip && \
+    yes | sdkmanager --licenses && \
+    sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0" "ndk;26.1.10909125" "cmake;3.22.1"
+
+# Qt 6.7.2 for Android
+ENV QT_PATH=/opt/Qt/6.7.2
+ENV PATH=$PATH:${QT_PATH}/bin
+
+
+RUN pip3 install --no-cache-dir -i https://mirrors.aliyun.com/pypi/simple/ aqtinstall
+
+# 【终极解决方案】使用空格分隔，一次性安装所有常用的附加模块
+# 包含：Multimedia, Location(定位), Positioning(位置服务), Charts, WebView, Sensors, VirtualKeyboard 等
+# 这样以后无论项目用到什么模块，都不会再报 Config.cmake does NOT exist 的错误了
+#
+# 关键: 必须加 qtquick3d.
+# 背景: libQt6Quick3DSpatialAudio_arm64-v8a.so (在 qtmultimedia 安装包中) 链接时
+#       声明 NEEDED libQt6Quick3D_arm64-v8a.so. 该 .so 由 qtquick3d 模块提供.
+#       如果 Dockerfile 不装 qtquick3d, 启动期 libOutdoorSurvival -> libQt6Multimedia
+#       -> libQt6Quick3DSpatialAudio dlopen 链触发找不到 libQt6Quick3D, 直接
+#       UnsatisfiedLinkError 闪退 (run.txt 09-09 08:44-08:45 实际崩溃).
+# 同步 CMakeLists.txt 必须保留 Qt6::Multimedia 链接, 否则 Qt 不会拉 Quick3DSpatialAudio.
+#
+# 关键: 必须加 qtshadertools.
+# 背景: 源码编译 qtquick3d 时, qtquick3d/CMakeLists.txt:42 find_package(Qt6ShaderTools)
+#       依赖 qtshadertools 的 Qt6ShaderToolsToolsConfig.cmake. aqt 默认不装这个模块.
+#       如果不加, cmake configure 阶段就报 "Could not find Qt6ShaderToolsTools" 失败
+#       (build.txt 09-09 11:17:30 实际错误).
+RUN aqt install-qt linux android 6.7.2 android_arm64_v8a -O /opt/Qt -m qtmultimedia qtlocation qtpositioning qtcharts qtwebview qtsensors qtvirtualkeyboard qtquick3d qtshadertools
+# armv7 暂时跳过 (2026-09-10 修复 build.txt 15/18 Permission denied):
+#   aqt install-qt android_armv7 在镜像里产物不完整, 报 /opt/Qt/6.7.2/android_armv7/bin/qt-cmake:
+#   Permission denied. 项目实际只在 arm64-v8a 上运行 (CMakeLists.txt 只声明 arm64-v8a),
+#   跳过 armv7 不影响最终 APK 构建. 需要 armv7 时再单独排查 aqt 安装.
+# RUN aqt install-qt linux android 6.7.2 android_armv7 -O /opt/Qt -m qtmultimedia qtlocation qtpositioning qtcharts qtwebview qtsensors qtvirtualkeyboard qtquick3d qtshadertools
+RUN aqt install-qt linux android 6.7.2 android_x86_64 -O /opt/Qt -m qtmultimedia qtlocation qtpositioning qtcharts qtwebview qtsensors qtvirtualkeyboard qtquick3d qtshadertools
+
+# 桌面版（宿主机工具链）— 必须装 qtshadertools + qtquick3d
+# 关键 (2026-09-09 修复 build.txt 12/17 第二次失败):
+#   qtquick3d 在 CMake configure 阶段会找 host 端的 Qt6::balsam 工具
+#   (tools/balsam/CMakeLists.txt:11 qt_internal_add_tool). 该工具由
+#   Qt6Quick3DTools 包提供, 只有装了 host 端 qtquick3d 才会产出.
+#   若不装 host qtquick3d, 报:
+#       Failed to find the host tool "Qt6::balsam".  It is part of the
+#       Qt6Quick3DTools package, but the package could not be found.
+#   修法: 在桌面 host Qt 装 qtquick3d 模块 (其内容里有 balsam + assetimporter 等工具).
+# 2026-10-16: 追加 qtpositioning/qtlocation — tests/ 单元测试在桌面 Qt 下编译, 而
+#   EmergencyService/MapService/RouteService/TravelService 依赖 QGeoCoordinate,
+#   缺失时 `cmake -S tests` 报 Failed to find required Qt component "Positioning"。
+#   (已构建好的镜像可用 `docker compose build unit-test` 增量补装, 见 Dockerfile.hosttests)
+RUN aqt install-qt linux desktop 6.7.2 linux_gcc_64 -O /opt/Qt -m qtshadertools qtquick3d qtpositioning qtlocation
+
+# ============================================================================
+# 关键: 源码编译 qtquick3d for Android (3 个 ABI)
+# 背景:
+#   - aqt qtquick3d 在 Qt 6.7.2 Android 平台不提供 libQt6Quick3D_arm64-v8a.so
+#     主库, 只装 qtquick3dspatialaudio 子模块
+#   - libQt6Quick3DSpatialAudio_arm64-v8a.so 链接时 NEEDED libQt6Quick3D_arm64-v8a.so
+#   - 启动期 dlopen 链触发找不到 libQt6Quick3D → UnsatisfiedLinkError 闪退
+#     (run.txt 09-09 09:58:01.390 实际崩溃)
+# 修法: 从清华 TUNA 镜像拉 qtquick3d 6.7.2 子模块源码, 用 qt-cmake 交叉编译并
+#       install 到 /opt/Qt/6.7.2/android_<abi>/, 产出真 arm64 .so
+# 关键点:
+#   - 国内 code.qt.io 慢/超时, 用清华 TUNA 镜像 (https://mirrors.tuna.tsinghua.edu.cn/qt/)
+#   - 需指定 -skip qtshadertools 等减少编译, 只编 qtquick3d 一个模块
+#   - qt-cmake 已包含 cross-compile 工具链配置
+#   - qtquick3d 依赖 qtshadertools, Dockerfile 上一阶段已通过 aqt 装它
+# ============================================================================
+ARG QT_SRC_DIR=/tmp/qt-src
+# qtquick3d 6.7.2 源码手动预置在 ./qtquick3d-6.7.2.zip, 避免 Docker 构建时拉 GitHub
+# 关键参数:
+#   -DQT_FEATURE_system_assimp=OFF     用 vendored 3rdparty/assimp 源码, 不依赖 apt libassimp-dev
+#                                      (apt 路径在 cross-compile 下 assimp::assimp IMPORTED target
+#                                       创建不稳, 触发 WrapQuick3DAssimp::WrapQuick3DAssimp 缺失
+#                                       错误. 改用源码 zip 摆进 3rdparty/assimp/src/, 见下方 RUN)
+#
+# 关键 (2026-09-09 修复 build.txt 12/17 失败):
+#   Qt 6.7.2 qt-cmake 内部默认从 /opt/android/android-ndk-r26b 找 toolchain,
+#   但这里 NDK 装在 $ANDROID_HOME/ndk/26.1.10909125 (r26b 仅为版本别称,
+#   Qt 的查找路径不会自动跟过来). 找不到时 cmake 退回宿主 gcc, 编译时
+#   携带 Clang 专有的 -Wno-error=#warnings / -Wno-error=deprecated-copy-with-
+#   user-provided-copy 标志, gcc 11.4 报错:
+#       cc1plus: error: '-Wno-error=#warnings': no option '-W#warnings'
+#       cc1plus: error: '-Wno-error=deprecated-copy-with-user-provided-copy'
+#   修法: 设 ANDROID_NDK_ROOT + 给 qt-cmake 显式传 -DANDROID_NDK_ROOT,
+#   让 toolchain 找到 Clang, 上述 Clang 标志正常被 Clang 解析.
+#
+# 关键 (2026-09-09 修复 build.txt 12/17 第三次失败 - WrapQuick3DAssimp target 缺失):
+#   启 -DQT_FEATURE_system_assimp=ON 时, 内部 find_package(assimp CONFIG QUIET) 找
+#   apt 装的 libassimp-dev, 但 Debian 包的 assimpConfig.cmake 在 cross-compile + qt-cmake
+#   包装下未能正确生成 assimp::assimp IMPORTED target, 导致 FindWrapQuick3DAssimp.cmake
+#   不创建 WrapQuick3DAssimp::WrapQuick3DAssimp target → generate 阶段 AssimpImporterPlugin
+#   链接报 "target was not found". 试过 -DCMAKE_PREFIX_PATH=/usr 仍不稳 (第三次失败见 build.txt).
+#   改法: 改用 vendored 3rdparty/assimp 源码 (手动预置 qtquick3d-assimp-5.4.1.zip,
+#   版本与 Qt 自带 revision.h 5.4.1 一致, 共 248/250 必需文件命中, 缺 config.h/revision.h
+#   模板是 cmake 展开产物, 保留 Qt 自带的 configure 好成品), 切到 system_assimp=OFF
+#   让 Qt 源码自带的 AssimpImporterPlugin/CMakeLists.txt 走 3rdparty 内置编译路径.
+ENV ANDROID_NDK_ROOT=${ANDROID_HOME}/ndk/26.1.10909125
+ENV ANDROID_NDK=${ANDROID_NDK_ROOT}
+COPY qtquick3d-6.7.2.zip /tmp/qtquick3d-6.7.2.zip
+COPY qtquick3d-assimp-5.4.1.zip /tmp/qtquick3d-assimp-5.4.1.zip
+RUN cd /tmp && unzip -q qtquick3d-6.7.2.zip && \
+    mv qtquick3d-6.7.2 ${QT_SRC_DIR} && \
+    # 关闭 timeline 可选特性, 避免依赖 qtquicktimeline 子模块 (zip 也没有)
+    echo 'set(QT_NO_FEATURE_quick3d_timeline ON)' >> ${QT_SRC_DIR}/.cmake.conf && \
+    # 把 assimp 5.4.1 源码摆进 3rdparty/assimp/src/, 供 Qt vendored 编译用
+    # zip 顶层是 qtquick3d-assimp-5.4.1/, 内含 code/ include/ contrib/; 目标路径 src/{code,include,contrib}
+    # 不覆盖 Qt 自带的 config.h / revision.h (已是 5.4.1 configure 好的成品)
+    mkdir -p ${QT_SRC_DIR}/src/3rdparty/assimp/src && \
+    unzip -q /tmp/qtquick3d-assimp-5.4.1.zip -d /tmp/assimp-staging && \
+    mv /tmp/assimp-staging/qtquick3d-assimp-5.4.1/code     ${QT_SRC_DIR}/src/3rdparty/assimp/src/code && \
+    mv /tmp/assimp-staging/qtquick3d-assimp-5.4.1/include  ${QT_SRC_DIR}/src/3rdparty/assimp/src/include && \
+    mv /tmp/assimp-staging/qtquick3d-assimp-5.4.1/contrib  ${QT_SRC_DIR}/src/3rdparty/assimp/src/contrib && \
+    rm -rf /tmp/assimp-staging && \
+    # assimp 5.4.1 contrib/unzip/ioapi.c 默认展开 fopen64/ftello64/fseeko64 (glibc 64 位扩展),
+    # Android NDK 26 bionic libc 不提供这三个函数, Clang 17 编 ioapi.c 报
+    # "call to undeclared function 'fopen64'" (build.txt 647/735 失败).
+    # 该文件 18-26 行有 #if defined(__APPLE__) || defined(IOAPI_NO_64) || ...
+    # 切到 fopen/ftello/fseeko 分支. 但 bionic 也没有 ftello/fseeko (只有 ftell/fseek),
+    # 所以还要把宏定义里 ftello(stream)→ftell(stream), fseeko(...)+"fseeko"→"fseek".
+    # 三条 ABI 共享同一份 ${QT_SRC_DIR} 源码, sed 一次够用.
+    sed -i '1i#define IOAPI_NO_64 1' ${QT_SRC_DIR}/src/3rdparty/assimp/src/contrib/unzip/ioapi.c && \
+    sed -i 's|^#define FTELLO_FUNC(stream) ftello(stream)$|#define FTELLO_FUNC(stream) ftell(stream)|' \
+        ${QT_SRC_DIR}/src/3rdparty/assimp/src/contrib/unzip/ioapi.c && \
+    sed -i 's|^#define FSEEKO_FUNC(stream, offset, origin) fseeko(stream, offset, origin)$|#define FSEEKO_FUNC(stream, offset, origin) fseek(stream, offset, origin)|' \
+        ${QT_SRC_DIR}/src/3rdparty/assimp/src/contrib/unzip/ioapi.c && \
+    ${QT_PATH}/android_arm64_v8a/bin/qt-cmake -S ${QT_SRC_DIR} -B ${QT_SRC_DIR}/build_arm64 -G Ninja \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=${QT_PATH}/android_arm64_v8a \
+        -DBUILD_SHARED_LIBS=ON \
+        -DQT_BUILD_TESTS=OFF \
+        -DQT_BUILD_EXAMPLES=OFF \
+        -DQT_FEATURE_system_assimp=OFF \
+        -DANDROID_NDK_ROOT=${ANDROID_NDK_ROOT} \
+        -DQT_HOST_PATH=${QT_PATH}/gcc_64 && \
+    cmake --build ${QT_SRC_DIR}/build_arm64 --parallel $(nproc) && \
+    cmake --install ${QT_SRC_DIR}/build_arm64 && \
+    rm -rf ${QT_SRC_DIR}/build_arm64
+
+# x86_64 ABI 同样需要
+RUN ${QT_PATH}/android_x86_64/bin/qt-cmake -S ${QT_SRC_DIR} -B ${QT_SRC_DIR}/build_x86_64 -G Ninja \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=${QT_PATH}/android_x86_64 \
+        -DBUILD_SHARED_LIBS=ON \
+        -DQT_BUILD_TESTS=OFF \
+        -DQT_BUILD_EXAMPLES=OFF \
+        -DQT_FEATURE_system_assimp=OFF \
+        -DANDROID_NDK_ROOT=${ANDROID_NDK_ROOT} \
+        -DQT_HOST_PATH=${QT_PATH}/gcc_64 && \
+    cmake --build ${QT_SRC_DIR}/build_x86_64 --parallel $(nproc) && \
+    cmake --install ${QT_SRC_DIR}/build_x86_64 && \
+    rm -rf ${QT_SRC_DIR}/build_x86_64
+
+# armv7 ABI 暂时跳过 (2026-09-10): 见上方 aqt install 注释
+# RUN ${QT_PATH}/android_armv7/bin/qt-cmake -S ${QT_SRC_DIR} -B ${QT_SRC_DIR}/build_armv7 -G Ninja \
+#         -DCMAKE_BUILD_TYPE=Release \
+#         -DCMAKE_INSTALL_PREFIX=${QT_PATH}/android_armv7 \
+#         -DBUILD_SHARED_LIBS=ON \
+#         -DQT_BUILD_TESTS=OFF \
+#         -DQT_BUILD_EXAMPLES=OFF \
+#         -DQT_FEATURE_system_assimp=OFF \
+#         -DANDROID_NDK_ROOT=${ANDROID_NDK_ROOT} \
+#         -DQT_HOST_PATH=${QT_PATH}/gcc_64 && \
+#     cmake --build ${QT_SRC_DIR}/build_armv7 --parallel $(nproc) && \
+#     cmake --install ${QT_SRC_DIR}/build_armv7 && \
+#     rm -rf ${QT_SRC_DIR}/build_armv7
+
+# 清理源码 (镜像不需要)
+RUN rm -rf ${QT_SRC_DIR}
+
+
+
+# 注意:NCNN 已移除(2026-08-27 V2 重构:改为图鉴检索 + HSV 匹配,不再使用端侧 AI 推理)
+# 节省 ~5-10 分钟构建时间 + 200MB 镜像体积
+
+# ============================================================================
+# Gradle: 不在镜像里预装 (build_apk.sh 在运行时从宿主 /project/gradle-*.zip 解压到
+# /opt/gradle-install/<hash>/). 此处只确保 unzip/curl 可用, 不固化 8.3 版本.
+# 优先级: 宿主目录的 gradle-*.zip > 国内镜像自动下载 (腾讯云/阿里云)
+# ============================================================================
+
+# 工作目录
+WORKDIR /project
+
+# 复制并构建
+COPY . /project/
+
+CMD ["/bin/bash"]

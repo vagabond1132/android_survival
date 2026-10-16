@@ -1,0 +1,190 @@
+apply plugin: 'com.android.application'
+
+android {
+    namespace 'com.outdoor.survival'
+    compileSdk 34
+
+    // 关键修复: AGP 8 增量构建时 javac 漏编的根因 + 修法
+    // --------------------------------------------------------------------
+    // 背景: build_apk.sh 在 gradle configure 之前先 cp android/src/ → app/src/main/java/.
+    //       看起来源是齐的, 但实际跑 build 时 :app:compileReleaseJavaWithJavac 任务
+    //       不在任务图里 (gradle --dry-run 看不到), 36 tasks 全 up-to-date, javac 漏编.
+    // 根因 (推测, 待 build.txt 诊断日志确认):
+    //   (1) AGP 8 解析 sourceSets 是在 configuration 阶段, 路径 'src/main/java' 相对
+    //       的是 project dir = $GRADLE_PROJECT_DIR/app/. 配置阶段这个目录已被创建,
+    //       但为空. AGP 8 namespace 模式下若 sourceSets 解析时该路径无源, 不会纳入
+    //       input fingerprinting, 后续 cp 添加文件后, 增量构建时任务仍命中 cache.
+    //   (2) build_apk.sh 跑完 cp 后, gradle assembleRelease 的 build cache 已记
+    //       "javac input = 空集", 36 tasks 全部 up-to-date, javac 永不重跑.
+    // 修法: 直接用 file() 绝对路径指向项目根的 android/src/, 完全绕过 build_apk.sh 的 cp.
+    //       这样 sourceSets 在 AGP 第一次 configure 时就指向真实源 (文件早就在),
+    //       javac 任务会正常纳入任务图, 缓存也以真实源为 fingerprint.
+    // --------------------------------------------------------------------
+    sourceSets {
+        main {
+            // 只列 'src/main/java'. build_apk.sh 在 gradle configure 之前把项目 java
+            // 源 cp 到这里 (不 rm androiddeployqt 模板的 org/qtproject), javac 一次
+            // 编译所有 java (项目 + QtActivity 模板), 不会有 duplicate class.
+            java.srcDirs = ['src/main/java']
+
+            // 关键: 显式声明 res.srcDirs.
+            // 背景: AGP 8 默认 sourceSets.main.res.srcDirs = ['src/main/res'],
+            //       但因为上面已显式声明 sourceSets { main { ... } }, 部分场景下
+            //       AGP 不会自动应用 res 默认值 → build_apk.sh cp 进来的
+            //       res/values/strings.xml (含 qt_static_init_classes) 不进
+            //       resources.arsc → 启动时 Resources$NotFoundException.
+            //       显式列出避免歧义.
+            res.srcDirs = ['src/main/res']
+
+            // 关键修复: 不显式声明 jniLibs.srcDirs, 让 AGP 8.4 mergeReleaseNativeLibs
+            // 既读 src/main/jniLibs/ 又自动从 NDK sysroot 注入 libc++_shared.so 等 runtime
+            // 背景: 之前显式 ['src/main/jniLibs'] 让 AGP 只读该目录 → libc++_shared.so
+            //       缺失 → 启动期 native crash. 不设 srcDirs 走 AGP 默认, 它会:
+            //       1) 读 src/main/jniLibs/ 收集项目 .so
+            //       2) 从 NDK toolchain sysroot 自动注入 libc++_shared.so
+            //       3) 合并到 APK 的 lib/<abi>/
+            // 兼容: build_apk.sh 已把项目 .so 复制到 src/main/jniLibs/<abi>/,
+            //       AGP 默认扫描会找到.
+            // 不再显式 jniLibs.srcDirs 限定
+        }
+    }
+
+    // 签名配置 (必须在 buildTypes 之前定义, 否则 buildTypes.release 引用
+    // signingConfigs.release 时会报 "Could not get unknown property 'release'")
+    signingConfigs {
+        release {
+            // 优先从环境变量获取密钥
+            if (System.getenv("KEYSTORE_PATH")) {
+                storeFile file(System.getenv("KEYSTORE_PATH"))
+                storePassword System.getenv("KEYSTORE_PASSWORD")
+                keyAlias System.getenv("KEY_ALIAS")
+                keyPassword System.getenv("KEY_PASSWORD")
+            } else {
+                // 默认 keystore
+                storeFile file("../keystore/outdoor.keystore")
+                storePassword "outdoor123"
+                keyAlias "outdoor"
+                keyPassword "outdoor123"
+            }
+        }
+    }
+
+    defaultConfig {
+        applicationId "com.outdoor.survival"
+        minSdkVersion 24
+        targetSdkVersion 34
+        versionCode 1
+        versionName "0.0.1"
+
+        ndk {
+            abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86_64'
+        }
+
+        // Qt 6 必需
+        externalNativeBuild {
+            cmake {
+                cppFlags "-std=c++17"
+                // ANDROID_SDK_ROOT 必须传给 cmake, 否则 Qt6 的
+                // _qt_internal_android_get_sdk_build_tools_revision 找不到 build-tools
+                // → "Could not locate Android SDK build tools under \"/build-tools\""
+                // QT_HOST_PATH 同样需要, 否则 find_package(Qt6) 找不到 Qt
+                // 用 ANDROID_HOME 是因为 ANDROID_HOME 更通用, 一些 Qt 内部检查会优先看这个
+                arguments "-DANDROID_STL=c++_shared",
+                          "-DQT_ANDROID_NDK_TOOLCHAIN=clang",
+                          "-DANDROID_SDK_ROOT=" + (project.findProperty('android.sdk.path') ?: '/opt/android-sdk'),
+                          "-DANDROID_HOME=" + (project.findProperty('android.sdk.path') ?: '/opt/android-sdk'),
+                          "-DQT_HOST_PATH=" + (project.findProperty('qt.host.path') ?: '/opt/Qt/6.7.2/gcc_64'),
+                          "-DCMAKE_PREFIX_PATH=" + (project.findProperty('qt.android.path') ?: '/opt/Qt/6.7.2/android_arm64_v8a')
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix ".debug"
+            versionNameSuffix "-debug"
+            minifyEnabled false
+            debuggable true
+        }
+        release {
+            minifyEnabled false  // 临时: R8 裁剪 QObject/Q_INVOKABLE 元数据可能导致 QML 反射失败, 待 proguard 规则完善后改为 true
+            shrinkResources false
+            debuggable false  // 生产 release 包不应可调试. 之前临时设为 true 排查 ClassNotFoundException, 现已修
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'),
+                          'proguard-rules.pro'
+
+            // 签名配置 (signingConfigs.release 已在上方定义)
+            signingConfig signingConfigs.release
+        }
+    }
+
+    packagingOptions {
+        jniLibs {
+            // 必须 useLegacyPackaging = true: AndroidManifest.xml:67
+            // android:extractNativeLibs="true" 要求 .so 打包到 lib/ (不压缩),
+            // 而不是 AGP 8 默认的 lib/<abi>/ (压缩).
+            // 如果不设, App 启动时 System.loadLibrary("OutdoorSurvival") 找不到 .so
+            // → UnsatisfiedLinkError → 立即退出
+            useLegacyPackaging = true
+        }
+        resources {
+            excludes += [
+                'META-INF/AL2.0',
+                'META-INF/LGPL2.1',
+                'META-INF/LICENSE*',
+                'META-INF/NOTICE*',
+                'META-INF/*.kotlin_module'
+            ]
+        }
+    }
+
+    buildFeatures {
+        buildConfig true
+        viewBinding true
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    androidResources {
+        // 不压缩的资源（提高加载速度）
+        noCompress 'tflite', 'param', 'bin', 'json'
+    }
+}
+
+dependencies {
+    implementation 'androidx.core:core:1.12.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.lifecycle:lifecycle-service:2.7.0'
+    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'androidx.security:security-crypto:1.1.0-alpha06'
+
+    // 关键: Qt 6.7 Android Java 绑定 (QtActivity / QtApplication / QtService 等)
+    // 这些类在 Qt 6.7 装在 /opt/Qt/6.7.2/.../jar/Qt6Android.jar 里 (预编译 .class).
+    // build_apk.sh 把这个 jar 复制到 android-build/app/libs/Qt6Android.jar,
+    // AGP :app:mergeReleaseClasses 阶段自动把 jar 内 .class 合并进 dex,
+    // 启动时 AndroidManifest 引用的 .QtActivity 即可找到.
+    // 不走 maven (org.qtproject.qt:qtandroid 在所有公开仓库 404).
+    implementation files('libs/Qt6Android.jar')
+
+    // 关键: Qt 6.7 Android 服务绑定 (multimedia / network / positioning / quick).
+    // 漏任何一个会导致 JNI_OnLoad 失败:
+    //   - 缺 Qt6AndroidMultimedia.jar → libQt6Multimedia 的 JNI_OnLoad 找不到
+    //     org.qtproject.qt.android.multimedia.QtAudioDeviceManager → ClassNotFoundException
+    //     → JNI_OnLoad 返回 JNI_ERR → 闪退 (run.txt 20:18:20.170 实际崩溃)
+    //   - 缺 QtAndroidPositioning.jar → libQt6Positioning 同样闪退
+    //   - 缺 Qt6AndroidNetwork.jar → libQt6Network 同样闪退
+    // 这些 jar 由 build_apk.sh 复制到 app/libs/, 必须全部 implementation 才会合并进 dex.
+    implementation files('libs/Qt6AndroidMultimedia.jar')
+    implementation files('libs/Qt6AndroidNetwork.jar')
+    implementation files('libs/Qt6AndroidNetworkInformationBackend.jar')
+    implementation files('libs/Qt6AndroidQuick.jar')
+    implementation files('libs/QtAndroidPositioning.jar')
+
+    // Test
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.1'
+}

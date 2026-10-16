@@ -1,0 +1,7 @@
+qtquick3d/
+.git/
+.idea/
+.vscode/
+*.tmp
+*.bak
+.DS_Store

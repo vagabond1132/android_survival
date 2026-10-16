@@ -1,0 +1,473 @@
+{
+  "version": "0.2.0",
+  "updated_at": "2026-08-24",
+  "description": "P0+P1 装备推荐规则 - 5 段海拔分级（L0-L4，最高 5000m）+ 地区气候维度",
+  "change_log": [
+    "v0.2.0: 删除 L5（4500-5500m）和 L6（5500m+），封顶 5000m",
+    "v0.2.0: 新增地区气候维度（昼夜温差/干湿/紫外线/风/特殊气候）"
+  ],
+  "altitude_segments": [
+    {
+      "level": "L0",
+      "name": "低海拔",
+      "min_m": 0,
+      "max_m": 500,
+      "color": "#4CAF50",
+      "description": "平原/低山徒步",
+      "weight_factor": 1.0
+    },
+    {
+      "level": "L1",
+      "name": "中海拔",
+      "min_m": 500,
+      "max_m": 1500,
+      "color": "#8BC34A",
+      "description": "低山徒步",
+      "weight_factor": 1.1
+    },
+    {
+      "level": "L2",
+      "name": "中高海拔",
+      "min_m": 1500,
+      "max_m": 2500,
+      "color": "#FFC107",
+      "description": "中山徒步，需注意高反预备",
+      "weight_factor": 1.2
+    },
+    {
+      "level": "L3",
+      "name": "高海拔",
+      "min_m": 2500,
+      "max_m": 3500,
+      "color": "#FF9800",
+      "description": "高反+保暖+防晒",
+      "weight_factor": 1.3
+    },
+    {
+      "level": "L4",
+      "name": "极高海拔",
+      "min_m": 3500,
+      "max_m": 5000,
+      "color": "#F44336",
+      "description": "雪地+氧气+技术装备",
+      "weight_factor": 1.5,
+      "warning": "需专业向导/许可证"
+    }
+  ],
+  "rules": [
+    {
+      "id": "R_BASE_2",
+      "name": "必带头灯",
+      "priority": "critical",
+      "level": 1,
+      "condition": "always",
+      "items": [
+        "headlamp"
+      ]
+    },
+    {
+      "id": "R_ALT_L3_SUN",
+      "name": "高海拔需SPF50+",
+      "priority": "critical",
+      "level": 2,
+      "condition": "altitude >= L3",
+      "items": [
+        "spf50_sunscreen"
+      ]
+    },
+    {
+      "id": "R_ALT_L3_GLASSES",
+      "name": "高海拔需UV400太阳镜",
+      "priority": "critical",
+      "level": 2,
+      "condition": "altitude >= L3",
+      "items": [
+        "uv400_sunglasses"
+      ]
+    },
+    {
+      "id": "R_ALT_L4_WARMTH",
+      "name": "极高海拔需厚羽绒",
+      "priority": "critical",
+      "level": 2,
+      "condition": "altitude >= L4",
+      "items": [
+        "down_jacket",
+        "expedition_down"
+      ]
+    },
+    {
+      "id": "R_ALT_L4_PAIN",
+      "name": "极高海拔需OTC头痛药",
+      "priority": "critical",
+      "level": 2,
+      "condition": "altitude >= L4",
+      "items": [
+        "ibuprofen"
+      ]
+    },
+    {
+      "id": "R_ALT_L4_LIP",
+      "name": "极高海拔需防晒唇膏",
+      "priority": "critical",
+      "level": 2,
+      "condition": "altitude >= L4",
+      "items": [
+        "lip_balm"
+      ]
+    },
+    {
+      "id": "R_ALT_L4_SNOW",
+      "name": "极高海拔需雪镜头盔",
+      "priority": "critical",
+      "level": 2,
+      "condition": "altitude >= L4",
+      "items": [
+        "snow_goggles",
+        "helmet"
+      ]
+    },
+    {
+      "id": "R_DIFFICULT_EXTREME",
+      "name": "极限路线备全装备",
+      "priority": "critical",
+      "level": 2,
+      "condition": "difficulty >= 5",
+      "items": [
+        "helmet",
+        "satellite_communicator",
+        "repair_kit"
+      ]
+    },
+    {
+      "id": "R_CLIMATE_DIURNAL_VERY_HIGH",
+      "name": "昼夜温差极大需额外保暖",
+      "priority": "critical",
+      "level": 2,
+      "condition": "diurnal_range >= 20",
+      "items": [
+        "down_jacket"
+      ]
+    },
+    {
+      "id": "R_UV_VERY_STRONG",
+      "name": "紫外线很强需全防晒",
+      "priority": "critical",
+      "level": 2,
+      "condition": "uv_level in ['strong', 'very_strong', 'extreme']",
+      "items": [
+        "spf50_sunscreen",
+        "uv400_sunglasses",
+        "sunhat",
+        "lip_balm"
+      ]
+    },
+    {
+      "id": "R_DESERT",
+      "name": "沙漠需防晒+大量水",
+      "priority": "critical",
+      "level": 2,
+      "condition": "is_desert == true",
+      "items": [
+        "spf50_sunscreen",
+        "face_mask",
+        "large_water_bag"
+      ]
+    },
+    {
+      "id": "R_BASE_3",
+      "name": "必带求生口哨",
+      "priority": "important",
+      "level": 1,
+      "condition": "always",
+      "items": [
+        "whistle"
+      ]
+    },
+    {
+      "id": "imp_thermos_l1",
+      "name": "中海拔以上建议保温杯",
+      "priority": "important",
+      "level": 2,
+      "condition": "altitude >= L1",
+      "items": [
+        "thermos"
+      ]
+    },
+    {
+      "id": "imp_firstaid",
+      "name": "必带基础急救包",
+      "priority": "important",
+      "level": 1,
+      "condition": "always",
+      "items": [
+        "first_aid_kit"
+      ]
+    },
+    {
+      "id": "imp_whistle_always",
+      "name": "必带求生口哨",
+      "priority": "important",
+      "level": 1,
+      "condition": "always",
+      "items": [
+        "whistle"
+      ]
+    },
+    {
+      "id": "R_BASE_4",
+      "name": "必带速干内衣",
+      "priority": "recommended",
+      "level": 1,
+      "condition": "always",
+      "items": [
+        "base_layer"
+      ]
+    },
+    {
+      "id": "R_ALT_L1_WARMTH",
+      "name": "中海拔需抓绒",
+      "priority": "recommended",
+      "level": 2,
+      "condition": "altitude >= L1",
+      "items": [
+        "fleece_jacket"
+      ]
+    },
+    {
+      "id": "R_ALT_L2_WARMTH",
+      "name": "中高海拔需软壳",
+      "priority": "recommended",
+      "level": 2,
+      "condition": "altitude >= L2",
+      "items": [
+        "softshell"
+      ]
+    },
+    {
+      "id": "R_ALT_L2_ALTITUDE",
+      "name": "中高海拔需红景天",
+      "priority": "recommended",
+      "level": 2,
+      "condition": "altitude >= L2",
+      "items": [
+        "rhodiola"
+      ]
+    },
+    {
+      "id": "R_ALT_L3_WARMTH",
+      "name": "高海拔需薄羽绒",
+      "priority": "recommended",
+      "level": 2,
+      "condition": "altitude >= L3",
+      "items": [
+        "light_down_jacket"
+      ]
+    },
+    {
+      "id": "R_ALT_L3_ALTITUDE",
+      "name": "高海拔需葡萄糖",
+      "priority": "recommended",
+      "level": 2,
+      "condition": "altitude >= L3",
+      "items": [
+        "glucose"
+      ]
+    },
+    {
+      "id": "R_ALT_L4_FOOD",
+      "name": "极高海拔食物+30%",
+      "priority": "recommended",
+      "level": 2,
+      "condition": "altitude >= L4",
+      "items": [
+        "energy_bar",
+        "electrolyte"
+      ]
+    },
+    {
+      "id": "R_ALT_L4_POWER",
+      "name": "极高海拔需大容量充电宝",
+      "priority": "recommended",
+      "level": 2,
+      "condition": "altitude >= L4",
+      "items": [
+        "large_power_bank"
+      ]
+    },
+    {
+      "id": "R_ALT_L4_ICE",
+      "name": "极高海拔需冰爪",
+      "priority": "recommended",
+      "level": 2,
+      "condition": "altitude >= L4 AND season in [winter, spring, autumn]",
+      "items": [
+        "crampons"
+      ]
+    },
+    {
+      "id": "R_ALT_L4_PRESSURE",
+      "name": "极高海拔需压力水壶",
+      "priority": "recommended",
+      "level": 2,
+      "condition": "altitude >= L4",
+      "items": [
+        "pressure_kettle"
+      ]
+    },
+    {
+      "id": "R_SEASON_WINTER_WARMTH",
+      "name": "冬季加强保暖",
+      "priority": "recommended",
+      "level": 2,
+      "condition": "season == 'winter'",
+      "items": [
+        "fleece_jacket"
+      ]
+    },
+    {
+      "id": "R_RAIN_HEAVY",
+      "name": "强降雨需防水",
+      "priority": "recommended",
+      "level": 2,
+      "condition": "precipitation in [heavy, storm]",
+      "items": [
+        "rain_jacket",
+        "waterproof_bag"
+      ]
+    },
+    {
+      "id": "R_RAIN_LIGHT",
+      "name": "小雨需雨具",
+      "priority": "recommended",
+      "level": 2,
+      "condition": "precipitation == 'light'",
+      "items": [
+        "rain_jacket"
+      ]
+    },
+    {
+      "id": "R_WIND_STRONG",
+      "name": "强风需防风",
+      "priority": "recommended",
+      "level": 2,
+      "condition": "wind_speed >= 8",
+      "items": [
+        "softshell",
+        "windproof_gear"
+      ]
+    },
+    {
+      "id": "R_DAYS_LONG",
+      "name": "多日行程备额外电池",
+      "priority": "recommended",
+      "level": 2,
+      "condition": "days >= 3",
+      "items": [
+        "spare_batteries",
+        "power_bank"
+      ]
+    },
+    {
+      "id": "R_DIFFICULT_HARD",
+      "name": "困难路线备修理包",
+      "priority": "recommended",
+      "level": 2,
+      "condition": "difficulty >= 4",
+      "items": [
+        "multi_tool",
+        "paracord"
+      ]
+    },
+    {
+      "id": "R_CLIMATE_DIURNAL_HIGH",
+      "name": "昼夜温差大需分层穿衣",
+      "priority": "recommended",
+      "level": 2,
+      "condition": "diurnal_range >= 15",
+      "items": [
+        "base_layer",
+        "fleece_jacket",
+        "light_down_jacket"
+      ]
+    },
+    {
+      "id": "R_CLIMATE_DRY",
+      "name": "干燥地区需保湿",
+      "priority": "recommended",
+      "level": 2,
+      "condition": "humidity == 'dry'",
+      "items": [
+        "moisturizer"
+      ]
+    },
+    {
+      "id": "R_CLIMATE_HUMID",
+      "name": "闷热地区需速干排汗",
+      "priority": "recommended",
+      "level": 2,
+      "condition": "humidity == 'humid'",
+      "items": [
+        "quick_dry_shirt",
+        "extra_socks",
+        "electrolyte"
+      ]
+    },
+    {
+      "id": "R_UV_EXTREME",
+      "name": "紫外线极强需防晒面罩",
+      "priority": "recommended",
+      "level": 2,
+      "condition": "uv_level == 'extreme'",
+      "items": [
+        "long_sleeve_sun_shirt"
+      ]
+    },
+    {
+      "id": "R_WIND_GALE",
+      "name": "强风需防风装备",
+      "priority": "recommended",
+      "level": 2,
+      "condition": "wind_level in ['strong', 'gale']",
+      "items": [
+        "softshell",
+        "windproof_gear"
+      ]
+    },
+    {
+      "id": "R_RAINY_SEASON",
+      "name": "雨季需防水",
+      "priority": "recommended",
+      "level": 2,
+      "condition": "is_rainy_season == true",
+      "items": [
+        "rain_jacket",
+        "waterproof_bag",
+        "dry_bag"
+      ]
+    },
+    {
+      "id": "R_COASTAL",
+      "name": "沿海需防风防盐",
+      "priority": "recommended",
+      "level": 2,
+      "condition": "is_coastal == true",
+      "items": [
+        "windproof_gear",
+        "salt_resistant_clothes"
+      ]
+    },
+    {
+      "id": "R_PLATEAU_ALTITUDE",
+      "name": "高原地区需提前适应",
+      "priority": "recommended",
+      "level": 2,
+      "condition": "is_plateau == true",
+      "items": [
+        "rhodiola",
+        "glucose",
+        "antihistamine"
+      ]
+    }
+  ]
+}

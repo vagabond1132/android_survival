@@ -1,0 +1,36 @@
+pluginManagement {
+    repositories {
+        // 多个国内镜像 + 官方源做 fallback, 避免单源限流/断网导致全部失败
+        maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
+        maven { url 'https://maven.aliyun.com/repository/google' }
+        maven { url 'https://maven.aliyun.com/repository/central' }
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        maven { url 'https://mirrors.cloud.tencent.com/nexus/repository/maven-public/' }
+        maven { url 'https://repo.huaweicloud.com/repository/maven/' }
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        // 多个国内镜像 + 官方源做 fallback, 避免单源限流/断网导致全部失败
+        maven { url 'https://maven.aliyun.com/repository/google' }
+        maven { url 'https://maven.aliyun.com/repository/central' }
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
+        maven { url 'https://mirrors.cloud.tencent.com/nexus/repository/maven-public/' }
+        maven { url 'https://repo.huaweicloud.com/repository/maven/' }
+        // 关键: Qt 官方 maven 仓库, 提供 org.qtproject.qt:qtandroid aar
+        // (含 QtActivity / QtApplication / QtService 等预编译 java 类)
+        maven { url 'https://download.qt.io/ministro/online/maven/repository/' }
+        maven { url 'https://maven.qt.io/' }
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.name = "OutdoorSurvival"
+include ':app'

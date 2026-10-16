@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">荒野手册</string>
+
+    <!-- 2026-09-11 (G3): 删除 9 个死字符串
+         app_subtitle / sos_action / emergency_call_120/110/119
+         recognition_hint / permission_camera/storage/location_rationale
+         disclaimer
+         grep 0 命中引用. -->
+
+    <!-- 关键: Qt 6.7 必需字符串资源
+         QtLoader.getStaticInitClasses 通过 getIdentifier("static_init_classes", "string", pkg)
+         查找本资源, 找不到则 getString(0) 抛 Resources$NotFoundException → 启动闪退.
+         资源名必须是 'static_init_classes' (从 QtLoader.class 字节流确认: 字符串池 length=0x13=19).
+         值是用户自定义 Application 类的全限定名, AndroidManifest application android:name
+         必须是同样的类. -->
+    <string name="static_init_classes" translatable="false">com.outdoor.survival.OutdoorSurvivalApp</string>
+
+    <!-- 关键: Qt 6.7 错误对话框字符串资源
+         QtActivityLoader.showErrorDialog:47 调
+         getIdentifier("fatal_error_msg", "string", pkg) + getString(id)
+         找不到 fatal_error_msg → getString(0) 抛 Resources$NotFoundException
+         → 二次崩溃, 掩盖 loadQtLibraries 真实根因.
+         加这个 string 资源, 让错误对话框能正常显示, 排查期能直接看到真因. -->
+    <string name="fatal_error_msg" translatable="false">Failed to load Qt libraries. Run: adb logcat -d -v threadtime | grep -E "QtLoader|libOutdoor|libqml" for details.</string>
+
+    <!-- QtLoader 必需资源 (qt_libs / bundle_local_qt_libs / use_local_qt_libs / QT_ANDROID_FONTS)
+         不在本文件, 由 build_apk.sh 在 STAGE 3 动态生成 app/src/main/res/values/libs.xml
+         原因: qt_libs 需枚举所有 79 个 .so 文件名 (含 ABI 后缀), 硬编码易漏
+         动态生成确保与 jniLibs/<abi>/ 实际内容一致
+         libs.xml 与 strings.xml 在 AAPT2 合并时, libs.xml 覆盖 (同 key 后定义胜出) -->
+</resources>

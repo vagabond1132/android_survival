@@ -1,0 +1,166 @@
+=== U+E50F  (11 refs) ===
+   qml/components\MapOverlay\RouteSummaryPanel.qml:269
+       text: kind === "route" ? "\ue50f 徒步路线" :
+   qml/components\base\IconLabel.qml:50
+       //   显示成自行车, 应改成 \ue50f (hiking 登山鞋)
+   qml/components\base\IconLabel.qml:51
+       "hiking":       "\ue50f",
+   qml/components\base\IconLabel.qml:155
+       //   PUA codepoint (\ue50f 等) 又被默认字体画方框.
+   qml/pages\EquipmentPage.qml:564
+       // 2026-09-19: 把 \ue52f (bicycle) 改成 \ue50f (hiking) 海拔级别图标
+   qml/pages\EquipmentPage.qml:567
+       text: "\ue50f " + model.altitudeLevelName +
+   qml/pages\EquipmentPage.qml:753
+       case "altitude":   return "\ue50f"  // landscape (高原)
+   qml/pages\MapPage.qml:980
+       text: "\ue50f 附近路线 (" + nearbyInfoDialog.nearbyRoutes.length + ")"  // Material Icons: hiking
+   qml/pages\MapPage.qml:1338
+       // 2026-09-19: \ue52f (bicycle) 改成 \ue50f (hiking) - 徒步路线图标
+   qml/pages\MapPage.qml:1340
+       text: (modelData.kind === "travel" ? "\ue1d7 " : "\ue50f ") +
+   qml/pages\RouteListPage.qml:75
+       text: "\ue50f"  // Material Icons: hiking (2026-09-19: 之前 \ue52f 是 bicycle, 改 hiking)
+
+=== U+E1D7  (8 refs) ===
+   qml/components\MapOverlay\RouteSummaryPanel.qml:270
+       kind === "travel" ? "\ue1d7 自驾游" : "\ue1db 轨迹记录"
+   qml/components\base\IconLabel.qml:52
+       "car":          "\ue1d7",
+   qml/pages\HomePage.qml:269
+       text: "\ue1d7 出行与装备"  // Material Icons: luggage / backback
+   qml/pages\MapPage.qml:1340
+       text: (modelData.kind === "travel" ? "\ue1d7 " : "\ue50f ") +
+   qml/pages\TravelDetailPage.qml:99
+       text: "\ue1d7 " + (entity.distanceKm || 0) + " km  ·  \ue425 " + (entity.days || 0) + " 天  ·  \ue1f7 ≈¥" + (entity.fuelCostCNY || 0)
+   qml/pages\TravelListPage.qml:50
+       resultLabel.text = "\ue1d7 共 " + (routeModel.count || 0) + " 条路线"  // Material Icons: directions_car
+   qml/pages\TravelListPage.qml:81
+       text: "\ue1d7"  // Material Icons: directions_car
+   qml/pages\TravelListPage.qml:284
+       text: "\ue1d7 " + (model.startName || model.startCity || "起点") +
+
+=== U+E6B1  (7 refs) ===
+   qml/components\MapOverlay\RouteSummaryPanel.qml:622
+       text: "\ue6b1 基本信息"  // Material Icons: fact_check
+   qml/pages\EquipmentDetailPage.qml:169
+       text: "\ue6b1 强装检查"  // Material Icons: fact_check
+   qml/pages\EquipmentPage.qml:440
+       text: "\ue6b1"  // fact_check
+   qml/pages\EquipmentPage.qml:594
+       text: "\ue6b1"  // Material Icons: fact_check
+   qml/pages\FirstAidDetailPage.qml:95
+       Section { titleIcon: "\ue6b1"; title: "详细操作"; items: entity.steps || [] }
+   qml/pages\KnotDetailPage.qml:92
+       titleIcon: "\ue6b1"  // fact_check
+   qml/pages\SurvivalDetailPage.qml:87
+       titleIcon: "\ue6b1"  // fact_check (步骤)
+
+=== U+E6E3  (3 refs) ===
+   qml/components\MapOverlay\RouteSummaryPanel.qml:673
+       text: "\ue6e3 " + (stats.roadType || "未提供") + "  ·  \ue1f7 ≈¥" + (stats.fuelCostCNY || 0)  // Material Icons: route / local_gas_station
+   qml/pages\MapPage.qml:1416
+       text: "\ue6e3 " + (modelData.name || "(轨迹)")  // Material Icons: route
+   qml/pages\TravelDetailPage.qml:191
+       Section { titleIcon: "\ue6e3"; title: "路面类型"; items: entity.roadType ? [entity.roadType] : []; asInline: true }  // route
+
+=== U+E1F7  (3 refs) ===
+   qml/components\MapOverlay\RouteSummaryPanel.qml:673
+       text: "\ue6e3 " + (stats.roadType || "未提供") + "  ·  \ue1f7 ≈¥" + (stats.fuelCostCNY || 0)  // Material Icons: route / local_gas_station
+   qml/pages\TravelDetailPage.qml:99
+       text: "\ue1d7 " + (entity.distanceKm || 0) + " km  ·  \ue425 " + (entity.days || 0) + " 天  ·  \ue1f7 ≈¥" + (entity.fuelCostCNY || 0)
+   qml/pages\TravelDetailPage.qml:192
+       Section { titleIcon: "\ue1f7"; title: "沿途补给"; items: entity.supply ? entity.supply.split(/[,、]/) : []; asInline: true }  // local_gas_station
+
+=== U+E4E0  (7 refs) ===
+   qml/components\MapOverlay\RouteSummaryPanel.qml:698
+       text: "\ue4e0 分段配速 (每公里)"  // Material Icons: equalizer
+   qml/pages\FieldGuidePage.qml:241
+       text: "\ue4e0 共 " + (listModel.count || 0) + " 条"  // Material Icons: equalizer
+   qml/pages\MapPage.qml:1359
+       text: "\ue4e0"  // Material Icons: equalizer
+   qml/pages\MapPage.qml:1433
+       text: "\ue4e0"  // Material Icons: equalizer
+   qml/pages\MapPageComponents\NavigationTab.qml:91
+       text: "\ue4e0"  // Material Icons: equalizer
+   qml/pages\RouteListPage.qml:46
+       resultLabel.text = "\ue4e0 共 " + (routeModel.count || 0) + " 条路线"  // Material Icons: equalizer
+   qml/pages\TrackDetailPage.qml:304
+       titleIcon: "\ue4e0"  // equalizer
+
+=== U+E1F6  (6 refs) ===
+   qml/components\base\IconLabel.qml:39
+       "pack":         "\ue1f6",
+   qml/components\base\IconLabel.qml:53
+       "backpack":     "\ue1f6",
+   qml/pages\EquipmentPage.qml:90
+       Text { text: "\ue1f6"; font.family: "Material Icons"; font.pixelSize: 32 }  // backpack
+   qml/pages\EquipmentPage.qml:146
+       text: "\ue1f6 创建装备清单"  // Material Icons: backpack
+   qml/pages\EquipmentPage.qml:680
+       text: "\ue1f6 装备库"  // Material Icons: backpack
+   qml/pages\EquipmentPage.qml:759
+       default:           return "\ue1f6"   // backpack (兜底)
+
+=== U+E2DC  (5 refs) ===
+   qml/pages\DangerSpeciesPage.qml:25
+       { id: 1, name: "\ue2dc 致命蘑菇", color: "#7B1FA2" },
+   qml/pages\FieldGuideImagePickPage.qml:39
+       { value: 3, label: "\ue2dc 蘑菇" }
+   qml/pages\FieldGuidePage.qml:33
+       { value: 3, label: "\ue2dc 蘑菇" }
+   qml/pages\FieldGuidePageComponents\SpeciesServiceRegistry.qml:20
+       readonly property var _icons:    ["\ue205", "\ue91a", "\ue1b9", "\ue2dc"]
+   qml/pages\MapPage.qml:651
+       model: ["\ue92b 蛇类", "\ue2dc 蘑菇", "\ue1b9 昆虫", "\ue205 植物", "\ue91a 动物"]
+
+=== U+E205  (8 refs) ===
+   qml/pages\DangerSpeciesPage.qml:27
+       { id: 3, name: "\ue205 毒植物", color: "#388E3C" },
+   qml/pages\FieldGuideDetailPage.qml:251
+       Text { text: "\ue205 可食信息"; font.family: "Material Icons"; color: CommonOptions.colorSuccess; font.bold: true; font.pixelSize: styles.fsMd }  // eco (
+   qml/pages\FieldGuideImagePickPage.qml:36
+       { value: 0, label: "\ue205 植物" },
+   qml/pages\FieldGuidePage.qml:30
+       { value: 0, label: "\ue205 植物" },
+   qml/pages\FieldGuidePageComponents\SpeciesServiceRegistry.qml:20
+       readonly property var _icons:    ["\ue205", "\ue91a", "\ue1b9", "\ue2dc"]
+   qml/pages\MapPage.qml:651
+       model: ["\ue92b 蛇类", "\ue2dc 蘑菇", "\ue1b9 昆虫", "\ue205 植物", "\ue91a 动物"]
+   qml/pages\RouteDetailPage.qml:429
+       text: "\ue205 沿途物种"  // Material Icons: eco (leaf)
+   qml/pages\SpeciesDetailPage.qml:230
+       titleIcon: "\ue205"  // eco (leaf, 栖息地)
+
+=== U+E9D5  (2 refs) ===
+   qml/pages\EquipmentDetailPage.qml:80
+       text: "\ue9d5 总重量: " + ((entity.totalWeightG || 0) / 1000).toFixed(2) + " kg"
+   qml/pages\EquipmentPage.qml:568
+       "  ·  \ue9d5 " + (model.totalWeightG / 1000).toFixed(2) + " kg"
+
+=== U+E2D0  (3 refs) ===
+   qml/pages\RouteDetailPage.qml:359
+       titleIcon: "\ue2d0"  // event (最佳季节)
+   qml/pages\TravelDetailPage.qml:193
+       Section { titleIcon: "\ue2d0"; title: "最佳季节"; items: entity.bestSeason || []; textColor: CommonOptions.colorWarn; prefix: "• " }  // event
+   qml/pages\TravelListPage.qml:297
+       text: "\ue2d0 " + (Array.isArray(model.bestSeason)
+
+=== U+E1CC  (1 refs) ===
+   qml/pages\SpeciesDetailPage.qml:190
+       text: "\ue1cc 活跃月份"  // Material Icons: event
+
+=== U+E1EB  (1 refs) ===
+   qml/pages\SurvivalDetailPage.qml:78
+       titleIcon: "\ue1eb"  // work (材料)
+
+=== U+E1F9  (1 refs) ===
+   qml/pages\FirstAidPage.qml:91
+       "category": "\ue1f9 环境急症",
+
+=== U+E2D4  (2 refs) ===
+   qml/pages\FieldGuideImagePickPage.qml:129
+       text: "\ue2d4\n点击下方按钮选择图片"  // Material Icons: folder_open
+   qml/pages\FieldGuideImagePickPage.qml:157
+       text: "\ue2d4 从相册选择"  // Material Icons: folder_open
+

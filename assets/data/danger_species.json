@@ -1,0 +1,2032 @@
+{
+  "version": "0.2.0",
+  "updated_at": "2026-09-29",
+  "description": "P0 危险物种扩展 - 33 种中国常见危险动植物",
+  "species": [
+    {
+      "id": "snake_bungarus",
+      "common_name": "银环蛇",
+      "scientific_name": "Bungarus multicinctus",
+      "category": 0,
+      "danger_level": 5,
+      "alias": [
+        "过基峡",
+        "竹节蛇",
+        "百节蛇"
+      ],
+      "features": [
+        "体长 1.0-1.8 米",
+        "全身黑白相间环带（白色环带较窄）",
+        "头椭圆，与颈部区分不明显",
+        "脊鳞扩大呈六角形"
+      ],
+      "distribution": [
+        "安徽",
+        "浙江",
+        "江西",
+        "福建",
+        "台湾",
+        "湖南",
+        "湖北",
+        "广东",
+        "广西",
+        "贵州",
+        "四川",
+        "重庆",
+        "云南"
+      ],
+      "min_elevation": 0,
+      "max_elevation": 1500,
+      "habitats": [
+        "丘陵",
+        "山地林区",
+        "水边",
+        "水田"
+      ],
+      "active_months": [
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11"
+      ],
+      "symptoms": [
+        "局部症状轻：仅微痛或麻木",
+        "1-4 小时后全身症状：视物模糊、眼睑下垂",
+        "吞咽困难、流涎",
+        "呼吸肌麻痹导致呼吸衰竭"
+      ],
+      "first_aid_id": "firstaid_snake_bite",
+      "protective_gear": [
+        "高帮登山鞋",
+        "蛇裤",
+        "夜行手电",
+        "蛇毒吸附器"
+      ],
+      "description": "中国南方最危险的毒蛇之一。神经毒素，一次排毒可致数人死亡。常夜间活动于水边、稻田附近。",
+      "source": "中国蛇类志 / 中国毒蛇数据库",
+      "reviewer": "XX 教授（动物学）",
+      "photo_sources": [
+        "Bungarus multicinctus",
+        "银环蛇 plant"
+      ]
+    },
+    {
+      "id": "snake_agkistrodon",
+      "common_name": "五步蛇（尖吻蝮）",
+      "scientific_name": "Deinagkistrodon acutus",
+      "category": 0,
+      "danger_level": 5,
+      "alias": [
+        "百步蛇",
+        "蕲蛇",
+        "翘鼻蛇"
+      ],
+      "features": [
+        "体长 1.0-1.5 米",
+        "头部呈三角形，明显区别于颈部（吻端尖而上翘）",
+        "体色棕褐色，背面有灰白色菱形斑纹",
+        "腹部白色，有黑色斑块"
+      ],
+      "distribution": [
+        "安徽",
+        "浙江",
+        "江西",
+        "福建",
+        "台湾",
+        "湖南",
+        "湖北",
+        "广东",
+        "广西",
+        "贵州"
+      ],
+      "min_elevation": 100,
+      "max_elevation": 1500,
+      "habitats": [
+        "山地林区",
+        "溪流边",
+        "草丛",
+        "茶园"
+      ],
+      "active_months": [
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "symptoms": [
+        "咬伤后立即剧痛、灼热感",
+        "局部迅速肿胀、出血",
+        "皮下出血、淤斑",
+        "全身：血液不凝、血尿、肾功能损害"
+      ],
+      "first_aid_id": "firstaid_snake_bite",
+      "protective_gear": [
+        "高帮登山鞋",
+        "蛇裤",
+        "夜行手电",
+        "蛇毒吸附器"
+      ],
+      "description": "中国长江以南最常见的剧毒蛇之一。血液毒素为主，含神经毒素。排毒量大，攻击距离可达体长 1/3-1/2。",
+      "source": "中国蛇类志",
+      "reviewer": "XX 教授（动物学）",
+      "photo_sources": [
+        "Deinagkistrodon acutus",
+        "五步蛇（尖吻蝮） plant"
+      ]
+    },
+    {
+      "id": "snake_naja",
+      "common_name": "舟山眼镜蛇",
+      "scientific_name": "Naja atra",
+      "category": 0,
+      "danger_level": 5,
+      "alias": [
+        "中华眼镜蛇",
+        "膨颈蛇",
+        "饭铲头"
+      ],
+      "features": [
+        "体长 1.0-1.5 米",
+        "颈部可扩张呈扁平状（眼镜状斑纹）",
+        "体色黑褐色或深灰色",
+        "激怒时直立颈部，发出呼呼声"
+      ],
+      "distribution": [
+        "安徽",
+        "浙江",
+        "江西",
+        "福建",
+        "湖南",
+        "湖北",
+        "广东",
+        "广西",
+        "贵州",
+        "云南",
+        "四川",
+        "重庆"
+      ],
+      "min_elevation": 0,
+      "max_elevation": 1500,
+      "habitats": [
+        "丘陵",
+        "平原",
+        "竹林",
+        "灌木丛",
+        "稻田"
+      ],
+      "active_months": [
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "symptoms": [
+        "咬伤后局部剧痛、肿胀、坏死",
+        "全身：胸闷、心悸、呼吸困难",
+        "神经毒素：视物模糊、流涎",
+        "细胞毒素：局部组织坏死"
+      ],
+      "first_aid_id": "firstaid_snake_bite",
+      "protective_gear": [
+        "高帮登山鞋",
+        "蛇裤",
+        "不主动接近"
+      ],
+      "description": "中国南方常见剧毒蛇。被激怒时会直立颈部扩张呈眼镜状，故名眼镜蛇。混合毒素（神经毒+细胞毒）。",
+      "source": "中国蛇类志",
+      "reviewer": "XX 教授（动物学）",
+      "photo_sources": [
+        "Naja atra",
+        "舟山眼镜蛇 plant"
+      ]
+    },
+    {
+      "id": "snake_ophiophagus",
+      "common_name": "眼镜王蛇",
+      "scientific_name": "Ophiophagus hannah",
+      "category": 0,
+      "danger_level": 5,
+      "alias": [
+        "山万蛇",
+        "过山峰",
+        "大眼镜蛇"
+      ],
+      "features": [
+        "世界最大毒蛇，体长 3-5 米",
+        "颈部可扩张，眼镜状斑纹明显",
+        "体色黑褐或橄榄色",
+        "性格凶猛，攻击性强"
+      ],
+      "distribution": [
+        "福建",
+        "广东",
+        "广西",
+        "云南",
+        "贵州",
+        "四川",
+        "浙江",
+        "江西",
+        "湖南"
+      ],
+      "min_elevation": 0,
+      "max_elevation": 1800,
+      "habitats": [
+        "热带雨林",
+        "亚热带常绿阔叶林",
+        "山区溪流"
+      ],
+      "active_months": [
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "symptoms": [
+        "咬伤后排毒量大（可达 50ml）",
+        "神经毒素症状：迅速出现",
+        "呼吸衰竭，抢救窗口短",
+        "死亡率高（未治疗可致 50%+ 死亡）"
+      ],
+      "first_aid_id": "firstaid_snake_bite",
+      "protective_gear": [
+        "高帮登山鞋",
+        "蛇裤",
+        "保持距离",
+        "绝不主动接近"
+      ],
+      "description": "世界最大毒蛇。一次排毒量可杀死 20+ 人。性格凶猛，会主动追击。南方山区极危险。",
+      "source": "中国蛇类志",
+      "reviewer": "XX 教授（动物学）",
+      "photo_sources": [
+        "Ophiophagus hannah",
+        "眼镜王蛇 plant"
+      ]
+    },
+    {
+      "id": "snake_trimeresurus",
+      "common_name": "竹叶青",
+      "scientific_name": "Trimeresurus stejnegeri",
+      "category": 0,
+      "danger_level": 4,
+      "alias": [
+        "青竹蛇",
+        "焦尾巴",
+        "竹叶青蛇"
+      ],
+      "features": [
+        "体长 0.6-0.9 米",
+        "通体翠绿色，伪装于竹叶和树叶",
+        "尾部末端红色（焦尾）",
+        "头三角形，眼睛红色"
+      ],
+      "distribution": [
+        "安徽",
+        "浙江",
+        "江西",
+        "福建",
+        "台湾",
+        "湖南",
+        "湖北",
+        "广东",
+        "广西",
+        "贵州",
+        "四川",
+        "重庆",
+        "云南",
+        "甘肃"
+      ],
+      "min_elevation": 200,
+      "max_elevation": 2000,
+      "habitats": [
+        "山区竹林",
+        "灌木丛",
+        "溪流边",
+        "茶园"
+      ],
+      "active_months": [
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "symptoms": [
+        "咬伤后局部肿痛、灼热",
+        "皮下出血、淤斑",
+        "全身症状一般较轻",
+        "可引起严重出血和过敏反应"
+      ],
+      "first_aid_id": "firstaid_snake_bite",
+      "protective_gear": [
+        "高帮登山鞋",
+        "不徒手摘树叶",
+        "夜间手电筒"
+      ],
+      "description": "中国常见毒蛇，分布广。因通体翠绿，常伪装于竹林和灌木丛中不易发现。血液毒素为主。",
+      "source": "中国蛇类志",
+      "reviewer": "XX 教授（动物学）",
+      "photo_sources": [
+        "Trimeresurus stejnegeri",
+        "竹叶青 plant"
+      ]
+    },
+    {
+      "id": "snake_gloydius",
+      "common_name": "短尾蝮",
+      "scientific_name": "Gloydius brevicaudus",
+      "category": 0,
+      "danger_level": 4,
+      "alias": [
+        "土虺蛇",
+        "土球子",
+        "七寸子"
+      ],
+      "features": [
+        "体长 0.4-0.6 米",
+        "体色灰褐色或红褐色",
+        "背部有两行深色圆斑",
+        "头略呈三角形，颈区分明显"
+      ],
+      "distribution": [
+        "辽宁",
+        "河北",
+        "山西",
+        "陕西",
+        "甘肃",
+        "宁夏",
+        "河南",
+        "山东",
+        "江苏",
+        "安徽"
+      ],
+      "min_elevation": 0,
+      "max_elevation": 1500,
+      "habitats": [
+        "平原",
+        "丘陵",
+        "田野",
+        "废弃房屋"
+      ],
+      "active_months": [
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "symptoms": [
+        "咬伤后局部肿痛、淤血",
+        "皮下出血、起水疱",
+        "全身：发热、心悸、视物模糊",
+        "凝血功能障碍"
+      ],
+      "first_aid_id": "firstaid_snake_bite",
+      "protective_gear": [
+        "高帮登山鞋",
+        "夜行手电",
+        "北方徒步也需注意"
+      ],
+      "description": "中国北方最常见的毒蛇。血液毒素为主。中国北方徒步、露营时需特别注意。",
+      "source": "中国蛇类志",
+      "reviewer": "XX 教授（动物学）",
+      "photo_sources": [
+        "Gloydius brevicaudus",
+        "短尾蝮 plant"
+      ]
+    },
+    {
+      "id": "snake_protobothrops",
+      "common_name": "原矛头蝮（烙铁头）",
+      "scientific_name": "Protobothrops mucrosquamatus",
+      "category": 0,
+      "danger_level": 4,
+      "alias": [
+        "烙铁头",
+        "笋壳斑",
+        "老鼠蛇"
+      ],
+      "features": [
+        "体长 0.8-1.2 米",
+        "头部呈烙铁形（尖三角形）",
+        "体色棕褐色或灰褐色",
+        "背部有深色斑块"
+      ],
+      "distribution": [
+        "浙江",
+        "江西",
+        "福建",
+        "台湾",
+        "湖南",
+        "湖北",
+        "广东",
+        "广西",
+        "贵州",
+        "四川",
+        "重庆",
+        "云南"
+      ],
+      "min_elevation": 200,
+      "max_elevation": 1800,
+      "habitats": [
+        "山地森林",
+        "竹林",
+        "溪流边",
+        "茶园"
+      ],
+      "active_months": [
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "symptoms": [
+        "咬伤后局部肿痛剧烈",
+        "伤口周围出现水疱、血疱",
+        "全身：凝血障碍、肾功能损害",
+        "可致死（未治疗）"
+      ],
+      "first_aid_id": "firstaid_snake_bite",
+      "protective_gear": [
+        "高帮登山鞋",
+        "蛇裤",
+        "夜行手电"
+      ],
+      "description": "南方山区常见毒蛇。头形似烙铁而得名。血液毒素强，攻击性强。",
+      "source": "中国蛇类志",
+      "reviewer": "XX 教授（动物学）",
+      "photo_sources": [
+        "Protobothrops mucrosquamatus",
+        "原矛头蝮（烙铁头） plant"
+      ]
+    },
+    {
+      "id": "snake_trimeresurus_albolabris",
+      "common_name": "白唇竹叶青",
+      "scientific_name": "Trimeresurus albolabris",
+      "category": 0,
+      "danger_level": 4,
+      "alias": [
+        "青竹蛇",
+        "白唇青"
+      ],
+      "features": [
+        "体长 0.6-0.8 米",
+        "通体翠绿色，唇部白色",
+        "尾部末端红色",
+        "头三角形，眼睛红色"
+      ],
+      "distribution": [
+        "福建",
+        "广东",
+        "广西",
+        "云南",
+        "贵州",
+        "海南"
+      ],
+      "min_elevation": 0,
+      "max_elevation": 1000,
+      "habitats": [
+        "热带雨林",
+        "亚热带常绿阔叶林",
+        "茶园",
+        "农田"
+      ],
+      "active_months": [
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11"
+      ],
+      "symptoms": [
+        "咬伤后局部肿痛、灼热",
+        "皮下出血、淤斑",
+        "全身症状一般较轻",
+        "可引起过敏反应"
+      ],
+      "first_aid_id": "firstaid_snake_bite",
+      "protective_gear": [
+        "高帮登山鞋",
+        "蛇裤",
+        "不徒手触碰植物"
+      ],
+      "description": "华南地区常见毒蛇。唇部白色是主要识别特征。血液毒素为主。",
+      "source": "中国蛇类志",
+      "reviewer": "XX 教授（动物学）",
+      "photo_sources": [
+        "Trimeresurus albolabris",
+        "白唇竹叶青 plant"
+      ]
+    },
+    {
+      "id": "snake_daboia",
+      "common_name": "圆斑蝰",
+      "scientific_name": "Daboia siamensis",
+      "category": 0,
+      "danger_level": 5,
+      "alias": [
+        "蝰蛇",
+        "金钱豹蛇"
+      ],
+      "features": [
+        "体长 0.8-1.2 米",
+        "体色棕褐色",
+        "背部有三行深褐色圆形斑",
+        "头三角形，与颈部区分明显"
+      ],
+      "distribution": [
+        "福建",
+        "广东",
+        "广西",
+        "云南",
+        "贵州",
+        "湖南"
+      ],
+      "min_elevation": 0,
+      "max_elevation": 1500,
+      "habitats": [
+        "山区",
+        "丘陵",
+        "灌木丛",
+        "农田"
+      ],
+      "active_months": [
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "symptoms": [
+        "咬伤后局部剧痛、肿胀",
+        "出血不止（凝血严重障碍）",
+        "全身：广泛出血、肾功能衰竭",
+        "死亡率高（未治疗）"
+      ],
+      "first_aid_id": "firstaid_snake_bite",
+      "protective_gear": [
+        "高帮登山鞋",
+        "蛇裤"
+      ],
+      "description": "南方山区剧毒蛇。凝血障碍严重，伤口出血不止。需立即就医。",
+      "source": "中国蛇类志",
+      "reviewer": "XX 教授（动物学）",
+      "photo_sources": [
+        "Daboia siamensis",
+        "圆斑蝰 plant"
+      ]
+    },
+    {
+      "id": "snake_elysia",
+      "common_name": "虎斑颈槽蛇",
+      "scientific_name": "Rhabdophis tigrinus",
+      "category": 0,
+      "danger_level": 3,
+      "alias": [
+        "虎斑游蛇",
+        "野鸡脖子"
+      ],
+      "features": [
+        "体长 0.6-1.0 米",
+        "体色翠绿",
+        "颈部红色斑块（颈槽）",
+        "头略呈三角形"
+      ],
+      "distribution": [
+        "全国大部分地区"
+      ],
+      "min_elevation": 0,
+      "max_elevation": 2000,
+      "habitats": [
+        "水边",
+        "稻田",
+        "池塘",
+        "溪流"
+      ],
+      "active_months": [
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "symptoms": [
+        "咬伤后局部肿痛",
+        "出血倾向",
+        "少数严重者凝血障碍",
+        "曾有致死案例（罕见）"
+      ],
+      "first_aid_id": "firstaid_snake_bite",
+      "protective_gear": [
+        "高帮登山鞋",
+        "避免抓蛇"
+      ],
+      "description": "国内最常见的蛇之一。曾被认为无毒，现证实为有毒蛇（达氏腺毒素）。多数咬伤症状轻微，少数严重。",
+      "source": "中国蛇类志",
+      "reviewer": "XX 教授（动物学）",
+      "photo_sources": [
+        "Rhabdophis tigrinus",
+        "虎斑颈槽蛇 plant"
+      ]
+    },
+    {
+      "id": "mushroom_amanita_verna",
+      "common_name": "致命白毒伞",
+      "scientific_name": "Amanita verna",
+      "category": 1,
+      "danger_level": 5,
+      "alias": [
+        "致命鹅膏",
+        "白毒鹅膏菌"
+      ],
+      "features": [
+        "通体白色",
+        "菌盖直径 5-12 cm，幼时卵形，成熟后平展",
+        "菌柄上有膜质菌环，基部有菌托",
+        "菌褶离生，白色"
+      ],
+      "distribution": [
+        "广东",
+        "广西",
+        "云南",
+        "湖南",
+        "福建",
+        "江西"
+      ],
+      "min_elevation": 200,
+      "max_elevation": 1500,
+      "habitats": [
+        "阔叶林",
+        "针阔混交林",
+        "茶园"
+      ],
+      "active_months": [
+        "6",
+        "7",
+        "8",
+        "9"
+      ],
+      "symptoms": [
+        "潜伏期 6-24 小时（看似已经没事）",
+        "随后出现恶心、呕吐、腹泻",
+        "1-2 天内症状缓解（假愈期）",
+        "2-3 天后肝功能衰竭",
+        "致死率 90% 以上（未及时治疗）"
+      ],
+      "first_aid_id": "firstaid_mushroom_poisoning",
+      "protective_gear": [
+        "⚠️ 切勿采食任何白色蘑菇",
+        "不认识的蘑菇绝对不吃"
+      ],
+      "description": "中国最危险的毒蘑菇之一。通体白色，伪装性强。致死率高达 90% 以上。常被误认为可食用的白色蘑菇。",
+      "source": "中国真菌志 / 中国疾控中心",
+      "reviewer": "XX 教授（真菌学）",
+      "photo_sources": [
+        "Amanita verna",
+        "致命白毒伞 plant"
+      ]
+    },
+    {
+      "id": "mushroom_russula",
+      "common_name": "亚稀褶红菇",
+      "scientific_name": "Russula subnigricans",
+      "category": 1,
+      "danger_level": 5,
+      "alias": [
+        "火炭菌",
+        "假炭蘑"
+      ],
+      "features": [
+        "菌盖灰褐色至黑褐色",
+        "受伤或老化后变红",
+        "菌肉白色，受伤变红后变黑",
+        "菌褶厚而稀"
+      ],
+      "distribution": [
+        "云南",
+        "贵州",
+        "湖南",
+        "江西",
+        "福建",
+        "广东"
+      ],
+      "min_elevation": 300,
+      "max_elevation": 1800,
+      "habitats": [
+        "阔叶林",
+        "针阔混交林"
+      ],
+      "active_months": [
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "symptoms": [
+        "误食后 10-30 分钟发病",
+        "恶心、呕吐、腹泻",
+        "1-2 天后出现横纹肌溶解",
+        "酱油色尿（肌红蛋白尿）",
+        "严重时肾功能衰竭"
+      ],
+      "first_aid_id": "firstaid_mushroom_poisoning",
+      "protective_gear": [
+        "切勿采食不认识的蘑菇",
+        "特别是受伤后变红的蘑菇"
+      ],
+      "description": "中国南方常见毒蘑菇，致死率高。因受伤变红的特征曾被误认为可食。",
+      "source": "中国真菌志",
+      "reviewer": "XX 教授（真菌学）",
+      "photo_sources": [
+        "Russula subnigricans",
+        "亚稀褶红菇 plant"
+      ]
+    },
+    {
+      "id": "mushroom_amanita_subjunquillea",
+      "common_name": "黄盖鹅膏",
+      "scientific_name": "Amanita subjunquillea",
+      "category": 1,
+      "danger_level": 5,
+      "alias": [
+        "黄盖致命鹅膏"
+      ],
+      "features": [
+        "菌盖浅黄色至黄褐色",
+        "菌柄白色，基部有菌托",
+        "菌环膜质，位于菌柄上部",
+        "菌褶离生"
+      ],
+      "distribution": [
+        "广东",
+        "广西",
+        "云南",
+        "四川",
+        "福建",
+        "湖南"
+      ],
+      "min_elevation": 200,
+      "max_elevation": 2000,
+      "habitats": [
+        "阔叶林",
+        "针叶林",
+        "茶园"
+      ],
+      "active_months": [
+        "6",
+        "7",
+        "8",
+        "9"
+      ],
+      "symptoms": [
+        "潜伏期 6-24 小时",
+        "急性胃肠炎症状",
+        "假愈期 1-2 天",
+        "肝肾功能衰竭",
+        "致死率高"
+      ],
+      "first_aid_id": "firstaid_mushroom_poisoning",
+      "protective_gear": [
+        "切勿采食野生鹅膏属蘑菇"
+      ],
+      "description": "剧毒鹅膏属蘑菇之一。含鹅膏毒素，破坏肝细胞。致死率极高。",
+      "source": "中国真菌志",
+      "reviewer": "XX 教授（真菌学）",
+      "photo_sources": [
+        "Amanita subjunquillea",
+        "黄盖鹅膏 plant"
+      ]
+    },
+    {
+      "id": "mushroom_chlorophyllum",
+      "common_name": "大青褶伞",
+      "scientific_name": "Chlorophyllum molybdites",
+      "category": 1,
+      "danger_level": 3,
+      "alias": [
+        "青褶伞",
+        "铅绿褶伞"
+      ],
+      "features": [
+        "菌盖白色，有褐色鳞片",
+        "菌褶幼时白色，老时变绿（关键特征）",
+        "菌柄有菌环，基部膨大",
+        "幼时像可食用蘑菇"
+      ],
+      "distribution": [
+        "广东",
+        "广西",
+        "云南",
+        "福建",
+        "湖南",
+        "江西"
+      ],
+      "min_elevation": 100,
+      "max_elevation": 1500,
+      "habitats": [
+        "草坪",
+        "公园",
+        "农田",
+        "林缘"
+      ],
+      "active_months": [
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "symptoms": [
+        "误食后 30 分钟-2 小时发病",
+        "恶心、呕吐、腹泻",
+        "症状较轻，一般不致死",
+        "1-2 天可自愈"
+      ],
+      "first_aid_id": "firstaid_mushroom_poisoning",
+      "protective_gear": [
+        "不采食幼时白色伞菌"
+      ],
+      "description": "中国南方常见毒蘑菇。菌褶变绿是识别特征。毒性较轻，但常被误食。",
+      "source": "中国真菌志",
+      "reviewer": "XX 教授（真菌学）",
+      "photo_sources": [
+        "Chlorophyllum molybdites",
+        "大青褶伞 plant"
+      ]
+    },
+    {
+      "id": "plant_gelsemium",
+      "common_name": "钩吻（断肠草）",
+      "scientific_name": "Gelsemium elegans",
+      "category": 3,
+      "danger_level": 5,
+      "alias": [
+        "大茶药",
+        "断肠草",
+        "胡蔓藤"
+      ],
+      "features": [
+        "藤本植物，缠绕其他植物",
+        "叶片对生，卵形或卵状披针形",
+        "花黄色，喇叭形（与金银花相似！）",
+        "果实为蒴果"
+      ],
+      "distribution": [
+        "浙江",
+        "福建",
+        "江西",
+        "湖南",
+        "广东",
+        "广西",
+        "云南",
+        "贵州",
+        "四川"
+      ],
+      "min_elevation": 200,
+      "max_elevation": 2000,
+      "habitats": [
+        "山地",
+        "灌丛",
+        "林缘"
+      ],
+      "active_months": [
+        "全年（花期 5-11 月）"
+      ],
+      "symptoms": [
+        "误食后 30 分钟-2 小时发病",
+        "恶心、呕吐、腹痛",
+        "视物模糊、复视",
+        "呼吸肌麻痹（呼吸困难）",
+        "心跳加速、血压下降"
+      ],
+      "first_aid_id": "firstaid_plant_poisoning",
+      "protective_gear": [
+        "⚠️ 切勿采食野生植物",
+        "⚠️ 钩吻花与金银花外观相似"
+      ],
+      "description": "中国最危险的毒植物之一。全株剧毒，常与金银花混淆导致中毒。每年南方均有中毒事件报道。",
+      "source": "中国植物志",
+      "reviewer": "XX 教授（植物学）",
+      "photo_sources": [
+        "Gelsemium elegans",
+        "钩吻（断肠草） plant"
+      ]
+    },
+    {
+      "id": "plant_datura",
+      "common_name": "曼陀罗",
+      "scientific_name": "Datura stramonium",
+      "category": 3,
+      "danger_level": 5,
+      "alias": [
+        "醉心花",
+        "狗核桃",
+        "洋金花"
+      ],
+      "features": [
+        "一年生草本",
+        "叶片大，互生",
+        "花白色或淡紫色，喇叭形",
+        "果实有刺（与栗子相似）"
+      ],
+      "distribution": [
+        "全国"
+      ],
+      "min_elevation": 0,
+      "max_elevation": 2500,
+      "habitats": [
+        "荒地",
+        "路边",
+        "田野"
+      ],
+      "active_months": [
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "symptoms": [
+        "误食后 30 分钟-2 小时发病",
+        "口干、皮肤干燥、瞳孔散大",
+        "幻觉、躁狂、抽搐",
+        "严重时呼吸衰竭"
+      ],
+      "first_aid_id": "firstaid_plant_poisoning",
+      "protective_gear": [
+        "切勿采食野生果实",
+        "果实有刺，需警惕"
+      ],
+      "description": "中国常见剧毒植物。全株有毒，果实易被儿童误食。",
+      "source": "中国植物志",
+      "reviewer": "XX 教授（植物学）",
+      "photo_sources": [
+        "Datura stramonium",
+        "曼陀罗 plant"
+      ]
+    },
+    {
+      "id": "plant_nerium",
+      "common_name": "夹竹桃",
+      "scientific_name": "Nerium oleander",
+      "category": 3,
+      "danger_level": 4,
+      "alias": [
+        "红花夹竹桃",
+        "柳叶桃"
+      ],
+      "features": [
+        "常绿灌木",
+        "叶片狭长，似柳叶",
+        "花粉红、白色等",
+        "果实为长蒴果"
+      ],
+      "distribution": [
+        "江苏",
+        "浙江",
+        "安徽",
+        "福建",
+        "江西",
+        "湖北",
+        "湖南",
+        "广东",
+        "广西",
+        "海南",
+        "重庆",
+        "四川",
+        "贵州",
+        "云南",
+        "台湾"
+      ],
+      "min_elevation": 0,
+      "max_elevation": 2000,
+      "habitats": [
+        "路边",
+        "庭院",
+        "公园",
+        "山地"
+      ],
+      "active_months": [
+        "全年"
+      ],
+      "symptoms": [
+        "误食后恶心、呕吐",
+        "心律失常（强心苷类）",
+        "严重时心跳骤停",
+        "可致死（剂量大时）"
+      ],
+      "first_aid_id": "firstaid_plant_poisoning",
+      "protective_gear": [
+        "不采食植物茎叶",
+        "不焚烧（烟也有毒）"
+      ],
+      "description": "中国南方常见的观赏植物。全株有毒，含有强心苷类毒素。北方少见，南方多见。",
+      "source": "中国植物志",
+      "reviewer": "XX 教授（植物学）",
+      "photo_sources": [
+        "Nerium oleander",
+        "夹竹桃 plant"
+      ]
+    },
+    {
+      "id": "plant_cicuta",
+      "common_name": "毒芹",
+      "scientific_name": "Cicuta virosa",
+      "category": 3,
+      "danger_level": 5,
+      "alias": [
+        "野芹菜",
+        "毒人参"
+      ],
+      "features": [
+        "多年生草本",
+        "叶片 2-3 回羽状复叶（似芹菜）",
+        "花白色，伞形花序",
+        "全株有臭味（区别于可食水芹）"
+      ],
+      "distribution": [
+        "辽宁",
+        "吉林",
+        "黑龙江",
+        "北京",
+        "天津",
+        "河北",
+        "山西",
+        "内蒙古",
+        "陕西",
+        "甘肃",
+        "青海",
+        "宁夏",
+        "新疆",
+        "江苏",
+        "浙江",
+        "安徽",
+        "江西",
+        "湖北",
+        "湖南",
+        "重庆",
+        "四川",
+        "贵州",
+        "云南"
+      ],
+      "min_elevation": 200,
+      "max_elevation": 2000,
+      "habitats": [
+        "水边",
+        "沼泽",
+        "溪流"
+      ],
+      "active_months": [
+        "5",
+        "6",
+        "7",
+        "8",
+        "9"
+      ],
+      "symptoms": [
+        "误食后 30 分钟发病",
+        "恶心、呕吐、腹痛",
+        "全身抽搐（剧毒）",
+        "呼吸衰竭",
+        "致死率高"
+      ],
+      "first_aid_id": "firstaid_plant_poisoning",
+      "protective_gear": [
+        "⚠️ 切勿采食野外伞形科植物"
+      ],
+      "description": "极易与可食水芹、芹菜混淆。剧毒，全株含毒芹毒素。致死率极高。",
+      "source": "中国植物志",
+      "reviewer": "XX 教授（植物学）",
+      "photo_sources": [
+        "Cicuta virosa",
+        "毒芹 plant"
+      ]
+    },
+    {
+      "id": "plant_phytolacca",
+      "common_name": "商陆",
+      "scientific_name": "Phytolacca acinosa",
+      "category": 3,
+      "danger_level": 4,
+      "alias": [
+        "野人参",
+        "山萝卜"
+      ],
+      "features": [
+        "多年生草本",
+        "叶片椭圆形",
+        "花白色，穗状花序",
+        "果实紫黑色（浆果）"
+      ],
+      "distribution": [
+        "全国大部分地区"
+      ],
+      "min_elevation": 0,
+      "max_elevation": 2500,
+      "habitats": [
+        "林缘",
+        "路边",
+        "沟谷",
+        "山地"
+      ],
+      "active_months": [
+        "5",
+        "6",
+        "7",
+        "8",
+        "9"
+      ],
+      "symptoms": [
+        "误食根茎后 30 分钟-2 小时发病",
+        "恶心、呕吐、腹泻",
+        "心律失常、呼吸困难",
+        "严重时致死"
+      ],
+      "first_aid_id": "firstaid_plant_poisoning",
+      "protective_gear": [
+        "不采食野生块根植物"
+      ],
+      "description": "根部酷似人参，常被误食。紫红色根有毒（白色根较安全）。中国山区常见。",
+      "source": "中国植物志",
+      "reviewer": "XX 教授（植物学）",
+      "photo_sources": [
+        "Phytolacca acinosa",
+        "商陆 plant"
+      ]
+    },
+    {
+      "id": "plant_rhodotypos",
+      "common_name": "鸡麻",
+      "scientific_name": "Rhodotypos scandens",
+      "category": 3,
+      "danger_level": 2,
+      "alias": [
+        "白棣棠"
+      ],
+      "features": [
+        "落叶灌木",
+        "叶片对生，卵形",
+        "花白色，4 瓣",
+        "果实黑色核果"
+      ],
+      "distribution": [
+        "辽宁",
+        "河北",
+        "山西",
+        "山东",
+        "河南",
+        "江苏",
+        "浙江",
+        "安徽",
+        "湖北",
+        "湖南",
+        "陕西",
+        "甘肃"
+      ],
+      "min_elevation": 200,
+      "max_elevation": 1500,
+      "habitats": [
+        "林缘",
+        "灌丛",
+        "山谷"
+      ],
+      "active_months": [
+        "4",
+        "5",
+        "6",
+        "7",
+        "8"
+      ],
+      "symptoms": [
+        "误食果实后轻度不适",
+        "恶心、呕吐",
+        "一般不严重",
+        "症状轻微"
+      ],
+      "first_aid_id": "firstaid_plant_poisoning",
+      "protective_gear": [
+        "不采食野生黑色浆果"
+      ],
+      "description": "常见观赏植物。果实有轻微毒性，误食后症状轻微。",
+      "source": "中国植物志",
+      "reviewer": "XX 教授（植物学）",
+      "photo_sources": [
+        "Rhodotypos scandens",
+        "鸡麻 plant"
+      ]
+    },
+    {
+      "id": "insect_tick",
+      "common_name": "蜱虫",
+      "scientific_name": "Ixodidae",
+      "category": 2,
+      "danger_level": 4,
+      "alias": [
+        "壁虱",
+        "草爬子",
+        "狗豆子"
+      ],
+      "features": [
+        "体型小，未吸血时 2-3 mm",
+        "吸血后膨胀至 10 mm 以上",
+        "褐色或黑色，椭圆形",
+        "有 8 条腿（成虫）"
+      ],
+      "distribution": [
+        "全国"
+      ],
+      "min_elevation": 0,
+      "max_elevation": 2500,
+      "habitats": [
+        "草地",
+        "灌木丛",
+        "林下",
+        "野生动物体表"
+      ],
+      "active_months": [
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "symptoms": [
+        "叮咬后局部红肿",
+        "可能传播疾病：森林脑炎、莱姆病",
+        "发热伴血小板减少综合征",
+        "持续发热立即就医"
+      ],
+      "first_aid_id": "firstaid_tick_removal",
+      "protective_gear": [
+        "长袖长裤（裤腿塞入袜子）",
+        "DEET 驱虫剂",
+        "派卡瑞丁驱虫剂",
+        "户外后全身检查"
+      ],
+      "description": "中国山区林区最危险的虫媒。可传播森林脑炎、莱姆病等严重疾病。每年 4-10 月活跃，叮咬后不可硬拽。",
+      "source": "中国疾控中心",
+      "reviewer": "XX 主任医师（感染科）",
+      "photo_sources": [
+        "Ixodidae",
+        "蜱虫 plant"
+      ]
+    },
+    {
+      "id": "insect_wasp",
+      "common_name": "胡蜂（虎头蜂）",
+      "scientific_name": "Vespa",
+      "category": 2,
+      "danger_level": 4,
+      "alias": [
+        "马蜂",
+        "黄蜂",
+        "虎头蜂"
+      ],
+      "features": [
+        "体型大，2-4 cm",
+        "黑黄相间或褐色",
+        "腰部细长（与蜜蜂区别）",
+        "毒性较强，可多次蛰刺"
+      ],
+      "distribution": [
+        "全国"
+      ],
+      "min_elevation": 0,
+      "max_elevation": 3000,
+      "habitats": [
+        "林区",
+        "灌木丛",
+        "屋檐下",
+        "树洞"
+      ],
+      "active_months": [
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "symptoms": [
+        "蛰伤后剧痛、红肿",
+        "多处蛰伤可致全身症状",
+        "全身荨麻疹、呼吸困难",
+        "血压下降（过敏性休克）",
+        "严重时数分钟内死亡"
+      ],
+      "first_aid_id": "firstaid_insect_bite",
+      "protective_gear": [
+        "避免甜食外露",
+        "不主动招惹蜂巢",
+        "被蛰后立即远离",
+        "过敏体质携带肾上腺素笔（EpiPen）"
+      ],
+      "description": "中国常见危险蜂类。秋季活跃，攻击性强。过敏体质被蛰可致过敏性休克死亡。",
+      "source": "中国疾控中心",
+      "reviewer": "XX 主任医师",
+      "photo_sources": [
+        "Vespa",
+        "胡蜂（虎头蜂） plant"
+      ]
+    },
+    {
+      "id": "insect_leech",
+      "common_name": "蚂蟥（山蛭）",
+      "scientific_name": "Haemadipsa",
+      "category": 2,
+      "danger_level": 3,
+      "alias": [
+        "水蛭",
+        "山蛭",
+        "旱蚂蟥"
+      ],
+      "features": [
+        "体长 1-5 cm",
+        "体表湿润，可伸缩",
+        "前吸盘和后吸盘",
+        "山中常见种为褐色或黑色"
+      ],
+      "distribution": [
+        "云南",
+        "贵州",
+        "四川",
+        "广东",
+        "广西",
+        "福建"
+      ],
+      "min_elevation": 200,
+      "max_elevation": 2500,
+      "habitats": [
+        "潮湿山地",
+        "丛林",
+        "溪流附近",
+        "雨后"
+      ],
+      "active_months": [
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "symptoms": [
+        "叮咬时无痛（唾液含麻醉成分）",
+        "吸附后吸血",
+        "离开后伤口持续出血（数小时）",
+        "可传播细菌感染",
+        "罕见严重并发症"
+      ],
+      "first_aid_id": "firstaid_leech_bite",
+      "protective_gear": [
+        "穿长袜（袜口扎紧）",
+        "裤腿塞入袜子",
+        "DEET 驱虫剂",
+        "雨后警惕"
+      ],
+      "description": "中国南方山区常见。叮咬时无痛，吸附后吸血。不可硬拽（会留下吸盘）。",
+      "source": "中国疾控中心",
+      "reviewer": "XX 主任医师",
+      "photo_sources": [
+        "Haemadipsa",
+        "蚂蟥（山蛭） plant"
+      ]
+    },
+    {
+      "id": "insect_solenopsis",
+      "common_name": "红火蚁",
+      "scientific_name": "Solenopsis invicta",
+      "category": 2,
+      "danger_level": 4,
+      "alias": [
+        "外来火蚁",
+        "入侵红火蚁"
+      ],
+      "features": [
+        "体型小，2-6 mm",
+        "体色红褐色",
+        "腹部黑色",
+        "蚁巢呈土丘状"
+      ],
+      "distribution": [
+        "广东",
+        "广西",
+        "福建",
+        "湖南",
+        "江西",
+        "四川",
+        "云南"
+      ],
+      "min_elevation": 0,
+      "max_elevation": 1500,
+      "habitats": [
+        "农田",
+        "草坪",
+        "路边",
+        "城市绿地"
+      ],
+      "active_months": [
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11"
+      ],
+      "symptoms": [
+        "蛰伤后剧烈灼痛",
+        "形成脓疱（24-48 小时）",
+        "严重者过敏性休克",
+        "可致死亡（过敏体质）"
+      ],
+      "first_aid_id": "firstaid_fire_ant_sting",
+      "protective_gear": [
+        "不踩踏蚁丘",
+        "穿戴长裤",
+        "野外休息前检查地面",
+        "过敏体质携带抗组胺药"
+      ],
+      "description": "中国南方近年入侵物种。攻击性强，蛰伤后剧烈疼痛和脓疱。过敏者可致死。",
+      "source": "中国疾控中心",
+      "reviewer": "XX 主任医师",
+      "photo_sources": [
+        "Solenopsis invicta",
+        "红火蚁 plant"
+      ]
+    },
+    {
+      "id": "insect_centipede",
+      "common_name": "蜈蚣",
+      "scientific_name": "Scolopendromorpha",
+      "category": 2,
+      "danger_level": 3,
+      "alias": [
+        "百足虫",
+        "千足虫"
+      ],
+      "features": [
+        "体长 5-15 cm",
+        "身体扁平，分节",
+        "每节有一对足",
+        "头部有一对毒颚"
+      ],
+      "distribution": [
+        "全国"
+      ],
+      "min_elevation": 0,
+      "max_elevation": 2500,
+      "habitats": [
+        "石缝",
+        "落叶下",
+        "朽木",
+        "阴暗潮湿处"
+      ],
+      "active_months": [
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "symptoms": [
+        "咬伤后局部剧痛",
+        "红肿、淋巴管炎",
+        "全身症状：发热、头痛",
+        "罕见严重并发症"
+      ],
+      "first_aid_id": "firstaid_centipede_bite",
+      "protective_gear": [
+        "翻动石块时小心",
+        "夜间露营关好帐篷",
+        "不徒手抓蜈蚣"
+      ],
+      "description": "中国常见节肢动物。山区、潮湿处多见。咬伤后剧痛但不致命。",
+      "source": "中国疾控中心",
+      "reviewer": "XX 主任医师",
+      "photo_sources": [
+        "Scolopendromorpha",
+        "蜈蚣 plant"
+      ]
+    },
+    {
+      "id": "insect_scorpion",
+      "common_name": "蝎子",
+      "scientific_name": "Scorpiones",
+      "category": 2,
+      "danger_level": 3,
+      "alias": [
+        "全蝎"
+      ],
+      "features": [
+        "体长 5-15 cm",
+        "身体分头胸部和腹部",
+        "尾部有毒针",
+        "前足呈钳状"
+      ],
+      "distribution": [
+        "全国大部分地区"
+      ],
+      "min_elevation": 0,
+      "max_elevation": 2000,
+      "habitats": [
+        "石缝",
+        "沙漠",
+        "山地",
+        "荒地"
+      ],
+      "active_months": [
+        "5",
+        "6",
+        "7",
+        "8",
+        "9"
+      ],
+      "symptoms": [
+        "蛰伤后局部剧痛",
+        "红肿、麻木",
+        "全身：肌肉痉挛、心律失常",
+        "严重时呼吸衰竭"
+      ],
+      "first_aid_id": "firstaid_scorpion_sting",
+      "protective_gear": [
+        "不徒手翻动石块",
+        "夜间检查鞋袜",
+        "西北、华北徒步特别注意"
+      ],
+      "description": "中国西北、华北常见。蛰伤后剧痛，多数不致命，少数过敏者严重。",
+      "source": "中国疾控中心",
+      "reviewer": "XX 主任医师",
+      "photo_sources": [
+        "Scorpiones",
+        "蝎子 plant"
+      ]
+    },
+    {
+      "id": "insect_paederus",
+      "common_name": "毒隐翅虫",
+      "scientific_name": "Paederus",
+      "category": 2,
+      "danger_level": 3,
+      "alias": [
+        "隐翅虫",
+        "青腰虫"
+      ],
+      "features": [
+        "体长 6-10 mm",
+        "黑红相间",
+        "翅膀折叠藏于背部",
+        "不咬人，但体液有毒"
+      ],
+      "distribution": [
+        "江苏",
+        "浙江",
+        "安徽",
+        "福建",
+        "江西",
+        "湖北",
+        "湖南",
+        "广东",
+        "广西",
+        "海南",
+        "重庆",
+        "四川",
+        "贵州",
+        "云南",
+        "台湾"
+      ],
+      "min_elevation": 0,
+      "max_elevation": 2000,
+      "habitats": [
+        "潮湿草地",
+        "稻田",
+        "树林"
+      ],
+      "active_months": [
+        "5",
+        "6",
+        "7",
+        "8",
+        "9"
+      ],
+      "symptoms": [
+        "接触体液后皮肤红肿",
+        "出现线性水疱、溃疡",
+        "疼痛剧烈",
+        "2 周可自愈（可留疤）"
+      ],
+      "first_aid_id": "firstaid_paederus_dermatitis",
+      "protective_gear": [
+        "不拍打（吹走或弹走）",
+        "不接触虫体",
+        "夜间关好纱窗"
+      ],
+      "description": "中国南方常见。体液含强酸性毒素，接触皮肤后引起线性皮炎。不要拍打！",
+      "source": "中国疾控中心",
+      "reviewer": "XX 主任医师",
+      "photo_sources": [
+        "Paederus",
+        "毒隐翅虫 plant"
+      ]
+    },
+    {
+      "id": "insect_aedes",
+      "common_name": "伊蚊（登革热传播）",
+      "scientific_name": "Aedes",
+      "category": 2,
+      "danger_level": 3,
+      "alias": [
+        "花斑蚊",
+        "黑斑蚊"
+      ],
+      "features": [
+        "体长 4-6 mm",
+        "黑色，有白斑",
+        "白天活动",
+        "飞行能力强"
+      ],
+      "distribution": [
+        "江苏",
+        "浙江",
+        "安徽",
+        "福建",
+        "江西",
+        "湖北",
+        "湖南",
+        "广东",
+        "广西",
+        "海南",
+        "重庆",
+        "四川",
+        "贵州",
+        "云南",
+        "台湾"
+      ],
+      "min_elevation": 0,
+      "max_elevation": 1500,
+      "habitats": [
+        "积水容器",
+        "花盆托盘",
+        "废弃轮胎",
+        "树洞"
+      ],
+      "active_months": [
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "symptoms": [
+        "叮咬后皮肤红肿瘙痒",
+        "可传播登革热、寨卡病毒",
+        "高热、关节痛、皮疹",
+        "严重可致死"
+      ],
+      "first_aid_id": "firstaid_mosquito_bite",
+      "protective_gear": [
+        "DEET 驱蚊剂",
+        "穿长袖长裤",
+        "清除积水",
+        "蚊帐"
+      ],
+      "description": "中国南方重要病媒生物。传播登革热、寨卡等疾病。白天活跃，防蚊很重要。",
+      "source": "中国疾控中心",
+      "reviewer": "XX 主任医师",
+      "photo_sources": [
+        "Aedes",
+        "伊蚊（登革热传播） plant"
+      ]
+    },
+    {
+      "id": "animal_wild_boar",
+      "common_name": "野猪",
+      "scientific_name": "Sus scrofa",
+      "category": 4,
+      "danger_level": 4,
+      "alias": [
+        "山猪"
+      ],
+      "features": [
+        "体长 1.0-1.5 米",
+        "体重 50-200 kg",
+        "黑褐色，刚毛粗硬",
+        "雄性有獠牙"
+      ],
+      "distribution": [
+        "全国山区"
+      ],
+      "min_elevation": 100,
+      "max_elevation": 3000,
+      "habitats": [
+        "山林",
+        "灌丛",
+        "农田"
+      ],
+      "active_months": [
+        "全年"
+      ],
+      "symptoms": [
+        "主动攻击：撞击、撕咬",
+        "伤口深，可能严重撕裂",
+        "伤口易感染",
+        "可能携带疾病"
+      ],
+      "first_aid_id": "firstaid_animal_bite",
+      "protective_gear": [
+        "不靠近（特别是带崽的母猪）",
+        "不喂食",
+        "保持距离",
+        "必要时爬树躲避"
+      ],
+      "description": "中国山区常见大型野生动物。具攻击性，受伤或带崽的母猪尤其危险。可造成严重撕裂伤。",
+      "source": "中国动物志",
+      "reviewer": "XX 教授（动物学）",
+      "photo_sources": [
+        "Sus scrofa",
+        "野猪 plant"
+      ]
+    },
+    {
+      "id": "animal_black_bear",
+      "common_name": "黑熊",
+      "scientific_name": "Ursus thibetanus",
+      "category": 4,
+      "danger_level": 4,
+      "alias": [
+        "亚洲黑熊",
+        "狗熊"
+      ],
+      "features": [
+        "体长 1.2-1.8 米",
+        "体重 100-200 kg",
+        "黑色，胸部有白色 V 形斑",
+        "力量大，攻击性强"
+      ],
+      "distribution": [
+        "黑龙江",
+        "吉林",
+        "辽宁",
+        "陕西",
+        "甘肃",
+        "四川",
+        "重庆",
+        "贵州",
+        "云南",
+        "西藏",
+        "广西",
+        "广东",
+        "湖南",
+        "江西",
+        "福建",
+        "浙江",
+        "安徽",
+        "海南"
+      ],
+      "min_elevation": 500,
+      "max_elevation": 3500,
+      "habitats": [
+        "山林",
+        "竹林",
+        "溪流"
+      ],
+      "active_months": [
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "symptoms": [
+        "严重撕裂伤",
+        "可能致死",
+        "伤口需立即处理",
+        "可能感染"
+      ],
+      "first_aid_id": "firstaid_animal_bite",
+      "protective_gear": [
+        "保持距离（至少 100m）",
+        "不喂食、不接近",
+        "不挡路（尤其带崽的母熊）",
+        "慢慢后退"
+      ],
+      "description": "中国保护动物。受伤或带崽时极具攻击性。遭遇后应缓慢后退，不要奔跑。",
+      "source": "中国动物志",
+      "reviewer": "XX 教授（动物学）",
+      "photo_sources": [
+        "Ursus thibetanus",
+        "黑熊 plant"
+      ]
+    },
+    {
+      "id": "animal_marmot",
+      "common_name": "旱獭",
+      "scientific_name": "Marmota",
+      "category": 4,
+      "danger_level": 3,
+      "alias": [
+        "土拨鼠",
+        "旱獭"
+      ],
+      "features": [
+        "体长 40-60 cm",
+        "黄褐色",
+        "粗短结实",
+        "穴居群居"
+      ],
+      "distribution": [
+        "新疆",
+        "青海",
+        "甘肃",
+        "西藏",
+        "四川",
+        "云南"
+      ],
+      "min_elevation": 2000,
+      "max_elevation": 4500,
+      "habitats": [
+        "高山草甸",
+        "草原",
+        "高原"
+      ],
+      "active_months": [
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9"
+      ],
+      "symptoms": [
+        "⚠️ 鼠疫宿主（不能接触）",
+        "可能叮咬（少见）",
+        "接触可能感染鼠疫",
+        "腺鼠疫可致死"
+      ],
+      "first_aid_id": "firstaid_animal_disease",
+      "protective_gear": [
+        "⚠️ 严禁接触（包括尸体）",
+        "保持 50m 以上距离",
+        "不喂食",
+        "不进入洞穴"
+      ],
+      "description": "中国西部高原常见。是鼠疫的主要宿主！严禁接触、喂食或靠近尸体。腺鼠疫致死率极高。",
+      "source": "中国疾控中心 / 动物志",
+      "reviewer": "XX 主任医师（感染科）",
+      "photo_sources": [
+        "Marmota",
+        "旱獭 plant"
+      ]
+    },
+    {
+      "id": "plant_abrus",
+      "common_name": "相思豆",
+      "scientific_name": "Abrus precatorius",
+      "category": 3,
+      "danger_level": 5,
+      "alias": [
+        "鸡母珠",
+        "美人豆"
+      ],
+      "features": [
+        "藤本植物",
+        "羽状复叶",
+        "花蝶形，淡紫色",
+        "种子鲜红带黑斑（剧毒）"
+      ],
+      "distribution": [
+        "广东",
+        "广西",
+        "云南",
+        "福建",
+        "台湾",
+        "海南"
+      ],
+      "min_elevation": 0,
+      "max_elevation": 1500,
+      "habitats": [
+        "灌丛",
+        "林缘",
+        "路边",
+        "公园"
+      ],
+      "active_months": [
+        "8",
+        "9",
+        "10",
+        "11",
+        "12"
+      ],
+      "symptoms": [
+        "误食种子 1-2 颗即可中毒",
+        "恶心、呕吐、腹泻",
+        "严重时肝肾功能衰竭",
+        "致死率高"
+      ],
+      "first_aid_id": "firstaid_plant_poisoning",
+      "protective_gear": [
+        "⚠️ 切勿误食或作装饰",
+        "避免儿童接触"
+      ],
+      "description": "种子鲜艳美丽，常被误作装饰品。但含剧毒蛋白质（相思豆毒素）。1-2 颗即可致死。",
+      "source": "中国植物志",
+      "reviewer": "XX 教授（植物学）",
+      "photo_sources": [
+        "Abrus precatorius",
+        "相思豆 plant"
+      ]
+    },
+    {
+      "id": "plant_aconitum",
+      "common_name": "乌头",
+      "scientific_name": "Aconitum",
+      "category": 3,
+      "danger_level": 5,
+      "alias": [
+        "附子",
+        "川乌"
+      ],
+      "features": [
+        "多年生草本",
+        "叶片掌状分裂",
+        "花蓝紫色，盔状",
+        "根块状，似乌鸦头"
+      ],
+      "distribution": [
+        "四川",
+        "云南",
+        "西藏",
+        "陕西",
+        "甘肃",
+        "青海"
+      ],
+      "min_elevation": 1500,
+      "max_elevation": 3500,
+      "habitats": [
+        "高山草甸",
+        "林缘",
+        "灌丛"
+      ],
+      "active_months": [
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "symptoms": [
+        "误食后 10 分钟-1 小时发病",
+        "口麻、舌麻",
+        "全身麻木、心律失常",
+        "严重时呼吸衰竭",
+        "可致死"
+      ],
+      "first_aid_id": "firstaid_plant_poisoning",
+      "protective_gear": [
+        "⚠️ 切勿采食乌头属植物",
+        "经炮制后入药不可误食"
+      ],
+      "description": "中国西部高山常见剧毒植物。全株剧毒，特别是根部。古代著名毒药（'鸩毒'）。",
+      "source": "中国植物志",
+      "reviewer": "XX 教授（植物学）",
+      "photo_sources": [
+        "Aconitum",
+        "乌头 plant"
+      ]
+    }
+  ]
+}

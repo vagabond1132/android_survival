@@ -1,0 +1,5123 @@
+{
+  "version": "1.0.0",
+  "kingdom": "fungi",
+  "updated_at": "2026-09-29",
+  "description": "全国常见蘑菇图鉴(致命/毒/可食)——个人使用,谨慎采食",
+  "mushrooms": [
+    {
+      "id": "mushroom_amanita_verna",
+      "common_name": "致命白毒伞",
+      "scientific_name": "Amanita verna",
+      "kingdom": "fungi",
+      "category": "deadly_mushroom",
+      "danger_level": 5,
+      "alias": [
+        "白毒鹅膏",
+        "春生鹅膏"
+      ],
+      "features": [
+        "菌盖白色,直径 5-12cm",
+        "菌柄白色,有菌环",
+        "菌托袋状,白色(关键!)",
+        "幼时菌盖半球形,展开后平展"
+      ],
+      "distribution": [
+        "山东",
+        "河南(豫南)",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 200,
+      "max_elevation": 1500,
+      "habitats": [
+        "阔叶林",
+        "混交林",
+        "栎树林"
+      ],
+      "active_months": [
+        "6",
+        "7",
+        "8",
+        "9"
+      ],
+      "poisoning_type": "肝损害(鹅膏毒素)",
+      "latency_hours": 8,
+      "mortality_rate": "极高(50-90%)",
+      "symptoms": [
+        "潜伏期 6-24 小时",
+        "初期恶心呕吐、腹泻(假愈期)",
+        "2-3 天后肝肾衰竭",
+        "致死量仅 30g"
+      ],
+      "look_alike": [
+        {
+          "id": "mushroom_agaricus",
+          "name": "白色食用蘑菇",
+          "distinction": "白毒伞有菌托菌环,食用菇无;白毒伞菌褶白色,食用菇菌褶粉红/褐色",
+          "fatality": "无毒可食"
+        },
+        {
+          "name": "灰鹅膏(可食)",
+          "distinction": "灰鹅膏灰色,白毒伞白色",
+          "fatality": "无毒可食"
+        }
+      ],
+      "first_aid_id": "firstaid_mushroom_poisoning",
+      "first_aid_links": {
+        "误食": "firstaid_mushroom_poisoning"
+      },
+      "protective_gear": [
+        "不采不食任何白色蘑菇",
+        "教育儿童勿碰"
+      ],
+      "route_associations": [
+        {
+          "route_id": "route_feng_mt_zh",
+          "months": [
+            "7",
+            "8",
+            "9"
+          ]
+        }
+      ],
+      "representative_color": {
+        "h": 0,
+        "s": 0,
+        "v": 95
+      },
+      "images": [
+        "whole",
+        "volva",
+        "habitat"
+      ],
+      "description": "中国毒性最强的蘑菇之一。河南豫南山区 6-9 月多见。致死率极高,无特效解毒剂。",
+      "source": "中国毒蘑菇图鉴 / 急救医学",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Amanita verna",
+        "致命白毒伞 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_amanita_phalloides",
+      "common_name": "毒鹅膏(鬼笔鹅膏)",
+      "scientific_name": "Amanita phalloides",
+      "kingdom": "fungi",
+      "category": "deadly_mushroom",
+      "danger_level": 5,
+      "alias": [
+        "死帽蕈",
+        "鬼笔毒鹅膏"
+      ],
+      "features": [
+        "菌盖橄榄绿色至黄褐色,直径 5-15cm",
+        "菌柄白色,有菌环",
+        "菌托袋状,白色(关键)",
+        "菌褶白色"
+      ],
+      "distribution": [
+        "山东",
+        "河南(豫南)",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 200,
+      "max_elevation": 1500,
+      "habitats": [
+        "阔叶林",
+        "栎树林",
+        "板栗林"
+      ],
+      "active_months": [
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "肝损害(鹅膏毒素)",
+      "latency_hours": 10,
+      "mortality_rate": "极高(50-90%)",
+      "symptoms": [
+        "潜伏期 6-24 小时",
+        "假愈期 1-2 天",
+        "3-5 天后肝肾衰竭",
+        "致死量 30g"
+      ],
+      "look_alike": [
+        {
+          "name": "橙红鹅膏(可食)",
+          "distinction": "橙红鹅膏菌盖橙红色,无毒;菌托和菌环特征不同",
+          "fatality": "无毒可食"
+        }
+      ],
+      "first_aid_id": "firstaid_mushroom_poisoning",
+      "first_aid_links": {
+        "误食": "firstaid_mushroom_poisoning"
+      },
+      "protective_gear": [
+        "不采不食"
+      ],
+      "route_associations": [
+        {
+          "route_id": "route_feng_mt_zh",
+          "months": [
+            "7",
+            "8",
+            "9",
+            "10"
+          ]
+        }
+      ],
+      "representative_color": {
+        "h": 60,
+        "s": 50,
+        "v": 70
+      },
+      "images": [
+        "whole",
+        "volva"
+      ],
+      "description": "欧洲最著名的毒蘑菇。河南豫南有分布。",
+      "source": "中国毒蘑菇图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Amanita phalloides",
+        "毒鹅膏(鬼笔鹅膏) mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_amanita_subjunquillea",
+      "common_name": "黄盖鹅膏",
+      "scientific_name": "Amanita subjunquillea",
+      "kingdom": "fungi",
+      "category": "deadly_mushroom",
+      "danger_level": 5,
+      "alias": [
+        "黄白毒鹅膏"
+      ],
+      "features": [
+        "菌盖黄褐色至淡黄色,直径 4-10cm",
+        "菌柄白色,有菌环",
+        "菌托袋状,白色(关键)",
+        "菌褶白色"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 200,
+      "max_elevation": 2000,
+      "habitats": [
+        "阔叶林",
+        "混交林"
+      ],
+      "active_months": [
+        "6",
+        "7",
+        "8",
+        "9"
+      ],
+      "poisoning_type": "肝损害(鹅膏毒素)",
+      "latency_hours": 10,
+      "mortality_rate": "极高",
+      "symptoms": [
+        "与白毒伞类似",
+        "假愈期后肝肾衰竭"
+      ],
+      "look_alike": [
+        {
+          "name": "橙红鹅膏(可食)",
+          "distinction": "橙红鹅膏颜色更鲜,菌托更明显",
+          "fatality": "无毒可食"
+        }
+      ],
+      "first_aid_id": "firstaid_mushroom_poisoning",
+      "first_aid_links": {
+        "误食": "firstaid_mushroom_poisoning"
+      },
+      "protective_gear": [
+        "不采不食"
+      ],
+      "route_associations": [],
+      "representative_color": {
+        "h": 50,
+        "s": 50,
+        "v": 75
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "北方常见致命鹅膏,黄色菌盖易与可食鹅膏混淆。",
+      "source": "中国毒蘑菇图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Amanita subjunquillea",
+        "黄盖鹅膏 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_russula",
+      "common_name": "亚稀褶红菇",
+      "scientific_name": "Russula subnigricans",
+      "kingdom": "fungi",
+      "category": "deadly_mushroom",
+      "danger_level": 5,
+      "alias": [
+        "亚黑红菇",
+        "火炭菌"
+      ],
+      "features": [
+        "菌盖灰褐色至黑褐色,直径 5-15cm",
+        "菌肉受伤变红再变黑(关键!)",
+        "菌褶白色,受伤变红",
+        "无菌环无菌托"
+      ],
+      "distribution": [
+        "山东",
+        "河南(豫南)",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 300,
+      "max_elevation": 2000,
+      "habitats": [
+        "阔叶林",
+        "混交林",
+        "栎树林"
+      ],
+      "active_months": [
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "横纹肌溶解",
+      "latency_hours": 2,
+      "mortality_rate": "高(无特效解毒剂)",
+      "symptoms": [
+        "2 小时内出现严重肌痛",
+        "横纹肌溶解致急性肾衰",
+        "心律失常致死"
+      ],
+      "look_alike": [
+        {
+          "distinction": "变绿红菇受伤不变色,亚稀褶红菇变红再变黑",
+          "fatality": "无毒可食",
+          "name": "变绿红菇(可食)"
+        }
+      ],
+      "first_aid_id": "firstaid_mushroom_poisoning",
+      "first_aid_links": {
+        "误食": "firstaid_mushroom_poisoning"
+      },
+      "protective_gear": [
+        "不采不食受伤变色的红菇"
+      ],
+      "route_associations": [],
+      "representative_color": {
+        "h": 0,
+        "s": 0,
+        "v": 30
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "近年被列为最毒蘑菇之一。北方山区有分布。",
+      "source": "中国毒蘑菇图鉴 / 急救医学",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Russula subnigricans",
+        "亚稀褶红菇 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_chlorophyllum",
+      "common_name": "大青褶伞",
+      "scientific_name": "Chlorophyllum molybdites",
+      "kingdom": "fungi",
+      "category": "common_poisonous",
+      "danger_level": 3,
+      "alias": [
+        "绿孢子环柄菇"
+      ],
+      "features": [
+        "菌盖白色,中央有褐色鳞片",
+        "菌褶幼时白色,后变绿色(关键!)",
+        "菌柄白色,有可移动菌环",
+        "孢子印绿色"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 0,
+      "max_elevation": 1500,
+      "habitats": [
+        "草坪",
+        "公园",
+        "菜地",
+        "林缘"
+      ],
+      "active_months": [
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "胃肠炎",
+      "latency_hours": 1,
+      "mortality_rate": "低(但常致严重腹泻)",
+      "symptoms": [
+        "1-2h 内恶心呕吐、腹泻",
+        "一般 1-2 天自愈"
+      ],
+      "look_alike": [
+        {
+          "id": "mushroom_macrolepiota",
+          "name": "高大环柄菇(可食)",
+          "distinction": "高大环柄菇菌褶白色,大青褶伞菌褶变绿",
+          "fatality": "无毒可食"
+        }
+      ],
+      "first_aid_links": {
+        "误食": "firstaid_mushroom_poisoning"
+      },
+      "protective_gear": [
+        "不采草坪白色大蘑菇"
+      ],
+      "route_associations": [],
+      "representative_color": {
+        "h": 80,
+        "s": 30,
+        "v": 90
+      },
+      "images": [
+        "whole",
+        "gills"
+      ],
+      "description": "北方草坪常见,胃肠炎型。",
+      "source": "中国毒蘑菇图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Chlorophyllum molybdites",
+        "大青褶伞 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_amanita_muscaria",
+      "common_name": "鹅膏菌(毒蝇伞)",
+      "scientific_name": "Amanita muscaria",
+      "kingdom": "fungi",
+      "category": "common_poisonous",
+      "danger_level": 3,
+      "alias": [
+        "蛤蟆菌",
+        "毒蝇鹅膏"
+      ],
+      "features": [
+        "菌盖鲜红色至橘红色,表面有白色鳞片",
+        "菌褶白色",
+        "菌柄白色有菌环",
+        "菌托环状"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 200,
+      "max_elevation": 2500,
+      "habitats": [
+        "针叶林",
+        "混交林"
+      ],
+      "active_months": [
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "神经毒素(毒蕈碱/异恶唑衍生物)",
+      "latency_hours": 0.5,
+      "mortality_rate": "中(高剂量可致死)",
+      "symptoms": [
+        "30min-2h 出汗、流涎、幻觉",
+        "瞳孔收缩",
+        "心动过缓",
+        "严重者抽搐"
+      ],
+      "look_alike": [
+        {
+          "name": "橙红鹅膏(可食)",
+          "distinction": "橙红鹅膏无白色鳞片,菌托更明显",
+          "fatality": "无毒可食"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {
+        "误食": "firstaid_mushroom_poisoning"
+      },
+      "protective_gear": [
+        "不采鲜红伞菌"
+      ],
+      "route_associations": [],
+      "representative_color": {
+        "h": 0,
+        "s": 80,
+        "v": 90
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "童话中常见,实际含神经毒素,北方针叶林有分布。",
+      "source": "中国毒蘑菇图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Amanita muscaria",
+        "鹅膏菌(毒蝇伞) mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_inocybe",
+      "common_name": "丝盖伞",
+      "scientific_name": "Inocybe",
+      "kingdom": "fungi",
+      "category": "common_poisonous",
+      "danger_level": 3,
+      "alias": [
+        "丝膜菌"
+      ],
+      "features": [
+        "菌盖圆锥形或钟形,褐色",
+        "菌褶褐色",
+        "菌柄圆柱形",
+        "菌肉白色"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 200,
+      "max_elevation": 2000,
+      "habitats": [
+        "林缘",
+        "草地"
+      ],
+      "active_months": [
+        "6",
+        "7",
+        "8",
+        "9"
+      ],
+      "poisoning_type": "神经毒素(毒蕈碱)",
+      "latency_hours": 0.5,
+      "mortality_rate": "中",
+      "symptoms": [
+        "30min 出汗、流涎、瞳孔收缩",
+        "心动过缓"
+      ],
+      "look_alike": [
+        {
+          "id": "mushroom_agaricus",
+          "name": "食用蘑菇",
+          "distinction": "丝盖伞菌褶褐色,食用菇菌褶粉/褐",
+          "fatality": "无毒可食"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {
+        "误食": "firstaid_mushroom_poisoning"
+      },
+      "protective_gear": [
+        "不采褐色小伞菌"
+      ],
+      "route_associations": [],
+      "representative_color": {
+        "h": 30,
+        "s": 40,
+        "v": 50
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "北方林缘常见,神经毒型。",
+      "source": "中国毒蘑菇图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Inocybe",
+        "丝盖伞 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_coprinus",
+      "common_name": "墨汁鬼伞",
+      "scientific_name": "Coprinopsis atramentaria",
+      "kingdom": "fungi",
+      "category": "common_poisonous",
+      "danger_level": 2,
+      "alias": [
+        "鬼伞"
+      ],
+      "features": [
+        "菌盖灰白色,卵形",
+        "老熟后菌褶液化(墨汁状)",
+        "菌柄白色,基部有环状痕迹"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西",
+        "全国广布"
+      ],
+      "min_elevation": 0,
+      "max_elevation": 2000,
+      "habitats": [
+        "田边",
+        "草地",
+        "腐木上"
+      ],
+      "active_months": [
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "鬼伞素(与酒精反应)",
+      "latency_hours": 0.5,
+      "mortality_rate": "低",
+      "symptoms": [
+        "食后 30min-2h 内饮酒即心悸、恶心、面部潮红"
+      ],
+      "look_alike": [
+        {
+          "id": "mushroom_coprinus_comatus",
+          "name": "毛头鬼伞(可食)",
+          "distinction": "毛头鬼伞无毒,老熟也变黑",
+          "fatality": "无毒可食"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {
+        "误食": "firstaid_mushroom_poisoning"
+      },
+      "protective_gear": [
+        "食后 3 日禁酒"
+      ],
+      "route_associations": [],
+      "representative_color": {
+        "h": 0,
+        "s": 0,
+        "v": 60
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "北方常见,食后忌酒是关键。",
+      "source": "中国毒蘑菇图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Coprinopsis atramentaria",
+        "墨汁鬼伞 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_omphalotus",
+      "common_name": "发光类脐菇",
+      "scientific_name": "Omphalotus japonicus",
+      "kingdom": "fungi",
+      "category": "common_poisonous",
+      "danger_level": 3,
+      "alias": [
+        "日本发光脐菇",
+        "夜光蘑菇"
+      ],
+      "features": [
+        "菌盖橘黄色,漏斗状",
+        "菌褶橘黄色",
+        "老熟后夜晚发荧光(关键!)",
+        "常成簇生长"
+      ],
+      "distribution": [
+        "山东",
+        "河南(豫南)",
+        "河北"
+      ],
+      "min_elevation": 200,
+      "max_elevation": 1500,
+      "habitats": [
+        "阔叶林",
+        "栎树根"
+      ],
+      "active_months": [
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "胃肠炎",
+      "latency_hours": 0.5,
+      "mortality_rate": "低",
+      "symptoms": [
+        "1-2h 内严重呕吐、腹泻"
+      ],
+      "look_alike": [
+        {
+          "id": "mushroom_cantharellus",
+          "name": "鸡油菌(可食)",
+          "distinction": "鸡油菌蛋黄色,菌褶皱襞状;发光类脐菇橘黄,菌褶明显",
+          "fatality": "无毒可食"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {
+        "误食": "firstaid_mushroom_poisoning"
+      },
+      "protective_gear": [
+        "勿采夜晚发光的橘色蘑菇"
+      ],
+      "route_associations": [],
+      "representative_color": {
+        "h": 30,
+        "s": 80,
+        "v": 90
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "夜间发光是显著识别特征。",
+      "source": "中国毒蘑菇图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Omphalotus japonicus",
+        "发光类脐菇 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_paxillus",
+      "common_name": "卷边桩菇",
+      "scientific_name": "Tapinella atrotomentosus",
+      "kingdom": "fungi",
+      "category": "common_poisonous",
+      "danger_level": 3,
+      "alias": [
+        "卷边网褶菌"
+      ],
+      "features": [
+        "菌盖黄褐色,中央下凹",
+        "菌褶受伤变褐色",
+        "菌柄粗壮,黑褐色绒毛"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 200,
+      "max_elevation": 2000,
+      "habitats": [
+        "针叶林",
+        "混交林"
+      ],
+      "active_months": [
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "免疫性溶血(累积性)",
+      "latency_hours": 1,
+      "mortality_rate": "中(多次食用致)",
+      "symptoms": [
+        "反复食用后致免疫性溶血",
+        "急性肾衰"
+      ],
+      "look_alike": [
+        {
+          "name": "食用乳菇",
+          "distinction": "食用乳菇有乳汁,卷边桩菇无",
+          "fatality": "无毒可食"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {
+        "误食": "firstaid_mushroom_poisoning"
+      },
+      "protective_gear": [
+        "不反复食用可疑蘑菇"
+      ],
+      "route_associations": [],
+      "representative_color": {
+        "h": 30,
+        "s": 50,
+        "v": 50
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "北方针叶林常见,反复食用才显毒性。",
+      "source": "中国毒蘑菇图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Tapinella atrotomentosus",
+        "卷边桩菇 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_galerina",
+      "common_name": "秋盔孢伞",
+      "scientific_name": "Galerina marginata",
+      "kingdom": "fungi",
+      "category": "common_poisonous",
+      "danger_level": 5,
+      "alias": [
+        "秋生盔孢伞"
+      ],
+      "features": [
+        "菌盖黄褐色,钟形",
+        "菌褶近白色至黄褐",
+        "菌柄细长,有膜质菌环"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 200,
+      "max_elevation": 2000,
+      "habitats": [
+        "腐木",
+        "林地"
+      ],
+      "active_months": [
+        "9",
+        "10",
+        "11"
+      ],
+      "poisoning_type": "肝损害(鹅膏毒素类)",
+      "latency_hours": 10,
+      "mortality_rate": "高",
+      "symptoms": [
+        "与白毒伞类似",
+        "假愈期后肝肾衰竭"
+      ],
+      "look_alike": [
+        {
+          "id": "mushroom_armillaria",
+          "name": "假蜜环菌(可食)",
+          "distinction": "假蜜环菌菌盖蜜黄色,无鹅膏毒素",
+          "fatality": "无毒可食"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {
+        "误食": "firstaid_mushroom_poisoning"
+      },
+      "protective_gear": [
+        "不采秋季腐木上的褐色小伞菌"
+      ],
+      "route_associations": [],
+      "representative_color": {
+        "h": 30,
+        "s": 50,
+        "v": 60
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "秋季常见,含鹅膏毒素,同样危险。",
+      "source": "中国毒蘑菇图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Galerina marginata",
+        "秋盔孢伞 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_mycena",
+      "common_name": "小皮伞属",
+      "scientific_name": "Mycena",
+      "kingdom": "fungi",
+      "category": "common_poisonous",
+      "danger_level": 2,
+      "alias": [
+        "小皮伞"
+      ],
+      "features": [
+        "菌盖小,钟形或圆锥形",
+        "菌褶白色或灰色",
+        "菌柄细长,脆"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 0,
+      "max_elevation": 2000,
+      "habitats": [
+        "林地",
+        "腐木",
+        "草地"
+      ],
+      "active_months": [
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "轻度神经/胃肠",
+      "latency_hours": 1,
+      "mortality_rate": "低",
+      "symptoms": [
+        "恶心、呕吐、腹泻",
+        "一般较轻"
+      ],
+      "look_alike": [],
+      "first_aid_id": "",
+      "first_aid_links": {
+        "误食": "firstaid_mushroom_poisoning"
+      },
+      "protective_gear": [],
+      "route_associations": [],
+      "representative_color": {
+        "h": 30,
+        "s": 30,
+        "v": 70
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "常见小蘑菇,大多轻度有毒或不可食。",
+      "source": "中国毒蘑菇图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Mycena",
+        "小皮伞属 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_amanita_pantherina",
+      "common_name": "豹斑毒鹅膏",
+      "scientific_name": "Amanita pantherina",
+      "kingdom": "fungi",
+      "category": "common_poisonous",
+      "danger_level": 4,
+      "alias": [
+        "豹斑鹅膏"
+      ],
+      "features": [
+        "菌盖褐色,表面有白色块状鳞片(豹斑)",
+        "菌褶白色",
+        "菌柄白色有菌环",
+        "菌托环状"
+      ],
+      "distribution": [
+        "山东",
+        "河南(豫西)",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 200,
+      "max_elevation": 2000,
+      "habitats": [
+        "阔叶林",
+        "混交林"
+      ],
+      "active_months": [
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "神经毒素(异恶唑类)",
+      "latency_hours": 0.5,
+      "mortality_rate": "中",
+      "symptoms": [
+        "30min-2h 出汗、瞳孔收缩、幻觉",
+        "严重者抽搐"
+      ],
+      "look_alike": [
+        {
+          "name": "赭盖鹅膏(可食)",
+          "distinction": "赭盖鹅膏受伤变红,豹斑鹅膏不变",
+          "fatality": "无毒可食"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {
+        "误食": "firstaid_mushroom_poisoning"
+      },
+      "protective_gear": [
+        "不采有白色块状鳞片的褐伞"
+      ],
+      "route_associations": [],
+      "representative_color": {
+        "h": 30,
+        "s": 40,
+        "v": 50
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "北方常见毒鹅膏,神经毒型。",
+      "source": "中国毒蘑菇图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Amanita pantherina",
+        "豹斑毒鹅膏 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_hebeloma",
+      "common_name": "丝膜菌(毒滑锈伞)",
+      "scientific_name": "Hebeloma",
+      "kingdom": "fungi",
+      "category": "common_poisonous",
+      "danger_level": 2,
+      "alias": [
+        "滑锈伞"
+      ],
+      "features": [
+        "菌盖黏滑,褐色或浅黄",
+        "菌褶浅褐色",
+        "菌柄白色,基部略膨大"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 200,
+      "max_elevation": 2000,
+      "habitats": [
+        "林缘",
+        "草地"
+      ],
+      "active_months": [
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "胃肠炎",
+      "latency_hours": 1,
+      "mortality_rate": "低",
+      "symptoms": [
+        "恶心、呕吐、腹泻"
+      ],
+      "look_alike": [],
+      "first_aid_id": "",
+      "first_aid_links": {
+        "误食": "firstaid_mushroom_poisoning"
+      },
+      "protective_gear": [],
+      "route_associations": [],
+      "representative_color": {
+        "h": 30,
+        "s": 30,
+        "v": 60
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "黏滑伞菌慎食。",
+      "source": "中国毒蘑菇图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Hebeloma",
+        "丝膜菌(毒滑锈伞) mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_scleroderma",
+      "common_name": "硬皮马勃",
+      "scientific_name": "Scleroderma citrinum",
+      "kingdom": "fungi",
+      "category": "common_poisonous",
+      "danger_level": 2,
+      "alias": [
+        "马勃"
+      ],
+      "features": [
+        "近球形,无柄",
+        "外皮厚,黄色,有疣状鳞片",
+        "内部初白后变黑紫色"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 0,
+      "max_elevation": 1500,
+      "habitats": [
+        "林缘",
+        "草地",
+        "山坡"
+      ],
+      "active_months": [
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "胃肠炎/神经刺激",
+      "latency_hours": 0.5,
+      "mortality_rate": "低",
+      "symptoms": [
+        "恶心呕吐、出汗、瞳孔不等"
+      ],
+      "look_alike": [
+        {
+          "id": "mushroom_lycoperdon",
+          "name": "大马勃(可食)",
+          "distinction": "大马勃外皮薄白色,硬皮马勃外皮厚黄色",
+          "fatality": "无毒可食"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {
+        "误食": "firstaid_mushroom_poisoning"
+      },
+      "protective_gear": [
+        "不采黄色厚皮马勃"
+      ],
+      "route_associations": [],
+      "representative_color": {
+        "h": 50,
+        "s": 60,
+        "v": 80
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "北方常见,外皮厚的不可食。",
+      "source": "中国毒蘑菇图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Scleroderma citrinum",
+        "硬皮马勃 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_boletus_edulis",
+      "common_name": "美味牛肝菌",
+      "scientific_name": "Boletus edulis",
+      "kingdom": "fungi",
+      "category": "edible_mushroom",
+      "danger_level": 0,
+      "alias": [
+        "白牛肝"
+      ],
+      "features": [
+        "菌盖褐色至深褐色",
+        "菌肉白色,受伤不变色",
+        "菌孔白色至黄绿色",
+        "菌柄粗壮,有网纹"
+      ],
+      "distribution": [
+        "山东",
+        "河南(豫西)",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 500,
+      "max_elevation": 2500,
+      "habitats": [
+        "针叶林",
+        "混交林"
+      ],
+      "active_months": [
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "",
+      "latency_hours": 0,
+      "mortality_rate": "无",
+      "symptoms": [],
+      "look_alike": [
+        {
+          "id": "mushroom_boletus_satanas",
+          "name": "魔牛肝菌(剧毒)",
+          "distinction": "魔牛肝菌菌肉受伤变蓝,美味牛肝菌不变蓝",
+          "fatality": "中(胃肠炎)"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {},
+      "protective_gear": [
+        "确认菌肉不变蓝再食"
+      ],
+      "route_associations": [],
+      "representative_color": {
+        "h": 30,
+        "s": 50,
+        "v": 50
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "北方山区最名贵的可食菌之一。",
+      "source": "中国食用菌图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Boletus edulis",
+        "美味牛肝菌 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_lactarius_deliciosus",
+      "common_name": "松乳菇",
+      "scientific_name": "Lactarius deliciosus",
+      "kingdom": "fungi",
+      "category": "edible_mushroom",
+      "danger_level": 0,
+      "alias": [
+        "美味红菇"
+      ],
+      "features": [
+        "菌盖橘红色,有同心环纹",
+        "菌褶橘黄色,受伤变绿(关键)",
+        "乳汁橘红色"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 300,
+      "max_elevation": 2000,
+      "habitats": [
+        "松林"
+      ],
+      "active_months": [
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "",
+      "latency_hours": 0,
+      "mortality_rate": "无",
+      "symptoms": [],
+      "look_alike": [
+        {
+          "id": "mushroom_lactarius_torminosus",
+          "name": "毛头乳菇(微毒)",
+          "distinction": "毛头乳菇乳汁白色,松乳菇乳汁橘红",
+          "fatality": "低"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {},
+      "protective_gear": [
+        "确认乳汁橘红色再食"
+      ],
+      "route_associations": [],
+      "representative_color": {
+        "h": 20,
+        "s": 70,
+        "v": 80
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "北方松林常见,名贵野生菌。",
+      "source": "中国食用菌图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Lactarius deliciosus",
+        "松乳菇 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_cantharellus",
+      "common_name": "鸡油菌",
+      "scientific_name": "Cantharellus cibarius",
+      "kingdom": "fungi",
+      "category": "edible_mushroom",
+      "danger_level": 0,
+      "alias": [
+        "杏菌",
+        "黄丝菇"
+      ],
+      "features": [
+        "菌盖蛋黄色至橘黄色,中央下凹",
+        "菌褶皱襞状(不是真褶)(关键)",
+        "菌柄与盖同色"
+      ],
+      "distribution": [
+        "山东",
+        "河南(豫西)",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 300,
+      "max_elevation": 2500,
+      "habitats": [
+        "针叶林",
+        "混交林"
+      ],
+      "active_months": [
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "",
+      "latency_hours": 0,
+      "mortality_rate": "无",
+      "symptoms": [],
+      "look_alike": [
+        {
+          "id": "mushroom_omphalotus",
+          "name": "发光类脐菇(毒)",
+          "distinction": "发光类脐菇橘黄色,有真菌褶且夜晚发光",
+          "fatality": "中"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {},
+      "protective_gear": [
+        "确认菌褶为皱襞状再食"
+      ],
+      "route_associations": [],
+      "representative_color": {
+        "h": 50,
+        "s": 80,
+        "v": 90
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "北方松林名贵食用菌。",
+      "source": "中国食用菌图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Cantharellus cibarius",
+        "鸡油菌 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_armillaria",
+      "common_name": "假蜜环菌",
+      "scientific_name": "Armillaria mellea",
+      "kingdom": "fungi",
+      "category": "edible_mushroom",
+      "danger_level": 0,
+      "alias": [
+        "榛蘑"
+      ],
+      "features": [
+        "菌盖蜜黄色至褐色,中央有鳞片",
+        "菌褶近白色至浅黄色",
+        "菌柄细长,有菌环(易与致命秋盔孢伞混淆!)"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西",
+        "全国广布"
+      ],
+      "min_elevation": 200,
+      "max_elevation": 2500,
+      "habitats": [
+        "阔叶林",
+        "腐木上"
+      ],
+      "active_months": [
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "",
+      "latency_hours": 0,
+      "mortality_rate": "无",
+      "symptoms": [],
+      "look_alike": [
+        {
+          "id": "mushroom_galerina",
+          "name": "秋盔孢伞(致命)",
+          "distinction": "假蜜环菌菌盖蜜黄色,秋盔孢伞黄褐色,务必检查有否鹅膏毒素特征(菌环位置/孢子印)",
+          "fatality": "极高"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {},
+      "protective_gear": [
+        "确保无鹅膏毒素特征(无菌托、孢子印非黄褐)再食"
+      ],
+      "route_associations": [],
+      "representative_color": {
+        "h": 50,
+        "s": 60,
+        "v": 75
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "东北名菜\"小鸡炖蘑菇\"主料,但秋季有与秋盔孢伞混淆风险。",
+      "source": "中国食用菌图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Armillaria mellea",
+        "假蜜环菌 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_tricholoma",
+      "common_name": "口蘑",
+      "scientific_name": "Tricholoma mongolicum",
+      "kingdom": "fungi",
+      "category": "edible_mushroom",
+      "danger_level": 0,
+      "alias": [
+        "蒙古口蘑"
+      ],
+      "features": [
+        "菌盖白色至灰白色,半球形",
+        "菌褶白色,密",
+        "菌柄白色,粗壮"
+      ],
+      "distribution": [
+        "河北(坝上)",
+        "内蒙古"
+      ],
+      "min_elevation": 800,
+      "max_elevation": 2000,
+      "habitats": [
+        "草原"
+      ],
+      "active_months": [
+        "6",
+        "7",
+        "8",
+        "9"
+      ],
+      "poisoning_type": "",
+      "latency_hours": 0,
+      "mortality_rate": "无",
+      "symptoms": [],
+      "look_alike": [
+        {
+          "id": "mushroom_amanita_verna",
+          "name": "致命白毒伞(剧毒)",
+          "distinction": "口蘑无菌托无菌环,白毒伞有(关键!)",
+          "fatality": "无毒可食"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {},
+      "protective_gear": [
+        "确认无菌托菌环再食"
+      ],
+      "route_associations": [],
+      "representative_color": {
+        "h": 0,
+        "s": 0,
+        "v": 90
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "河北坝上、内蒙古草原名产,名贵食用菌。",
+      "source": "中国食用菌图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Tricholoma mongolicum",
+        "口蘑 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_agaricus",
+      "common_name": "双孢蘑菇",
+      "scientific_name": "Agaricus bisporus",
+      "kingdom": "fungi",
+      "category": "edible_mushroom",
+      "danger_level": 0,
+      "alias": [
+        "白蘑菇",
+        "洋菇"
+      ],
+      "features": [
+        "菌盖白色至褐色,半球形",
+        "菌褶粉红色至黑褐色(关键)",
+        "菌柄白色,有菌环",
+        "无菌托"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西",
+        "全国(栽培)"
+      ],
+      "min_elevation": 0,
+      "max_elevation": 2000,
+      "habitats": [
+        "草地",
+        "堆肥"
+      ],
+      "active_months": [
+        "全年(栽培)"
+      ],
+      "poisoning_type": "",
+      "latency_hours": 0,
+      "mortality_rate": "无",
+      "symptoms": [],
+      "look_alike": [
+        {
+          "id": "mushroom_amanita_verna",
+          "name": "致命白毒伞(剧毒)",
+          "distinction": "白毒伞菌褶白色、双孢菇菌褶粉红/褐(关键)",
+          "fatality": "无毒可食"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {},
+      "protective_gear": [
+        "菌褶必须粉红/褐色,白色褶有剧毒"
+      ],
+      "route_associations": [],
+      "representative_color": {
+        "h": 0,
+        "s": 0,
+        "v": 90
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "最常见的食用蘑菇。北方野生种在草地。",
+      "source": "中国食用菌图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Agaricus bisporus",
+        "双孢蘑菇 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_coprinus_comatus",
+      "common_name": "毛头鬼伞",
+      "scientific_name": "Coprinus comatus",
+      "kingdom": "fungi",
+      "category": "edible_mushroom",
+      "danger_level": 0,
+      "alias": [
+        "鸡腿菇"
+      ],
+      "features": [
+        "菌盖白色,圆柱形,表面有鳞片",
+        "菌褶幼时白色,后变粉红再变黑(液化)",
+        "菌柄白色,基部有环状痕迹"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 0,
+      "max_elevation": 1500,
+      "habitats": [
+        "草地",
+        "路边"
+      ],
+      "active_months": [
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "",
+      "latency_hours": 0,
+      "mortality_rate": "无",
+      "symptoms": [],
+      "look_alike": [
+        {
+          "id": "mushroom_coprinus",
+          "name": "墨汁鬼伞(与酒反应)",
+          "distinction": "墨汁鬼伞菌盖灰白较矮,毛头鬼伞菌盖白色高耸",
+          "fatality": "无毒可食"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {},
+      "protective_gear": [
+        "食后 3 日禁酒"
+      ],
+      "route_associations": [],
+      "representative_color": {
+        "h": 0,
+        "s": 0,
+        "v": 95
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "北方常见,幼嫩可食,老熟液化。",
+      "source": "中国食用菌图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Coprinus comatus",
+        "毛头鬼伞 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_pleurotus",
+      "common_name": "平菇",
+      "scientific_name": "Pleurotus ostreatus",
+      "kingdom": "fungi",
+      "category": "edible_mushroom",
+      "danger_level": 0,
+      "alias": [
+        "侧耳",
+        "糙皮侧耳"
+      ],
+      "features": [
+        "菌盖灰白色至灰褐色,扇形或半圆形",
+        "菌褶白色,延生至菌柄",
+        "菌柄侧生或无",
+        "常成簇生长"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西",
+        "全国广布"
+      ],
+      "min_elevation": 0,
+      "max_elevation": 2500,
+      "habitats": [
+        "阔叶树枯木"
+      ],
+      "active_months": [
+        "全年"
+      ],
+      "poisoning_type": "",
+      "latency_hours": 0,
+      "mortality_rate": "无",
+      "symptoms": [],
+      "look_alike": [],
+      "first_aid_id": "",
+      "first_aid_links": {},
+      "protective_gear": [],
+      "route_associations": [],
+      "representative_color": {
+        "h": 30,
+        "s": 10,
+        "v": 80
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "最常见的栽培食用菌,北方野生多。",
+      "source": "中国食用菌图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Pleurotus ostreatus",
+        "平菇 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_lentinula",
+      "common_name": "香菇",
+      "scientific_name": "Lentinula edodes",
+      "kingdom": "fungi",
+      "category": "edible_mushroom",
+      "danger_level": 0,
+      "alias": [
+        "冬菇",
+        "花菇"
+      ],
+      "features": [
+        "菌盖褐色至深褐色,有不规则裂纹",
+        "菌褶白色",
+        "菌柄白色,中生或偏生",
+        "有特殊香气"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 200,
+      "max_elevation": 2000,
+      "habitats": [
+        "阔叶树枯木(栎/栗/栲)"
+      ],
+      "active_months": [
+        "春",
+        "秋",
+        "冬"
+      ],
+      "poisoning_type": "",
+      "latency_hours": 0,
+      "mortality_rate": "无",
+      "symptoms": [],
+      "look_alike": [],
+      "first_aid_id": "",
+      "first_aid_links": {},
+      "protective_gear": [],
+      "route_associations": [],
+      "representative_color": {
+        "h": 30,
+        "s": 50,
+        "v": 50
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "北方主产区,河南西峡是中国香菇之乡。",
+      "source": "中国食用菌图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Lentinula edodes",
+        "香菇 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_morel",
+      "common_name": "羊肚菌",
+      "scientific_name": "Morchella esculenta",
+      "kingdom": "fungi",
+      "category": "edible_mushroom",
+      "danger_level": 0,
+      "alias": [
+        "羊肚蘑"
+      ],
+      "features": [
+        "菌盖呈蜂窝状,深褐色",
+        "菌柄白色,中空",
+        "整体如羊肚状(关键)"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 200,
+      "max_elevation": 2500,
+      "habitats": [
+        "阔叶林",
+        "杨树林",
+        "果园"
+      ],
+      "active_months": [
+        "3",
+        "4",
+        "5"
+      ],
+      "poisoning_type": "",
+      "latency_hours": 0,
+      "mortality_rate": "无",
+      "symptoms": [],
+      "look_alike": [
+        {
+          "id": "mushroom_gyromitra",
+          "name": "鹿花菌(剧毒)",
+          "distinction": "鹿花菌菌盖脑状皱曲,羊肚菌蜂窝状(关键)",
+          "fatality": "高"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {},
+      "protective_gear": [
+        "确认菌盖蜂窝状(非脑状)再食"
+      ],
+      "route_associations": [],
+      "representative_color": {
+        "h": 30,
+        "s": 40,
+        "v": 50
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "北方早春名贵野生菌。需与鹿花菌严格区分。",
+      "source": "中国食用菌图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Morchella esculenta",
+        "羊肚菌 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_lycoperdon",
+      "common_name": "大马勃",
+      "scientific_name": "Calvatia gigantea",
+      "kingdom": "fungi",
+      "category": "edible_mushroom",
+      "danger_level": 0,
+      "alias": [
+        "马粪包",
+        "灰包"
+      ],
+      "features": [
+        "球形或近球形,白色,大(可达 50cm)",
+        "外皮薄,易剥",
+        "内部幼时白色可食"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 0,
+      "max_elevation": 2000,
+      "habitats": [
+        "草地",
+        "林缘",
+        "田边"
+      ],
+      "active_months": [
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "",
+      "latency_hours": 0,
+      "mortality_rate": "无",
+      "symptoms": [],
+      "look_alike": [
+        {
+          "id": "mushroom_scleroderma",
+          "name": "硬皮马勃(微毒)",
+          "distinction": "硬皮马勃外皮厚黄色,大马勃外皮薄白色",
+          "fatality": "无毒可食"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {},
+      "protective_gear": [
+        "仅食幼时白色内部,老熟变黄不可食"
+      ],
+      "route_associations": [],
+      "representative_color": {
+        "h": 0,
+        "s": 0,
+        "v": 95
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "北方常见的可食马勃,幼嫩时整个可食。",
+      "source": "中国食用菌图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Calvatia gigantea",
+        "大马勃 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_hericium",
+      "common_name": "猴头菇",
+      "scientific_name": "Hericium erinaceus",
+      "kingdom": "fungi",
+      "category": "edible_mushroom",
+      "danger_level": 0,
+      "alias": [
+        "猴头菌"
+      ],
+      "features": [
+        "菌体白色,球形",
+        "表面有下垂的肉刺(猴头状,关键)",
+        "无菌褶无菌柄"
+      ],
+      "distribution": [
+        "山东(鲁中南)",
+        "河南(豫西)",
+        "河北(燕山)",
+        "山西"
+      ],
+      "min_elevation": 300,
+      "max_elevation": 2000,
+      "habitats": [
+        "栎树等阔叶树枯木"
+      ],
+      "active_months": [
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "",
+      "latency_hours": 0,
+      "mortality_rate": "无",
+      "symptoms": [],
+      "look_alike": [],
+      "first_aid_id": "",
+      "first_aid_links": {},
+      "protective_gear": [],
+      "route_associations": [],
+      "representative_color": {
+        "h": 0,
+        "s": 0,
+        "v": 90
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "著名药食两用菌,八大山珍之一。",
+      "source": "中国食用菌图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Hericium erinaceus",
+        "猴头菇 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_ganoderma",
+      "common_name": "灵芝",
+      "scientific_name": "Ganoderma lucidum",
+      "kingdom": "fungi",
+      "category": "edible_mushroom",
+      "danger_level": 0,
+      "alias": [
+        "赤芝",
+        "瑞草"
+      ],
+      "features": [
+        "菌盖肾形或半圆形,红褐色",
+        "表面有同心环纹和漆样光泽",
+        "菌柄侧生,有漆样光泽"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 200,
+      "max_elevation": 2000,
+      "habitats": [
+        "阔叶树枯木"
+      ],
+      "active_months": [
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "",
+      "latency_hours": 0,
+      "mortality_rate": "无",
+      "symptoms": [],
+      "look_alike": [],
+      "first_aid_id": "",
+      "first_aid_links": {},
+      "protective_gear": [
+        "木质化不可食,药用"
+      ],
+      "route_associations": [],
+      "representative_color": {
+        "h": 20,
+        "s": 60,
+        "v": 50
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "传统名贵中药材。",
+      "source": "本草纲目 / 中国食用菌图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Ganoderma lucidum",
+        "灵芝 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_sparassis",
+      "common_name": "绣球菌",
+      "scientific_name": "Sparassis crispa",
+      "kingdom": "fungi",
+      "category": "edible_mushroom",
+      "danger_level": 0,
+      "alias": [
+        "绣球菇"
+      ],
+      "features": [
+        "菌体白色至淡黄色,由许多瓣状叶片组成(绣球状,关键)",
+        "无菌柄"
+      ],
+      "distribution": [
+        "山东",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 200,
+      "max_elevation": 2000,
+      "habitats": [
+        "松树根"
+      ],
+      "active_months": [
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "",
+      "latency_hours": 0,
+      "mortality_rate": "无",
+      "symptoms": [],
+      "look_alike": [],
+      "first_aid_id": "",
+      "first_aid_links": {},
+      "protective_gear": [],
+      "route_associations": [],
+      "representative_color": {
+        "h": 50,
+        "s": 30,
+        "v": 90
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "名贵食用菌,河北有产。",
+      "source": "中国食用菌图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Sparassis crispa",
+        "绣球菌 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_auricularia",
+      "common_name": "木耳",
+      "scientific_name": "Auricularia auricula-judae",
+      "kingdom": "fungi",
+      "category": "edible_mushroom",
+      "danger_level": 0,
+      "alias": [
+        "黑木耳",
+        "云耳"
+      ],
+      "features": [
+        "胶质,耳状或叶状,褐黑色",
+        "腹面平滑,背面有短毛"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西",
+        "全国广布"
+      ],
+      "min_elevation": 0,
+      "max_elevation": 2000,
+      "habitats": [
+        "阔叶树枯木"
+      ],
+      "active_months": [
+        "春",
+        "夏",
+        "秋",
+        "雨后多"
+      ],
+      "poisoning_type": "",
+      "latency_hours": 0,
+      "mortality_rate": "无",
+      "symptoms": [],
+      "look_alike": [
+        {
+          "name": "毛木耳",
+          "distinction": "毛木耳背面绒毛明显,木耳较光滑",
+          "fatality": "无毒可食"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {},
+      "protective_gear": [
+        "勿食新鲜木耳(含卟啉光敏物质),必须晒干泡发"
+      ],
+      "route_associations": [],
+      "representative_color": {
+        "h": 30,
+        "s": 50,
+        "v": 30
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "最常见的食用菌,北方枯木上常见。",
+      "source": "中国食用菌图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Auricularia auricula-judae",
+        "Auricularia auricula",
+        "木耳 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_amanita_virosa",
+      "common_name": "鳞柄白毒伞",
+      "scientific_name": "Amanita virosa",
+      "kingdom": "fungi",
+      "category": "deadly_mushroom",
+      "danger_level": 5,
+      "alias": [
+        "白毒鹅膏",
+        "毁灭天使"
+      ],
+      "features": [
+        "菌盖纯白色,直径 5-10cm",
+        "菌褶白色",
+        "菌柄白色,有鳞片和菌环",
+        "菌托白色袋状"
+      ],
+      "distribution": [
+        "河北(燕山)",
+        "山西",
+        "内蒙古",
+        "辽宁"
+      ],
+      "min_elevation": 300,
+      "max_elevation": 2000,
+      "habitats": [
+        "针叶林",
+        "混交林"
+      ],
+      "active_months": [
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "肝损害(鹅膏毒素)",
+      "latency_hours": 10,
+      "mortality_rate": "极高(50-90%)",
+      "symptoms": [
+        "潜伏 8-24 小时",
+        "初期呕吐腹泻(假愈期)",
+        "2-3 天后肝功能衰竭",
+        "致死量约 30g"
+      ],
+      "look_alike": [
+        {
+          "id": "mushroom_agaricus",
+          "name": "双孢蘑菇(可食)",
+          "distinction": "白毒伞有菌托菌环、菌褶白色;双孢蘑菇无菌托、菌褶粉红/褐",
+          "fatality": "无毒可食"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {
+        "误食": "firstaid_mushroom_poisoning"
+      },
+      "protective_gear": [
+        "不采任何有菌托的白色蘑菇"
+      ],
+      "route_associations": [
+        {
+          "route_id": "route_wutaishan",
+          "months": [
+            "8",
+            "9"
+          ]
+        },
+        {
+          "route_id": "route_changbaishan",
+          "months": [
+            "8",
+            "9"
+          ]
+        }
+      ],
+      "representative_color": {
+        "h": 0,
+        "s": 0,
+        "v": 95
+      },
+      "images": [
+        "whole",
+        "volva"
+      ],
+      "description": "北方针叶林最致命的鹅膏之一,与可食白蘑菇极易混淆,务必检查菌托。",
+      "source": "中国毒蘑菇图鉴 / 急救医学",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Amanita virosa",
+        "Amanita virosa",
+        "鳞柄白毒伞 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_lepiota_brunneoincarnata",
+      "common_name": "肉褐鳞环柄菇",
+      "scientific_name": "Lepiota brunneoincarnata",
+      "kingdom": "fungi",
+      "category": "deadly_mushroom",
+      "danger_level": 5,
+      "alias": [
+        "肉褐环柄菇"
+      ],
+      "features": [
+        "菌盖小,直径 2-6cm,褐色鳞片环状排列",
+        "菌褶白色,密",
+        "菌柄细,有菌环",
+        "体型小极易被忽略"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 0,
+      "max_elevation": 1500,
+      "habitats": [
+        "草地",
+        "林缘",
+        "菜园"
+      ],
+      "active_months": [
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "肝损害(鹅膏毒素)",
+      "latency_hours": 8,
+      "mortality_rate": "高",
+      "symptoms": [
+        "潜伏 6-12 小时",
+        "呕吐腹泻后假愈",
+        "肝肾功能衰竭"
+      ],
+      "look_alike": [],
+      "first_aid_id": "",
+      "first_aid_links": {
+        "误食": "firstaid_mushroom_poisoning"
+      },
+      "protective_gear": [
+        "不采个体细小的褐色伞菌"
+      ],
+      "route_associations": [
+        {
+          "route_id": "route_taishan_dong",
+          "months": [
+            "8",
+            "9"
+          ]
+        }
+      ],
+      "representative_color": {
+        "h": 20,
+        "s": 40,
+        "v": 50
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "华北草地常见小型剧毒菌,含鹅膏毒素,常被当作\"小蘑菇\"误采。",
+      "source": "中国毒蘑菇图鉴 / 急救医学",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Lepiota brunneoincarnata",
+        "Lepiota brunneoincarnata",
+        "肉褐鳞环柄菇 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_amanita_fuliginea",
+      "common_name": "灰花纹鹅膏",
+      "scientific_name": "Amanita fuliginea",
+      "kingdom": "fungi",
+      "category": "deadly_mushroom",
+      "danger_level": 5,
+      "alias": [
+        "灰鹅膏",
+        "麻子菌"
+      ],
+      "features": [
+        "菌盖灰褐色,中央深色,有丝状花纹",
+        "菌褶白色",
+        "菌柄灰白色,有菌环",
+        "菌托灰白色袋状"
+      ],
+      "distribution": [
+        "河北",
+        "山西",
+        "河南(豫南)",
+        "山东(鲁南)"
+      ],
+      "min_elevation": 200,
+      "max_elevation": 1800,
+      "habitats": [
+        "阔叶林",
+        "混交林",
+        "栎树林"
+      ],
+      "active_months": [
+        "6",
+        "7",
+        "8",
+        "9"
+      ],
+      "poisoning_type": "肝损害(鹅膏毒素)",
+      "latency_hours": 10,
+      "mortality_rate": "极高",
+      "symptoms": [
+        "潜伏 6-24 小时",
+        "假愈期后肝肾衰竭",
+        "我国鹅膏中毒主要致死种之一"
+      ],
+      "look_alike": [
+        {
+          "id": "mushroom_amanita_pantherina",
+          "name": "豹斑毒鹅膏(毒)",
+          "distinction": "豹斑鹅膏菌盖有白色块状鳞片;灰花纹鹅膏为丝状灰花纹",
+          "fatality": "中"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {
+        "误食": "firstaid_mushroom_poisoning"
+      },
+      "protective_gear": [
+        "不采有菌托的灰褐色伞菌"
+      ],
+      "route_associations": [
+        {
+          "route_id": "route_tai_mountain",
+          "months": [
+            "7",
+            "8"
+          ]
+        }
+      ],
+      "representative_color": {
+        "h": 30,
+        "s": 20,
+        "v": 45
+      },
+      "images": [
+        "whole",
+        "volva"
+      ],
+      "description": "我国鹅膏中毒的主要致死种,北方阔叶林夏秋可见。",
+      "source": "中国毒蘑菇图鉴 / 急救医学",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Amanita fuliginea",
+        "Amanita fuliginea",
+        "灰花纹鹅膏 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_gyromitra",
+      "common_name": "鹿花菌",
+      "scientific_name": "Gyromitra esculenta",
+      "kingdom": "fungi",
+      "category": "common_poisonous",
+      "danger_level": 4,
+      "alias": [
+        "鹿花蕈",
+        "肝菌"
+      ],
+      "features": [
+        "菌盖脑状皱曲,红褐至深褐",
+        "菌盖与菌柄相连",
+        "菌柄白色至灰白,中空",
+        "整体形似大脑"
+      ],
+      "distribution": [
+        "河北(坝上)",
+        "山西",
+        "内蒙古",
+        "辽宁"
+      ],
+      "min_elevation": 500,
+      "max_elevation": 2200,
+      "habitats": [
+        "针叶林沙地",
+        "火烧迹地"
+      ],
+      "active_months": [
+        "4",
+        "5",
+        "6"
+      ],
+      "poisoning_type": "鹿花菌素(溶血/肝损害/神经)",
+      "latency_hours": 6,
+      "mortality_rate": "中(高剂量可致死)",
+      "symptoms": [
+        "食后 6-12 小时呕吐腹泻",
+        "溶血、黄疸",
+        "重者抽搐、肝损害"
+      ],
+      "look_alike": [
+        {
+          "id": "mushroom_morel",
+          "name": "羊肚菌(可食)",
+          "distinction": "羊肚菌菌盖蜂窝状;鹿花菌菌盖脑状皱曲(关键)",
+          "fatality": "无毒可食"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {
+        "误食": "firstaid_mushroom_poisoning"
+      },
+      "protective_gear": [
+        "严格区分蜂窝状与脑状菌盖"
+      ],
+      "route_associations": [
+        {
+          "route_id": "route_changbaishan",
+          "months": [
+            "5",
+            "6"
+          ]
+        }
+      ],
+      "representative_color": {
+        "h": 15,
+        "s": 50,
+        "v": 45
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "北方春季沙地针叶林常见,常被误当羊肚菌。生食剧毒,鹿花菌素具挥发性。",
+      "source": "中国毒蘑菇图鉴 / 急救医学",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Gyromitra esculenta",
+        "Gyromitra esculenta",
+        "鹿花菌 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_boletus_satanas",
+      "common_name": "魔牛肝菌",
+      "scientific_name": "Rubroboletus satanas",
+      "kingdom": "fungi",
+      "category": "common_poisonous",
+      "danger_level": 4,
+      "alias": [
+        "魔牛肝",
+        "撒旦牛肝菌"
+      ],
+      "features": [
+        "菌盖灰白至灰褐色,直径 8-20cm",
+        "菌孔红色(关键!)",
+        "菌肉白色,受伤变蓝",
+        "菌柄粗壮,上部红色有网纹"
+      ],
+      "distribution": [
+        "河北",
+        "山西",
+        "山东(鲁中)"
+      ],
+      "min_elevation": 300,
+      "max_elevation": 1800,
+      "habitats": [
+        "阔叶林",
+        "栎树林",
+        "石灰岩土壤"
+      ],
+      "active_months": [
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "胃肠炎(重)",
+      "latency_hours": 1,
+      "mortality_rate": "低(但症状剧烈)",
+      "symptoms": [
+        "0.5-3 小时剧烈呕吐、腹泻",
+        "腹部绞痛",
+        "可致脱水"
+      ],
+      "look_alike": [
+        {
+          "id": "mushroom_boletus_edulis",
+          "name": "美味牛肝菌(可食)",
+          "distinction": "美味牛肝菌菌孔白色/黄绿、菌肉不变蓝;魔牛肝菌菌孔红色、菌肉变蓝",
+          "fatality": "无毒可食"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {
+        "误食": "firstaid_mushroom_poisoning"
+      },
+      "protective_gear": [
+        "凡菌孔红色或菌肉变蓝的牛肝菌一律不采"
+      ],
+      "route_associations": [
+        {
+          "route_id": "route_taishan_dong",
+          "months": [
+            "8",
+            "9"
+          ]
+        }
+      ],
+      "representative_color": {
+        "h": 0,
+        "s": 60,
+        "v": 80
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "北方阔叶林剧毒牛肝菌,菌孔红色是最醒目特征,与美味牛肝菌同域分布。",
+      "source": "中国毒蘑菇图鉴 / 急救医学",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Rubroboletus satanas",
+        "Rubroboletus satanas",
+        "魔牛肝菌 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_agaricus_xanthodermus",
+      "common_name": "黄斑蘑菇",
+      "scientific_name": "Agaricus xanthodermus",
+      "kingdom": "fungi",
+      "category": "common_poisonous",
+      "danger_level": 3,
+      "alias": [
+        "黄斑伞",
+        "假蘑菇"
+      ],
+      "features": [
+        "菌盖白色,中央略带黄褐",
+        "菌褶幼时粉红,后变黑褐",
+        "菌柄受伤迅即变鲜黄(关键!)",
+        "有酚(墨水/碘酒)气味"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 0,
+      "max_elevation": 1500,
+      "habitats": [
+        "草地",
+        "林缘",
+        "路边",
+        "堆肥"
+      ],
+      "active_months": [
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "胃肠炎",
+      "latency_hours": 0.5,
+      "mortality_rate": "低",
+      "symptoms": [
+        "0.5-2 小时恶心呕吐、腹泻",
+        "出汗、面部潮红"
+      ],
+      "look_alike": [
+        {
+          "id": "mushroom_agaricus_campestris",
+          "name": "野蘑菇(可食)",
+          "distinction": "野蘑菇受伤不变黄、有蘑菇香;黄斑蘑菇变鲜黄、有酚味",
+          "fatality": "无毒可食"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {
+        "误食": "firstaid_mushroom_poisoning"
+      },
+      "protective_gear": [
+        "受伤变黄或有酚味者不食"
+      ],
+      "route_associations": [
+        {
+          "route_id": "route_badaling",
+          "months": [
+            "8",
+            "9"
+          ]
+        }
+      ],
+      "representative_color": {
+        "h": 0,
+        "s": 0,
+        "v": 90
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "北方草地常见,与可食野蘑菇极易混淆,菌柄受伤变黄是鉴别要点。",
+      "source": "中国毒蘑菇图鉴 / 急救医学",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Agaricus xanthodermus",
+        "Agaricus xanthodermus",
+        "黄斑蘑菇 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_entoloma_sinuatum",
+      "common_name": "毒粉褶菌",
+      "scientific_name": "Entoloma sinuatum",
+      "kingdom": "fungi",
+      "category": "common_poisonous",
+      "danger_level": 4,
+      "alias": [
+        "毒粉褶蕈"
+      ],
+      "features": [
+        "菌盖灰白至灰褐色,直径 6-15cm",
+        "菌褶初白后变粉红(关键!)",
+        "菌柄白色,粗壮",
+        "孢子印粉红色"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 200,
+      "max_elevation": 1800,
+      "habitats": [
+        "阔叶林",
+        "林缘草地"
+      ],
+      "active_months": [
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "胃肠炎(重)",
+      "latency_hours": 0.5,
+      "mortality_rate": "低(常致重症脱水)",
+      "symptoms": [
+        "0.5-3 小时剧烈呕吐、腹泻",
+        "腹部绞痛、口渴",
+        "可致脱水休克"
+      ],
+      "look_alike": [
+        {
+          "id": "mushroom_tricholoma",
+          "name": "口蘑(可食)",
+          "distinction": "口蘑菌褶白色;毒粉褶菌菌褶变粉红、孢子印粉红",
+          "fatality": "无毒可食"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {
+        "误食": "firstaid_mushroom_poisoning"
+      },
+      "protective_gear": [
+        "不采菌褶变粉红的大型伞菌"
+      ],
+      "route_associations": [
+        {
+          "route_id": "route_lao_mountain",
+          "months": [
+            "8",
+            "9"
+          ]
+        }
+      ],
+      "representative_color": {
+        "h": 30,
+        "s": 10,
+        "v": 70
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "北方阔叶林常见大型毒菌,常被误认为口蘑,中毒症状剧烈。",
+      "source": "中国毒蘑菇图鉴 / 急救医学",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Entoloma sinuatum",
+        "Entoloma sinuatum",
+        "毒粉褶菌 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_clitocybe_dealbata",
+      "common_name": "白霜杯伞",
+      "scientific_name": "Clitocybe dealbata",
+      "kingdom": "fungi",
+      "category": "common_poisonous",
+      "danger_level": 4,
+      "alias": [
+        "白霜杯蕈",
+        "毒杯伞"
+      ],
+      "features": [
+        "菌盖白色至灰白,直径 2-5cm,中央下凹",
+        "菌褶白色,延生",
+        "菌柄白色,细",
+        "常成群生于草地(仙女环)"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西",
+        "内蒙古"
+      ],
+      "min_elevation": 0,
+      "max_elevation": 2000,
+      "habitats": [
+        "草地",
+        "牧场",
+        "林缘"
+      ],
+      "active_months": [
+        "7",
+        "8",
+        "9",
+        "10",
+        "11"
+      ],
+      "poisoning_type": "毒蕈碱(副交感兴奋)",
+      "latency_hours": 0.5,
+      "mortality_rate": "中",
+      "symptoms": [
+        "15-30 分钟大量出汗、流涎、流泪",
+        "瞳孔缩小、视物模糊",
+        "心动过缓、血压下降"
+      ],
+      "look_alike": [
+        {
+          "id": "mushroom_marasmius_oreades",
+          "name": "沙地蘑菇(可食)",
+          "distinction": "沙地蘑菇菌褶白色但菌柄坚韧、无菌环不呈杯状;白霜杯伞菌盖中央明显下凹",
+          "fatality": "无毒可食"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {
+        "误食": "firstaid_mushroom_poisoning"
+      },
+      "protective_gear": [
+        "不采草地成圈生长的小白伞菌"
+      ],
+      "route_associations": [
+        {
+          "route_id": "route_badaling",
+          "months": [
+            "9",
+            "10"
+          ]
+        }
+      ],
+      "representative_color": {
+        "h": 0,
+        "s": 0,
+        "v": 90
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "北方草地\"仙女环\"常见小白菌,毒蕈碱型中毒,起病极快。",
+      "source": "中国毒蘑菇图鉴 / 急救医学",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Clitocybe dealbata",
+        "Clitocybe dealbata",
+        "白霜杯伞 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_hypholoma_fasciculare",
+      "common_name": "簇生沿丝伞",
+      "scientific_name": "Hypholoma fasciculare",
+      "kingdom": "fungi",
+      "category": "common_poisonous",
+      "danger_level": 3,
+      "alias": [
+        "丛生韧黑伞",
+        "硫磺菌(误名)"
+      ],
+      "features": [
+        "菌盖硫黄色至橙黄,中央略带红褐",
+        "菌褶初黄后变紫褐色",
+        "菌柄黄色,细长",
+        "成丛密集生于腐木"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 100,
+      "max_elevation": 2000,
+      "habitats": [
+        "腐木",
+        "树桩",
+        "倒木"
+      ],
+      "active_months": [
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "胃肠炎(含苦味毒素)",
+      "latency_hours": 1,
+      "mortality_rate": "低",
+      "symptoms": [
+        "1-3 小时恶心呕吐、腹泻",
+        "口苦",
+        "一般 1-2 天恢复"
+      ],
+      "look_alike": [
+        {
+          "id": "mushroom_armillaria",
+          "name": "假蜜环菌(可食)",
+          "distinction": "假蜜环菌菌盖蜜黄有鳞片、菌褶白色;簇生沿丝伞菌褶老后紫褐、味极苦",
+          "fatality": "无毒可食"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {
+        "误食": "firstaid_mushroom_poisoning"
+      },
+      "protective_gear": [
+        "腐木上成丛的黄色小伞菌不采"
+      ],
+      "route_associations": [
+        {
+          "route_id": "route_songshan",
+          "months": [
+            "8",
+            "9"
+          ]
+        }
+      ],
+      "representative_color": {
+        "h": 45,
+        "s": 60,
+        "v": 90
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "北方最常见的腐木毒菌,一丛可达上百朵,味极苦是重要识别特征。",
+      "source": "中国毒蘑菇图鉴 / 急救医学",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Hypholoma fasciculare",
+        "Hypholoma fasciculare",
+        "簇生沿丝伞 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_russula_emetica",
+      "common_name": "毒红菇",
+      "scientific_name": "Russula emetica",
+      "kingdom": "fungi",
+      "category": "common_poisonous",
+      "danger_level": 3,
+      "alias": [
+        "呕吐红菇",
+        "辣红菇"
+      ],
+      "features": [
+        "菌盖鲜红,直径 3-8cm,表面黏",
+        "菌褶白色,密",
+        "菌柄白色,脆",
+        "菌肉味辛辣(关键!)"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 200,
+      "max_elevation": 2200,
+      "habitats": [
+        "针叶林",
+        "混交林"
+      ],
+      "active_months": [
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "胃肠炎",
+      "latency_hours": 0.5,
+      "mortality_rate": "低",
+      "symptoms": [
+        "0.5-2 小时剧烈呕吐、腹泻",
+        "腹部绞痛"
+      ],
+      "look_alike": [
+        {
+          "name": "变绿红菇(可食)",
+          "distinction": "变绿红菇菌盖绿色、菌肉味温和;毒红菇菌盖红色、味辛辣",
+          "fatality": "无毒可食"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {
+        "误食": "firstaid_mushroom_poisoning"
+      },
+      "protective_gear": [
+        "红色菌盖的脆质红菇一律不采"
+      ],
+      "route_associations": [
+        {
+          "route_id": "route_lao_mountain",
+          "months": [
+            "8",
+            "9"
+          ]
+        }
+      ],
+      "representative_color": {
+        "h": 0,
+        "s": 70,
+        "v": 85
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "北方针叶林常见红菇,辛辣味明显,常成片出现。",
+      "source": "中国毒蘑菇图鉴 / 急救医学",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Russula emetica",
+        "Russula emetica",
+        "毒红菇 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_lactarius_torminosus",
+      "common_name": "毛头乳菇",
+      "scientific_name": "Lactarius torminosus",
+      "kingdom": "fungi",
+      "category": "common_poisonous",
+      "danger_level": 3,
+      "alias": [
+        "疝疼乳菇"
+      ],
+      "features": [
+        "菌盖粉红至淡橘红,边缘绒毛状卷曲(关键!)",
+        "菌褶淡黄,延生",
+        "菌柄与盖同色",
+        "乳汁白色,味辛辣"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 200,
+      "max_elevation": 2000,
+      "habitats": [
+        "桦木林",
+        "针叶林"
+      ],
+      "active_months": [
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "胃肠炎",
+      "latency_hours": 0.5,
+      "mortality_rate": "低",
+      "symptoms": [
+        "0.5-2 小时呕吐、腹泻",
+        "腹部绞痛"
+      ],
+      "look_alike": [
+        {
+          "id": "mushroom_lactarius_deliciosus",
+          "name": "松乳菇(可食)",
+          "distinction": "松乳菇菌盖橘红有同心环、乳汁橘红;毛头乳菇边缘绒毛状、乳汁白色辛辣",
+          "fatality": "无毒可食"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {
+        "误食": "firstaid_mushroom_poisoning"
+      },
+      "protective_gear": [
+        "乳菇类必查乳汁颜色与气味"
+      ],
+      "route_associations": [
+        {
+          "route_id": "route_changbaishan",
+          "months": [
+            "8",
+            "9"
+          ]
+        }
+      ],
+      "representative_color": {
+        "h": 10,
+        "s": 50,
+        "v": 80
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "北方桦木林常见,与松乳菇外形相近,乳汁白色辛辣是鉴别点。",
+      "source": "中国毒蘑菇图鉴 / 急救医学",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Lactarius torminosus",
+        "Lactarius torminosus",
+        "毛头乳菇 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_macrolepiota",
+      "common_name": "高大环柄菇",
+      "scientific_name": "Macrolepiota procera",
+      "kingdom": "fungi",
+      "category": "edible_mushroom",
+      "danger_level": 0,
+      "alias": [
+        "高环柄菇",
+        "伞把菇"
+      ],
+      "features": [
+        "菌盖大型,直径 10-30cm,褐色鳞片",
+        "中央隆起",
+        "菌柄细长,可高达 30cm",
+        "菌环厚,可上下移动"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 100,
+      "max_elevation": 2000,
+      "habitats": [
+        "林缘",
+        "草地",
+        "路边"
+      ],
+      "active_months": [
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "",
+      "latency_hours": 0,
+      "mortality_rate": "无",
+      "symptoms": [],
+      "look_alike": [
+        {
+          "id": "mushroom_chlorophyllum",
+          "name": "大青褶伞(毒)",
+          "distinction": "大青褶伞菌褶变绿、菌环不可移动、体型较小;高大环柄菇菌褶白色、菌环可移动",
+          "fatality": "中(胃肠炎)"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {},
+      "protective_gear": [
+        "确认菌褶不变绿、菌环可移动再食"
+      ],
+      "route_associations": [
+        {
+          "route_id": "route_songshan",
+          "months": [
+            "8",
+            "9"
+          ]
+        }
+      ],
+      "representative_color": {
+        "h": 25,
+        "s": 40,
+        "v": 70
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "北方林缘常见大型食用菌,与有毒的大青褶伞须严格区分。",
+      "source": "中国食用菌图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Macrolepiota procera",
+        "Macrolepiota procera",
+        "高大环柄菇 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_agaricus_campestris",
+      "common_name": "野蘑菇",
+      "scientific_name": "Agaricus campestris",
+      "kingdom": "fungi",
+      "category": "edible_mushroom",
+      "danger_level": 0,
+      "alias": [
+        "蘑菇",
+        "田蘑菇"
+      ],
+      "features": [
+        "菌盖白色至淡褐,直径 4-10cm",
+        "菌褶幼时粉红,后变黑褐",
+        "菌柄白色,有膜质菌环",
+        "受伤不变色,有蘑菇香气"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西",
+        "内蒙古"
+      ],
+      "min_elevation": 0,
+      "max_elevation": 2000,
+      "habitats": [
+        "草地",
+        "牧场",
+        "田边"
+      ],
+      "active_months": [
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "",
+      "latency_hours": 0,
+      "mortality_rate": "无",
+      "symptoms": [],
+      "look_alike": [
+        {
+          "id": "mushroom_agaricus_xanthodermus",
+          "name": "黄斑蘑菇(毒)",
+          "distinction": "黄斑蘑菇菌柄受伤变鲜黄、有酚味;野蘑菇不变色、有蘑菇香",
+          "fatality": "中(胃肠炎)"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {},
+      "protective_gear": [
+        "必须确认受伤不变黄、无酚味"
+      ],
+      "route_associations": [
+        {
+          "route_id": "route_badaling",
+          "months": [
+            "8",
+            "9"
+          ]
+        }
+      ],
+      "representative_color": {
+        "h": 0,
+        "s": 0,
+        "v": 90
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "北方草原与牧场最经典的野生食用菌,双孢蘑菇的野生近缘种。",
+      "source": "中国食用菌图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Agaricus campestris",
+        "Agaricus campestris",
+        "野蘑菇 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_flammulina",
+      "common_name": "金针菇",
+      "scientific_name": "Flammulina filiformis",
+      "kingdom": "fungi",
+      "category": "edible_mushroom",
+      "danger_level": 0,
+      "alias": [
+        "构菌",
+        "冬菇",
+        "金菇"
+      ],
+      "features": [
+        "菌盖黄色至黄褐,直径 2-8cm,表面黏滑",
+        "菌褶白色至淡黄",
+        "菌柄细长,基部棕褐",
+        "成丛生于阔叶枯木"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 200,
+      "max_elevation": 2000,
+      "habitats": [
+        "阔叶树枯木",
+        "树桩"
+      ],
+      "active_months": [
+        "11",
+        "12",
+        "1",
+        "2",
+        "3"
+      ],
+      "poisoning_type": "",
+      "latency_hours": 0,
+      "mortality_rate": "无",
+      "symptoms": [],
+      "look_alike": [
+        {
+          "id": "mushroom_galerina",
+          "name": "秋盔孢伞(致命)",
+          "distinction": "金针菇菌褶白色、菌柄基部棕褐有绒毛;秋盔孢伞菌褶黄褐、菌柄有膜质菌环(关键!)",
+          "fatality": "极高"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {},
+      "protective_gear": [
+        "冬季阔叶枯木上成丛采集,须排除无菌环"
+      ],
+      "route_associations": [
+        {
+          "route_id": "route_tai_mountain",
+          "months": [
+            "12",
+            "1"
+          ]
+        }
+      ],
+      "representative_color": {
+        "h": 35,
+        "s": 60,
+        "v": 85
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "北方冬季阔叶枯木主要食用菌,野生种与致命的秋盔孢伞同季同域,须严格区分。",
+      "source": "中国食用菌图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Flammulina filiformis",
+        "Flammulina filiformis",
+        "金针菇 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_pholiota_nameko",
+      "common_name": "滑菇",
+      "scientific_name": "Pholiota microspora",
+      "kingdom": "fungi",
+      "category": "edible_mushroom",
+      "danger_level": 0,
+      "alias": [
+        "滑子蘑",
+        "光帽鳞伞"
+      ],
+      "features": [
+        "菌盖黄褐至橙黄,表面黏滑(关键)",
+        "菌褶淡黄至锈褐",
+        "菌柄细,有菌环",
+        "成丛生于阔叶枯木"
+      ],
+      "distribution": [
+        "河北",
+        "山西",
+        "辽宁",
+        "内蒙古"
+      ],
+      "min_elevation": 300,
+      "max_elevation": 1800,
+      "habitats": [
+        "阔叶树枯木",
+        "倒木"
+      ],
+      "active_months": [
+        "9",
+        "10",
+        "11"
+      ],
+      "poisoning_type": "",
+      "latency_hours": 0,
+      "mortality_rate": "无",
+      "symptoms": [],
+      "look_alike": [
+        {
+          "id": "mushroom_hypholoma_fasciculare",
+          "name": "簇生沿丝伞(毒)",
+          "distinction": "沿丝伞菌盖硫黄、菌褶紫褐、味苦;滑菇菌盖黏滑、菌褶淡黄、味鲜",
+          "fatality": "低(胃肠炎)"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {},
+      "protective_gear": [
+        "确认菌盖黏滑、无苦味再食"
+      ],
+      "route_associations": [
+        {
+          "route_id": "route_wutaishan",
+          "months": [
+            "9",
+            "10"
+          ]
+        }
+      ],
+      "representative_color": {
+        "h": 35,
+        "s": 50,
+        "v": 80
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "北方秋季阔叶枯木常见食用菌,因菌盖黏滑得名,已广泛栽培。",
+      "source": "中国食用菌图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Pholiota microspora",
+        "Pholiota microspora",
+        "滑菇 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_lepista_nuda",
+      "common_name": "紫丁香蘑",
+      "scientific_name": "Lepista nuda",
+      "kingdom": "fungi",
+      "category": "edible_mushroom",
+      "danger_level": 0,
+      "alias": [
+        "紫晶蘑",
+        "裸紫丁蘑"
+      ],
+      "features": [
+        "菌盖紫色至蓝紫色,直径 5-15cm",
+        "菌褶紫色",
+        "菌柄紫色,粗壮",
+        "常成群生于草地林缘"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 100,
+      "max_elevation": 2000,
+      "habitats": [
+        "草地",
+        "林缘",
+        "腐叶层"
+      ],
+      "active_months": [
+        "9",
+        "10",
+        "11"
+      ],
+      "poisoning_type": "",
+      "latency_hours": 0,
+      "mortality_rate": "无",
+      "symptoms": [],
+      "look_alike": [],
+      "first_aid_id": "",
+      "first_aid_links": {},
+      "protective_gear": [
+        "须充分加热(生食可致胃肠不适)"
+      ],
+      "route_associations": [
+        {
+          "route_id": "route_lao_mountain",
+          "months": [
+            "10",
+            "11"
+          ]
+        }
+      ],
+      "representative_color": {
+        "h": 270,
+        "s": 40,
+        "v": 70
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "北方秋季紫蓝色食用菌,色泽独特易辨,须煮熟食用。",
+      "source": "中国食用菌图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Lepista nuda",
+        "Lepista nuda",
+        "紫丁香蘑 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_marasmius_oreades",
+      "common_name": "沙地蘑菇",
+      "scientific_name": "Marasmius oreades",
+      "kingdom": "fungi",
+      "category": "edible_mushroom",
+      "danger_level": 0,
+      "alias": [
+        "仙环小皮伞",
+        "硬柄小皮伞"
+      ],
+      "features": [
+        "菌盖浅褐至黄褐,直径 2-5cm,中央隆起",
+        "菌褶白色至淡黄,疏,延生",
+        "菌柄坚韧,可扭曲不断(关键!)",
+        "成圈生长(仙女环)"
+      ],
+      "distribution": [
+        "河北(坝上)",
+        "山西",
+        "内蒙古",
+        "山东"
+      ],
+      "min_elevation": 0,
+      "max_elevation": 2200,
+      "habitats": [
+        "草地",
+        "牧场",
+        "草原"
+      ],
+      "active_months": [
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "",
+      "latency_hours": 0,
+      "mortality_rate": "无",
+      "symptoms": [],
+      "look_alike": [
+        {
+          "id": "mushroom_clitocybe_dealbata",
+          "name": "白霜杯伞(毒)",
+          "distinction": "白霜杯伞菌盖中央下凹、菌柄脆;沙地蘑菇菌盖中央隆起、菌柄坚韧",
+          "fatality": "中(毒蕈碱)"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {},
+      "protective_gear": [
+        "确认菌柄坚韧可扭、菌盖隆起再采"
+      ],
+      "route_associations": [
+        {
+          "route_id": "route_wutaishan",
+          "months": [
+            "8",
+            "9"
+          ]
+        }
+      ],
+      "representative_color": {
+        "h": 35,
+        "s": 30,
+        "v": 80
+      },
+      "images": [
+        "whole",
+        "habitat"
+      ],
+      "description": "北方草原\"仙女环\"主角,菌柄坚韧耐运,但与有毒白霜杯伞同域,须细辨。",
+      "source": "中国食用菌图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Marasmius oreades",
+        "Marasmius oreades",
+        "沙地蘑菇 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_tremella",
+      "common_name": "银耳",
+      "scientific_name": "Tremella fuciformis",
+      "kingdom": "fungi",
+      "category": "edible_mushroom",
+      "danger_level": 0,
+      "alias": [
+        "白木耳",
+        "雪耳"
+      ],
+      "features": [
+        "菌体白色半透明胶质,瓣状",
+        "直径 3-10cm",
+        "干后收缩,泡发复原",
+        "生于阔叶树枯木"
+      ],
+      "distribution": [
+        "河南(豫西)",
+        "河北",
+        "山西",
+        "山东"
+      ],
+      "min_elevation": 200,
+      "max_elevation": 1800,
+      "habitats": [
+        "阔叶树枯木(栎/枫杨)"
+      ],
+      "active_months": [
+        "5",
+        "6",
+        "7",
+        "8",
+        "9"
+      ],
+      "poisoning_type": "",
+      "latency_hours": 0,
+      "mortality_rate": "无",
+      "symptoms": [],
+      "look_alike": [
+        {
+          "id": "mushroom_auricularia",
+          "name": "木耳(可食)",
+          "distinction": "木耳褐黑色、背面有短毛;银耳白色半透明胶质瓣状",
+          "fatality": "无毒可食"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {},
+      "protective_gear": [
+        "勿食发黏变质者"
+      ],
+      "route_associations": [
+        {
+          "route_id": "route_taishan_dong",
+          "months": [
+            "7",
+            "8"
+          ]
+        }
+      ],
+      "representative_color": {
+        "h": 0,
+        "s": 0,
+        "v": 95
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "传统药食两用菌,北方阔叶枯木有野生分布,河南为传统产区。",
+      "source": "中国食用菌图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Tremella fuciformis",
+        "Tremella fuciformis",
+        "银耳 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_polyporus_umbellatus",
+      "common_name": "猪苓",
+      "scientific_name": "Polyporus umbellatus",
+      "kingdom": "fungi",
+      "category": "edible_mushroom",
+      "danger_level": 0,
+      "alias": [
+        "猪苓花",
+        "千层菌"
+      ],
+      "features": [
+        "由众多小菌盖聚合而成,直径 10-30cm",
+        "各小菌盖灰白至淡褐,中央下凹",
+        "菌柄白色,多分枝",
+        "生于地下菌核上"
+      ],
+      "distribution": [
+        "河北",
+        "山西",
+        "河南(豫西)",
+        "陕西"
+      ],
+      "min_elevation": 500,
+      "max_elevation": 2200,
+      "habitats": [
+        "阔叶林地下菌核",
+        "枫树/栎树根"
+      ],
+      "active_months": [
+        "6",
+        "7",
+        "8",
+        "9"
+      ],
+      "poisoning_type": "",
+      "latency_hours": 0,
+      "mortality_rate": "无",
+      "symptoms": [],
+      "look_alike": [],
+      "first_aid_id": "",
+      "first_aid_links": {},
+      "protective_gear": [],
+      "route_associations": [
+        {
+          "route_id": "route_taibai_baoji",
+          "months": [
+            "7",
+            "8"
+          ]
+        }
+      ],
+      "representative_color": {
+        "h": 30,
+        "s": 15,
+        "v": 80
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "著名中药\"猪苓\"的实体,北方林下可见,嫩时可食,药用价值更高。",
+      "source": "本草纲目 / 中国食用菌图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Polyporus umbellatus",
+        "Polyporus umbellatus",
+        "猪苓 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_amanita_pallidorosea",
+      "common_name": "淡红鹅膏",
+      "scientific_name": "Amanita pallidorosea",
+      "kingdom": "fungi",
+      "category": "deadly_mushroom",
+      "danger_level": 5,
+      "alias": [
+        "淡红毒鹅膏",
+        "粉盖鹅膏"
+      ],
+      "features": [
+        "菌盖淡粉红至近白,直径 6-12cm",
+        "菌褶白色,密",
+        "菌柄白色,有菌环",
+        "菌托白色袋状(关键)"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 100,
+      "max_elevation": 1800,
+      "habitats": [
+        "阔叶林",
+        "混交林"
+      ],
+      "active_months": [
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "肝损害(鹅膏毒素)",
+      "latency_hours": 10,
+      "mortality_rate": "极高(50-90%)",
+      "symptoms": [
+        "潜伏 8-24 小时",
+        "呕吐腹泻后进入假愈期",
+        "2-3 天后肝肾功能衰竭",
+        "致死量约 30g 鲜重"
+      ],
+      "look_alike": [
+        {
+          "id": "mushroom_amanita_verna",
+          "name": "致命白毒伞(毒)",
+          "distinction": "白毒伞菌盖纯白;淡红鹅膏菌盖中央带淡粉色,两者均具菌托菌环,皆剧毒",
+          "fatality": "极高"
+        },
+        {
+          "id": "mushroom_amanita_virosa",
+          "name": "鳞柄白毒伞(毒)",
+          "distinction": "鳞柄白毒伞菌柄有鳞片;淡红鹅膏菌盖带粉调",
+          "fatality": "极高"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {
+        "误食": "firstaid_mushroom_poisoning"
+      },
+      "protective_gear": [
+        "凡有菌托的白色/浅色鹅膏一律不采"
+      ],
+      "route_associations": [
+        {
+          "route_id": "route_taishan_dong",
+          "months": [
+            "8",
+            "9"
+          ]
+        },
+        {
+          "route_id": "route_badaling",
+          "months": [
+            "8",
+            "9"
+          ]
+        }
+      ],
+      "representative_color": {
+        "h": 350,
+        "s": 30,
+        "v": 95
+      },
+      "images": [
+        "whole",
+        "volva"
+      ],
+      "description": "北方阔叶林剧毒鹅膏,菌盖带淡粉调仍极易与可食菌混淆。凡见菌托即弃。",
+      "source": "中国毒蘑菇图鉴 / 急救医学",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Amanita pallidorosea",
+        "Amanita pallidorosea",
+        "淡红鹅膏 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_lepiota_helveola",
+      "common_name": "褐鳞环柄菇",
+      "scientific_name": "Lepiota helveola",
+      "kingdom": "fungi",
+      "category": "deadly_mushroom",
+      "danger_level": 5,
+      "alias": [
+        "褐鳞小伞"
+      ],
+      "features": [
+        "菌盖小,直径 2-5cm,粉褐色鳞片",
+        "鳞片呈环状龟裂",
+        "菌褶白色,密",
+        "菌柄细,有菌环,易脱落"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 0,
+      "max_elevation": 1600,
+      "habitats": [
+        "草地",
+        "林缘",
+        "菜园"
+      ],
+      "active_months": [
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "肝损害(鹅膏毒素)",
+      "latency_hours": 8,
+      "mortality_rate": "高",
+      "symptoms": [
+        "潜伏 6-12 小时",
+        "呕吐腹泻后假愈",
+        "肝肾功能衰竭"
+      ],
+      "look_alike": [
+        {
+          "id": "mushroom_lepiota_brunneoincarnata",
+          "name": "肉褐鳞环柄菇(毒)",
+          "distinction": "两者同属且均剧毒,菌盖鳞片色调与大小略有差异,外形极易混淆",
+          "fatality": "高"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {
+        "误食": "firstaid_mushroom_poisoning"
+      },
+      "protective_gear": [
+        "不采个体细小的褐色鳞片伞菌"
+      ],
+      "route_associations": [
+        {
+          "route_id": "route_songshan",
+          "months": [
+            "8",
+            "9"
+          ]
+        }
+      ],
+      "representative_color": {
+        "h": 20,
+        "s": 35,
+        "v": 50
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "华北草地小型剧毒环柄菇,与肉褐鳞环柄菇为姊妹种,含鹅膏毒素,极易被当\"小蘑菇\"误采。",
+      "source": "中国毒蘑菇图鉴 / 急救医学",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Lepiota helveola",
+        "Lepiota helveola",
+        "褐鳞环柄菇 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_conocybe_filaris",
+      "common_name": "纹缘丝盖伞",
+      "scientific_name": "Conocybe filaris",
+      "kingdom": "fungi",
+      "category": "deadly_mushroom",
+      "danger_level": 5,
+      "alias": [
+        "锥盖伞"
+      ],
+      "features": [
+        "菌盖小,直径 1-3cm,黄褐至锈褐",
+        "菌盖边缘有辐射状细纹(关键)",
+        "菌褶锈褐色",
+        "菌柄细长,有菌环"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 0,
+      "max_elevation": 1500,
+      "habitats": [
+        "草地",
+        "林缘",
+        "腐殖土"
+      ],
+      "active_months": [
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "肝损害(鹅膏毒素)",
+      "latency_hours": 8,
+      "mortality_rate": "高",
+      "symptoms": [
+        "潜伏 6-12 小时",
+        "呕吐腹泻、腹痛",
+        "假愈期后肝衰竭"
+      ],
+      "look_alike": [
+        {
+          "id": "mushroom_galerina",
+          "name": "秋盔孢伞(致命)",
+          "distinction": "秋盔孢伞菌盖黄褐、无菌环;纹缘丝盖伞菌褶锈褐、菌柄有菌环",
+          "fatality": "极高"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {
+        "误食": "firstaid_mushroom_poisoning"
+      },
+      "protective_gear": [
+        "不采草地上的小型锈褐色伞菌"
+      ],
+      "route_associations": [
+        {
+          "route_id": "route_badaling",
+          "months": [
+            "8",
+            "9"
+          ]
+        }
+      ],
+      "representative_color": {
+        "h": 30,
+        "s": 40,
+        "v": 60
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "外形普通的小型毒菌,却含鹅膏毒素。华北草地腐殖土常见,误采后果极严重。",
+      "source": "中国毒蘑菇图鉴 / 急救医学",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Conocybe filaris",
+        "Conocybe filaris",
+        "纹缘丝盖伞 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_cortinarius_orellanus",
+      "common_name": "毒丝膜菌",
+      "scientific_name": "Cortinarius orellanus",
+      "kingdom": "fungi",
+      "category": "deadly_mushroom",
+      "danger_level": 5,
+      "alias": [
+        "奥来丝膜菌",
+        "焦黄丝膜菌"
+      ],
+      "features": [
+        "菌盖锈褐色至橙褐,直径 4-10cm",
+        "菌盖干,有细绒毛",
+        "菌褶锈黄,成熟后锈褐",
+        "菌柄细,有蛛网状菌幕(关键)"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西",
+        "内蒙古"
+      ],
+      "min_elevation": 200,
+      "max_elevation": 2000,
+      "habitats": [
+        "针叶林",
+        "混交林"
+      ],
+      "active_months": [
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "奥来毒素(延迟性肾损害)",
+      "latency_hours": 72,
+      "mortality_rate": "高(可致不可逆肾衰竭)",
+      "symptoms": [
+        "潜伏期极长(2-14 天,关键!)",
+        "首发口渴、多尿、腹痛",
+        "数天后急性肾衰竭",
+        "易被漏诊"
+      ],
+      "look_alike": [
+        {
+          "id": "mushroom_hebeloma",
+          "name": "丝膜菌(毒滑锈伞)",
+          "distinction": "两者均属丝膜菌类,形近;毒丝膜菌菌盖橙褐干绒、菌幕蛛网状",
+          "fatality": "高"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {
+        "误食": "firstaid_mushroom_poisoning"
+      },
+      "protective_gear": [
+        "凡有蛛网状菌幕的锈褐色伞菌一律不采"
+      ],
+      "route_associations": [
+        {
+          "route_id": "route_wutaishan",
+          "months": [
+            "8",
+            "9"
+          ]
+        }
+      ],
+      "representative_color": {
+        "h": 30,
+        "s": 45,
+        "v": 50
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "潜伏期可长达两周的致命毒菌,含奥来毒素致不可逆肾衰竭。华北针叶林秋季可见,识别难度大。",
+      "source": "中国毒蘑菇图鉴 / 急救医学",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Cortinarius orellanus",
+        "Cortinarius orellanus",
+        "毒丝膜菌 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_inocybe_maculata",
+      "common_name": "大孢丝盖伞",
+      "scientific_name": "Inocybe maculata",
+      "kingdom": "fungi",
+      "category": "deadly_mushroom",
+      "danger_level": 5,
+      "alias": [
+        "斑纹丝盖伞",
+        "毒丝盖伞"
+      ],
+      "features": [
+        "菌盖圆锥形,直径 3-7cm,褐至赭褐",
+        "菌盖中央有放射状纤维纹",
+        "菌褶初灰褐后锈褐",
+        "菌柄有丝膜残迹"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 100,
+      "max_elevation": 2000,
+      "habitats": [
+        "阔叶林",
+        "林缘",
+        "石灰岩土壤"
+      ],
+      "active_months": [
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "毒蕈碱(高含量,可致死)",
+      "latency_hours": 0.5,
+      "mortality_rate": "中-高(重症可致死)",
+      "symptoms": [
+        "15-30 分钟大量出汗、流涎、流泪",
+        "瞳孔缩小、视物模糊",
+        "心动过缓、血压骤降",
+        "严重者抽搐、呼吸麻痹"
+      ],
+      "look_alike": [
+        {
+          "id": "mushroom_mycena",
+          "name": "小菇属(部分毒)",
+          "distinction": "小菇属菌盖小、菌柄脆无丝膜;大孢丝盖伞菌盖有放射状纤丝、菌柄有丝膜残迹",
+          "fatality": "中"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {
+        "误食": "firstaid_mushroom_poisoning"
+      },
+      "protective_gear": [
+        "不采菌盖有放射状纤丝的褐色伞菌"
+      ],
+      "route_associations": [
+        {
+          "route_id": "route_tai_mountain",
+          "months": [
+            "8",
+            "9"
+          ]
+        }
+      ],
+      "representative_color": {
+        "h": 25,
+        "s": 40,
+        "v": 45
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "丝盖伞属中毒蕈碱含量高的种类,起病极快。华北阔叶林常见,个体不显眼却可致命。",
+      "source": "中国毒蘑菇图鉴 / 急救医学",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Inocybe maculata",
+        "Inocybe maculata",
+        "大孢丝盖伞 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_amanita_citrina",
+      "common_name": "橙黄鹅膏",
+      "scientific_name": "Amanita citrina",
+      "kingdom": "fungi",
+      "category": "common_poisonous",
+      "danger_level": 4,
+      "alias": [
+        "柠檬黄鹅膏",
+        "黄毒伞"
+      ],
+      "features": [
+        "菌盖淡柠檬黄至近白,直径 5-10cm",
+        "菌盖常有白色碎鳞片",
+        "菌褶白色",
+        "菌托明显,菌柄有菌环"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 100,
+      "max_elevation": 1800,
+      "habitats": [
+        "阔叶林",
+        "混交林"
+      ],
+      "active_months": [
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "胃肠炎+类鹅膏毒素(致幻)",
+      "latency_hours": 2,
+      "mortality_rate": "中",
+      "symptoms": [
+        "2-6 小时呕吐腹泻",
+        "部分可致幻觉、兴奋",
+        "重者需就医"
+      ],
+      "look_alike": [
+        {
+          "id": "mushroom_amanita_muscaria",
+          "name": "毒蝇伞(毒)",
+          "distinction": "毒蝇伞菌盖鲜红有白点;橙黄鹅膏菌盖淡柠檬黄、白鳞较淡",
+          "fatality": "中"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {
+        "误食": "firstaid_mushroom_poisoning"
+      },
+      "protective_gear": [
+        "凡见菌托的浅色鹅膏一律不采"
+      ],
+      "route_associations": [
+        {
+          "route_id": "route_lao_mountain",
+          "months": [
+            "8",
+            "9"
+          ]
+        }
+      ],
+      "representative_color": {
+        "h": 55,
+        "s": 30,
+        "v": 60
+      },
+      "images": [
+        "whole",
+        "volva"
+      ],
+      "description": "北方阔叶林浅色鹅膏,含鹅膏毒素类与致幻成分,外形淡雅却不可食。",
+      "source": "中国毒蘑菇图鉴 / 急救医学",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Amanita citrina",
+        "Amanita citrina",
+        "橙黄鹅膏 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_hygrocybe_conica",
+      "common_name": "变黑蜡伞",
+      "scientific_name": "Hygrocybe conica",
+      "kingdom": "fungi",
+      "category": "common_poisonous",
+      "danger_level": 3,
+      "alias": [
+        "锥形蜡伞",
+        "黑蜡伞"
+      ],
+      "features": [
+        "菌盖圆锥形,直径 2-5cm,橙黄至橙红",
+        "受伤或老化后变黑(关键!)",
+        "菌褶黄,疏",
+        "菌柄橙黄细长"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西",
+        "内蒙古"
+      ],
+      "min_elevation": 200,
+      "max_elevation": 2200,
+      "habitats": [
+        "草地",
+        "牧场",
+        "林缘"
+      ],
+      "active_months": [
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "胃肠炎",
+      "latency_hours": 1,
+      "mortality_rate": "低",
+      "symptoms": [
+        "1-3 小时恶心呕吐、腹泻",
+        "腹部不适"
+      ],
+      "look_alike": [],
+      "first_aid_id": "",
+      "first_aid_links": {
+        "误食": "firstaid_mushroom_poisoning"
+      },
+      "protective_gear": [
+        "凡受伤变黑的蜡伞不采"
+      ],
+      "route_associations": [
+        {
+          "route_id": "route_wutaishan",
+          "months": [
+            "8",
+            "9"
+          ]
+        }
+      ],
+      "representative_color": {
+        "h": 25,
+        "s": 85,
+        "v": 60
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "北方草地蜡伞类,橙黄醒目但受伤即变黑是鉴别特征。含胃肠炎毒素,不可食。",
+      "source": "中国毒蘑菇图鉴 / 急救医学",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Hygrocybe conica",
+        "Hygrocybe conica",
+        "变黑蜡伞 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_russula_foetens",
+      "common_name": "臭红菇",
+      "scientific_name": "Russula foetens",
+      "kingdom": "fungi",
+      "category": "common_poisonous",
+      "danger_level": 3,
+      "alias": [
+        "臭黄菇",
+        "油辣菇"
+      ],
+      "features": [
+        "菌盖土黄至褐黄,直径 6-15cm,表面黏",
+        "菌盖边缘有条棱(关键)",
+        "菌褶白色,密",
+        "菌肉有刺鼻腥臭味"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 200,
+      "max_elevation": 2200,
+      "habitats": [
+        "针叶林",
+        "混交林"
+      ],
+      "active_months": [
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "胃肠炎",
+      "latency_hours": 0.5,
+      "mortality_rate": "低",
+      "symptoms": [
+        "0.5-3 小时剧烈呕吐、腹泻",
+        "腹部绞痛",
+        "可致脱水"
+      ],
+      "look_alike": [
+        {
+          "id": "mushroom_russula_emetica",
+          "name": "毒红菇(毒)",
+          "distinction": "毒红菇菌盖红色、味辛辣;臭红菇菌盖土黄、有腥臭味、菌盖边缘有棱",
+          "fatality": "低"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {
+        "误食": "firstaid_mushroom_poisoning"
+      },
+      "protective_gear": [
+        "闻有腥臭味或菌盖边缘有棱的红菇类不采"
+      ],
+      "route_associations": [
+        {
+          "route_id": "route_changbaishan",
+          "months": [
+            "8",
+            "9"
+          ]
+        }
+      ],
+      "representative_color": {
+        "h": 45,
+        "s": 45,
+        "v": 65
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "北方针叶林常见大型毒红菇,刺鼻气味明显。与可食正红菇类外形相近,须细辨。",
+      "source": "中国毒蘑菇图鉴 / 急救医学",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Russula foetens",
+        "Russula foetens",
+        "臭红菇 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_pholiota_squarrosa",
+      "common_name": "翘鳞伞",
+      "scientific_name": "Pholiota squarrosa",
+      "kingdom": "fungi",
+      "category": "common_poisonous",
+      "danger_level": 3,
+      "alias": [
+        "翘鳞环锈伞",
+        "刺鳞伞"
+      ],
+      "features": [
+        "菌盖黄褐,直径 5-12cm,密被翘起鳞片(关键)",
+        "菌褶初黄后锈褐",
+        "菌柄粗,有翘鳞",
+        "成丛生于阔叶树基部"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 200,
+      "max_elevation": 2000,
+      "habitats": [
+        "阔叶树基部",
+        "树桩",
+        "倒木"
+      ],
+      "active_months": [
+        "8",
+        "9",
+        "10",
+        "11"
+      ],
+      "poisoning_type": "胃肠炎",
+      "latency_hours": 1,
+      "mortality_rate": "低",
+      "symptoms": [
+        "1-4 小时呕吐腹泻",
+        "腹痛"
+      ],
+      "look_alike": [
+        {
+          "id": "mushroom_pholiota_nameko",
+          "name": "滑菇(可食)",
+          "distinction": "滑菇菌盖黏滑无翘鳞、菌柄有菌环;翘鳞伞菌盖密被翘起鳞片",
+          "fatality": "低"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {
+        "误食": "firstaid_mushroom_poisoning"
+      },
+      "protective_gear": [
+        "树基成丛的翘鳞伞菌不采"
+      ],
+      "route_associations": [
+        {
+          "route_id": "route_songshan",
+          "months": [
+            "9",
+            "10"
+          ]
+        }
+      ],
+      "representative_color": {
+        "h": 35,
+        "s": 60,
+        "v": 70
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "北方阔叶树基部常见丛生菌,菌盖翘鳞醒目。与栽培食用菌滑菇同属,须严格区分。",
+      "source": "中国毒蘑菇图鉴 / 急救医学",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Pholiota squarrosa",
+        "Pholiota squarrosa",
+        "翘鳞伞 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_mycena_pura",
+      "common_name": "洁小菇",
+      "scientific_name": "Mycena pura",
+      "kingdom": "fungi",
+      "category": "common_poisonous",
+      "danger_level": 4,
+      "alias": [
+        "紫粉小菇",
+        "粉紫小菇"
+      ],
+      "features": [
+        "菌盖钟形,直径 2-6cm,淡紫至粉紫",
+        "菌盖边缘有条纹",
+        "菌褶白色,延生",
+        "菌柄细长,紫白色"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 300,
+      "max_elevation": 2200,
+      "habitats": [
+        "针叶林",
+        "阔叶林落叶层"
+      ],
+      "active_months": [
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "毒蕈碱+歧胺(致幻)",
+      "latency_hours": 0.5,
+      "mortality_rate": "中",
+      "symptoms": [
+        "15-60 分钟出汗、流涎、瞳孔缩小",
+        "可致视觉紊乱、兴奋",
+        "心动过缓"
+      ],
+      "look_alike": [
+        {
+          "id": "mushroom_lepista_nuda",
+          "name": "紫丁香蘑(可食)",
+          "distinction": "紫丁香蘑菌盖大、菌褶紫色、生于草地林缘;洁小菇菌盖小、淡紫、菌褶白色、生于落叶层",
+          "fatality": "中"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {
+        "误食": "firstaid_mushroom_poisoning"
+      },
+      "protective_gear": [
+        "不采落叶层上的淡紫色小菇"
+      ],
+      "route_associations": [
+        {
+          "route_id": "route_taibai_baoji",
+          "months": [
+            "8",
+            "9"
+          ]
+        }
+      ],
+      "representative_color": {
+        "h": 270,
+        "s": 35,
+        "v": 70
+      },
+      "images": [
+        "whole",
+        "gills"
+      ],
+      "description": "北方落叶层常见淡紫小菇,含毒蕈碱与致幻成分。与可食紫丁香蘑颜色相近,须分辨菌褶颜色。",
+      "source": "中国毒蘑菇图鉴 / 急救医学",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Mycena pura",
+        "Mycena pura",
+        "洁小菇 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_clitocybe_rivulosa",
+      "common_name": "毒白杯伞",
+      "scientific_name": "Clitocybe rivulosa",
+      "kingdom": "fungi",
+      "category": "common_poisonous",
+      "danger_level": 4,
+      "alias": [
+        "白杯伞",
+        "象牙白杯伞"
+      ],
+      "features": [
+        "菌盖白色至灰白,直径 2-5cm,中央下凹",
+        "菌褶白色,密,延生",
+        "菌柄白色,纤维质",
+        "成圈生于草地"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西",
+        "内蒙古"
+      ],
+      "min_elevation": 0,
+      "max_elevation": 2000,
+      "habitats": [
+        "草地",
+        "牧场",
+        "林缘"
+      ],
+      "active_months": [
+        "7",
+        "8",
+        "9",
+        "10",
+        "11"
+      ],
+      "poisoning_type": "毒蕈碱(高含量)",
+      "latency_hours": 0.5,
+      "mortality_rate": "中-高",
+      "symptoms": [
+        "15-30 分钟大量出汗、流涎、流泪",
+        "瞳孔缩小、视物模糊",
+        "心动过缓、血压下降",
+        "严重者呼吸抑制"
+      ],
+      "look_alike": [
+        {
+          "id": "mushroom_clitocybe_dealbata",
+          "name": "白霜杯伞(毒)",
+          "distinction": "两者同属且均含毒蕈碱,菌盖大小与下凹程度略有差异,外形极难区分",
+          "fatality": "中"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {
+        "误食": "firstaid_mushroom_poisoning"
+      },
+      "protective_gear": [
+        "草地成圈白色杯伞一律不采"
+      ],
+      "route_associations": [
+        {
+          "route_id": "route_badaling",
+          "months": [
+            "9",
+            "10"
+          ]
+        }
+      ],
+      "representative_color": {
+        "h": 0,
+        "s": 0,
+        "v": 95
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "与白霜杯伞同为草地\"仙女环\"毒菌,毒蕈碱含量高,起病极快。华北夏秋高发。",
+      "source": "中国毒蘑菇图鉴 / 急救医学",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Clitocybe rivulosa",
+        "Clitocybe rivulosa",
+        "毒白杯伞 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_boletus_reticulatus",
+      "common_name": "网柄牛肝菌",
+      "scientific_name": "Boletus reticulatus",
+      "kingdom": "fungi",
+      "category": "edible_mushroom",
+      "danger_level": 0,
+      "alias": [
+        "阔柄牛肝菌",
+        "白牛肝"
+      ],
+      "features": [
+        "菌盖褐黄至栗褐,直径 8-20cm",
+        "菌孔白色,老后淡黄不变蓝(关键)",
+        "菌柄粗,有白色网纹",
+        "菌肉白色,受伤不变蓝"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 200,
+      "max_elevation": 2000,
+      "habitats": [
+        "阔叶林",
+        "栎树林"
+      ],
+      "active_months": [
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "",
+      "latency_hours": 0,
+      "mortality_rate": "无",
+      "symptoms": [],
+      "look_alike": [
+        {
+          "id": "mushroom_boletus_satanas",
+          "name": "魔牛肝菌(毒)",
+          "distinction": "魔牛肝菌菌孔红色、菌肉变蓝;网柄牛肝菌菌孔白/淡黄不变蓝",
+          "fatality": "中(胃肠炎重)"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {},
+      "protective_gear": [
+        "确认菌孔不红、菌肉不变蓝再采"
+      ],
+      "route_associations": [
+        {
+          "route_id": "route_taishan_dong",
+          "months": [
+            "8",
+            "9"
+          ]
+        }
+      ],
+      "representative_color": {
+        "h": 30,
+        "s": 40,
+        "v": 55
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "北方阔叶林优质食用牛肝菌,菌柄网纹明显。与有毒魔牛肝菌须以菌孔颜色严格区分。",
+      "source": "中国食用菌图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Boletus reticulatus",
+        "Boletus reticulatus",
+        "网柄牛肝菌 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_suillus_luteus",
+      "common_name": "褐环乳牛肝菌",
+      "scientific_name": "Suillus luteus",
+      "kingdom": "fungi",
+      "category": "edible_mushroom",
+      "danger_level": 0,
+      "alias": [
+        "乳牛肝菌",
+        "黄黏盖"
+      ],
+      "features": [
+        "菌盖黏滑,黄褐至暗褐,直径 4-10cm",
+        "菌盖易撕去黏液层",
+        "菌孔黄色,细密",
+        "菌柄有紫褐菌环(关键)"
+      ],
+      "distribution": [
+        "河北",
+        "山西",
+        "内蒙古",
+        "辽宁",
+        "山东(北部)"
+      ],
+      "min_elevation": 500,
+      "max_elevation": 2200,
+      "habitats": [
+        "松林",
+        "针叶林"
+      ],
+      "active_months": [
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "",
+      "latency_hours": 0,
+      "mortality_rate": "无",
+      "symptoms": [],
+      "look_alike": [],
+      "first_aid_id": "",
+      "first_aid_links": {},
+      "protective_gear": [
+        "撕去菌盖黏液层后烹调"
+      ],
+      "route_associations": [
+        {
+          "route_id": "route_wutaishan",
+          "months": [
+            "8",
+            "9"
+          ]
+        }
+      ],
+      "representative_color": {
+        "h": 40,
+        "s": 35,
+        "v": 60
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "北方松林最常见食用牛肝菌,菌盖黏滑、菌柄有紫褐菌环。须撕去黏液层再食。",
+      "source": "中国食用菌图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Suillus luteus",
+        "Suillus luteus",
+        "褐环乳牛肝菌 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_laetiporus",
+      "common_name": "硫磺菌",
+      "scientific_name": "Laetiporus sulphureus",
+      "kingdom": "fungi",
+      "category": "edible_mushroom",
+      "danger_level": 0,
+      "alias": [
+        "硫色绚孔菌",
+        "鲑鱼菌"
+      ],
+      "features": [
+        "由瓣状菌盖叠生成莲座状,可达 30cm",
+        "菌盖硫黄色至橙黄(关键)",
+        "菌肉鲜黄,多汁",
+        "生于阔叶树干基"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 100,
+      "max_elevation": 2000,
+      "habitats": [
+        "阔叶树树干",
+        "树桩"
+      ],
+      "active_months": [
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "",
+      "latency_hours": 0,
+      "mortality_rate": "无",
+      "symptoms": [],
+      "look_alike": [],
+      "first_aid_id": "",
+      "first_aid_links": {},
+      "protective_gear": [
+        "仅取幼嫩菌盖(嫩时乳白/鲜黄、多汁)",
+        "老熟木质化及生针叶树上者勿食"
+      ],
+      "route_associations": [
+        {
+          "route_id": "route_songshan",
+          "months": [
+            "6",
+            "7",
+            "8"
+          ]
+        }
+      ],
+      "representative_color": {
+        "h": 45,
+        "s": 85,
+        "v": 60
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "北方阔叶树干基常见大型多孔菌,幼时硫黄鲜嫩可食。老后韧如木不可食。",
+      "source": "中国食用菌图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Laetiporus sulphureus",
+        "Laetiporus sulphureus",
+        "硫磺菌 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_grifola",
+      "common_name": "灰树花",
+      "scientific_name": "Grifola frondosa",
+      "kingdom": "fungi",
+      "category": "edible_mushroom",
+      "danger_level": 0,
+      "alias": [
+        "舞茸",
+        "栗蘑",
+        "贝叶多孔菌"
+      ],
+      "features": [
+        "由众多扇形菌柄聚合,直径可达 40cm",
+        "菌盖灰褐至暗灰,表面有细纹",
+        "菌孔白色,细密",
+        "生于栎树等根部"
+      ],
+      "distribution": [
+        "河北",
+        "山西",
+        "山东",
+        "辽宁",
+        "河南(豫西)"
+      ],
+      "min_elevation": 300,
+      "max_elevation": 2000,
+      "habitats": [
+        "阔叶树根部",
+        "栎树根部"
+      ],
+      "active_months": [
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "",
+      "latency_hours": 0,
+      "mortality_rate": "无",
+      "symptoms": [],
+      "look_alike": [],
+      "first_aid_id": "",
+      "first_aid_links": {},
+      "protective_gear": [
+        "勿切去根土后原地重生(破坏菌核)"
+      ],
+      "route_associations": [
+        {
+          "route_id": "route_taishan_dong",
+          "months": [
+            "9",
+            "10"
+          ]
+        }
+      ],
+      "representative_color": {
+        "h": 30,
+        "s": 20,
+        "v": 35
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "北方栗林名贵食用菌,又称\"舞茸\"\"栗蘑\"。成群生于栎树根部,口感脆嫩、药食两用。",
+      "source": "中国食用菌图鉴 / 本草纲目",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Grifola frondosa",
+        "Grifola frondosa",
+        "灰树花 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_tricholoma_matsutake",
+      "common_name": "松茸",
+      "scientific_name": "Tricholoma matsutake",
+      "kingdom": "fungi",
+      "category": "edible_mushroom",
+      "danger_level": 0,
+      "alias": [
+        "松口蘑",
+        "松蕈"
+      ],
+      "features": [
+        "菌盖黄褐至栗褐,直径 5-15cm",
+        "菌盖有纤维状鳞片",
+        "菌褶白色,密",
+        "菌柄粗,有褐色菌环残迹"
+      ],
+      "distribution": [
+        "辽宁",
+        "吉林(南部)",
+        "河北(北部)",
+        "山西"
+      ],
+      "min_elevation": 800,
+      "max_elevation": 2500,
+      "habitats": [
+        "赤松林",
+        "针叶林"
+      ],
+      "active_months": [
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "",
+      "latency_hours": 0,
+      "mortality_rate": "无",
+      "symptoms": [],
+      "look_alike": [
+        {
+          "id": "mushroom_tricholoma",
+          "name": "口蘑(可食)",
+          "distinction": "口蘑菌盖灰褐、无菌环;松茸菌盖黄褐、菌柄有褐环残迹、有浓香",
+          "fatality": "无"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {},
+      "protective_gear": [
+        "采后须留菌根土回填"
+      ],
+      "route_associations": [
+        {
+          "route_id": "route_changbaishan",
+          "months": [
+            "9",
+            "10"
+          ]
+        }
+      ],
+      "representative_color": {
+        "h": 35,
+        "s": 35,
+        "v": 45
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "北方松林名贵食用菌,香气浓郁。东北与北方山地秋季可见,与栽培口蘑须区分。",
+      "source": "中国食用菌图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Tricholoma matsutake",
+        "Tricholoma matsutake",
+        "松茸 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_lyophyllum_decastes",
+      "common_name": "荷叶离褶伞",
+      "scientific_name": "Lyophyllum decastes",
+      "kingdom": "fungi",
+      "category": "edible_mushroom",
+      "danger_level": 0,
+      "alias": [
+        "玉蕈",
+        "真姬菇",
+        "一窝鸡"
+      ],
+      "features": [
+        "菌盖灰褐至灰白,直径 4-10cm",
+        "菌盖表面有放射状细纹",
+        "菌褶白色,密",
+        "数十朵成丛簇生(关键)"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西"
+      ],
+      "min_elevation": 200,
+      "max_elevation": 2000,
+      "habitats": [
+        "林缘",
+        "草地",
+        "路边"
+      ],
+      "active_months": [
+        "9",
+        "10",
+        "11"
+      ],
+      "poisoning_type": "",
+      "latency_hours": 0,
+      "mortality_rate": "无",
+      "symptoms": [],
+      "look_alike": [
+        {
+          "id": "mushroom_clitocybe_dealbata",
+          "name": "白霜杯伞(毒)",
+          "distinction": "白霜杯伞菌盖中央下凹、菌柄脆、成圈;荷叶离褶伞成丛簇生、菌盖灰褐有条纹",
+          "fatality": "中"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {},
+      "protective_gear": [
+        "确认成丛簇生、菌盖无下凹再采"
+      ],
+      "route_associations": [
+        {
+          "route_id": "route_lao_mountain",
+          "months": [
+            "10",
+            "11"
+          ]
+        }
+      ],
+      "representative_color": {
+        "h": 30,
+        "s": 25,
+        "v": 55
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "北方秋季成丛食用菌,数十朵簇生如\"一窝鸡\"。肉质脆嫩,已广泛栽培。",
+      "source": "中国食用菌图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Lyophyllum decastes",
+        "Lyophyllum decastes",
+        "荷叶离褶伞 mushroom"
+      ]
+    },
+    {
+      "id": "mushroom_agaricus_bitorquis",
+      "common_name": "大肥蘑菇",
+      "scientific_name": "Agaricus bitorquis",
+      "kingdom": "fungi",
+      "category": "edible_mushroom",
+      "danger_level": 0,
+      "alias": [
+        "大肥菇",
+        "双环菇"
+      ],
+      "features": [
+        "菌盖白色至淡黄,直径 6-15cm",
+        "菌褶幼时粉红,后黑褐",
+        "菌柄有双层菌环(关键)",
+        "菌肉厚,受伤微变黄但无酚味"
+      ],
+      "distribution": [
+        "山东",
+        "河南",
+        "河北",
+        "山西",
+        "内蒙古"
+      ],
+      "min_elevation": 0,
+      "max_elevation": 1800,
+      "habitats": [
+        "草地",
+        "路旁",
+        "压实地"
+      ],
+      "active_months": [
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "poisoning_type": "",
+      "latency_hours": 0,
+      "mortality_rate": "无",
+      "symptoms": [],
+      "look_alike": [
+        {
+          "id": "mushroom_agaricus_xanthodermus",
+          "name": "黄斑蘑菇(毒)",
+          "distinction": "黄斑蘑菇菌柄受伤迅即变鲜黄、有酚味;大肥蘑菇有双层菌环、无酚味",
+          "fatality": "中(胃肠炎)"
+        }
+      ],
+      "first_aid_id": "",
+      "first_aid_links": {},
+      "protective_gear": [
+        "确认有双层菌环、无酚味再食"
+      ],
+      "route_associations": [
+        {
+          "route_id": "route_badaling",
+          "months": [
+            "7",
+            "8"
+          ]
+        }
+      ],
+      "representative_color": {
+        "h": 0,
+        "s": 0,
+        "v": 90
+      },
+      "images": [
+        "whole"
+      ],
+      "description": "北方草地路旁常见大型食用蘑菇,菌柄双层菌环是可靠特征,可顶开土被而出。",
+      "source": "中国食用菌图鉴",
+      "reviewer": "XX(菌物学)",
+      "photo_sources": [
+        "Agaricus bitorquis",
+        "Agaricus bitorquis",
+        "大肥蘑菇 mushroom"
+      ]
+    }
+  ]
+}

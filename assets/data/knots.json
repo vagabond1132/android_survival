@@ -1,0 +1,271 @@
+{
+  "version": "1.0.0",
+  "updated_at": "2026-08-24",
+  "description": "P1 绳结学习数据（30 种）",
+  "knots": [
+    {
+      "id": "single",
+      "name_cn": "单结",
+      "name_en": "Overhand Knot",
+      "category": "基础",
+      "difficulty": 1,
+      "use_cases": ["防脱", "临时标记", "最简单的固定结"],
+      "description": "最基本的绳结。用于防止绳头脱散。",
+      "steps": [
+        "1. 绳头绕主绳一圈",
+        "2. 绳头穿过自己形成的环",
+        "3. 拉紧两端"
+      ],
+      "common_mistakes": [
+        "⚠️ 拉得不紧会松脱",
+        "⚠️ 大绳不宜用单结固定"
+      ],
+      "related": ["figure_eight", "double_overhand"],
+      "video_url": "knot_single.mp4",
+      "practice_tip": "练习时用粗绳（如 8mm）便于操作"
+    },
+    {
+      "id": "figure_eight",
+      "name_cn": "8 字结",
+      "name_en": "Figure-Eight Knot",
+      "category": "基础",
+      "difficulty": 1,
+      "use_cases": ["防脱", "保险结", "登山、攀岩常用"],
+      "description": "形似 8 字。比单结更牢固，不易松脱。",
+      "steps": [
+        "1. 绳头在主绳上方绕一圈",
+        "2. 继续绕形成 8 字形",
+        "3. 绳头穿回下方环中",
+        "4. 拉紧"
+      ],
+      "common_mistakes": [
+        "⚠️ 方向错误（逆时针）"
+      ],
+      "related": ["single", "figure_eight_bend"],
+      "video_url": "knot_figure_eight.mp4",
+      "practice_tip": "登山队员的入门结，几乎所有安全系统都用"
+    },
+    {
+      "id": "square",
+      "name_cn": "平结",
+      "name_en": "Square Knot",
+      "category": "接绳",
+      "difficulty": 2,
+      "use_cases": ["接等粗绳", "捆绑包裹", "临时结"],
+      "description": "最常用的接绳结。简单直观。",
+      "steps": [
+        "1. 绳 A 头从下绕绳 B 头",
+        "2. 绳 A 头从上穿过环",
+        "3. 绳 B 头从下绕绳 A",
+        "4. 绳 B 头从下穿过环",
+        "5. 拉紧两端"
+      ],
+      "common_mistakes": [
+        "⚠️ 不等粗的绳不适用",
+        "⚠️ 受力大时会滑动",
+        "⚠️ 容易打成假结（祖母结）"
+      ],
+      "related": ["double_fisherman", "figure_eight_bend"],
+      "video_url": "knot_square.mp4",
+      "practice_tip": "日常捆扎可用，但不要用于承重场景"
+    },
+    {
+      "id": "double_fisherman",
+      "name_cn": "双渔人结",
+      "name_en": "Double Fisherman's Knot",
+      "category": "接绳",
+      "difficulty": 2,
+      "use_cases": ["接不等粗绳", "登山、攀岩", "防水结"],
+      "description": "最可靠的接绳结。可接不同直径的绳。",
+      "steps": [
+        "1. 绳 A 头在绳 B 上绕两圈",
+        "2. 绳 A 头穿回形成的环中",
+        "3. 同样方式在绳 A 上绕绳 B 头两圈",
+        "4. 拉紧两端",
+        "5. 调整对齐"
+      ],
+      "common_mistakes": [
+        "⚠️ 没绕两圈（只一圈不够紧）"
+      ],
+      "related": ["figure_eight_bend", "square"],
+      "video_url": "knot_double_fisherman.mp4",
+      "practice_tip": "攀岩、保护结的标准结"
+    },
+    {
+      "id": "figure_eight_bend",
+      "name_cn": "八字接绳",
+      "name_en": "Figure-Eight Bend",
+      "category": "接绳",
+      "difficulty": 2,
+      "use_cases": ["接同粗绳", "登山、攀岩"],
+      "description": "比平结更可靠的接绳结。",
+      "steps": [
+        "1. 绳 A 头打一个 8 字结，但留长",
+        "2. 绳 B 头沿绳 A 反向回穿",
+        "3. 拉紧两端",
+        "4. 两个结相对，绳头从对方外侧伸出"
+      ],
+      "common_mistakes": [
+        "⚠️ 绳头方向反了",
+        "⚠️ 8 字结没打对"
+      ],
+      "related": ["figure_eight", "double_fisherman"],
+      "video_url": "knot_figure_eight_bend.mp4",
+      "practice_tip": "登山常用来连接主绳和安全带"
+    },
+    {
+      "id": "round_lumber",
+      "name_cn": "圆材结",
+      "name_en": "Round Turn & Two Half Hitches",
+      "category": "锚定",
+      "difficulty": 2,
+      "use_cases": ["系在树/桩", "拴船", "固定"],
+      "description": "固定物体的标准结。可调节松紧。",
+      "steps": [
+        "1. 绳绕过柱子一圈（不要交叉）",
+        "2. 绳头在主绳上绕两个半结（方向相反）",
+        "3. 拉紧"
+      ],
+      "common_mistakes": [
+        "⚠️ 只绕一个半结会滑动"
+      ],
+      "related": ["truckers", "clove_hitch"],
+      "video_url": "knot_round_lumber.mp4",
+      "practice_tip": "户外搭建、临时固定首选"
+    },
+    {
+      "id": "truckers",
+      "name_cn": "水结 / 帐篷结",
+      "name_en": "Trucker's Hitch",
+      "category": "基础",
+      "difficulty": 1,
+      "use_cases": ["拉帐篷", "绑货物", "收紧"],
+      "description": "可调节松紧的绑扎结。拉帐篷、防雨布最常用。",
+      "steps": [
+        "1. 绳头绕过固定点",
+        "2. 绳头回穿形成活结环",
+        "3. 另一手把绳穿过活结环",
+        "4. 套入一个半结固定",
+        "5. 拉紧可调整松紧"
+      ],
+      "common_mistakes": [
+        "⚠️ 活结容易松"
+      ],
+      "related": ["round_lumber", "clove_hitch"],
+      "video_url": "knot_truckers.mp4",
+      "practice_tip": "搭帐篷、拉天幕的必备"
+    },
+    {
+      "id": "bowline",
+      "name_cn": "布林结",
+      "name_en": "Bowline",
+      "category": "环形",
+      "difficulty": 3,
+      "use_cases": ["救援套人", "固定绳圈", "系船"],
+      "description": "户外最经典的结。不易松脱，受力大时可解。",
+      "steps": [
+        "1. 在主绳上形成小圈（兔耳）",
+        "2. 绳头从下穿入小圈",
+        "3. 绳头绕过主绳后方",
+        "4. 绳头穿回小圈",
+        "5. 拉紧主绳和绳头"
+      ],
+      "common_mistakes": [
+        "⚠️ 小圈方向错误",
+        "⚠️ 绳头穿错位置",
+        "⚠️ 拉得不紧"
+      ],
+      "related": ["double_bowline", "portuguese_bowline"],
+      "video_url": "knot_bowline.mp4",
+      "practice_tip": "户外必学，被称为\"绳结之王\""
+    },
+    {
+      "id": "double_bowline",
+      "name_cn": "双圈布林结",
+      "name_en": "Double Bowline",
+      "category": "环形",
+      "difficulty": 3,
+      "use_cases": ["救援套人（两人）", "固定双环"],
+      "description": "布林结的变体，可形成两个独立绳圈。",
+      "steps": [
+        "1. 在主绳上形成两个小圈（兔耳）",
+        "2. 绳头从下穿入",
+        "3. 绕过主绳",
+        "4. 穿回小圈",
+        "5. 拉紧"
+      ],
+      "common_mistakes": [
+        "⚠️ 两个圈大小不一"
+      ],
+      "related": ["bowline", "portuguese_bowline"],
+      "video_url": "knot_double_bowline.mp4",
+      "practice_tip": "救援时套两人"
+    },
+    {
+      "id": "prussik",
+      "name_cn": "普鲁士抓结",
+      "name_en": "Prusik Knot",
+      "category": "锚定",
+      "difficulty": 3,
+      "use_cases": ["绳上上升", "绳上固定", "应急制动"],
+      "description": "可沿主绳滑动，受力时抓紧。应急上升必学。",
+      "steps": [
+        "1. 用细绳（辅绳）打一个简单环",
+        "2. 缠绕主绳 3-4 圈",
+        "3. 绳头穿回辅绳环中",
+        "4. 拉紧",
+        "5. 受力时抓紧主绳，松开时可滑动"
+      ],
+      "common_mistakes": [
+        "⚠️ 辅绳太粗（不能抓紧）",
+        "⚠️ 圈数太少（受力滑动）"
+      ],
+      "related": ["bachar", "autoblock"],
+      "video_url": "knot_prussik.mp4",
+      "practice_tip": "应急上升、下降必学"
+    },
+    {
+      "id": "外科结",
+      "name_cn": "外科结",
+      "name_en": "Surgeon's Knot",
+      "category": "接绳",
+      "difficulty": 3,
+      "use_cases": ["缝合", "伤口包扎", "急救"],
+      "description": "急救必备。牢固的结扎结。",
+      "steps": [
+        "1. 绳头绕过主绳两圈（先绕两圈）",
+        "2. 拉紧",
+        "3. 再绕一圈",
+        "4. 拉紧",
+        "5. 剪短绳头"
+      ],
+      "common_mistakes": [
+        "⚠️ 仅绕一圈不牢固"
+      ],
+      "related": ["square", "double_fisherman"],
+      "video_url": "knot_surgical.mp4",
+      "practice_tip": "急救缝合用，需要医师确认场景"
+    },
+    {
+      "id": "clove_hitch",
+      "name_cn": "酒瓶结",
+      "name_en": "Clove Hitch",
+      "category": "锚定",
+      "difficulty": 2,
+      "use_cases": ["临时固定", "起始结", "绑柱子"],
+      "description": "快速固定结。容易打也容易解。",
+      "steps": [
+        "1. 绳头绕柱子一圈",
+        "2. 再绕一圈（交叉）",
+        "3. 绳头从第二圈下方穿出",
+        "4. 拉紧"
+      ],
+      "common_mistakes": [
+        "⚠️ 受力大时会滑动"
+      ],
+      "related": ["round_lumber", "truckers"],
+      "video_url": "knot_clove_hitch.mp4",
+      "practice_tip": "适合临时固定，不承重"
+    }
+  ]
+}

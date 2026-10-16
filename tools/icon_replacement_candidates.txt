@@ -1,0 +1,151 @@
+=== hiking(缺) ===
+   U+E536  directions_walk e536         OK ✓
+   U+E566  directions_run e566          OK ✓
+   U+E564  terrain e564                 OK ✓
+   U+E55F  landscape e55f               OK ✓
+   U+E530  directions_bike e530         OK ✓
+   U+E239  emoji_nature e239            OK ✓
+   U+E406  nature e406                  OK ✓
+   U+E5FF  forest                       missing
+   U+E50F  hiking_new e50f              missing
+   -> 可用: E239 E406 E530 E536 E55F E564 E566
+
+=== car(缺) ===
+   U+E531  directions_car e531          OK ✓
+   U+E569  local_shipping e569          OK ✓
+   U+E532  directions_bus e532          OK ✓
+   U+E535  directions_transit e535      OK ✓
+   U+E570  train e570                   OK ✓
+   U+E539  flight e539                  OK ✓
+   U+E53F  luggage e53f                 OK ✓
+   U+E532  boat e532                    OK ✓
+   -> 可用: E531 E532 E532 E535 E539 E53F E569 E570
+
+=== check/步骤(缺) ===
+   U+E153  checklist e153               OK ✓
+   U+E065  playlist_add_check e065      OK ✓
+   U+E85D  assignment e85d              OK ✓
+   U+E86C  check_circle e86c            OK ✓
+   U+E896  list e896                    OK ✓
+   U+E876  done e876                    OK ✓
+   U+E166  fact_check_new               OK ✓
+   U+E14C  build e14c                   OK ✓
+   U+E873  description e873             OK ✓
+   -> 可用: E065 E14C E153 E166 E85D E86C E873 E876 E896
+
+=== route/路面(缺) ===
+   U+E55B  map e55b                     OK ✓
+   U+E568  navigation e568              OK ✓
+   U+E922  timeline e922                OK ✓
+   U+E0B6  call_split e0b6              OK ✓
+   U+E0B6  alt_route e0b6               OK ✓
+   U+E260  linear_scale e260            OK ✓
+   U+E564  terrain e564                 OK ✓
+   U+E6E3  route_new e6e3               missing
+   -> 可用: E0B6 E0B6 E260 E55B E564 E568 E922
+
+=== 加油/补给(缺) ===
+   U+E569  local_shipping e569          OK ✓
+   U+E989  local_gas_station e989       OK ✓
+   U+E8CC  shopping_cart e8cc           OK ✓
+   U+E8D1  store e8d1                   OK ✓
+   U+E56C  restaurant e56c              OK ✓
+   U+E561  local_dining e561            OK ✓
+   U+E227  attach_money e227            OK ✓
+   U+E263  monetization_on e263         OK ✓
+   U+E1F7  local_gas_station_new e1f7   missing
+   -> 可用: E227 E263 E561 E569 E56C E8CC E8D1 E989
+
+=== 统计/条数(缺) ===
+   U+E01D  equalizer e01d               OK ✓
+   U+E26B  bar_chart e26b               OK ✓
+   U+E896  list e896                    OK ✓
+   U+E8EF  view_list e8ef               OK ✓
+   U+E242  format_list_numbered e242    OK ✓
+   U+E85D  assessment e85d              OK ✓
+   U+E24B  insert_chart e24b            OK ✓
+   U+E4E0  equalizer_new e4e0           missing
+   -> 可用: E01D E242 E24B E26B E85D E896 E8EF
+
+=== 背包(缺) ===
+   U+E53F  luggage e53f                 OK ✓
+   U+E8F6  shopping_bag e8f6            OK ✓
+   U+E88A  portable_wifi                OK ✓
+   U+E8F9  work e8f9                    OK ✓
+   U+E8F9  business_center e8f9         OK ✓
+   U+E1F6  backpack_new e1f6            missing
+   U+E1F7  backpack_new2 e1f7           missing
+   -> 可用: E53F E88A E8F6 E8F9 E8F9
+
+=== 蘑菇(缺) ===
+   U+E239  emoji_nature e239            OK ✓
+   U+E8A2  park e8a2                    OK ✓
+   U+E2DC  spa e2dc                     missing
+   U+E4CA  grass? e4ca                  missing
+   U+E3E3  filter_vintage e3e3          OK ✓
+   U+E406  nature e406                  OK ✓
+   U+E545  local_florist e545           OK ✓
+   -> 可用: E239 E3E3 E406 E545 E8A2
+
+=== 叶子/植物(缺) ===
+   U+E205  eco e205                     missing
+   U+E2DC  spa e2dc                     missing
+   U+E406  nature e406                  OK ✓
+   U+E545  local_florist e545           OK ✓
+   U+E3E3  filter_vintage e3e3          OK ✓
+   U+E4CA  grass e4ca                   missing
+   U+E8A2  park e8a2                    OK ✓
+   U+E5FF  forest                       missing
+   U+E5FF  tree                         missing
+   -> 可用: E3E3 E406 E545 E8A2
+
+=== 重量(缺) ===
+   U+E6DD  fitness_center e6dd          OK ✓
+   U+E1F6  scale e1f6                   missing
+   U+E259  line_weight e259             OK ✓
+   U+E8D5  swap_vert e8d5               OK ✓
+   U+E9D5  monitor_weight               missing
+   U+E9D5  fitness_center2 e9d5         missing
+   -> 可用: E259 E6DD E8D5
+
+=== 日期/季节(缺) ===
+   U+E878  event e878                   OK ✓
+   U+E8DF  today e8df                   OK ✓
+   U+E916  date_range e916              OK ✓
+   U+E935  calendar_today e935          OK ✓
+   U+E8B5  schedule e8b5                OK ✓
+   U+E192  access_time e192             OK ✓
+   U+E616  event_note e616              OK ✓
+   U+E2D0  wc? e2d0                     missing
+   -> 可用: E192 E616 E878 E8B5 E8DF E916 E935
+
+=== 材料(缺) ===
+   U+E14C  build e14c                   OK ✓
+   U+E8F9  handyman                     OK ✓
+   U+E8F9  construction                 OK ✓
+   U+E1BD  widgets e1bd                 OK ✓
+   U+E87B  extension e87b               OK ✓
+   U+E574  category e574                OK ✓
+   U+E1EB  work e1eb                    missing
+   -> 可用: E14C E1BD E574 E87B E8F9 E8F9
+
+=== 环境急症(缺) ===
+   U+E002  warning e002                 OK ✓
+   U+E1B5  wb_sunny e1b5                OK ✓
+   U+E193  ac_unit e193                 OK ✓
+   U+E1B7  bolt e1b7                    OK ✓
+   U+E564  terrain e564                 OK ✓
+   U+E1B1  sos e1b1                     OK ✓
+   U+E160  report e160                  OK ✓
+   -> 可用: E002 E160 E193 E1B1 E1B5 E1B7 E564
+
+=== 相册/文件夹(缺) ===
+   U+E2C7  folder e2c7                  OK ✓
+   U+E2C8  folder_open e2c8             OK ✓
+   U+E413  photo_library e413           OK ✓
+   U+E3B6  collections e3b6             OK ✓
+   U+E3F4  image e3f4                   OK ✓
+   U+E412  photo e412                   OK ✓
+   U+E24F  insert_photo e24f            OK ✓
+   -> 可用: E24F E2C7 E2C8 E3B6 E3F4 E412 E413
+

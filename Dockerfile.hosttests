@@ -1,0 +1,19 @@
+# 桌面端单元测试镜像
+#
+# 背景: Dockerfile.android 只给 desktop Qt 装了 qtshadertools + qtquick3d,
+#       缺 qtpositioning。而 EmergencyService / MapService / RouteService /
+#       TravelService / FieldGuideHistory 都依赖 QGeoCoordinate,导致
+#       `cmake -S tests` 在容器里 configure 直接失败 (Failed to find required
+#       Qt component "Positioning")。
+#
+# 本文件基于已构建好的 APK 镜像增量安装 desktop Positioning + Location 模块,
+# 不重跑 NDK/SDK/Android Qt 安装,构建耗时约 1-2 分钟。
+#
+#   docker compose build unit-test
+#   docker compose run --rm unit-test bash -c "cd /project && bash run_unit_tests.sh"
+
+FROM outdoor-survival-android-builder:latest
+
+RUN aqt install-qt linux desktop 6.7.2 linux_gcc_64 -O /opt/Qt \
+        -m qtpositioning qtlocation qtcharts qtsensors \
+    && rm -rf /root/.cache/aqtinstall

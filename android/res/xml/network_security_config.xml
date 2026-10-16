@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 2026-09-19: Qt 6.7 在 Android NDK r26 上 ossl TLS backend 加载
+     /system/lib/libcrypto.so 被 namespace 拦截, QSslSocket 初始化失败
+     → tile.openstreetmap.de (HTTPS) 拉不到瓦片.
+     兜底: 这些 OSM 镜像域名允许走 cleartext (HTTP), 即使 HTTPS 失败也能拉.
+     商业域名 (api/cdn.outdoor-survival.com) 默认仍禁明文.
+     2026-09-23: 修地图白底 - 之前 allowlist 是 webrd0.is.autonavi.com
+     (少一个 1), MapPage.qml 实际请求 webrd01.is.autonavi.com, 域名不匹配
+     Android 9+ 直接 block HTTPS → 瓦片拉不到 → 白底. 补回 webrd01.
+     2026-09-24: 真正的病根是 manifest 用了 <meta-data android:name=
+     "android.security.net.config"> 这种非官方写法, 本文件一直没被 Android 加载 →
+     allowlist 形同虚设. 已改成 <application android:networkSecurityConfig=
+     "@xml/network_security_config">. 同时 MapPage.qml 的 host 从 https 改 http
+     (APK 未打包 OpenSSL 3, QSslSocket 起不来, 所有 HTTPS 都拉不到).
+     2026-10-09: 上面这条已解决 — build_apk.sh 现显式把
+     third_party/android_openssl/ssl_3/<abi>/libcrypto_3.so + libssl_3.so 打进
+     APK lib/<abi>/, QSslSocket 可正常工作, MapPage.qml 三源均走 https.
+     注意: 本文件 <domain-config> 白名单**只对 HTTP 明文生效**; HTTPS 走
+     <base-config> 的 trust-anchors(系统 CA), 无需在此列域名. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">tile.openstreetmap.de</domain>
+        <domain includeSubdomains="true">tile.openstreetmap.org</domain>
+        <domain includeSubdomains="true">tile.openstreetmap.fr</domain>
+        <domain includeSubdomains="true">basemaps.cartocdn.com</domain>
+        <domain includeSubdomains="true">webrd01.is.autonavi.com</domain>
+        <domain includeSubdomains="true">api.outdoor-survival.com</domain>
+        <domain includeSubdomains="true">cdn.outdoor-survival.com</domain>
+    </domain-config>
+</network-security-config>

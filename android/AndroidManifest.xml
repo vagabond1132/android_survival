@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:versionCode="1"
+    android:versionName="0.0.1">
+
+    <!-- 网络权限（P2 联网识别） -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+
+    <!-- 相机（识别） -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- 存储 -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="29" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+
+    <!-- 位置（SOS、识别历史） -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!-- 电话 / 短信（紧急） -->
+    <uses-permission android:name="android.permission.CALL_PHONE" />
+    <uses-permission android:name="android.permission.SEND_SMS" />
+
+    <!-- 闪光灯 / 震动 -->
+    <uses-permission android:name="android.permission.FLASHLIGHT" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!-- 唤醒锁定（SOS 长按） -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- 前台服务（SOS 模式） -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL" />
+
+    <!-- 硬件特性 -->
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="true" />
+    <uses-feature
+        android:name="android.hardware.camera.autofocus"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.location.gps"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.telephony"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.touchscreen"
+        android:required="true" />
+
+    <application
+        android:name=".OutdoorSurvivalApp"
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:theme="@style/AppTheme"
+        android:hardwareAccelerated="true"
+        android:largeHeap="true"
+        android:extractNativeLibs="true"
+        android:requestLegacyExternalStorage="false"
+        android:allowBackup="false"
+        android:fullBackupContent="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:usesCleartextTraffic="false"
+        android:networkSecurityConfig="@xml/network_security_config"
+        tools:targetApi="33">
+
+        <!-- 2026-09-19: 自定义 MainActivity (com.outdoor.survival.MainActivity) 继承
+             QtActivityBase. 接管 onRequestPermissionsResult, 转 PermissionHelper.dispatchResult
+             反向调 C++ nativeHandlePermissionResult. 旧 manifest 写 QtActivityBase 时
+             系统权限回调没地方接 → AndroidPlatform::requestPermission 是 stub 直接 callback(true)
+             假装成功 → 首次装包没弹"允许使用位置/相机"系统框. -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:configChanges="orientation|uiMode|locale|fontScale|keyboard|keyboardHidden|navigation|screenLayout|screenSize|smallestScreenSize|density"
+            android:windowSoftInputMode="adjustResize"
+            android:screenOrientation="unspecified"
+            android:launchMode="singleTask"
+            android:resizeableActivity="true">
+
+            <!-- QtLoader 启动时从 ActivityInfo.metaData 读 "android.app.lib_name"
+                 作为主库名, 拼成 lib<value>.so 调 System.loadLibrary.
+                 若缺失, m_mainLibName 为空 → 找 lib_.so 永远失败 → 启动闪退
+                 (logcat: "QtLoader: Loading main library failed").
+                 若写 OutdoorSurvival_arm64-v8a, QtLoader 内部直接拼 lib<value>.so
+                 → libOutdoorSurvival_arm64-v8a_arm64-v8a.so 重复 ABI 后缀 → 找不到
+                 → 同样 "Loading main library failed" (run.txt 16:43:52.910 实际命中).
+                 不能依赖 androiddeployqt 注入: build_apk.sh 会把本 manifest 覆盖
+                 androiddeployqt 生成版, 必须在此硬编码以保持稳定. -->
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="OutdoorSurvival" />
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- 深度链接：分享接收 -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="outdoor" />
+                <data android:scheme="https"
+                      android:host="share.outdoor-survival.com" />
+            </intent-filter>
+        </activity>
+
+        <!-- SOS 前台服务 -->
+        <service
+            android:name=".EmergencyService"
+            android:exported="false"
+            android:foregroundServiceType="location|phoneCall" />
+
+        <!-- 2026-09-11: 拍照独立壳 Activity (Map 主页改版 P1, 3.26 拍照存图+GPS)
+             不继承 QtActivity, 避免影响 Qt 启动; 拍完通过 JNI 反灌到 C++ 端.
+             exported=true: 需让 MediaStore.ACTION_IMAGE_CAPTURE 拉起系统相机. -->
+        <activity
+            android:name=".PhotoCaptureActivity"
+            android:exported="true"
+            android:configChanges="orientation|uiMode|locale|fontScale|keyboard|keyboardHidden|navigation|screenLayout|screenSize|smallestScreenSize|density"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+        <!-- 文件提供者（识别图片分享） -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <!-- 网络安全配置: 走 <application android:networkSecurityConfig> 官方属性 (见上方
+             application 开标签). 旧的 <meta-data android:name="android.security.net.config"> 写法
+             Android 不认, allowlist 一直没生效. -->
+    </application>
+
+    <!-- 第三方库配置 -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.DIAL" />
+            <data android:scheme="tel" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SENDTO" />
+            <data android:scheme="smsto" />
+        </intent>
+    </queries>
+</manifest>

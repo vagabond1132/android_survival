@@ -1,0 +1,15 @@
+// Top-level build file
+// 注意: 仓库声明已移到 settings.gradle 的 dependencyResolutionManagement / pluginManagement
+// 此处不要再写 buildscript.repositories 或 allprojects.repositories,
+// 否则 Gradle 8.x 在 FAIL_ON_PROJECT_REPOS 模式下会报:
+//   "repository 'Google' was added by build file 'build.gradle'"
+buildscript {
+    dependencies {
+        classpath("com.android.tools.build:gradle:8.4.0")
+    }
+}
+
+// Groovy DSL 写法 (不要用 Kotlin 的 Delete::class)
+tasks.register('clean', Delete) {
+    delete rootProject.buildDir
+}

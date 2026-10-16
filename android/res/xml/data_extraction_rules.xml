@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="database" path="user.db" />
+        <exclude domain="database" path="settings.db" />
+    </cloud-backup>
+    <device-transfer>
+        <include domain="database" path="species.db" />
+        <include domain="database" path="firstaid.db" />
+        <include domain="database" path="survival.db" />
+        <include domain="database" path="routes.db" />
+    </device-transfer>
+</data-extraction-rules>
