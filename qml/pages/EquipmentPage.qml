@@ -184,7 +184,8 @@ Page {
                 grams: Number(l.totalWeightG) || 0,
                 checked: Number(l.checkedCount) || 0,
                 completed: l.isCompleted === true,
-                created: String(l.createdAt || "")
+                created: String(l.createdAt || ""),
+                label: "", count: 0
             })
         }
         order.sort(function (a, b) { return a.lv - b.lv })
@@ -195,7 +196,13 @@ Page {
                 if (a.created === b.created) return a.name < b.name ? -1 : 1
                 return a.created < b.created ? 1 : -1
             })
-            out.push({ kind: "head", label: order[g].label, count: members.length, level: order[g].lv })
+            // 两类行必须同键: delegate 里的绑定一律会求值 (`visible: false` 不拦绑定),
+            // 少一个键真机上就是 "Unable to assign [undefined] to QString/bool/int"。
+            out.push({
+                kind: "head", label: order[g].label, count: members.length, level: order[g].lv,
+                itemId: "", name: "", altMax: 0, grams: 0, checked: 0,
+                completed: false, created: ""
+            })
             for (var m = 0; m < members.length; ++m) out.push(members[m])
         }
         listRows = out
@@ -243,7 +250,8 @@ Page {
                 grams: it.grams,
                 critical: it.critical,
                 isUser: it.isUser,
-                plate: CommonOptions.plateCode("GB", it.itemId)
+                plate: CommonOptions.plateCode("GB", it.itemId),
+                label: "", count: 0
             })
         }
         order.sort(function (a, b) {
@@ -260,7 +268,11 @@ Page {
                 if (a.grams !== b.grams) return a.grams - b.grams
                 return a.name < b.name ? -1 : 1
             })
-            out.push({ kind: "head", label: categoryLabel(order[g]), count: members.length })
+            out.push({
+                kind: "head", label: categoryLabel(order[g]), count: members.length,
+                itemId: "", name: "", catKey: order[g], catLabel: "", grams: 0,
+                critical: false, isUser: false, plate: ""
+            })
             for (var m = 0; m < members.length; ++m) out.push(members[m])
         }
         itemRows = out

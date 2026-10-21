@@ -324,8 +324,18 @@ QList<RecommendedItem> EquipmentService::applyRules(
     const TripParameters& params,
     const QHash<QString, EquipmentItem>& items) {
 
+    // 2026-10-21 修复 (用户报"必带/强必带不随环境条件变化"):
+    //   原来这里是 `addedIds` 去重 + 首条命中即定档 —— 一条 item 只要被前面某条规则
+    //   收走, 后面所有命中它的规则**整条作废**, 既不提档也不留理由。
+    //   现在改成: 同一 item 的多条命中规则全部累加理由, 优先级取**最高**那一档。
+    //   注意实测边界 (扫过 18 组环境参数, _scratch_debug/gear_rules_20261021):
+    //   当前 equipment_rules.json 里 16 个被多条规则覆盖的 item, 覆盖它们的规则**档位
+    //   全相同**, 所以这个修复今天只让"推荐理由"栏从 1 条变多条, 桶数量一个没动 ——
+    //   必带/强必带不随季节/降水/风/湿度变化是规则数据本身没在这个档位写这些条件
+    //   (39 条: 11 critical / 4 important / 24 recommended; important 里 3 条还是
+    //   always), 属于数据问题, 不在此函数职责内。
     QList<RecommendedItem> result;
-    QSet<QString> addedIds;
+    QHash<QString, int> indexOf;   // itemId -> result 下标 (保持首次出现的顺序, 可复现)
 
     for (const auto& ruleV : m_rules) {
         QJsonObject rule = ruleV.toObject();
@@ -353,18 +363,26 @@ QList<RecommendedItem> EquipmentService::applyRules(
         QJsonArray ruleItems = rule["items"].toArray();
         for (const auto& iv : ruleItems) {
             QString itemId = iv.toString();
-            if (addedIds.contains(itemId)) continue;
-
             auto it = items.constFind(itemId);
             if (it == items.constEnd()) continue;
 
-            RecommendedItem rec;
-            rec.item = it.value();
-            rec.priority = priority;
-            rec.reasons << ruleName;
-            rec.sourceRule = rule["id"].toString();
-            result.append(rec);
-            addedIds.insert(itemId);
+            const auto pos = indexOf.constFind(itemId);
+            if (pos == indexOf.constEnd()) {
+                RecommendedItem rec;
+                rec.item = it.value();
+                rec.priority = priority;
+                rec.reasons << ruleName;
+                rec.sourceRule = rule["id"].toString();
+                indexOf.insert(itemId, result.size());
+                result.append(rec);
+                continue;
+            }
+            RecommendedItem& rec = result[pos.value()];
+            if (!rec.reasons.contains(ruleName)) rec.reasons << ruleName;
+            if (priority > rec.priority) {
+                rec.priority = priority;
+                rec.sourceRule = rule["id"].toString();
+            }
         }
     }
     return result;

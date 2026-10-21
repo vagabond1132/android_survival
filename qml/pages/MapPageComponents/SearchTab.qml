@@ -59,6 +59,20 @@ Item {
         }
     }
 
+    // 副标题口径对齐 NearbyTab(目标): 省 · 全长.
+    // 原来写的是 province + " · " + city —— search()/getByProvinceAndDifficulty()/
+    // getByDifficulty() 三个返回里根本没有 city 这个键 (RouteService.cpp 手搓的
+    // QVariantMap 只有 id/name/province/difficulty/distanceKm), 拼出来永远只剩一个点.
+    // 用 filter+join 而不是硬拼: 省为空的条目不会留个孤零零的 "·".
+    function subOf(r) {
+        var parts = []
+        var p = String(r.province || "")
+        if (p.length > 0) parts.push(p)
+        var km = Number(r.distanceKm) || 0
+        if (km > 0) parts.push("全长 " + CommonOptions.formatDistance(km))
+        return parts.join(" · ")
+    }
+
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: styles.spMd
@@ -180,7 +194,7 @@ Item {
                 dense: true
                 title: modelData.name || "(未命名)"
                 titleColor: CommonOptions.colorText
-                subtitle: (modelData.province || "") + " · " + (modelData.city || "")
+                subtitle: root.subOf(modelData)
                 value: CommonOptions.difficultyLabel(modelData.difficulty || 1)
                 bg: picked ? CommonOptions.colorSurfaceDim : CommonOptions.colorSurface
                 // 2026-10-19: ListRow 的 value 文字吃 accent 色. 这里不能再用

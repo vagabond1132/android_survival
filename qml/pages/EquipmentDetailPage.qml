@@ -83,13 +83,18 @@ Page {
     }
 
     // 展平成 head + item 两组行; 必备 = 前两档 (与 ChecklistPage 的 required 同口径)
+    // 两类行必须是同一套键: delegate 里的绑定一律会求值 (`visible: false` 不拦绑定),
+    // 少一个键真机上就是 "Unable to assign [undefined] to QString/bool/int"。
     function rebuild() {
         var out = []
         for (var b = 0; b < buckets.length; ++b) {
             var bk = buckets[b]
             var arr = detailPage._toArr(detailPage.entity[bk.key])
             if (arr.length === 0) continue
-            out.push({ kind: "head", label: bk.label, tone: bk.tone, count: arr.length })
+            out.push({
+                kind: "head", label: bk.label, tone: bk.tone, count: arr.length,
+                itemId: "", name: "", sub: "", grams: 0, required: false, checked: false
+            })
             for (var i = 0; i < arr.length; ++i) {
                 var it = arr[i]
                 var why = detailPage._toArr(it.reasons)
@@ -101,7 +106,8 @@ Page {
                     grams: Number(it.weightG) || 0,
                     tone: bk.tone,
                     required: b < 2,
-                    checked: it.checked === true
+                    checked: it.checked === true,
+                    label: "", count: 0
                 })
             }
         }

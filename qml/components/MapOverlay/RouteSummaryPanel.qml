@@ -329,6 +329,7 @@ Item {
                 Repeater {
                     model: root._statCards
                     delegate: Rectangle {
+                        required property var modelData
                         Layout.fillWidth: true
                         Layout.preferredHeight: styles.rowHTall
                         radius: styles.rSm
@@ -506,6 +507,7 @@ Item {
                                   sub: "热量 " + Math.round(stats.calorieKcal || 0) + " kcal" }
                             ]
                             delegate: RowLayout {
+                                required property var modelData
                                 Layout.fillWidth: true
                                 spacing: styles.spXs
                                 Text {
@@ -695,6 +697,7 @@ Item {
                     Repeater {
                         model: stats.splits || []
                         delegate: RowLayout {
+                            required property var modelData
                             Layout.fillWidth: true
                             spacing: styles.spSm
                             Text {

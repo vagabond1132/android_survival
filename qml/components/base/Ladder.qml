@@ -20,6 +20,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import OutdoorSurvival 1.0   // CommonOptions 是模块单例, 不 import 真机上档位色全部回落成黑
 
 Item {
     id: ladder

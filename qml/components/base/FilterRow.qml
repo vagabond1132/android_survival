@@ -93,6 +93,9 @@ RowLayout {
             // 2026-10-16: Material 的弹出列表挂在 Overlay 上, 不继承 control.font,
             //   必须显式给 delegate, 否则弹出项回退系统字体 → 图标变方框.
             delegate: ItemDelegate {
+                required property var model
+                required property var modelData
+                required property int index
                 width: comboBoxItem.width
                 height: styles.rowHSm
                 contentItem: Text {

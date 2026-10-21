@@ -116,7 +116,8 @@ Page {
                 difficulty: Number(k.difficulty) || 1,
                 learned: !!k.learned,
                 plate: CommonOptions.plateCode("KN", k.id),
-                tone: toneFor(cat)
+                tone: toneFor(cat),
+                count: 0, allLearned: false
             })
         }
         ordered.sort(function (a, b) { return a.plate < b.plate ? -1 : (a.plate > b.plate ? 1 : 0) })
@@ -137,12 +138,16 @@ Page {
             var allLearned = members.length > 0
             for (var m = 0; m < members.length; ++m)
                 if (!members[m].learned) allLearned = false
+            // 两类行必须同键: delegate 里的绑定一律求值 (`visible: false` 不拦绑定),
+            // 少一个键真机上就是 "Unable to assign [undefined] to QString/bool/int"。
             out.push({
                 kind: "head",
                 category: cat2,
                 count: members.length,
                 tone: toneFor(cat2),
-                allLearned: allLearned
+                allLearned: allLearned,
+                id: "", nameCn: "", nameEn: "", use: "",
+                difficulty: 1, learned: false, plate: ""
             })
             for (var n = 0; n < members.length; ++n) out.push(members[n])
         }

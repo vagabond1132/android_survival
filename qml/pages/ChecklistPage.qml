@@ -103,7 +103,19 @@ Page {
             group: group,
             required: required,
             checked: checked,
-            missing: required && !checked
+            missing: required && !checked,
+            label: "", count: 0
+        }
+    }
+
+    // delegate 里两类行的绑定都会求值 —— `visible: false` 不阻止绑定生效,
+    // 所以 head 缺 name/sub/checked/grams、item 缺 label/count 都会报
+    // "Unable to assign [undefined] to QString/bool/int" (真机 4 处)。两边都补齐。
+    function _mkHead(label, count) {
+        return {
+            kind: "head", label: label, count: count,
+            id: "", name: "", sub: "", grams: 0, group: "",
+            required: false, checked: false, missing: false
         }
     }
 
@@ -132,16 +144,16 @@ Page {
         if (packedByCategory) {
             for (var g = 0; g < groups.length; ++g) {
                 var members = all.filter(function (it) { return it.group === groups[g] })
-                out.push({ kind: "head", label: groups[g], count: members.length })
+                out.push(_mkHead(groups[g], members.length))
                 for (var m = 0; m < members.length; ++m) out.push(members[m])
             }
         } else {
             var sorted = all.slice().sort(function (a, b) { return _urgency(a) - _urgency(b) })
             var lack = sorted.filter(function (it) { return it.missing })
-            out.push({ kind: "head", label: "还缺的必备", count: lack.length })
+            out.push(_mkHead("还缺的必备", lack.length))
             for (var s = 0; s < sorted.length; ++s) {
                 if (s === lack.length && lack.length > 0)
-                    out.push({ kind: "head", label: "其余", count: sorted.length - lack.length })
+                    out.push(_mkHead("其余", sorted.length - lack.length))
                 out.push(sorted[s])
             }
         }

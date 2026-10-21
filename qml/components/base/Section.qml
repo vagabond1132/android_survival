@@ -75,10 +75,12 @@ ColumnLayout {
     Repeater {
         model: _itemsModel
         delegate: Loader {
+            required property var model
             Layout.fillWidth: true
             sourceComponent: sectionRoot.asInline ? inlineItem : blockItem
-            // 2026-09-19: Loader 内可访问 model, 但 Component 根 Item 拿不到.
-            //   用 onItemChanged 把 model.value 显式塞到 item 的属性上.
+            // 2026-10-21: 本文件有 pragma ComponentBehavior: Bound, delegate 不再能看见
+            //   视图注入的 `model` 上下文属性 (真机 ReferenceError), 必须 required property 声明。
+            //   Component 根 Item 本来就拿不到 model, 所以仍用 onItemChanged 显式塞值。
             onItemChanged: {
                 if (item) {
                     // 2026-09-21: 用 String() 强转. 之前 model.value 是 QJSValue 类型,

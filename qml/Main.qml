@@ -211,6 +211,7 @@ ApplicationWindow {
                 ListElement { name: "sos";           title: "SOS 紧急求助" }
             }
             delegate: ItemDelegate {
+                required property var model
                 width: ListView.view.width
                 height: winStyles.rowH
                 contentItem: RowLayout {
@@ -420,6 +421,7 @@ ApplicationWindow {
                     anchors.fill: parent
                     model: searchResults
                     delegate: ItemDelegate {
+                        required property var model
                         width: ListView.view.width
                         height: winStyles.rowH
                         contentItem: RowLayout {

@@ -186,6 +186,11 @@ public:
     Q_INVOKABLE QColor altitudeColor(int level) const;
     // 任意 token 加透明度 (替代页面里散落的 Qt.rgba(x,y,z,a))
     Q_INVOKABLE QColor withAlpha(const QColor &c, qreal alpha) const;
+    // 2026-10-21 真机: 物种库的 representative_color 存的是 {h,s,v} (h 0-360, s/v 0-100),
+    //   而 QML 全局函数里**没有 Qt.hsv()** (只有 Qt.hsla), 详情页直接调会抛
+    //   "TypeError: Property 'hsv' of object Qt(...) is not a function"。
+    //   HSV→RGB 收口到这里, 两个调用点 (详情页色块 / 图册选图页) 共用。
+    Q_INVOKABLE QColor hsvColor(int h, int s, int v) const;
     // === 方位 (2026-10-20 「地物图例」丁骨架) ===
     // 丁的②资源按"离我多远 + 在哪个方位"排序, 每行左列是 50px 方位列.
     // 数据侧只有 lat/lon, 所以方位算在展示层, 单位统一米.

@@ -118,7 +118,8 @@ Page {
                     steps: steps,
                     hasDecision: hasTree,
                     plate: CommonOptions.plateCode("FA", e.id || ""),
-                    tone: CommonOptions.dangerColor(u)
+                    tone: CommonOptions.dangerColor(u),
+                    label: "", count: 0
                 })
             }
         }
@@ -134,12 +135,15 @@ Page {
                     && (currentCategory === -1 || x.category === currentCategory)
             })
             if (members.length === 0) continue
+            // 两类行必须同键: delegate 里的绑定一律求值 (`visible: false` 不拦绑定),
+            // 少一个键真机上就是 "Unable to assign [undefined] to QString/bool/int"。
             out.push({
                 kind: "head",
                 urgency: uu,
                 label: urgencyName(uu),
                 count: members.length,
-                tone: CommonOptions.dangerColor(uu)
+                tone: CommonOptions.dangerColor(uu),
+                id: "", title: "", category: "", steps: 0, hasDecision: false, plate: ""
             })
             for (var m = 0; m < members.length; ++m)
                 out.push(members[m])

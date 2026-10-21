@@ -19,6 +19,7 @@
  */
 
 import QtQuick
+import OutdoorSurvival 1.0   // CommonOptions 是模块单例, 不 import 真机上必然 ReferenceError
 
 Text {
     id: root

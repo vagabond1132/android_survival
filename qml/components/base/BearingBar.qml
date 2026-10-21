@@ -126,6 +126,7 @@ Item {
             model: ["0\u00b0", "90\u00b0", "180\u00b0", "270\u00b0", "360\u00b0"]
             delegate: Text {
                 required property var modelData
+                required property int index
                 width: tickRow.width / 5
                 horizontalAlignment: index === 0 ? Text.AlignLeft
                                               : (index === 4 ? Text.AlignRight : Text.AlignHCenter)

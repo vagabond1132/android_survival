@@ -406,7 +406,8 @@ Page {
     //   从来没生效过. 现在切换走 _rebuildForBaseMap 重建本页, 只依赖
     //   osm.mapping.host 的 path base. 五源见 mapPage._baseMaps.
     //   !!! 注意: Map 初值必须是非空 Plugin (见 Map 内注释), 否则 setPlugin 空指针崩.
-    // 2026-10-19 白底真根因 (容器内离线复现, 见 app/_maptest/ 探针 + doc 记录):
+    // 2026-10-19 白底真根因 (容器内离线复现, 探针见 D:\build_docker\_scratch_debug\
+    //   maptest_20261019\ —— 仓库外的调试沙盒, 不在 app/ 下 + doc 记录):
     //   QtLocation 6.7 的 OSM 插件 **不会** 替换 osm.mapping.host 里的
     //   {z}/{x}/{y} —— 它把花括号原样百分号编码, 然后在整串 URL 末尾 **追加**
     //   "<z>/<x>/<y>.png". 本地探针实测 (http://127.0.0.1:8099/ 日志):
@@ -812,6 +813,7 @@ Page {
             id: speciesMarkerView
             model: mapPage.speciesLocations
             delegate: MapQuickItem {
+                required property var modelData
                 coordinate: QtPositioning.coordinate(modelData.lat, modelData.lon)
                 anchorPoint.x: 12
                 anchorPoint.y: 12
@@ -894,6 +896,7 @@ Page {
         Repeater {
             model: mapPage.routeOverlays
             delegate: MapPolyline {
+                required property var modelData
                 line.color: modelData.color
                 line.width: 5
                 path: modelData.path
@@ -904,6 +907,7 @@ Page {
         Repeater {
             model: mapPage.routeMarkers
             delegate: MapQuickItem {
+                required property var modelData
                 coordinate: modelData.coord
                 anchorPoint.x: 11
                 anchorPoint.y: 11
@@ -940,6 +944,7 @@ Page {
         Repeater {
             model: mapPage.dangerMarkers
             delegate: MapQuickItem {
+                required property var modelData
                 coordinate: modelData.coord
                 anchorPoint.x: 9
                 anchorPoint.y: 9
@@ -975,6 +980,7 @@ Page {
         Repeater {
             model: mapPage.waypointMarkers
             delegate: MapQuickItem {
+                required property var modelData
                 coordinate: modelData.coord
                 anchorPoint.x: 5
                 anchorPoint.y: 5
@@ -992,6 +998,7 @@ Page {
         Repeater {
             model: mapPage.trackOverlays
             delegate: MapPolyline {
+                required property var modelData
                 line.color: modelData.color
                 line.width: 4
                 path: modelData.path
@@ -999,14 +1006,18 @@ Page {
         }
 
         // 2026-09-15: 长按地图 → 在长按点添加物种标注
-        // TapHandler 不会与 Map 的 pan/pinch 冲突
+        // 2026-10-21 #78 (A6 真因): 原来这行写的是 `gesturePolicy: TapHandler.ReleaseWithinBounds`,
+        //   而 Qt 6 的 QQuickPointerTapHandler::wantsGrab() 里只有默认的 DragThreshold 走
+        //   setPassiveGrab, 其余三种 (WithinBounds / ReleaseWithinBounds / DragWithinBounds)
+        //   一律在**按下时**就 setExclusiveGrab —— 独占抓取消解前, Map 内置的平移 DragHandler
+        //   拿不到同一个触点, 于是"地图怎么拖都不动, 但 +/- 和程序改 center 都正常".
+        //   去掉这一行回到 DragThreshold (被动抓握): 长按照样出 onLongPressed, 拖动交还给地图.
         // 2026-10-20 #61 修参数: longPressed() 这个信号在 Qt 6 是**无参**的, 原来写
         //   `function(eventPoint, button)` → eventPoint 恒 undefined, 一点长按就
         //   "Cannot read property position of undefined", 长按标注从来没通过.
         //   触点要读 TapHandler.point.
         TapHandler {
             id: longPressHandler
-            gesturePolicy: TapHandler.ReleaseWithinBounds
             onLongPressed: {
                 var p = longPressHandler.point
                 if (!p) return
@@ -1137,6 +1148,8 @@ Page {
                     model: addAnnotateDialog.categoryLabels
                     delegate: ItemDelegate {
                         id: catItem
+                        required property var modelData
+                        required property int index
                         width: catCombo.width
                         height: styles.touchMin
                         contentItem: Text {
@@ -1492,6 +1505,7 @@ Page {
                 model: mapPage.routeOverlays
 
                 delegate: Rectangle {
+                    required property var modelData
                     width: ListView.view ? ListView.view.width : 0
                     height: 56
                     color: hoverArea.containsMouse ? CommonOptions.colorSurfaceDim : CommonOptions.colorSurface
@@ -1589,6 +1603,7 @@ Page {
                 model: mapPage.trackOverlays
 
                 delegate: Rectangle {
+                    required property var modelData
                     width: ListView.view ? ListView.view.width : 0
                     height: 56
                     color: hoverArea.containsMouse ? CommonOptions.colorSurfaceDim : CommonOptions.colorSurface
@@ -1771,6 +1786,8 @@ Page {
         Repeater {
             model: mapPage._baseMaps
             delegate: MenuItem {
+                required property var modelData
+                required property int index
                 text: modelData.name
                 checkable: true
                 checked: mapPage.currentBaseMap === index

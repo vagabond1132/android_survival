@@ -253,6 +253,13 @@ QColor CommonOptions::withAlpha(const QColor &c, qreal alpha) const {
     return out;
 }
 
+QColor CommonOptions::hsvColor(int h, int s, int v) const {
+    // 入参按数据侧原样: h 0-360, s/v 0-100; 越界直接夹住, 不让一个脏字段把色块打成 TypeError。
+    return QColor::fromHsvF(qBound<qreal>(0.0, h / 360.0, 1.0),
+                            qBound<qreal>(0.0, s / 100.0, 1.0),
+                            qBound<qreal>(0.0, v / 100.0, 1.0));
+}
+
 QString CommonOptions::css(const QColor &c, qreal alpha) const {
     QColor col = c;
     if (!qFuzzyCompare(alpha, 1.0))

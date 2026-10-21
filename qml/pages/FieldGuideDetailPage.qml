@@ -358,10 +358,12 @@ Page {
         var c = entity.representativeColor
         return !!(c && typeof c === "object" && isFinite(Number(c.h)))
     }
+    // 2026-10-21 真机: 这里原来调 Qt.hsv() —— QML 根本没有这个函数 (只有 Qt.hsla),
+    //   每次求值都抛 TypeError, 色块永远拿不到色。HSV→RGB 收口到 CommonOptions::hsvColor。
     readonly property color _plateColor: _plateColorValid
-        ? Qt.hsv(Math.min(360, Math.max(0, Number(entity.representativeColor.h))) / 360,
-                 Math.min(100, Math.max(0, Number(entity.representativeColor.s) || 0)) / 100,
-                 Math.min(100, Math.max(0, Number(entity.representativeColor.v) || 0)) / 100)
+        ? CommonOptions.hsvColor(Math.round(Number(entity.representativeColor.h)),
+                                 Math.round(Number(entity.representativeColor.s) || 0),
+                                 Math.round(Number(entity.representativeColor.v) || 0))
         : CommonOptions.colorSurfaceDim
 
     // 海拔: 图鉴给 min/max, 危险物种库给拼好的 "0-2500m" 字符串

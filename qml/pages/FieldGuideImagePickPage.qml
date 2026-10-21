@@ -88,12 +88,13 @@ Page {
     function _cl(v, lo, hi) { return Math.min(hi, Math.max(lo, v)) }
 
     // 图鉴条目的 representative_color 是 {h,s,v} (h 0-360, s/v 0-100).
-    // 换算与③详情页同一套写法; 缺字段就返回 null, 由调用方画空格子而不是猜一个色.
+    // 换算走 CommonOptions.hsvColor —— QML 没有 Qt.hsv(), 真机上直接 TypeError;
+    // 钳位也在 C++ 里做, 这边只负责缺字段返回 null, 由调用方画空格子而不是猜一个色.
     function _hsv(c) {
         if (!c || typeof c !== "object" || !isFinite(Number(c.h))) return null
-        return Qt.hsv(pickPage._cl(Number(c.h), 0, 360) / 360,
-                      pickPage._cl(Number(c.s) || 0, 0, 100) / 100,
-                      pickPage._cl(Number(c.v) || 0, 0, 100) / 100)
+        return CommonOptions.hsvColor(Math.round(Number(c.h)),
+                                      Math.round(Number(c.s) || 0),
+                                      Math.round(Number(c.v) || 0))
     }
 
     // 换图 / 换界门 → 候选与主色一起作废 (规则 ④)

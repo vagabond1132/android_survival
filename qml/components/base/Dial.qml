@@ -50,8 +50,11 @@ Item {
     implicitHeight: implicitWidth
 
     // 指针平滑: 朝向是传感器逐帧推的, 不做插值会抖成一片糊
+    // 2026-10-21 真机: 少了 `property: "heading"`, RotationAnimator 默认动画 "rotation",
+    //   和 Behavior 的目标属性对不上 → 每帧刷 "property name conflict" (一次巡检 7,986 条)
+    //   并且平滑根本没生效。
     Behavior on heading {
-        RotationAnimator { duration: 260 }
+        RotationAnimator { property: "heading"; duration: 260 }
     }
 
     Canvas {

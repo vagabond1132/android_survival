@@ -125,7 +125,8 @@ Page {
                     difficulty: d,
                     minutes: Number(it.estimatedTimeMin) || 0,
                     plate: CommonOptions.plateCode("SV", it.id || ""),
-                    tone: topicTone(t)
+                    tone: topicTone(t),
+                    label: "", count: 0
                 })
             }
         }
@@ -137,12 +138,15 @@ Page {
             if (!counts[t2]) continue
             if (currentTopic !== -1 && t2 !== currentTopic) continue
             var members = ordered.filter(function (x) { return x.topic === t2 })
+            // 两类行必须同键: delegate 里的绑定一律求值 (`visible: false` 不拦绑定),
+            // 少一个键真机上就是 "Unable to assign [undefined] to QString/bool/int"。
             out.push({
                 kind: "head",
                 topic: t2,
                 label: topicLabel(t2),
                 count: members.length,
-                tone: topicTone(t2)
+                tone: topicTone(t2),
+                id: "", name: "", category: "", difficulty: 1, minutes: 0, plate: ""
             })
             for (var m = 0; m < members.length; ++m) out.push(members[m])
         }
