@@ -361,7 +361,10 @@ QVariantMap FieldGuideIndex::toMap(const FieldGuideEntity& e) {
     m["activeTime"] = e.activeTime;
     m["hibernationMonths"] = e.hibernationMonths;
     m["protectionLevel"] = e.protectionLevel;
-    m["symptoms"] = e.symptoms;
+    // 2026-10-20: 上面所有 list 字段都过了 toVariantList, 唯独 symptoms 漏了 ——
+    //   QStringList 进 QVariantMap 到 QML 端仍是 QQmlListModel, 详情页 .join("；")
+    //   直接 TypeError, 症状那一整块空白.
+    m["symptoms"] = toVariantList(e.symptoms);
 
     // 蘑菇特有
     m["poisoningType"] = e.poisoningType;

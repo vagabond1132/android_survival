@@ -13,6 +13,7 @@
 #include <QGeoCoordinate>
 #include <QGeoPositionInfo>
 #include <QGeoPositionInfoSource>
+#include <limits>  // 2026-10-20: quiet_NaN 表示"本次定位没有高程"
 #include "../common/ServiceBase.h"  // 2026-09-21 阶段 L2
 
 namespace outdoor {
@@ -35,6 +36,15 @@ class EmergencyService : public ServiceBase {
     Q_OBJECT
     Q_PROPERTY(bool isSosActive READ isSosActive NOTIFY sosStateChanged)
     Q_PROPERTY(int contactCount READ contactCount NOTIFY contactsChanged)
+    // 2026-10-20: 定位读数直接成属性, 供 ①营地/⑤求助 的墨底仪表绑定.
+    // 之前 QML 侧只能调 getCurrentLocation() 拿 map 再自己接 signal, 每个页面
+    // 各写一遍刷新逻辑, 于是"海拔"这一路根本没人接 (仪表上写的是 -- 或假数).
+    Q_PROPERTY(bool hasLocation READ isLocationValid NOTIFY locationUpdated)
+    Q_PROPERTY(double currentLatitude READ currentLatitude NOTIFY locationUpdated)
+    Q_PROPERTY(double currentLongitude READ currentLongitude NOTIFY locationUpdated)
+    Q_PROPERTY(double currentAccuracy READ currentAccuracy NOTIFY locationUpdated)
+    // GPS 给的高程 (QGeoPositionInfo::Elevation); 无该属性时为 NaN, 界面显示 "--"
+    Q_PROPERTY(double currentAltitude READ currentAltitude NOTIFY locationUpdated)
 
 public:
     /**
@@ -70,6 +80,12 @@ public:
     Q_INVOKABLE void triggerSOS();
     Q_INVOKABLE void cancelSOS();
     bool isSosActive() const { return m_sosActive; }
+
+    // 定位读数 (见上方 Q_PROPERTY 注释)
+    double currentLatitude() const  { return m_currentLocation.latitude(); }
+    double currentLongitude() const { return m_currentLocation.longitude(); }
+    double currentAccuracy() const  { return m_accuracy; }
+    double currentAltitude() const  { return m_elevation; }
 
     // 快速拨号
     Q_INVOKABLE void call120();
@@ -119,6 +135,9 @@ private:
     bool m_sosActive = false;
     QGeoCoordinate m_currentLocation;
     double m_accuracy = 0;
+    // 2026-10-20: GPS 高程. NaN = 本次定位没带 Elevation 属性 (界面要显示 "--",
+    // 不能显示 0 —— 0 m 会被读成"海平面", 在山地是错的数).
+    double m_elevation = std::numeric_limits<double>::quiet_NaN();
     QGeoPositionInfoSource* m_geoSource = nullptr;
 
     // 单例指针: 供 JNI 桥接找到当前实例.

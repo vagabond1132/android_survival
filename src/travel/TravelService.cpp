@@ -69,7 +69,20 @@ bool TravelService::loadFromJson() {
         t.fuelCostCNY = o["fuelCostCNY"].toInt();
         t.description = o["description"].toString();
         for (const auto& s : o["bestSeason"].toArray()) t.bestSeason << s.toString();
-        for (const auto& s : o["tags"].toArray()) t.tags << s.toString();
+        // 2026-10-20: travel.json 这一项是单数 "tag", 且是 "/" 连接的字符串
+        // (如 "川西/大环线/高原"), 而这里原本按复数数组 "tags" 读 → 101 条的 tags
+        // 恒为空 → search() 里那句 t.tags.join(",").contains(keyword) 永远不命中,
+        // 搜 "318" / "世遗" / "喀纳斯" 全空. 两种写法都吃, 不改数据.
+        // 单测钉住: tests/unit/test_travel_service.cpp::test_tags_split_and_searchable
+        if (o.contains("tags")) {
+            for (const auto& s : o["tags"].toArray()) t.tags << s.toString();
+        } else {
+            const QString tagStr = o["tag"].toString();
+            if (!tagStr.isEmpty()) {
+                for (const QString& s : tagStr.split(QLatin1Char('/'), Qt::SkipEmptyParts))
+                    t.tags << s.trimmed();
+            }
+        }
         m_travels[t.id] = t;
         count++;
     }

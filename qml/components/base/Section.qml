@@ -1,45 +1,58 @@
 /**
  * @file Section.qml
- * @brief 通用章节组件 (2026-09-14 token 化)
+ * @brief 通用章节组件 (2026-09-14 建立, 2026-10-16 整体改版补全 token)
  *
- * 之前硬编码 "white" / "#37474F" / "#90A4AE" 全部换为 CommonOptions.
+ * 之前硬编码 "white" / "#37474F" / "#90A4AE" 全部换为 CommonOptions,
+ * 本轮把剩下的尺寸字面量 (16 / 8 / 14 / radius 8) 也换成 Styles token.
+ *
+ * 注意 Styles 的实例化方式: 本组件根节点是 ColumnLayout, 而 Qt Quick Layouts
+ * 不参与布局的隐藏项会被忽略, 所以必须写 visible: false, 否则会在章节末尾
+ * 多出一行 0 高度 + 一个 spacing 的空隙.
  */
 
+// 2026-10-19 真机 stage0.log: delegate 里引用外层 id (如 categorySection / searchDialog) 在 qmlcachegen
+// 编译下会抛 ReferenceError, 必须 Bound 语义才能拿到外层组件作用域.
+pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls.Material
 import QtQuick.Layouts
 import OutdoorSurvival 1.0
 
 ColumnLayout {
     id: sectionRoot
     property string title: ""
-    // 2026-09-19: titleIcon 替代 emoji (避免 emoji 在系统字体下渲染为 X).
-    //   调用方传 Material Icons codepoint, 如 "\ue1b1" (report_problem)
-    property string titleIcon: ""
+    // 2026-10-16 改版: 图标一律用 IconLabel 语义名 (如 "warning").
+    //   原先还留了一条 titleIcon 裸码位过渡通道, 2026-10-19 Wave 3 把最后
+    //   11 处调用方换完后已无人使用, 故删除 —— 保留它只会诱导新代码又写
+    //   "\ue1xx", 而那些码位并没有经过字形核对.
+    property string titleIconName: ""
     property var items: []
     property color textColor: CommonOptions.colorText
     property string prefix: ""
     property bool asInline: false
     property int itemSpacing: 8
 
+    Styles { id: styles; visible: false }
+
     Layout.fillWidth: true
-    Layout.margins: 16
-    spacing: 8
+    Layout.margins: styles.spLg
+    spacing: styles.spSm
 
     RowLayout {
         Layout.fillWidth: true
-        spacing: 6
-        Text {
-            visible: sectionRoot.titleIcon.length > 0
-            text: sectionRoot.titleIcon
-            font.family: "Material Icons"
-            color: CommonOptions.colorText
-            font.pixelSize: 16
+        spacing: styles.spXs
+        // 首选: 语义名走 SectionTitle (内部 IconLabel, 带字体就绪判断)
+        SectionTitle {
+            visible: sectionRoot.titleIconName.length > 0
+            Layout.fillWidth: true
+            icon: sectionRoot.titleIconName
+            text: sectionRoot.title
         }
+        // 无图标时只出标题
         Text {
+            visible: sectionRoot.titleIconName.length === 0
             text: sectionRoot.title
             color: CommonOptions.colorText
-            font.pixelSize: 16
+            font.pixelSize: styles.fsLg
             font.bold: true
         }
     }
@@ -85,19 +98,19 @@ ColumnLayout {
             id: blockRoot
             property string textValue: ""
             color: CommonOptions.colorSurface
-            radius: 8
-            border.color: Qt.darker(CommonOptions.colorSurface, 1.2)
-            border.width: 1
+            radius: styles.rMd
+            border.color: CommonOptions.colorDivider
+            border.width: styles.lineHair
             Layout.fillWidth: true
-            implicitHeight: itemText.implicitHeight + 16
+            implicitHeight: itemText.implicitHeight + styles.cardPad * 2
 
             Text {
                 id: itemText
                 anchors.fill: parent
-                anchors.margins: 8
+                anchors.margins: styles.cardPad
                 text: sectionRoot.prefix + blockRoot.textValue
                 color: sectionRoot.textColor
-                font.pixelSize: 14
+                font.pixelSize: styles.fsMd
                 wrapMode: Text.WordWrap
             }
         }
@@ -110,7 +123,7 @@ ColumnLayout {
             property string textValue: ""
             text: "• " + inlineRoot.textValue
             color: sectionRoot.textColor
-            font.pixelSize: 14
+            font.pixelSize: styles.fsMd
             wrapMode: Text.WordWrap
             Layout.fillWidth: true
         }

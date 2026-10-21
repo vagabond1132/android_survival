@@ -14,6 +14,7 @@
 #include <QFile>
 #include <QJsonDocument>
 #include <QJsonArray>
+#include <QSet>
 #include <QDir>
 #include <QStandardPaths>
 #include <QSqlQuery>
@@ -169,6 +170,8 @@ bool FirstAidService::loadFromJson() {
 
     // 加载决策树
     QJsonArray nodes = root["decision_nodes"].toArray();
+    QHash<QString, QString> nodeEntryId;   // nodeId -> entryId (只在建根时用, 不进结构体)
+    QSet<QString> referenced;              // 被任何 next_id 指过的节点 = 一定不是根
     for (const auto& v : nodes) {
         QJsonObject n = v.toObject();
         DecisionNode node;
@@ -177,8 +180,7 @@ bool FirstAidService::loadFromJson() {
         node.text = n["text"].toString();
         node.terminalAction = n["terminal_action"].toString();
 
-        QString entryId = n["entry_id"].toString();
-        m_entryRoots[entryId] = node.id;
+        const QString entryId = n["entry_id"].toString();
 
         for (const auto& opt : n["options"].toArray()) {
             QJsonObject o = opt.toObject();
@@ -186,10 +188,25 @@ bool FirstAidService::loadFromJson() {
             QString nextId = o["next_id"].toString();
             node.options << label;
             node.nextNodes[label] = nextId;
+            if (!nextId.isEmpty()) referenced.insert(nextId);
         }
 
         m_decisionNodes[node.id] = node;
+        if (!entryId.isEmpty()) nodeEntryId.insert(node.id, entryId);
         loadedNodes++;
+    }
+
+    // 2026-10-20 建根改口径: 原来按"该 entry 第一个出现的节点"当根, 靠的是
+    // firstaid_entries.json 里根节点恰好排在最前 —— 数据一旦重排, getDecisionRoot()
+    // 就会返回一个终态叶子 (question 为空), 决策页整页没有问题也没有选项 (2026-10-16
+    // 那次修的就是这个). 现在按图论定义找根: 没有被任何 next_id 指过的节点才是根.
+    for (auto it = nodeEntryId.constBegin(); it != nodeEntryId.constEnd(); ++it) {
+        if (referenced.contains(it.key())) continue;
+        const QString entryId = it.value();
+        const QString existing = m_entryRoots.value(entryId);
+        // 一棵树正常情况下只有一个根; 数据里若出现多根 (孤儿节点), 保留字典序小的那个,
+        // 免得每次启动随机挑一个 —— m_decisionNodes 是 QHash, 遍历序不稳.
+        if (existing.isEmpty() || it.key() < existing) m_entryRoots[entryId] = it.key();
     }
 
     // 加载急救包模板
@@ -373,6 +390,14 @@ QVariantMap FirstAidService::getDecisionNode(const QString& nodeId) {
     result["options"] = n.options;
     result["isTerminal"] = !n.terminalAction.isEmpty();
     result["terminalAction"] = n.terminalAction;
+    // 2026-10-20 修决策树走不动: nextNodes 只在 C++ 侧, QML 拿不到就只能猜 id 规则,
+    // 而旧页面猜的是 "当前 id + _ + 序号", 数据里的真实 id 是 snake_bite_step2 这种
+    // 语义名 → 每一点都查不到节点, 立刻掉进"按关键步骤操作"的假终态. 按 options 的
+    // 顺序把下一跳 id 一起给出去, QML 直接按下标走.
+    QVariantList nextIds;
+    nextIds.reserve(n.options.size());
+    for (const QString& label : n.options) nextIds.append(n.nextNodes.value(label));
+    result["nextIds"] = nextIds;
     return result;
 }
 

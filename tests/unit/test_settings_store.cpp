@@ -57,9 +57,11 @@ private slots:
         QCOMPARE(SettingsStore::getInt("n/count"), 42);
         QCOMPARE(SettingsStore::getDouble("n/ratio"), 0.25);
         QVERIFY(SettingsStore::getBool("n/on"));
-        // QSettings 后端把 bool 落成 "true"/"false" 字符串, QVariant::toInt 会成功解析
-        //   成 0/1 → 不进入 fallback 分支. 只有真类型不兼容时才走默认值.
-        QCOMPARE(SettingsStore::getInt("n/ratio", -1), -1);   // "0.25" 无法 toInt
+        // QVariant::toInt() 对数值型走截断 (0.25 → 0), 不算转换失败, 所以不会落到默认值.
+        // 真正触发 fallback 的是非数值字符串, 下面单独验.
+        QCOMPARE(SettingsStore::getInt("n/ratio", -1), 0);
+        QVERIFY(SettingsStore::setValue("n/text", QStringLiteral("abc")).isOk());
+        QCOMPARE(SettingsStore::getInt("n/text", -1), -1);
         QCOMPARE(SettingsStore::getBool("n/absent", false), false);
     }
 

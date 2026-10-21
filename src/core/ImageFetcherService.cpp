@@ -23,11 +23,44 @@
 
 namespace outdoor {
 
-constexpr const char* kApiBase = "https://commons.wikimedia.org/w/api.php";
+// 2026-10-16: 图源从 commons.wikimedia.org (简中被墙, 检索请求永久挂起) 切到自建 CDN.
+//   约定: https://cdn.outdoor-survival.com/species/<kingdom>/<id>/<n>.jpg  (n=1,2,...)
+//   服务端目录结构由运维按此约定铺图; 客户端顺序探测, 首个缺失即停 (不 gap-fill).
+constexpr const char* kCdnBase = "https://cdn.outdoor-survival.com/species";
 constexpr const char* kUserAgent = "OutdoorSurvivalApp/1.0 (image-fetcher; Qt)";
+constexpr int kMaxImagesPerSpecies = 6;   // 单物种最多探测图片数
+constexpr qint64 kMinImageBytes = 1024;   // 小于此字节视为无效 (占位/错误页)
+
+namespace {
+
+// 2026-10-19: 真机定位图册 bug 的根因 — CDN 源站尚未铺图, 对任意路径都回
+//   HTTP 200 + text/html 占位页 ("We're getting things ready", 固定 39821 字节).
+//   旧逻辑只看状态码 (<400) 和体积 (>1KB), 于是 HTML 被写成 00.jpg, Qt 解码报
+//   "Unsupported image format", 且 cachedImages 之后一直把它当有效缓存, 刷新也救不回来.
+//   只按文件头魔数判类型, 不引 QtGui — 本文件要进无 GUI 的 host 单测.
+bool hasImageMagic(const QByteArray& head) {
+    return head.startsWith("\xFF\xD8\xFF")            // JPEG
+        || head.startsWith("\x89PNG\r\n\x1A\n")       // PNG
+        || head.startsWith("GIF87a") || head.startsWith("GIF89a")
+        || (head.startsWith("RIFF") && head.size() >= 12 && head.mid(8, 4) == "WEBP");
+}
+
+QByteArray readHead(const QString& path) {
+    QFile f(path);
+    return f.open(QIODevice::ReadOnly) ? f.read(12) : QByteArray();
+}
+
+}  // namespace
 
 ImageFetcherService::ImageFetcherService(QObject* parent)
-    : QObject(parent), m_nam(new QNetworkAccessManager(this)) {}
+    : QObject(parent), m_nam(new QNetworkAccessManager(this)) {
+    // 2026-10-16: 修 3.jpg 图册永久"正在加载图片…"。根因: commons.wikimedia.org
+    //   在简中网络被墙 (SYN 被静默丢弃), QNetworkAccessManager 默认无超时 → 请求
+    //   永久挂起 → onReplyFinished_ 永不触发 → _photoLoading 永不清零 → 无限转圈。
+    //   设 8s 传输超时, 超时即以错误完成 → 走失败分支 → 触发 imageFailed/imagesAllReady
+    //   → UI 落到"暂无图片"+刷新按钮, 不再假死。
+    m_nam->setTransferTimeout(8000);
+}
 
 ImageFetcherService::~ImageFetcherService() = default;
 
@@ -44,6 +77,12 @@ QString ImageFetcherService::localPathFor_(const QString& kingdom, const QString
     return cacheDirFor_(kingdom, id) + QString("/%1.jpg").arg(n, 2, 10, QChar('0'));
 }
 
+QString ImageFetcherService::cdnUrlFor_(const QString& kingdom, const QString& id, int n) const {
+    // n 为 1-based 序号 → 00.jpg 对应 <id>/1.jpg
+    return QString(kCdnBase) + "/" + (kingdom.isEmpty() ? "unknown" : kingdom)
+           + "/" + id + "/" + QString::number(n) + ".jpg";
+}
+
 QString ImageFetcherService::cacheRootPath() const {
     return cacheRoot_();
 }
@@ -56,9 +95,13 @@ QStringList ImageFetcherService::cachedImages(const QString& id, const QString& 
         QStringList() << "*.jpg" << "*.jpeg" << "*.png",
         QDir::Files, QDir::Name);
     for (const auto& fi : files) {
-        if (fi.size() > 1024) {
-            out << fi.absoluteFilePath();
+        if (fi.size() <= 1024) continue;
+        if (!hasImageMagic(readHead(fi.absoluteFilePath()))) {
+            Logger::warn(QString("img cache drop %1 (非图片内容, 已删除)").arg(fi.absoluteFilePath()));
+            QFile::remove(fi.absoluteFilePath());
+            continue;
         }
+        out << fi.absoluteFilePath();
     }
     return out;
 }
@@ -84,14 +127,13 @@ void ImageFetcherService::fetchImages(const QString& id,
         emit imageFailed(id, "empty id");
         return;
     }
-    if (sources.isEmpty()) {
-        emit imageFailed(id, "empty sources");
-        return;
-    }
     Task t;
     t.id = id;
     t.kingdom = kingdom;
     t.sources = sources;
+    // 期望图片数上限: 至少探测 1 张, 最多 kMaxImagesPerSpecies. sources 数量只作提示,
+    // 实际以 CDN 上是否存在 <n>.jpg 为准 (顺序探测, 首个缺失即停).
+    t.maxImages = qBound(1, sources.size(), kMaxImagesPerSpecies);
 
     // 先填充缓存
     t.cachePaths = cachedImages(id, kingdom);
@@ -104,99 +146,40 @@ void ImageFetcherService::fetchImages(const QString& id,
         emit imageReady(id, i, t.cachePaths[i]);
     }
 
-    // 缓存已满 → 全部就绪, 不再下载
-    if (t.filledCount >= t.sources.size()) {
+    // 缓存已达上限 → 全部就绪, 不再下载
+    if (t.filledCount >= t.maxImages) {
         Logger::info(QString("img fetch allCached id=%1 → imagesAllReady").arg(id));
         emit imagesAllReady(id, t.cachePaths);
         return;
     }
 
-    // 记录到 id 索引, 后续 imageinfo 下载阶段匹配
+    // 记录到 id 索引, 后续 CDN 下载阶段匹配
     m_idIndex[id] = t;
     startTask_(t);
 }
 
 void ImageFetcherService::startTask_(Task t) {
-    if (t.filledCount >= t.sources.size()) {
+    if (t.filledCount >= t.maxImages) {
         emit imagesAllReady(t.id, t.cachePaths);
         m_idIndex.remove(t.id);
         return;
     }
-    kickSearch_(t);
+    // 从缓存之后的下一张开始探测 (缓存 nn.jpg 对应 CDN <nn+1>.jpg)
+    t.nextImgIdx = t.filledCount + 1;
+    kickImage_(t);
 }
 
-void ImageFetcherService::kickSearch_(Task task) {
-    const QString& q = task.sources[task.nextSourceIdx];
-    QUrl url(QString(kApiBase) + "?action=query&format=json&list=search"
-             "&srsearch=" + QUrl::toPercentEncoding(q)
-             + "&srnamespace=6&srlimit=5");
-    QNetworkRequest req(url);
+void ImageFetcherService::kickImage_(Task task) {
+    const QString urlStr = cdnUrlFor_(task.kingdom, task.id, task.nextImgIdx);
+    QNetworkRequest req{QUrl(urlStr)};
     req.setHeader(QNetworkRequest::UserAgentHeader, kUserAgent);
 
-    Task copy = task;
-    copy.phase = Task::Phase::Search;
     QNetworkReply* reply = m_nam->get(req);
-    m_inflight.insert(reply, copy);
+    m_inflight.insert(reply, task);
     connect(reply, &QNetworkReply::finished, this, &ImageFetcherService::onReplyFinished_);
-    // 2026-09-30 诊断: 埋点 (含完整 URL). 若日志停在 "img req[search]" 而永无
-    //   "img reply[search]" → 请求挂起 (TLS 未就绪 / DNS 卡住 / 网络不可达).
-    Logger::info(QString("img req[search] id=%1 url=%2").arg(task.id, url.toString()));
-}
-
-void ImageFetcherService::kickDownload_(Task task, const QString& fileTitle) {
-    QUrl url(QString(kApiBase) + "?action=query&format=json&prop=imageinfo"
-             "&titles=" + QUrl::toPercentEncoding(fileTitle)
-             + "&iiprop=url&iiurlwidth=800");
-    QNetworkRequest req(url);
-    req.setHeader(QNetworkRequest::UserAgentHeader, kUserAgent);
-
-    Task copy = task;
-    copy.phase = Task::Phase::Download;
-    copy.currentTitle = fileTitle;
-    QNetworkReply* reply = m_nam->get(req);
-    m_inflight.insert(reply, copy);
-    connect(reply, &QNetworkReply::finished, this, &ImageFetcherService::onReplyFinished_);
-    // 2026-09-30 诊断: 埋点. 若日志里无此行 → search 阶段就没拿到标题.
-    Logger::info(QString("img req[imageinfo] id=%1 title=%2").arg(task.id, fileTitle));
-}
-
-QString ImageFetcherService::firstTitleFromSearch_(const QByteArray& body) {
-    QJsonParseError err;
-    auto doc = QJsonDocument::fromJson(body, &err);
-    if (err.error != QJsonParseError::NoError) return {};
-    auto arr = doc.object().value("query").toObject().value("search").toArray();
-    // 粗筛: 排除非图 (map, logo, icon, diagram, distribution, schematic 等)
-    static const QStringList bad = {
-        "map", "logo", "icon", "diagram", "chart", "graph", "schematic",
-        "sketch", "drawing", "range_map", "distribution", "habitat",
-        "anatomy", "morphology", "cooking", "recipe", "plate", "illustration"
-    };
-    for (const auto& v : arr) {
-        const QString title = v.toObject().value("title").toString();
-        const QString low = title.toLower();
-        if (!low.endsWith(".jpg") && !low.endsWith(".jpeg") && !low.endsWith(".png"))
-            continue;
-        bool skip = false;
-        for (const auto& b : bad) {
-            if (low.contains(b)) { skip = true; break; }
-        }
-        if (!skip) return title;
-    }
-    return {};
-}
-
-QString ImageFetcherService::thumbUrlFromImageInfo_(const QByteArray& body) {
-    QJsonParseError err;
-    auto doc = QJsonDocument::fromJson(body, &err);
-    if (err.error != QJsonParseError::NoError) return {};
-    auto pages = doc.object().value("query").toObject().value("pages").toObject();
-    for (const auto& v : pages) {
-        const auto infos = v.toObject().value("imageinfo").toArray();
-        if (infos.isEmpty()) continue;
-        const auto info = infos.first().toObject();
-        return info.value("thumburl").toString(info.value("url").toString());
-    }
-    return {};
+    // 诊断: 若停在 "img req[cdn]" 而永无 "img reply[cdn]" → CDN 连接挂起 (DNS/网络/证书).
+    Logger::info(QString("img req[cdn] id=%1 n=%2 url=%3")
+                 .arg(task.id).arg(task.nextImgIdx).arg(urlStr));
 }
 
 void ImageFetcherService::onReplyFinished_() {
@@ -206,147 +189,67 @@ void ImageFetcherService::onReplyFinished_() {
 
     Task task = m_inflight.take(reply);
     const bool ok = (reply->error() == QNetworkReply::NoError);
+    const int httpStatus =
+        reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     const QByteArray body = reply->readAll();
-    // 2026-09-30 诊断: 每次回包一行 (phase / HTTP 状态 / 错误 / 响应体大小).
-    //   这是判定 "请求是否真的完成" 的关键埋点: 出现此行说明网络层有返回;
-    //   只出现 "img req[*]" 而无此行 = 请求永久挂起.
-    //   若 error 含 "SSL"/"ssl"/"handshake" → TLS 层问题 (OpenSSL 缺失/证书).
-    const int httpStatus = reply->attribute(
-        QNetworkRequest::HttpStatusCodeAttribute).toInt();
-    Logger::info(QString("img reply[%1] id=%2 ok=%3 http=%4 err=%5 bytes=%6")
-                 .arg(task.phase == Task::Phase::Search ? "search" : "imageinfo",
-                      task.id,
-                      ok ? "1" : "0")
-                 .arg(httpStatus)
-                 .arg(reply->errorString())
-                 .arg(body.size()));
+    Logger::info(QString("img reply[cdn] id=%1 n=%2 ok=%3 http=%4 err=%5 bytes=%6")
+                 .arg(task.id).arg(task.nextImgIdx)
+                 .arg(ok ? "1" : "0").arg(httpStatus)
+                 .arg(reply->errorString()).arg(body.size()));
 
-    if (!ok) {
-        // 网络错误 → 跳到下一个 source, 最终才报失败
-        task.nextSourceIdx++;
-        if (task.nextSourceIdx < task.sources.size()) {
-            kickSearch_(task);
-        } else {
-            emit imagesAllReady(task.id, task.cachePaths);
-            if (task.cachePaths.isEmpty()) {
-                emit imageFailed(task.id, reply->errorString());
-            }
-            m_idIndex.remove(task.id);
+    // 收尾: 有图 → imagesAllReady; 一张都没有 → 追加 imageFailed (清 loading + 提示)
+    auto finish = [this](Task& t) {
+        emit imagesAllReady(t.id, t.cachePaths);
+        if (t.cachePaths.isEmpty()) {
+            emit imageFailed(t.id, QStringLiteral("CDN 无图片 (可能尚未铺图)"));
         }
+        m_idIndex.remove(t.id);
+    };
+
+    // 顺序探测: 首个缺失/失败/过小即停止 (不做 gap 填充)
+    if (!ok || httpStatus >= 400 || body.size() <= kMinImageBytes) {
+        finish(task);
         return;
     }
 
-    if (task.phase == Task::Phase::Search) {
-        const QString title = firstTitleFromSearch_(body);
-        if (title.isEmpty()) {
-            task.nextSourceIdx++;
-            if (task.nextSourceIdx < task.sources.size()) {
-                kickSearch_(task);
-            } else {
-                emit imagesAllReady(task.id, task.cachePaths);
-                if (task.cachePaths.isEmpty()) {
-                    emit imageFailed(task.id, "no file matched in " +
-                                     QString::number(task.sources.size()) + " queries");
-                }
-                m_idIndex.remove(task.id);
-            }
+    // 200 + HTML 占位页也走这里: 不落盘, 直接按"无图"收尾
+    if (!hasImageMagic(body.left(12))) {
+        Logger::warn(QString("img not-image id=%1 n=%2 http=%3 type=%4 bytes=%5 → 未缓存")
+                     .arg(task.id).arg(task.nextImgIdx).arg(httpStatus)
+                     .arg(reply->header(QNetworkRequest::ContentTypeHeader).toString())
+                     .arg(body.size()));
+        finish(task);
+        return;
+    }
+
+    const QString localPath = localPathFor_(task.kingdom, task.id, task.nextImgIdx - 1);
+    QDir().mkpath(QFileInfo(localPath).absolutePath());
+    QFile f(localPath);
+    bool saved = false;
+    if (f.open(QIODevice::WriteOnly)) {
+        f.write(body);
+        f.close();
+        saved = (QFileInfo(localPath).size() > kMinImageBytes);
+    } else {
+        Logger::warn(QString("img save fail %1: %2").arg(localPath, f.errorString()));
+    }
+
+    if (saved) {
+        task.cachePaths.append(localPath);
+        const int idx = task.filledCount;
+        task.filledCount++;
+        emit imageReady(task.id, idx, localPath);
+        Logger::info(QString("img cached %1 [%2] %3").arg(task.id).arg(idx).arg(localPath));
+        m_idIndex[task.id] = task;   // 更新进度 (刷新/重进时缓存可复用)
+        if (task.filledCount < task.maxImages) {
+            task.nextImgIdx++;
+            kickImage_(task);        // 继续探测下一张
             return;
         }
-        // 进入下载阶段
-        kickDownload_(task, title);
-        return;
+    } else {
+        Logger::warn(QString("img too small/invalid %1").arg(localPath));
     }
-
-    // Phase::Download
-    const QString thumbUrl = thumbUrlFromImageInfo_(body);
-    if (thumbUrl.isEmpty()) {
-        // 当前 source 失败, 尝试下一个
-        task.nextSourceIdx++;
-        if (task.nextSourceIdx < task.sources.size()) {
-            kickSearch_(task);
-        } else {
-            emit imagesAllReady(task.id, task.cachePaths);
-            m_idIndex.remove(task.id);
-        }
-        return;
-    }
-
-    // 下载真实缩略图
-    // 2026-09-19: 用 brace init 避免 vexing parse (QNetworkRequest req(QUrl(...))
-    //   被编译器解析为函数声明, req 变成返回 QNetworkRequest 的函数指针)
-    QNetworkRequest req{QUrl(thumbUrl)};
-    req.setHeader(QNetworkRequest::UserAgentHeader, kUserAgent);
-    QNetworkReply* dl = m_nam->get(req);
-
-    // 2026-09-30 诊断: 真实缩略图下载入口埋点 (第三段请求, 直接拉高德/Wikimedia 图床).
-    //   与 "img reply[thumb]" 成对: 有 req 无 reply = 图片 CDN 连接挂起 (最可能的
-    //   白底/转圈根因 —— 前两段 API 走 commons.wikimedia.org 通, 但图床域名不通).
-    Logger::info(QString("img req[thumb] id=%1 url=%2").arg(task.id, thumbUrl));
-
-    // 复用 reply mapping: 二次请求把 task.id 作为 key
-    Task copy = task;
-    copy.phase = Task::Phase::Download;
-    m_inflight.insert(dl, copy);
-    connect(dl, &QNetworkReply::finished, this, [this, dl]() {
-        Task t = m_inflight.take(dl);
-        // 2026-09-30 诊断: 图片下载回包. 注意 —— 这里用 header/contentLength 取大小,
-        //   不能 readAll() (会消耗响应体, 导致下面 f.write(dl->readAll()) 为空).
-        Logger::info(QString("img reply[thumb] id=%1 ok=%2 http=%3 err=%4 clen=%5")
-                     .arg(t.id)
-                     .arg(dl->error() == QNetworkReply::NoError ? "1" : "0")
-                     .arg(dl->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt())
-                     .arg(dl->errorString())
-                     .arg(dl->header(QNetworkRequest::ContentLengthHeader).toInt()));
-        dl->deleteLater();
-
-        // 2026-09-19: QNetworkReply::NoError 是枚举值, 不是函数, 去掉 ()
-        if (dl->error() != QNetworkReply::NoError) {
-            Logger::warn(QString("img dl err %1: %2").arg(t.id, dl->errorString()));
-            t.nextSourceIdx++;
-            if (t.nextSourceIdx < t.sources.size()) {
-                kickSearch_(t);
-            } else {
-                emit imagesAllReady(t.id, t.cachePaths);
-                m_idIndex.remove(t.id);
-            }
-            return;
-        }
-
-        // 保存到缓存
-        const QString localPath = localPathFor_(t.kingdom, t.id, t.filledCount);
-        QDir().mkpath(QFileInfo(localPath).absolutePath());
-        QFile f(localPath);
-        if (f.open(QIODevice::WriteOnly)) {
-            f.write(dl->readAll());
-            f.close();
-            if (QFileInfo(localPath).size() > 1024) {
-                t.cachePaths.append(localPath);
-                const int idx = t.filledCount;
-                t.filledCount++;
-                emit imageReady(t.id, idx, localPath);
-                Logger::info(QString("img cached %1 [%2] %3").arg(t.id).arg(idx).arg(localPath));
-            } else {
-                Logger::warn(QString("img too small %1 (%2 B)").arg(localPath)
-                             .arg(QFileInfo(localPath).size()));
-            }
-        } else {
-            Logger::warn(QString("img save fail %1: %2").arg(localPath, f.errorString()));
-        }
-
-        // 继续下一个 source / 完成
-        t.nextSourceIdx++;
-        if (t.filledCount < t.sources.size()) {
-            if (t.nextSourceIdx < t.sources.size()) {
-                kickSearch_(t);
-            } else {
-                emit imagesAllReady(t.id, t.cachePaths);
-                m_idIndex.remove(t.id);
-            }
-        } else {
-            emit imagesAllReady(t.id, t.cachePaths);
-            m_idIndex.remove(t.id);
-        }
-    });
+    finish(task);
 }
 
 } // namespace outdoor

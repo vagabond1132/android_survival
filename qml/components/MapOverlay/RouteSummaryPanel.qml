@@ -17,6 +17,9 @@
  *   - kind: "route" | "travel" | "track"
  *   - id:   routeId / travelId / trackId
  */
+// 2026-10-19 真机 stage0.log: delegate 里引用外层 id (如 categorySection / searchDialog) 在 qmlcachegen
+// 编译下会抛 ReferenceError, 必须 Bound 语义才能拿到外层组件作用域.
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls.Material
 import QtQuick.Layouts
@@ -213,7 +216,34 @@ Item {
         return (ms * 3.6).toFixed(1) + " km/h"
     }
 
-    // === 布局 ===
+    // === 布局 (2026-10-16 整体改版) ===
+    //   ① 6 张统计卡原先是 6 段复制粘贴的 Rectangle (~150 行), 现收为 Repeater
+    //      + _statCards 模型; 加一项指标只改模型.
+    //   ② 全站 hex → CommonOptions.* / CommonOptions.css() (Canvas 只认 CSS 字符串).
+    //   ③ "图标 + 中文" 的 Text 拆成 IconLabel + Text. 之前整段 Text 绑
+    //      font.family: "Material Icons", 中文靠 Qt 字形回退渲染, 是改版前
+    //      真机"图标方框"同源隐患; 尺寸间距全部走 styles.*.
+
+    Styles { id: styles; visible: false }
+
+    // 统计卡数据: label / value / unit / accent
+    readonly property var _statCards: [
+        { label: "距离",     value: (distM / 1000).toFixed(2), unit: "km",
+          accent: CommonOptions.colorAccent },
+        { label: "累计爬升", value: Math.round(gainM).toString(),  unit: "m",
+          accent: CommonOptions.categoryColor(4) },
+        { label: "累计下降", value: Math.round(lossM).toString(),  unit: "m",
+          accent: CommonOptions.colorWarn },
+        { label: "最高海拔", value: Math.round(maxAlt).toString(), unit: "m",
+          accent: CommonOptions.categoryColor(3) },
+        { label: "最低海拔", value: Math.round(minAlt).toString(), unit: "m",
+          accent: CommonOptions.categoryColor(1) },
+        { label: kind === "track" ? "实际时长" : "估算时长",
+          // 退出时 mapService 可能先于本绑定销毁, null 守卫防止重算炸一次
+          value: mapService ? mapService.formatDuration(durationS) : "", unit: "",
+          accent: CommonOptions.colorTrack }
+    ]
+
     ScrollView {
         anchors.fill: parent
         contentWidth: parent.width
@@ -221,57 +251,68 @@ Item {
 
         ColumnLayout {
             width: parent.width
-            spacing: 12
+            spacing: styles.spMd
 
             // 加载错误
             Rectangle {
                 Layout.fillWidth: true
-                Layout.margins: 12
+                Layout.margins: styles.pageGap
                 visible: loadError.length > 0
-                Layout.preferredHeight: 60
-                color: "#D32F2F"
-                radius: 4
+                Layout.preferredHeight: styles.rowHSm
+                color: CommonOptions.colorDanger
+                radius: styles.rSm
                 Text {
                     anchors.centerIn: parent
                     text: loadError
-                    color: "white"
-                    font.pixelSize: 13
+                    color: CommonOptions.colorTextOnAccent
+                    font.pixelSize: styles.fsMd
                 }
             }
 
             // === 头部 ===
             Rectangle {
                 Layout.fillWidth: true
-                Layout.margins: 12
-                Layout.preferredHeight: 80
-                radius: 8
-                color: kind === "route" ? "#1A237E" : kind === "travel" ? "#00695C" : "#37474F"
+                Layout.margins: styles.pageGap
+                Layout.preferredHeight: styles.rowHTall
+                radius: styles.rMd
+                color: kind === "route"  ? CommonOptions.colorRouteLine
+                     : kind === "travel" ? CommonOptions.colorTeal
+                     : CommonOptions.colorSurfaceDim
                 ColumnLayout {
                     anchors.fill: parent
-                    anchors.margins: 12
-                    spacing: 2
+                    anchors.margins: styles.cardPad
+                    spacing: styles.spXs
                     RowLayout {
                         Layout.fillWidth: true
                         Text {
                             text: name || "(未命名)"
-                            color: "white"
-                            font.pixelSize: 18
+                            color: CommonOptions.colorTextOnAccent
+                            font.pixelSize: styles.fsXl
                             font.bold: true
                             Layout.fillWidth: true
                             elide: Text.ElideRight
                         }
                         Text {
                             text: _difficultyLabel()
-                            color: "white"
-                            font.pixelSize: 12
+                            color: CommonOptions.colorTextOnAccent
+                            font.pixelSize: styles.fsSm
                         }
                     }
-                    Text {
-                        text: kind === "route" ? "\ue536 徒步路线" :
-                              kind === "travel" ? "\ue531 自驾游" : "\ue1db 轨迹记录"
-                        font.family: "Material Icons"
-                        color: "#B0BEC5"
-                        font.pixelSize: 12
+                    RowLayout {
+                        spacing: styles.spXs
+                        IconLabel {
+                            name: kind === "route"  ? "hiking"
+                                : kind === "travel" ? "car" : "fieldguide"
+                            size: styles.icSm
+                            tintColor: CommonOptions.colorTextMuted
+                        }
+                        Text {
+                            Layout.fillWidth: true
+                            text: kind === "route"  ? "徒步路线"
+                                : kind === "travel" ? "自驾游" : "轨迹记录"
+                            color: CommonOptions.colorTextMuted
+                            font.pixelSize: styles.fsSm
+                        }
                     }
                 }
             }
@@ -279,163 +320,45 @@ Item {
             // === 基础统计卡 ===
             GridLayout {
                 Layout.fillWidth: true
-                Layout.leftMargin: 12
-                Layout.rightMargin: 12
+                Layout.leftMargin: styles.pageGap
+                Layout.rightMargin: styles.pageGap
                 columns: 3
-                rowSpacing: 8
-                columnSpacing: 8
+                rowSpacing: styles.cardGap
+                columnSpacing: styles.cardGap
 
-                // 距离
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 70
-                    radius: 6
-                    color: "#263238"
-                    ColumnLayout {
-                        anchors.fill: parent
-                        anchors.margins: 6
-                        spacing: 2
-                        Text { text: "距离"; color: "#90A4AE"; font.pixelSize: 10 }
-                        RowLayout {
-                            Layout.fillWidth: true
+                Repeater {
+                    model: root._statCards
+                    delegate: Rectangle {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: styles.rowHTall
+                        radius: styles.rSm
+                        color: CommonOptions.colorSurface
+                        ColumnLayout {
+                            anchors.fill: parent
+                            anchors.margins: styles.spSm
                             spacing: 2
                             Text {
-                                text: (distM / 1000).toFixed(2)
-                                color: "#1976D2"
-                                font.pixelSize: 20
-                                font.bold: true
-                                Layout.fillWidth: true
+                                text: modelData.label
+                                color: CommonOptions.colorTextDim
+                                font.pixelSize: styles.fsXs
                             }
-                            Text { text: "km"; color: "#78909C"; font.pixelSize: 11 }
-                        }
-                    }
-                }
-                // 爬升
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 70
-                    radius: 6
-                    color: "#263238"
-                    ColumnLayout {
-                        anchors.fill: parent
-                        anchors.margins: 6
-                        spacing: 2
-                        Text { text: "累计爬升"; color: "#90A4AE"; font.pixelSize: 10 }
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: 2
-                            Text {
-                                text: Math.round(gainM).toString()
-                                color: "#388E3C"
-                                font.pixelSize: 20
-                                font.bold: true
+                            RowLayout {
                                 Layout.fillWidth: true
+                                spacing: 2
+                                Text {
+                                    text: modelData.value
+                                    color: modelData.accent
+                                    font.pixelSize: styles.fsXl
+                                    font.bold: true
+                                    Layout.fillWidth: true
+                                    elide: Text.ElideRight
+                                }
+                                Text {
+                                    text: modelData.unit
+                                    color: CommonOptions.colorTextDisabled
+                                    font.pixelSize: styles.fsSm
+                                }
                             }
-                            Text { text: "m"; color: "#78909C"; font.pixelSize: 11 }
-                        }
-                    }
-                }
-                // 下降
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 70
-                    radius: 6
-                    color: "#263238"
-                    ColumnLayout {
-                        anchors.fill: parent
-                        anchors.margins: 6
-                        spacing: 2
-                        Text { text: "累计下降"; color: "#90A4AE"; font.pixelSize: 10 }
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: 2
-                            Text {
-                                text: Math.round(lossM).toString()
-                                color: "#F57C00"
-                                font.pixelSize: 20
-                                font.bold: true
-                                Layout.fillWidth: true
-                            }
-                            Text { text: "m"; color: "#78909C"; font.pixelSize: 11 }
-                        }
-                    }
-                }
-                // 最高
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 70
-                    radius: 6
-                    color: "#263238"
-                    ColumnLayout {
-                        anchors.fill: parent
-                        anchors.margins: 6
-                        spacing: 2
-                        Text { text: "最高海拔"; color: "#90A4AE"; font.pixelSize: 10 }
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: 2
-                            Text {
-                                text: Math.round(maxAlt).toString()
-                                color: "#7B1FA2"
-                                font.pixelSize: 20
-                                font.bold: true
-                                Layout.fillWidth: true
-                            }
-                            Text { text: "m"; color: "#78909C"; font.pixelSize: 11 }
-                        }
-                    }
-                }
-                // 最低
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 70
-                    radius: 6
-                    color: "#263238"
-                    ColumnLayout {
-                        anchors.fill: parent
-                        anchors.margins: 6
-                        spacing: 2
-                        Text { text: "最低海拔"; color: "#90A4AE"; font.pixelSize: 10 }
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: 2
-                            Text {
-                                text: Math.round(minAlt).toString()
-                                color: "#0097A7"
-                                font.pixelSize: 20
-                                font.bold: true
-                                Layout.fillWidth: true
-                            }
-                            Text { text: "m"; color: "#78909C"; font.pixelSize: 11 }
-                        }
-                    }
-                }
-                // 时长
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 70
-                    radius: 6
-                    color: "#263238"
-                    ColumnLayout {
-                        anchors.fill: parent
-                        anchors.margins: 6
-                        spacing: 2
-                        Text {
-                            text: kind === "track" ? "实际时长" : "估算时长"
-                            color: "#90A4AE"
-                            font.pixelSize: 10
-                        }
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: 2
-                            Text {
-                                text: mapService.formatDuration(durationS)
-                                color: "#5D4037"
-                                font.pixelSize: 20
-                                font.bold: true
-                                Layout.fillWidth: true
-                            }
-                            Text { text: ""; color: "#78909C"; font.pixelSize: 11 }
                         }
                     }
                 }
@@ -444,43 +367,49 @@ Item {
             // === 海拔剖面 ===
             Rectangle {
                 Layout.fillWidth: true
-                Layout.leftMargin: 12
-                Layout.rightMargin: 12
-                Layout.preferredHeight: 160
-                radius: 8
-                color: "#1A237E"
+                Layout.leftMargin: styles.pageGap
+                Layout.rightMargin: styles.pageGap
+                Layout.preferredHeight: styles.chartH
+                radius: styles.rMd
+                color: CommonOptions.colorRouteLine
                 ColumnLayout {
                     anchors.fill: parent
-                    anchors.margins: 8
-                    spacing: 4
-                    Text {
-                        text: "\ue564 海拔剖面"  // Material Icons: terrain (2026-09-19: 之前 \ue52f 是 bicycle)
-                        font.family: "Material Icons"
-                        color: "white"
-                        font.pixelSize: 14
-                        font.bold: true
+                    anchors.margins: styles.spSm
+                    spacing: styles.spXs
+
+                    SectionTitle {
+                        Layout.fillWidth: true
+                        icon: "terrain"
+                        text: "海拔剖面"
+                        // 海拔卡底色是 colorRouteLine (深色主色底), 标题要反白
+                        titleColor: CommonOptions.colorTextOnAccent
+                        iconColor: CommonOptions.colorTextOnAccent
+                        pixelSize: styles.fsMd
                     }
 
                     // 2026-09-15: Canvas 移到 ColumnLayout 内部 (与 id 引用同 scope)
                     Canvas {
                         id: profileCanvas
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 120
+                        Layout.fillHeight: true
                         antialiasing: true
 
-                        property real padding: 8
+                        property real padding: styles.spSm
                         property real chartW: width - 2 * padding
                         property real chartH: height - 2 * padding
 
                         onPaint: {
                             var ctx = getContext("2d")
                             ctx.reset()
-                            ctx.fillStyle = "#1A237E"
+                            ctx.fillStyle = CommonOptions.css(CommonOptions.colorRouteLine)
                             ctx.fillRect(0, 0, width, height)
 
+                            var labelFont = styles.fsSm + "px " + Qt.application.font.family
+                            var noteFont  = styles.fsXs + "px " + Qt.application.font.family
+
                             if (!profile || !profile.distances || profile.distances.length < 2) {
-                                ctx.fillStyle = "#90A4AE"
-                                ctx.font = "12px sans-serif"
+                                ctx.fillStyle = CommonOptions.css(CommonOptions.colorTextDim)
+                                ctx.font = labelFont
                                 ctx.textAlign = "center"
                                 ctx.fillText("无海拔数据", width / 2, height / 2)
                                 return
@@ -507,8 +436,8 @@ Item {
                             ctx.lineTo(padding + chartW, height - padding)
                             ctx.closePath()
                             var grad = ctx.createLinearGradient(0, padding, 0, height - padding)
-                            grad.addColorStop(0, "rgba(76, 175, 80, 0.8)")
-                            grad.addColorStop(1, "rgba(76, 175, 80, 0.1)")
+                            grad.addColorStop(0, CommonOptions.css(CommonOptions.colorSuccess, 0.8))
+                            grad.addColorStop(1, CommonOptions.css(CommonOptions.colorSuccess, 0.1))
                             ctx.fillStyle = grad
                             ctx.fill()
 
@@ -520,13 +449,13 @@ Item {
                                 if (k === 0) ctx.moveTo(x2, y2)
                                 else ctx.lineTo(x2, y2)
                             }
-                            ctx.strokeStyle = "#4CAF50"
+                            ctx.strokeStyle = CommonOptions.css(CommonOptions.colorSuccess)
                             ctx.lineWidth = 2
                             ctx.stroke()
 
                             // 标注最大/最低
-                            ctx.fillStyle = "white"
-                            ctx.font = "10px sans-serif"
+                            ctx.fillStyle = CommonOptions.css(CommonOptions.colorTextOnAccent)
+                            ctx.font = noteFont
                             ctx.textAlign = "left"
                             ctx.fillText("最高 " + Math.round(maxE) + "m", padding + 4, padding + 12)
                             ctx.fillText("最低 " + Math.round(minE) + "m", padding + 4, height - padding - 4)
@@ -545,59 +474,62 @@ Item {
             // === 速度分析 (轨迹模式) ===
             Rectangle {
                 Layout.fillWidth: true
-                Layout.leftMargin: 12
-                Layout.rightMargin: 12
-                Layout.preferredHeight: kind === "track" ? 110 : 0
+                Layout.leftMargin: styles.pageGap
+                Layout.rightMargin: styles.pageGap
+                Layout.preferredHeight: styles.rowH * 2
                 visible: kind === "track"
-                radius: 8
-                color: "#263238"
+                radius: styles.rMd
+                color: CommonOptions.colorSurface
 
                 ColumnLayout {
                     anchors.fill: parent
-                    anchors.margins: 8
-                    spacing: 4
-                    Text {
-                        text: "⏱ 速度分析"
-                        color: "white"
-                        font.pixelSize: 14
-                        font.bold: true
+                    anchors.margins: styles.spSm
+                    spacing: styles.spXs
+
+                    SectionTitle {
+                        Layout.fillWidth: true
+                        icon: "trending_up"
+                        text: "速度分析"
                     }
+
                     GridLayout {
                         Layout.fillWidth: true
                         columns: 3
-                        rowSpacing: 4
-                        columnSpacing: 6
+                        rowSpacing: styles.spXs
+                        columnSpacing: styles.spMd
 
-                        Text { text: "平均"; color: "#B0BEC5"; font.pixelSize: 11 }
-                        Text {
-                            text: formatSpeed(avgSpeed)
-                            color: "white"
-                            font.pixelSize: 13
-                            font.bold: true
-                            Layout.fillWidth: true
-                        }
-                        Text {
-                            text: "配速 " + formatPace(avgPace)
-                            color: "#B0BEC5"
-                            font.pixelSize: 11
-                            Layout.fillWidth: true
-                            horizontalAlignment: Text.AlignRight
-                        }
-
-                        Text { text: "最快"; color: "#B0BEC5"; font.pixelSize: 11 }
-                        Text {
-                            text: formatSpeed(maxSpeed)
-                            color: "white"
-                            font.pixelSize: 13
-                            font.bold: true
-                            Layout.fillWidth: true
-                        }
-                        Text {
-                            text: "热量 " + Math.round(stats.calorieKcal || 0) + " kcal"
-                            color: "#B0BEC5"
-                            font.pixelSize: 11
-                            Layout.fillWidth: true
-                            horizontalAlignment: Text.AlignRight
+                        Repeater {
+                            model: [
+                                { k: "平均", v: formatSpeed(avgSpeed),
+                                  sub: "配速 " + formatPace(avgPace) },
+                                { k: "最快", v: formatSpeed(maxSpeed),
+                                  sub: "热量 " + Math.round(stats.calorieKcal || 0) + " kcal" }
+                            ]
+                            delegate: RowLayout {
+                                Layout.fillWidth: true
+                                spacing: styles.spXs
+                                Text {
+                                    text: modelData.k
+                                    color: CommonOptions.colorTextMuted
+                                    font.pixelSize: styles.fsSm
+                                    Layout.preferredWidth: 40
+                                }
+                                Text {
+                                    text: modelData.v
+                                    color: CommonOptions.colorText
+                                    font.pixelSize: styles.fsMd
+                                    font.bold: true
+                                    Layout.fillWidth: true
+                                }
+                                Text {
+                                    text: modelData.sub
+                                    color: CommonOptions.colorTextMuted
+                                    font.pixelSize: styles.fsSm
+                                    Layout.preferredWidth: 110
+                                    horizontalAlignment: Text.AlignRight
+                                    elide: Text.ElideRight
+                                }
+                            }
                         }
                     }
                 }
@@ -606,75 +538,104 @@ Item {
             // === 路线属性 ===
             Rectangle {
                 Layout.fillWidth: true
-                Layout.leftMargin: 12
-                Layout.rightMargin: 12
+                Layout.leftMargin: styles.pageGap
+                Layout.rightMargin: styles.pageGap
                 visible: kind === "route" || kind === "travel"
-                Layout.preferredHeight: routeOrTravelInfoCol.implicitHeight + 24
-                radius: 8
-                color: "#263238"
+                Layout.preferredHeight: routeOrTravelInfoCol.implicitHeight
+                                        + styles.cardPad * 2
+                radius: styles.rMd
+                color: CommonOptions.colorSurface
 
                 ColumnLayout {
                     id: routeOrTravelInfoCol
                     anchors.fill: parent
-                    anchors.margins: 12
-                    spacing: 4
+                    anchors.margins: styles.cardPad
+                    spacing: styles.spXs
 
-                    Text {
-                        text: "\ue153 基本信息"  // Material Icons: fact_check
-                        font.family: "Material Icons"
-                        color: "white"
-                        font.pixelSize: 14
-                        font.bold: true
+                    SectionTitle {
+                        Layout.fillWidth: true
+                        icon: "flag"
+                        text: "基本信息"
+                        // 本卡片底色是 colorSurface, 不是主色底 → 标题用主文字色
+                        pixelSize: styles.fsMd
+                        titleColor: CommonOptions.colorText
+                        iconColor: CommonOptions.colorAccent
                     }
                     // 路线
                     Text {
                         visible: kind === "route"
                         text: "起点: " + (stats.trailheadName || "(未提供)")
-                        color: "white"
-                        font.pixelSize: 12
+                        color: CommonOptions.colorText
+                        font.pixelSize: styles.fsSm
                         Layout.fillWidth: true
                         elide: Text.ElideRight
                     }
                     Text {
                         visible: kind === "route"
                         text: "终点: " + (stats.trailendName || "(未提供)")
-                        color: "white"
-                        font.pixelSize: 12
+                        color: CommonOptions.colorText
+                        font.pixelSize: styles.fsSm
                         Layout.fillWidth: true
                         elide: Text.ElideRight
                     }
-                    Text {
+                    RowLayout {
                         visible: kind === "route" && (stats.notRecommended || false)
-                        text: "\ue002 " + (stats.notRecommendedReason || "需要特别注意")  // Material Icons: warning
-                        font.family: "Material Icons"
-                        color: "#FF8A65"
-                        font.pixelSize: 12
-                        wrapMode: Text.WordWrap
-                        Layout.fillWidth: true
+                        spacing: styles.spXs
+                        IconLabel {
+                            name: "warning"
+                            size: styles.icSm
+                            tintColor: CommonOptions.colorWarn
+                        }
+                        Text {
+                            Layout.fillWidth: true
+                            text: stats.notRecommendedReason || "需要特别注意"
+                            color: CommonOptions.colorWarn
+                            font.pixelSize: styles.fsSm
+                            wrapMode: Text.WordWrap
+                        }
                     }
                     // 自驾
                     Text {
                         visible: kind === "travel"
                         text: "起点: " + (stats.startName || "") + " (" + (stats.startCity || "") + ")"
-                        color: "white"
-                        font.pixelSize: 12
+                        color: CommonOptions.colorText
+                        font.pixelSize: styles.fsSm
                         Layout.fillWidth: true
                         elide: Text.ElideRight
                     }
                     Text {
                         visible: kind === "travel"
                         text: "终点: " + (stats.endName || "") + " (" + (stats.endCity || "") + ")"
-                        color: "white"
-                        font.pixelSize: 12
+                        color: CommonOptions.colorText
+                        font.pixelSize: styles.fsSm
                         Layout.fillWidth: true
                         elide: Text.ElideRight
                     }
-                    Text {
+                    RowLayout {
                         visible: kind === "travel"
-                        text: "\ue922 " + (stats.roadType || "未提供") + "  ·  \ue989 ≈¥" + (stats.fuelCostCNY || 0)  // Material Icons: route / local_gas_station
-                        font.family: "Material Icons"
-                        color: "#B0BEC5"
-                        font.pixelSize: 11
+                        spacing: styles.spXs
+                        IconLabel {
+                            name: "route"
+                            size: styles.icSm
+                            tintColor: CommonOptions.colorTextDim
+                        }
+                        Text {
+                            text: stats.roadType || "未提供"
+                            color: CommonOptions.colorTextDim
+                            font.pixelSize: styles.fsSm
+                        }
+                        Item { Layout.preferredWidth: styles.spSm }
+                        IconLabel {
+                            name: "fuel"
+                            size: styles.icSm
+                            tintColor: CommonOptions.colorTextDim
+                        }
+                        Text {
+                            Layout.fillWidth: true
+                            text: "≈¥" + (stats.fuelCostCNY || 0)
+                            color: CommonOptions.colorTextDim
+                            font.pixelSize: styles.fsSm
+                        }
                     }
                 }
             }
@@ -682,56 +643,76 @@ Item {
             // === 分段配速表 (轨迹) ===
             Rectangle {
                 Layout.fillWidth: true
-                Layout.leftMargin: 12
-                Layout.rightMargin: 12
-                Layout.preferredHeight: splitsCol.implicitHeight + 24
-                radius: 8
-                color: "#263238"
+                Layout.leftMargin: styles.pageGap
+                Layout.rightMargin: styles.pageGap
+                Layout.preferredHeight: splitsCol.implicitHeight + styles.cardPad * 2
+                radius: styles.rMd
+                color: CommonOptions.colorSurface
                 visible: kind === "track" && stats.splits && stats.splits.length > 0
 
                 ColumnLayout {
                     id: splitsCol
                     anchors.fill: parent
-                    anchors.margins: 12
-                    spacing: 4
+                    anchors.margins: styles.cardPad
+                    spacing: styles.spXs
 
-                    Text {
-                        text: "\ue01d 分段配速 (每公里)"  // Material Icons: equalizer
-                        font.family: "Material Icons"
-                        color: "white"
-                        font.pixelSize: 14
-                        font.bold: true
+                    SectionTitle {
+                        Layout.fillWidth: true
+                        icon: "timeline"
+                        text: "分段配速 (每公里)"
+                        pixelSize: styles.fsMd
+                        titleColor: CommonOptions.colorText
+                        iconColor: CommonOptions.colorAccent
                     }
+
+                    // 表头 + 数据行同用一套列宽, 避免改版后左右错位
+                    readonly property int kmW: 40
+                    readonly property int durW: 72
 
                     RowLayout {
                         Layout.fillWidth: true
-                        spacing: 8
-                        Text { text: "km"; color: "#B0BEC5"; font.pixelSize: 11; Layout.preferredWidth: 30 }
-                        Text { text: "用时"; color: "#B0BEC5"; font.pixelSize: 11; Layout.preferredWidth: 60 }
-                        Text { text: "配速"; color: "#B0BEC5"; font.pixelSize: 11; Layout.fillWidth: true }
+                        spacing: styles.spSm
+                        Text {
+                            text: "km"
+                            color: CommonOptions.colorTextMuted
+                            font.pixelSize: styles.fsSm
+                            Layout.preferredWidth: splitsCol.kmW
+                        }
+                        Text {
+                            text: "用时"
+                            color: CommonOptions.colorTextMuted
+                            font.pixelSize: styles.fsSm
+                            Layout.preferredWidth: splitsCol.durW
+                        }
+                        Text {
+                            text: "配速"
+                            color: CommonOptions.colorTextMuted
+                            font.pixelSize: styles.fsSm
+                            Layout.fillWidth: true
+                        }
                     }
 
                     Repeater {
                         model: stats.splits || []
                         delegate: RowLayout {
                             Layout.fillWidth: true
-                            spacing: 8
+                            spacing: styles.spSm
                             Text {
                                 text: modelData.km
-                                color: "white"
-                                font.pixelSize: 12
-                                Layout.preferredWidth: 30
+                                color: CommonOptions.colorText
+                                font.pixelSize: styles.fsSm
+                                Layout.preferredWidth: splitsCol.kmW
                             }
                             Text {
                                 text: mapService.formatDuration(modelData.durationS)
-                                color: "white"
-                                font.pixelSize: 12
-                                Layout.preferredWidth: 60
+                                color: CommonOptions.colorText
+                                font.pixelSize: styles.fsSm
+                                Layout.preferredWidth: splitsCol.durW
                             }
                             Text {
                                 text: formatPace(modelData.avgPace)
-                                color: "#80CBC4"
-                                font.pixelSize: 12
+                                color: CommonOptions.colorTeal
+                                font.pixelSize: styles.fsSm
                                 font.bold: true
                                 Layout.fillWidth: true
                             }
@@ -740,7 +721,7 @@ Item {
                 }
             }
 
-            Item { Layout.fillWidth: true; Layout.preferredHeight: 16 }
+            Item { Layout.fillWidth: true; Layout.preferredHeight: styles.pageGap }
         }
     }
 }

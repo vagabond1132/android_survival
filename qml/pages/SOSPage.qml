@@ -1,6 +1,27 @@
 /**
  * @file SOSPage.qml
- * @brief SOS 紧急页面
+ * @brief ⑤ 求助 — 先读数, 再决定动作 (2026-10-20 「地物图例」丁骨架 v8)
+ *
+ * 版式逐块对应已评审的 mock (review-ding-v8.html 「丁 ⑤」):
+ *   墨底仪表   左边嵌 74px 迷你盘 + 坐标/海拔/精度/读取 (与①同一件 PositionReadout)
+ *   两个次级动作 复制位置文本 / 生成短信草稿 —— 都只加工文本, 不发出去
+ *   紧急号码   120 / 110 / 119 三行, 每行右侧一条 52x9 长按进度条
+ *   一键求救   长按 3 秒才 triggerSOS(); 进行中换成状态条 + 取消
+ *   先做这一步 急救卡来自 firstAidService.getCritical(), 不写死条目
+ *   紧急联系人 每位一行, 同样长按 2 秒才拨号
+ *
+ * 这一页最要紧的一条规则: 页面上没有任何一处"点一下就拨出去".
+ *   改版前这里是三颗 tap-to-dial 的 QuickCallButton + 一颗联系人直接 callNumber,
+ *   口袋里误触就把 120 拨出去了. 现在全部走 HoldConfirmRow: 按住 2 秒进度条填满
+ *   才算确认, 中途松手 / 手指滑出都清零. 号码行之外, triggerSOS() 也进了长按门 ——
+ *   它内部会 call120() 并群发短信, 是整页后果最重的一次操作.
+ *   真机验证时这些行一律不许按满 (项目记忆: 真机绝不触发拨号/短信).
+ *
+ * 读数不许编: 没定位就写 "NO FIX", 海拔没给就是 "--"; 「生成短信草稿」未定位时
+ * 交给 service 的 "GPS 位置未获取到" 文案, 不拼假坐标.
+ *
+ * 坏消息不许过期: 复制/草稿两条失败写进页面常驻的 note 行, 不用 3 秒就消失的
+ * toast (成功侧仍用 toast —— 那是一次性确认, 不值得占版面).
  */
 
 import QtQuick
@@ -8,276 +29,578 @@ import QtQuick.Controls.Material
 import QtQuick.Layouts
 import OutdoorSurvival 1.0
 
+// delegate 里要读 sosPage / styles 这些外层 id, qmlcachegen 静态编译下必须 Bound,
+// 否则真机静默 ReferenceError (2026-10-19 同类 bug 一批).
+pragma ComponentBehavior: Bound
+
 Page {
     id: sosPage
-    title: "SOS 紧急"
 
-    // 倒计时
-    property int countdown: 0
-    Timer {
-        id: countdownTimer
-        interval: 1000
-        onTriggered: {
-            if (sosPage.countdown > 0) {
-                sosPage.countdown--
-            } else {
-                countdownTimer.stop()
-            }
-        }
+    Styles { id: styles; visible: false }
+
+    // 2026-10-20: 不再直接引用 Main.qml 的 id "toast" -- QML 语义上 id 只在声明文件里
+    //   可见, 跨文件取得到只是"创建上下文链"的巧合 (实测: qmlcachegen 编译下 StackView
+    //   页面仍可解析, 所以旧写法确实弹过; 但改成动态 createObject 或被别处嵌就变 undefined).
+    //   显式从 Window 上的 alias 取 (Main.qml: readonly property alias toastBox).
+    readonly property var toast: ApplicationWindow.window
+                                 ? ApplicationWindow.window.toastBox : null
+
+    title: "求助"
+    height: Math.max(parent ? parent.height : 800, 800)
+    width: parent ? parent.width : 360
+
+    background: Rectangle { color: CommonOptions.colorBg }
+
+    function navigateTo(page, props) {
+        ApplicationWindow.window.navBus.navigateTo(page, props || {})
     }
 
-    ColumnLayout {
-        anchors.fill: parent
-        anchors.margins: 16
-        spacing: 16
+    // === 数据来源 ===========================================================
+    readonly property bool hasFix: emergencyService ? emergencyService.hasLocation : false
+    readonly property real curLat: emergencyService ? emergencyService.currentLatitude : 0
+    readonly property real curLon: emergencyService ? emergencyService.currentLongitude : 0
+    readonly property real accM: emergencyService ? emergencyService.currentAccuracy : -1
+    readonly property real altM: emergencyService ? emergencyService.currentAltitude : Number.NaN
 
-        // 顶部警告
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 80
-            color: "#D32F2F"
+    readonly property bool hasHeading: compassSensor ? compassSensor.valid : false
+    readonly property real headingDeg: hasHeading ? compassSensor.heading : 0
 
-            Column {
-                anchors.centerIn: parent
-                spacing: 4
-                Text {
-                    text: "\ue1b1 紧急情况？"  // Material Icons: sos
-                    font.family: "Material Icons"
-                    color: "white"
-                    font.pixelSize: 22
-                    font.bold: true
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
-                Text {
-                    text: "长按下方按钮 3 秒触发 SOS"
-                    color: "white"
-                    font.pixelSize: 14
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
-            }
+    // 最后一次定位的读取时刻. 只有 locationUpdated 会改写它, 所以显示的是"读取"而不是"现在".
+    property string fixTime: "--:--"
+
+    // 2026-10-21 #65: 失败原因常驻在这一行, 不走 toast. 求助页上的"复制失败"/
+    //   "短信应用打不开"如果 3 秒后自己消失, 用户会以为草稿已经生成好了 —— 这一页
+    //   不许有会过期的坏消息. 成功侧仍用 toast (一次性确认, 越短越好, 别占版面).
+    property string note: ""
+
+    // 坐标与右上状态都画在墨底仪表的等宽 Text 里, 只许拉丁和数字 (见 Styles ⑦)
+    readonly property string coordText: hasFix
+        ? curLat.toFixed(5) + (curLat >= 0 ? " N" : " S") + " / "
+          + curLon.toFixed(5) + (curLon >= 0 ? " E" : " W")
+        : "NO FIX"
+    readonly property string altText: (hasFix && isFinite(altM))
+        ? CommonOptions.formatElevation(altM) : "--"
+    readonly property string accText: (hasFix && accM >= 0)
+        ? "\u00b1" + Math.round(accM) + " m" : "--"
+    readonly property string headingText: hasHeading
+        ? Math.round(headingDeg) + "\u00b0" : "--"
+
+    // 「先做这一步」+「紧急联系人」: 两个 service 方法都没有 NOTIFY, 只能手动取数
+    property var triage: []
+    property var contacts: []
+
+    // === 文本加工 ===========================================================
+    // 复制/草稿共用同一句话 (来自 service, 页面不自己拼坐标格式)
+    function locationText() {
+        if (!emergencyService) return ""
+        return emergencyService.formatLocationMessage(curLat, curLon)
+    }
+
+    function copyLocation() {
+        var t = sosPage.locationText()
+        if (!androidPlatform || !androidPlatform.copyToClipboard(t)) {
+            sosPage.note = "复制失败 · 这台设备上没有可用剪贴板"
+            return
         }
+        sosPage.note = ""
+        toast.success("位置文本已复制")
+    }
 
-        // SOS 大按钮
-        Item {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 200
-
-            Rectangle {
-                id: sosButton
-                anchors.centerIn: parent
-                width: Math.min(parent.width, 200)
-                height: width
-                radius: width / 2
-                color: pressArea.pressed ? "#B71C1C" : "#D32F2F"
-
-                Behavior on color { ColorAnimation { duration: 200 } }
-
-                Text {
-                    anchors.centerIn: parent
-                    text: sosPage.countdown > 0 ? sosPage.countdown : "SOS"
-                    color: "white"
-                    font.pixelSize: sosPage.countdown > 0 ? 72 : 48
-                    font.bold: true
-                }
-            }
-
-            MouseArea {
-                id: pressArea
-                anchors.fill: sosButton
-                onPressed: {
-                    sosPage.countdown = 3
-                    countdownTimer.start()
-                    // 2026-09-20: 修 Bug 16. 之前用 Connections 监听 countdownTimer.onTriggered
-                    //   然后调 triggerTimer.interval=1 立即触发, 再 reset 回 3000 ——
-                    //   每次 countdownTimer tick 都跑 (每秒 1 次), 多次改 interval 会
-                    //   让 QML 内部计时漂移. 改为 triggerTimer.repeat=false 的单次
-                    //   Timer, interval=3000, 跟随 onPressed 重启, 跟着 onReleased 停止.
-                    triggerTimer.restart()
-                }
-                onReleased: {
-                    if (sosPage.countdown > 0) {
-                        sosPage.countdown = 0
-                        countdownTimer.stop()
-                        triggerTimer.stop()
-                    }
-                }
-            }
-
-            // 2026-09-20: 修 Bug 16. 单次 Timer, 跟随 press/restart, 跟随 release/stop.
-            Timer {
-                id: triggerTimer
-                interval: 3000
-                repeat: false
-                running: false
-                onTriggered: {
-                    emergencyService.triggerSOS()
-                    sosPage.countdown = 0
-                }
-            }
+    // 只拉起系统短信编辑页 (收件人留空, 正文填好), 发送键在用户手里.
+    // 走 sendSMS() 就是 SmsManager 直接发送 —— 野外误触等于真发一条, 这条路不给开.
+    function draftSms() {
+        var t = sosPage.locationText()
+        if (!androidPlatform || !androidPlatform.openSmsDraft("", t)) {
+            sosPage.note = "短信草稿打不开 · 这台设备没有可用短信应用"
+            return
         }
+        sosPage.note = ""
+        toast.success("草稿已放进短信应用 · 请自己确认后再发送")
+    }
 
-        // 快速拨号
-        Text {
-            text: "快速拨号"
-            font.pixelSize: 16
-            font.bold: true
-            color: "white"
+    // === 取数 ===============================================================
+    // 危急优先度高的先上, 同档按 id 排 (getCritical 遍历 QHash, 不排序的话每进
+    // 一次页面顺序都不一样). 先排序再取 steps/donts: 库里 urgency>=4 有几十条,
+    // 每条 getById 都会重建一份完整 QVariantMap, 只为了排完就丢掉不划算.
+    function refreshTriage() {
+        if (!firstAidService) { triage = []; return }
+        var raw = firstAidService.getCritical()
+        var picked = []
+        for (var i = 0; i < raw.length; ++i) picked.push(raw[i])
+        picked.sort(function (a, b) {
+            var ua = Number(a.urgency), ub = Number(b.urgency)
+            if (ub !== ua) return ub - ua
+            return a.id < b.id ? -1 : 1
+        })
+        var out = []
+        for (var j = 0; j < picked.length && j < 3; ++j) {
+            var d = firstAidService.getById(picked[j].id)
+            out.push({
+                id: picked[j].id,
+                title: picked[j].title,
+                urgency: Number(picked[j].urgency),
+                steps: (d && d.steps) ? d.steps.length : 0,
+                donts: (d && d.donts) ? d.donts.length : 0
+            })
         }
+        triage = out
+    }
 
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 8
+    function refreshContacts() {
+        if (!emergencyService) { contacts = []; return }
+        // getContacts 返回 Result 包装 {ok, value:[...]}, 失败时当空列表处理
+        var r = emergencyService.getContacts()
+        contacts = (r && r.value !== undefined) ? r.value : []
+    }
 
-            QuickCallButton {
-                Layout.fillWidth: true
-                number: "120"
-                label: "急救"
-                accentColor: "#D32F2F"
-            }
-            QuickCallButton {
-                Layout.fillWidth: true
-                number: "110"
-                label: "报警"
-                accentColor: "#1976D2"
-            }
-            QuickCallButton {
-                Layout.fillWidth: true
-                number: "119"
-                label: "火警"
-                accentColor: "#F57C00"
-            }
-        }
-
-        // 紧急联系人
-        RowLayout {
-            Layout.fillWidth: true
-            Layout.topMargin: 16
-            Label {
-                text: "紧急联系人"
-                color: "white"
-                font.pixelSize: 16
-                font.bold: true
-                Layout.fillWidth: true
-            }
-            Button {
-                text: "+ 添加"
-                flat: true
-                onClicked: {
-                    // 2026-09-14: signal 上抛, 避免在 Page 内隐式依赖外层 stackView
-                    ApplicationWindow.window.navBus.navigateTo("EmergencyContactsPage", {})
-                }
-            }
-        }
-
-        ListView {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            spacing: 4
-            model: contactList
-
-            // 2026-09-20: 用 ServiceListModel 替代 clear+for+append 模板 (Phase 3)
-            ServiceListModel {
-                id: contactList
-                service: emergencyService
-                method: "getContacts"
-            }
-
-            Component.onCompleted: refreshContacts()
-
-            function refreshContacts() {
-                // 2026-09-20: 用 ServiceListModel 替代 clear+for+append 模板 (Phase 3)
-                // Qt.callLater 避免与 Component.onCompleted 的 auto-refresh 冲突.
-                Qt.callLater(function() { contactList.refresh() })
-            }
-
-            delegate: Rectangle {
-                width: ListView.view.width
-                height: 56
-                color: CommonOptions.colorSurface
-
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.margins: 8
-                    spacing: 12
-                    Rectangle {
-                        width: 36
-                        height: 36
-                        radius: 18
-                        color: model.isPrimary ? "#D32F2F" : "#455A64"
-                        Text {
-                            anchors.centerIn: parent
-                            text: model.isPrimary ? "★" : "●"
-                            color: "white"
-                        }
-                    }
-                    Column {
-                        Layout.fillWidth: true
-                        Text {
-                            text: model.name
-                            color: CommonOptions.colorText
-                            font.pixelSize: 14
-                            font.bold: model.isPrimary
-                            elide: Text.ElideRight
-                            Layout.fillWidth: true
-                        }
-                        Text {
-                            text: model.phone + " · " + model.relation
-                            color: "#90A4AE"
-                            font.pixelSize: 12
-                            elide: Text.ElideRight
-                            Layout.fillWidth: true
-                        }
-                    }
-                    Button {
-                        text: "拨打"
-                        flat: true
-                        onClicked: emergencyService.callNumber(model.phone)
-                    }
-                }
-            }
-        }
-
-        // SOS 状态
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 50
-            visible: emergencyService.isSosActive
-            color: "#1B5E20"
-
-            RowLayout {
-                anchors.fill: parent
-                anchors.margins: 8
-                Text {
-                    text: "\ue5ca SOS 已触发 - 正在救援"  // Material Icons: check
-                    font.family: "Material Icons"
-                    color: "white"
-                    Layout.fillWidth: true
-                }
-                Button {
-                    text: "取消"
-                    Material.background: "#D32F2F"
-                    onClicked: emergencyService.cancelSOS()
-                }
-            }
+    Component.onCompleted: {
+        if (emergencyService) emergencyService.requestLocationUpdate()
+        if (compassSensor) compassSensor.active = true
+        refreshTriage()
+        refreshContacts()
+    }
+    Component.onDestruction: {
+        if (compassSensor) compassSensor.active = false
+    }
+    onVisibleChanged: {
+        if (visible) {
+            if (emergencyService) emergencyService.requestLocationUpdate()
+            refreshTriage()
+            refreshContacts()
         }
     }
 
     Connections {
         target: emergencyService
-        function onSosTriggered() {
-            // 2026-09-20: 修 Bug 17. 之前是 TODO 空 handler.
-            //   SOS 触发后用 toast 反馈给用户 (避免用户在 UI 上找反馈, 误以为没成功).
-            if (typeof toast !== "undefined" && toast && toast.success) {
-                toast.success("SOS 已触发, 等待救援")
-            } else {
-                console.log("[SOS] triggered")
-            }
+        function onLocationUpdated(lat, lon, accuracy) {
+            var d = new Date()
+            sosPage.fixTime = ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2)
         }
+        function onContactsChanged() { sosPage.refreshContacts() }
+        function onSosTriggered() { toast.success("SOS 已触发 · 正在通知联系人") }
+        function onSosCancelled() { toast.info("SOS 已取消") }
     }
 
-    onVisibleChanged: {
-        if (visible) {
-            contactList.refreshContacts()
+    // === 版面 ===============================================================
+    ScrollView {
+        anchors.fill: parent
+        contentWidth: parent.width
+
+        ColumnLayout {
+            width: parent.width
+            spacing: styles.spMd
+
+            // --- 标题条 ---
+            Item {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 54
+                Layout.leftMargin: styles.pageMargin
+                Layout.rightMargin: styles.pageMargin
+
+                Column {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    // 右上角 Plate 让位, 否则状态行从它底下穿过两边都读不全
+                    anchors.rightMargin: 64
+                    spacing: 3
+                    Text {
+                        text: "SOS"
+                        font.family: styles.monoFont
+                        font.pixelSize: styles.fsXs
+                        font.letterSpacing: 1.6
+                        color: CommonOptions.colorInk3
+                    }
+                    Text {
+                        width: parent.width
+                        text: "求助"
+                        font.pixelSize: styles.fs2xl
+                        font.bold: true
+                        color: CommonOptions.colorText
+                        elide: Text.ElideRight
+                    }
+                    Text {
+                        width: parent.width
+                        text: sosPage.hasFix
+                              ? (sosPage.hasHeading
+                                 ? "定位就绪 · 朝向 " + sosPage.headingText
+                                 : "定位就绪 · 无罗盘朝向, 按正北读")
+                              : "尚未定位 · 草稿里只有时间没有坐标"
+                        font.pixelSize: styles.fsSm
+                        color: CommonOptions.colorTextMuted
+                        elide: Text.ElideRight
+                    }
+                }
+                Plate {
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    code: "119/120"
+                    tone: CommonOptions.colorHazard
+                }
+            }
+
+            // --- 墨底仪表 + 迷你盘 (全站两处墨底之二) ---
+            PositionReadout {
+                Layout.fillWidth: true
+                Layout.leftMargin: styles.pageMargin
+                Layout.rightMargin: styles.pageMargin
+                showDial: true
+                label: "LIVE POSITION"
+                trailing: sosPage.hasFix ? "GPS FIX" : "NO FIX"
+                trailingColor: sosPage.hasFix
+                               ? CommonOptions.colorForest : CommonOptions.colorLegendAmber
+                coordText: sosPage.coordText
+                cells: [
+                    { v: sosPage.altText,   k: "海拔" },
+                    { v: sosPage.accText,   k: "精度" },
+                    { v: sosPage.fixTime,   k: "读取" }
+                ]
+                dialValue: sosPage.headingText
+                dialLabel: "HDG"
+                dialHeading: sosPage.headingDeg
+                dialHasFix: sosPage.hasFix
+            }
+
+            // --- 两个次级动作: 只加工文本, 不发出去 ---
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.leftMargin: styles.pageMargin
+                Layout.rightMargin: styles.pageMargin
+                spacing: styles.spSm
+
+                OutlineButton {
+                    Layout.fillWidth: true
+                    text: "复制位置文本"
+                    onClicked: sosPage.copyLocation()
+                }
+                OutlineButton {
+                    Layout.fillWidth: true
+                    text: "生成短信草稿"
+                    onClicked: sosPage.draftSms()
+                }
+            }
+
+            // 失败常驻行 (见上面 note 属性注释)
+            Text {
+                Layout.fillWidth: true
+                Layout.leftMargin: styles.pageMargin
+                Layout.rightMargin: styles.pageMargin
+                visible: sosPage.note.length > 0
+                text: sosPage.note
+                font.pixelSize: styles.fsSm
+                color: CommonOptions.colorLegendAmber
+                wrapMode: Text.WordWrap
+            }
+
+            // --- 紧急号码: 三行, 长按 2 秒 ---
+            SectionTitle {
+                Layout.fillWidth: true
+                Layout.leftMargin: styles.pageMargin
+                Layout.rightMargin: styles.pageMargin
+                Layout.topMargin: 2
+                text: "紧急号码"
+                trailing: "HOLD 2 S"
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.leftMargin: styles.pageMargin
+                Layout.rightMargin: styles.pageMargin
+                Layout.preferredHeight: numbersCol.implicitHeight
+                color: CommonOptions.colorSurface
+                border.color: CommonOptions.colorRule
+                border.width: styles.lineHair
+
+                ColumnLayout {
+                    id: numbersCol
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    spacing: 0
+
+                    Repeater {
+                        model: [
+                            { code: "120", title: "医疗急救", sub: "不自动拨号 · 长按进度条确认" },
+                            { code: "110", title: "警务", sub: "山地搜救通常由 110 联动" },
+                            { code: "119", title: "消防救援", sub: "山火 / 困锁 / 高处救援" }
+                        ]
+                        delegate: ColumnLayout {
+                            id: numberCell
+                            required property var modelData
+                            required property int index
+                            Layout.fillWidth: true
+                            spacing: 0
+
+                            // 行间 1px 组线: 第一行不画, 卡片上描边已经是第一条
+                            Rectangle {
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: styles.lineHair
+                                visible: numberCell.index > 0
+                                color: CommonOptions.colorRuleSoft
+                            }
+                            HoldConfirmRow {
+                                Layout.fillWidth: true
+                                code: numberCell.modelData.code
+                                title: numberCell.modelData.title
+                                subtitle: numberCell.modelData.sub
+                                onConfirmed: {
+                                    if (!emergencyService) return
+                                    if (numberCell.modelData.code === "120") emergencyService.call120()
+                                    else if (numberCell.modelData.code === "110") emergencyService.call110()
+                                    else emergencyService.call119()
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // --- 一键求救 / 进行中状态 ---
+            SectionTitle {
+                Layout.fillWidth: true
+                Layout.leftMargin: styles.pageMargin
+                Layout.rightMargin: styles.pageMargin
+                Layout.topMargin: 2
+                text: "一键求救"
+                trailing: "SOS"
+            }
+
+            // triggerSOS() 内部会拨 120 并给所有联系人群发位置短信, 是本页后果最重
+            // 的一次动作, 所以它和号码行用同一个门, 只是拉到 3 秒.
+            HoldConfirmRow {
+                Layout.fillWidth: true
+                Layout.leftMargin: styles.pageMargin
+                Layout.rightMargin: styles.pageMargin
+                visible: !(emergencyService && emergencyService.isSosActive)
+                code: "SOS"
+                title: "触发 SOS"
+                subtitle: "拨 120 并群发位置给 "
+                          + (emergencyService ? emergencyService.contactCount : 0) + " 位联系人"
+                holdMs: 3000
+                accent: CommonOptions.colorBlaze
+                onConfirmed: {
+                    if (emergencyService) emergencyService.triggerSOS()
+                }
+            }
+
+            // SOS 进行中: hazard 实心条, 不占墨底名额.
+            //   全站墨底仪表只有两处 (①与上面那块), 这是设计约定里"高优先级仪表"的
+            //   信号, 再出现第三块就贬值了; colorHazard 的语义本来就是"危险 / SOS".
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.leftMargin: styles.pageMargin
+                Layout.rightMargin: styles.pageMargin
+                Layout.preferredHeight: styles.rowH
+                visible: emergencyService ? emergencyService.isSosActive : false
+                color: CommonOptions.colorHazard
+                border.color: CommonOptions.colorDangerDeep
+                border.width: styles.lineHair
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: styles.cardPad
+                    anchors.rightMargin: styles.cardPad
+                    spacing: styles.spSm
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 1
+                        Text {
+                            Layout.fillWidth: true
+                            text: "SOS 已触发 · 正在等待救援"
+                            color: CommonOptions.colorTextOnAccent
+                            font.pixelSize: styles.fsMd
+                            font.bold: true
+                            elide: Text.ElideRight
+                        }
+                        Text {
+                            Layout.fillWidth: true
+                            text: sosPage.hasFix
+                                  ? "位置持续更新中 · " + sosPage.coordText
+                                  : "尚未定位 · 到达开阔处重取一次"
+                            color: CommonOptions.withAlpha(CommonOptions.colorTextOnAccent, 0.82)
+                            font.pixelSize: styles.fsXs
+                            elide: Text.ElideRight
+                        }
+                    }
+                    // 取消不设门: 误触发之后"停手"必须是本页最容易做到的一次点击
+                    OutlineButton {
+                        Layout.alignment: Qt.AlignVCenter
+                        text: "取消"
+                        tone: CommonOptions.colorHazard
+                        onClicked: {
+                            if (emergencyService) emergencyService.cancelSOS()
+                        }
+                    }
+                }
+            }
+
+            // --- 先做这一步 (急救卡, 全部来自 service) ---
+            SectionTitle {
+                Layout.fillWidth: true
+                Layout.leftMargin: styles.pageMargin
+                Layout.rightMargin: styles.pageMargin
+                Layout.topMargin: 2
+                text: "先做这一步"
+                trailing: "TRIAGE"
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.leftMargin: styles.pageMargin
+                Layout.rightMargin: styles.pageMargin
+                spacing: styles.spSm
+
+                Repeater {
+                    model: sosPage.triage
+                    delegate: Rectangle {
+                        id: triageCard
+                        required property var modelData
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: styles.rowHTall
+                        color: CommonOptions.colorSurface
+                        border.color: CommonOptions.colorRule
+                        border.width: styles.lineHair
+
+                        Rectangle {
+                            anchors.left: parent.left
+                            anchors.top: parent.top
+                            anchors.bottom: parent.bottom
+                            width: styles.lineAccent
+                            color: triageCard.modelData.urgency >= 5
+                                   ? CommonOptions.colorHazard : CommonOptions.colorAmber
+                        }
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: styles.lineAccent + 6
+                            anchors.rightMargin: styles.cardPad
+                            spacing: styles.spSm
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 1
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: triageCard.modelData.title
+                                    font.pixelSize: styles.fsMd
+                                    font.bold: true
+                                    color: CommonOptions.colorText
+                                    elide: Text.ElideRight
+                                }
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: styles.spXs
+                                    // 编号是拉丁数字才进 monoFont, 后面的中文另起一个
+                                    // Text: monospace 族没汉字字形, 混在一句里真机会出方框.
+                                    Plate {
+                                        entryId: triageCard.modelData.id
+                                        prefix: "FA"
+                                    }
+                                    Text {
+                                        Layout.fillWidth: true
+                                        text: triageCard.modelData.steps + " 步"
+                                              + (triageCard.modelData.donts > 0
+                                                 ? " · 含 " + triageCard.modelData.donts + " 条禁忌" : "")
+                                        font.pixelSize: styles.fsXs
+                                        color: CommonOptions.colorTextDim
+                                        elide: Text.ElideRight
+                                    }
+                                }
+                            }
+                            IconLabel {
+                                Layout.alignment: Qt.AlignVCenter
+                                name: "chevron_right"
+                                size: styles.icMd
+                                tintColor: CommonOptions.colorInk3
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: sosPage.navigateTo("FirstAidDetailPage",
+                                                          { entryId: triageCard.modelData.id })
+                        }
+                    }
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    visible: sosPage.triage.length === 0
+                    text: "急救库没读到危急条目 · 可在急救页按类别查"
+                    font.pixelSize: styles.fsSm
+                    color: CommonOptions.colorTextDim
+                    wrapMode: Text.Wrap
+                    maximumLineCount: 2
+                }
+            }
+
+            // --- 紧急联系人 ---
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.leftMargin: styles.pageMargin
+                Layout.rightMargin: styles.pageMargin
+                Layout.topMargin: 2
+                spacing: styles.spSm
+
+                SectionTitle {
+                    Layout.fillWidth: true
+                    text: "紧急联系人 " + sosPage.contacts.length + " 位"
+                    trailing: "LIST"
+                }
+                OutlineButton {
+                    Layout.alignment: Qt.AlignVCenter
+                    text: "添加"
+                    tone: CommonOptions.colorBlaze
+                    onClicked: sosPage.navigateTo("EmergencyContactsPage", {})
+                }
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.leftMargin: styles.pageMargin
+                Layout.rightMargin: styles.pageMargin
+                spacing: styles.spSm
+                visible: sosPage.contacts.length > 0
+
+                Repeater {
+                    model: sosPage.contacts
+                    delegate: HoldConfirmRow {
+                        id: contactRow
+                        required property var modelData
+                        Layout.fillWidth: true
+                        // 每位联系人自己就是一张描边卡 (HoldConfirmRow 自带),
+                        // 不再套一层 Rectangle: 双层描边只会让 1px 线糊成 2px.
+                        code: String(contactRow.modelData.phone || "").slice(-4)
+                        title: contactRow.modelData.name
+                               + (contactRow.modelData.isPrimary ? " \u00b7 主" : "")
+                        subtitle: (contactRow.modelData.phone || "")
+                                  + " " + (contactRow.modelData.relation || "")
+                        accent: CommonOptions.colorPlum
+                        confirmable: String(contactRow.modelData.phone || "").length > 0
+                        onConfirmed: {
+                            if (emergencyService)
+                                emergencyService.callNumber(contactRow.modelData.phone)
+                        }
+                    }
+                }
+            }
+
+            // 一个联系人都没有时说明原因 (空白列表分不清"没加"还是"没读到")
+            EmptyState {
+                Layout.fillWidth: true
+                Layout.leftMargin: styles.pageMargin
+                Layout.rightMargin: styles.pageMargin
+                visible: sosPage.contacts.length === 0
+                iconName: "list"
+                text: "还没有紧急联系人"
+                hint: "添加后触发 SOS 会把位置和伤情短信发给 TA"
+                actionText: "去添加"
+                onActionTriggered: sosPage.navigateTo("EmergencyContactsPage", {})
+            }
+
+            Item { Layout.preferredHeight: styles.spLg }
         }
     }
 }

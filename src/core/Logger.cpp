@@ -38,13 +38,10 @@ bool Logger::initialize(const QString& logDir) {
     //     防止历史残留超 1MB 的旧文件
     enforceTotalSize();
 
-    // === 2. 如果今日主文件 > 1MB,启动时也立即清掉(避免一启动就 rotate 失败) ===
+    // === 2. 如果今日主文件 > 上限,启动时先轮转 (旧内容移入 .1,不丢历史) ===
     QFileInfo fi(m_logPath);
     if (fi.exists() && fi.size() > m_maxFileSize) {
-        QFile f(m_logPath);
-        if (f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-            f.close();
-        }
+        rotate();
     }
 
     // === 3. 打开主文件(append) ===
@@ -184,23 +181,9 @@ void Logger::enforceTotalSize() {
         QFile::remove(fi.absoluteFilePath());
     }
 
-    // 进一步防御:即使这样,主文件还可能 > 1MB(没及时轮转)
-    // 如果主文件已超 1MB,直接 truncate 0 字节
-    QFileInfo mainFi(m_logPath);
-    if (mainFi.exists() && mainFi.size() > m_maxFileSize) {
-        // 必须先关闭再 truncate(如果当前还打开着)
-        bool wasOpen = m_logFile.isOpen();
-        if (wasOpen) m_logFile.close();
-
-        QFile f(m_logPath);
-        if (f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-            f.close();
-        }
-        if (wasOpen) {
-            m_logFile.setFileName(m_logPath);
-            m_logFile.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text);
-        }
-    }
+    // 主文件超限不在这里处理: 由 writeToFile 写入前的 pos() 检查触发 rotate.
+    // 2026-10-16 修: 这里原本会把超限的主文件 truncate 成 0 字节, 结果 pos() 永远
+    // 追不上 m_maxFileSize, 轮转再也不触发, 现场日志被反复清空而不是滚动.
 }
 
 qint64 Logger::currentTotalSize() const {

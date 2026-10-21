@@ -119,6 +119,10 @@ int SurvivalService::toolCount() const {
     return n;
 }
 
+int SurvivalService::totalCount() const {
+    return static_cast<int>(m_items.size());
+}
+
 QVariantList SurvivalService::getByTopic(Topic topic) {
     QVariantList list;
     for (const auto& i : m_items) {

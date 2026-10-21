@@ -22,18 +22,15 @@
 #include <QDateTime>
 #include <QJsonObject>
 #include "../common/ServiceBase.h"  // 2026-09-21 阶段 L2
+#include "../common/AltitudeLevel.h"  // 2026-10-21 (#18 C3): 段位阈值唯一定义在这里
 
 namespace outdoor {
 
-// 海拔段位（7 段 L0-L6，与 MapService::AltitudeLevel 区分）
-enum class EquipmentAltitudeLevel {    L0 = 0,  // < 500m
-    L1 = 1,  // 500-1500m
-    L2 = 2,  // 1500-2500m
-    L3 = 3,  // 2500-3500m
-    L4 = 4,  // 3500-4500m
-    L5 = 5,  // 4500-5500m
-    L6 = 6   // >= 5500m
-};
+// 海拔段位: 真身是 src/common/AltitudeLevel.h 里的 ::AltitudeLevel (7 段 L0-L6).
+//   这里只留一个名字, 装备侧既有代码和单测照旧写 EquipmentAltitudeLevel::L3.
+//   2026-10-21 之前它是独立的一份枚举, 与 MapService 那份 5 段版本对同一个高度
+//   读出不同档 (4800m: 这边 L5, 那边 L4), C3 就是收这件事.
+using EquipmentAltitudeLevel = ::AltitudeLevel;
 
 // 湿度类型
 enum class HumidityType {
@@ -181,10 +178,9 @@ public:
     int totalItems() const;
     int totalRules() const;
 
-    // 海拔段位
+    // 海拔段位 (阈值/名称的真身在 src/common/AltitudeLevel.h; 颜色一律找 CommonOptions.altitudeColor)
     Q_INVOKABLE static EquipmentAltitudeLevel getAltitudeLevel(int altitudeM);
     Q_INVOKABLE static QString getAltitudeLevelName(EquipmentAltitudeLevel level);
-    Q_INVOKABLE static QString getAltitudeLevelColor(EquipmentAltitudeLevel level);
     Q_INVOKABLE static QJsonObject getAltitudeSegment(EquipmentAltitudeLevel level);
 
     // 装备查询

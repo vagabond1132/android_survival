@@ -108,10 +108,14 @@ bool ChecklistService::loadTemplates() {
         list.description = o["description"].toString();
         list.isTemplate = true;
 
-        for (const auto& iv : o["items"].toArray()) {
-            QJsonObject io = iv.toObject();
+        const QJsonArray itemArr = o["items"].toArray();
+        for (int i = 0; i < itemArr.size(); ++i) {
+            QJsonObject io = itemArr.at(i).toObject();
             Item item;
-            item.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+            // 2026-10-20: 模板条目 id 改成 (scenario, 序号) 派生的稳定串, 不再是 UUID.
+            // checklist_items.id 是 PRIMARY KEY, 用 plain INSERT, 所以必须全局唯一 ——
+            // 自建清单的 id 本身是 UUID, "hike_1day:3" 与 "uuid:3" 不会撞.
+            item.id = list.id + QLatin1Char(':') + QString::number(i);
             item.name = io["name"].toString();
             item.category = io["category"].toString();
             item.quantity = io["quantity"].toInt();
@@ -123,6 +127,20 @@ bool ChecklistService::loadTemplates() {
                 item.alternatives << alt.toString();
             }
             list.items.append(item);
+        }
+
+        // 2026-10-20 修勾选态丢失: 这里原来是"每次启动都新建 UUID + checked=false",
+        // 紧接着 saveChecklist → saveChecklistItems 的 DELETE+INSERT 就把用户昨天
+        // 打的勾整片覆盖掉 (出门前勾了 16 项, 重启清零). 现在把库里已有的勾选按
+        // name 回填 —— 每份模板内 name 唯一 (checklists.json 4 份 98 项已核),
+        // 所以按名字贴回是稳的; 数据改名的那一项回到未勾选, 比整份清单清零合理.
+        // 不动 checklists.json: 口径是"数据保持现状", 修复只落在展示/存储层.
+        const QList<Item> stored = loadChecklistItems(list.id);
+        if (!stored.isEmpty()) {
+            QHash<QString, bool> checkedByName;
+            for (const Item& s : stored) checkedByName.insert(s.name, s.checked);
+            for (Item& item : list.items)
+                item.checked = checkedByName.value(item.name, false);
         }
 
         recomputeStats(list);
@@ -413,12 +431,31 @@ QVariantMap ChecklistService::saveChecklist(const Checklist& list) {
     return toQVariant(Ok(true));
 }
 
+// 2026-10-16: 清单行存在性探针. m_checklists 是懒加载的, 不能只查内存, 否则
+// 一条只在库里的清单会被误判成"不存在".
+namespace {
+bool checklistRowExists(Database* db, const QString& id) {
+    if (!db || !db->isOpen(Database::Name::User)) return false;
+    QSqlQuery q(db->get(Database::Name::User));
+    q.prepare("SELECT 1 FROM checklists WHERE id = ? AND is_deleted = 0");
+    q.addBindValue(id);
+    return q.exec() && q.next();
+}
+} // namespace
+
 // 2026-09-21: 阶段 L3.3 - deleteChecklist 返回 Result<bool>
 QVariantMap ChecklistService::deleteChecklist(const QString& id) {
     using namespace outdoor::internal;
     const char* ctx = "ChecklistService::deleteChecklist";
 
     if (auto e = dbOpenCheck(m_db, Database::Name::User, ctx)) return *e;
+
+    // 2026-10-16 修契约: 原来对不存在的 id 也照样 UPDATE (影响 0 行) 然后返回 ok=true,
+    // UI 会误报"已删除". 与 addItem/deleteItem 的 NotFound 对齐.
+    if (!checklistRowExists(m_db, id)) {
+        return toQVariant(Err<bool>(ServiceErrorCode::NotFound,
+                                    QStringLiteral("清单不存在: %1").arg(id), ctx));
+    }
 
     // 2026-09-21 阶段 L2.2: DbHelper::execDmlPositional 需 QSqlQuery lvalue, 提取本地变量
     QSqlDatabase db = m_db->get(Database::Name::User);
@@ -441,6 +478,12 @@ QVariantMap ChecklistService::setItemChecked(const QString& checklistId,
     const char* ctx = "ChecklistService::setItemChecked";
 
     if (auto e = dbOpenCheck(m_db, Database::Name::User, ctx)) return *e;
+
+    // 2026-10-16 修契约: 清单不存在时 UPDATE 影响 0 行却仍返回 ok, 改成 NotFound.
+    if (!checklistRowExists(m_db, checklistId)) {
+        return toQVariant(Err<bool>(ServiceErrorCode::NotFound,
+                                    QStringLiteral("清单不存在: %1").arg(checklistId), ctx));
+    }
 
     // 2026-09-21 阶段 L2.2: DbHelper::execDmlPositional 需 QSqlQuery lvalue, 提取本地变量
     QSqlDatabase db = m_db->get(Database::Name::User);
@@ -597,16 +640,21 @@ QJsonObject ChecklistService::exportToJson(const QString& checklistId) {
     return obj;
 }
 
-// 2026-09-21: 阶段 L3.3 - importFromJson 返回 Result<bool>
+// 2026-09-21: 阶段 L3.3 - importFromJson 切 Result
+// 2026-10-16: value 语义固定为新清单 id (字符串)
 QVariantMap ChecklistService::importFromJson(const QJsonObject& json) {
     using namespace outdoor::internal;
 
     Checklist list;
-    list.id = json["id"].toString();
-    if (list.id.isEmpty()) {
-        list.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-    }
+    // 2026-10-16 修: 导入一律重新生成清单 id. 原来复用 json["id"], 重新导入自己的导出
+    // 文件会 INSERT OR REPLACE 覆盖原清单 (静默丢掉用户后来的编辑).
+    list.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     list.name = json["name"].toString();
+    if (list.name.trimmed().isEmpty()) {
+        return toQVariant(Err<QString>(ServiceErrorCode::InvalidArgument,
+                                       QStringLiteral("导入的清单缺少 name"),
+                                       "ChecklistService::importFromJson"));
+    }
     list.scenario = json["scenario"].toString();
     list.description = json["description"].toString();
     list.isTemplate = false;
@@ -614,10 +662,11 @@ QVariantMap ChecklistService::importFromJson(const QJsonObject& json) {
     for (const auto& v : json["items"].toArray()) {
         QJsonObject io = v.toObject();
         Item item;
-        item.id = io["id"].toString();
-        if (item.id.isEmpty()) {
-            item.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-        }
+        // 2026-10-20 修导入丢项: checklist_items.id 是全局 PRIMARY KEY (不是
+        // (checklist_id, id) 复合键), 原来照搬导出文件里的 item id, 于是"导出自己的
+        // 清单再导进来"必然跟原清单的行撞主键 → INSERT 失败, 新清单在内存里看着有 N 项、
+        // 重启后一条不剩. 与上面重新生成清单 id 同一口径: 条目 id 也一律重新生成.
+        item.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
         item.name = io["name"].toString();
         item.category = io["category"].toString();
         item.quantity = io["quantity"].toInt();
@@ -631,7 +680,11 @@ QVariantMap ChecklistService::importFromJson(const QJsonObject& json) {
     }
 
     recomputeStats(list);
-    return saveChecklist(list);  // 透传 saveChecklist 的 Result
+    QVariantMap saved = saveChecklist(list);
+    if (!saved.value("ok").toBool()) return saved;
+    // 2026-10-16 修: 原来直接透传 saveChecklist 的 Result<bool>, value 是 true 而不是
+    // 新清单的 id, 调用方拿到 "true" 当 id 用, 导进来的清单再也打不开.
+    return toQVariant(Ok(list.id));
 }
 
 double ChecklistService::getTotalWeight(const QString& checklistId) {

@@ -1,7 +1,10 @@
 #!/bin/bash
 # 荒野手册 Android APK 完整打包脚本
 # 用法：bash build_apk.sh [debug|release] [abi]
-#   abi 可选：arm64-v8a (默认), armeabi-v7a, x86_64, all
+#   abi 可选：arm64-v8a (默认), x86_64
+#     armeabi-v7a 已从可交付目标里去掉: 构建容器里只装了 android_arm64_v8a /
+#     android_x86_64 两个 Qt kit, 没有 android_armv7 (2026-10-21 核对, 见
+#     doc/08-索引与概念/全代码索引.md §18.3). 传 v7a 会在下面 Qt 包检查处直接报错停下.
 #
 # 日志输出:
 #   全部 stdout/stderr 同时写入 $APP_DIR/build/build_<type>_<abi>.log
@@ -127,9 +130,14 @@ critical_step() {
     shift
     log_info "执行: $desc"
     log_info "命令: $*"
-    if ! "$@"; then
-        local rc=$?
-        die "$desc 失败 (rc=$rc)", "$rc"
+    # 2026-10-19: 原来写 `if ! "$@"; then local rc=$?` —— `!` 已把状态位取反,
+    #   $? 恒为 0, die 只报 "失败 (rc=0)", 脚本以 0 退出. 结果一次 C++ 编译失败
+    #   (ImageFetcherService.cpp 编译错误) 被 docker compose run 当成成功返回,
+    #   白跑一轮. 改成 || 捕获真实 rc 并原样传给 die.
+    local rc=0
+    "$@" || rc=$?
+    if [ "$rc" -ne 0 ]; then
+        die "$desc 失败 (rc=$rc)" "$rc"
     fi
 }
 
@@ -196,7 +204,12 @@ case "$TARGET_ABI" in
         QT_QPA="$QT_BASE/android_arm64_v8a"
         ;;
     armeabi-v7a)
-        QT_QPA="$QT_BASE/android_armv7"
+        # 2026-10-21: 这里以前指向 $QT_BASE/android_armv7, 而构建镜像里根本没装那个 kit
+        # (/opt/Qt/6.7.2 只有 gcc_64 / android_arm64_v8a / android_x86_64), 于是会一路走到
+        # 下面的 [ ! -d "$QT_QPA" ] 才失败, 报一句"Qt 包没找到"让人以为环境坏了.
+        # 真机是 arm64、模拟器是 x86_64, v7a 不在交付范围 → 在这一步就说清楚原因停下.
+        log_error "armeabi-v7a 不再支持: 构建镜像里没有 android_armv7 这个 Qt kit (只出 arm64-v8a / x86_64)"
+        exit 1
         ;;
     x86_64)
         QT_QPA="$QT_BASE/android_x86_64"

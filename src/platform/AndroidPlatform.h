@@ -53,6 +53,10 @@ public:
     // 2026-09-16: 复制任意 URI (file:// / content://) 到 app 沙盒, 返回本地绝对路径
     QString importImage(const QString& srcUri) override;
 
+    // 2026-10-20: ⑤求助页两个读数动作 (见 PlatformInterface 注释)
+    bool copyToClipboard(const QString& text) override;
+    bool openSmsDraft(const QString& number, const QString& body) override;
+
 private:
     bool m_flashlightOn = false;
     QJniObject* m_wakeLock = nullptr;  // 延迟构造避免 #ifdef 复杂度

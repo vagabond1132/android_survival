@@ -1,370 +1,664 @@
 /**
  * @file FieldGuideImagePickPage.qml
- * @brief 拍照/选图 → 图鉴候选匹配(HSV 颜色特征)
+ * @brief 选图 → 取主色 → 图鉴候选 (2026-10-20 v9 F1 目录母版, 丁骨架二级页)
  *
- * 2026-09-11 一次性重写:
- *   - 加 FileDialog 选图 (从相册选)
- *   - 加 Image 预览
- *   - 加返回按钮 (push 进来后能返回)
- *   - 颜色 token 统一
+ * 入口: Main.qml 方位条 "photo" → navBus.navigateTo("FieldGuideImagePickPage", {})
+ *       (原来还有一条 CameraPage 的入口, 该页在 #65 孤儿处置里已删).
+ * 出口: 点候选行 → FieldGuideDetailPage{speciesId}.
+ *
+ * 这一页唯一的"算法"是颜色距离, 版式必须把这一点摊开说, 否则用户会把它当成识图:
+ *   ① 主色要看得见. ImageColorExtractor.extractFromFile(path, 8) 给的是 8×8 网格
+ *      采出来的一个 HSV. 页面上它做成色块 + 等宽读数贴在图下沿, 每条候选也各带
+ *      自己的代表色块 —— 两个色块并排, 用户自己能判断"像不像", 不用信那个百分比.
+ *   ② 百分比不是识别结论. similarity = max(0, 100 - HSV距离/6.26)
+ *      (PlantService.cpp:293), 与形状/纹理/大小无关. 所以它画成一条 5px 墨条,
+ *      不做成红黄绿"准/不准"的灯, 也不给整屏铺一条 colorDanger 警示带 ——
+ *      危险红是⑤求助的专用色, 不参与读数值分级.
+ *   ③ 结果要读得完, 失败要留得下. 复制失败 / 取色失败 / 0 候选都写进常驻 note 行,
+ *      不再用三秒就消失的 toast (改版口径同 EquipmentPage / EquipmentDetailPage).
+ *   ④ 换界门或换图就清空候选. 候选是按一个 service 算出来的, 留着上一界的条目
+ *      还显示"5 条"是假数据.
+ *
+ * 2026-10-20: 四大类从 ComboBox 换成 4 枚 Chip. ComboBox 的 popup 挂在 Overlay 上,
+ *   delegate 不继承 control.font, 真机上字体覆盖修了两轮才不出方框 (#9). Chip 是
+ *   本地组件没有那个坑, 四个类目一屏全可见, 还少一次点击.
  */
+
+// delegate 里要读 pickPage 的属性与方法, qmlcachegen 静态编译下必须 Bound.
+pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Controls.Material
-import QtQuick.Dialogs  // 2026-09-14: FileDialog 需要
+import QtQuick.Dialogs          // FileDialog 需要
 import QtQuick.Layouts
-// 2026-09-14: 移除无关的 QtLocation import (之前误加, 引入大模块解析开销 + 偶发 push 失败)
 import OutdoorSurvival 1.0
 
 Page {
     id: pickPage
-    title: "拍照检索图鉴"
-    property int currentKingdom: 0  // 0=植物 1=动物 2=昆虫 3=蘑菇
-    property var currentResults: []
-    // 2026-09-16: 改为 imageSource, 直接给 Image 用 (Qt 自动处理 content:// 和 file://)
-    // 不再剥离 file:// 前缀, 也不去掉 content://, Image 组件原生支持
-    property url currentImageSource: ""
-    // 2026-09-17: 补声明 currentImagePath (之前没声明, 用 dynamic property 严格模式会崩)
-    // 该字段是 importImage 返回的本地沙盒绝对路径, 给 ImageColorExtractor 读
-    property string currentImagePath: ""
-    // 2026-09-20: 匹配中标志, 防止用户连点 matchByColor 触发 N 次网格采样
-    property bool _matching: false
 
+    Styles { id: styles; visible: false }
+
+    title: "拍照检索图鉴"
     background: Rectangle { color: CommonOptions.colorBg }
 
-    readonly property var kingdomOptions: [
-        { value: 0, label: "\ue406 植物" },
-        { value: 1, label: "\ue91a 动物" },
-        { value: 2, label: "\ue1b9 昆虫" },
-        { value: 3, label: "\ue239 蘑菇" }
+    property int currentKingdom: 0      // 0 植物 / 1 动物 / 2 昆虫 / 3 蘑菇
+    property url currentImageSource: "" // 给 Image 显示 (Qt 原生支持 content:// 与 file://)
+    property string currentImagePath: ""// importImage 复制进沙盒后的绝对路径, 给取色接口
+    property var userColor: null        // 取到的主色 {h,s,v}; null = 还没取
+    property var rows: []               // 候选行
+    property string note: ""            // 常驻提示行 (规则 ③)
+
+    // === 数据源 ==============================================================
+    function kingdomService(idx) {
+        return idx === 0 ? plantService
+             : idx === 1 ? animalService
+             : idx === 2 ? insectService
+             : idx === 3 ? mushroomService : null
+    }
+    function kingdomCount(idx) {
+        var s = kingdomService(idx)
+        return s ? s.totalCount : 0
+    }
+
+    readonly property var kingdoms: [
+        { k: 0, label: "植物" },
+        { k: 1, label: "动物" },
+        { k: 2, label: "昆虫" },
+        { k: 3, label: "蘑菇" }
     ]
 
+    readonly property string statusLine: {
+        if (pickPage.currentImagePath === "")
+            return "选一张照片 · 只按主色粗筛"
+        if (pickPage.rows.length === 0)
+            return "已选图 · 点「按主色匹配」"
+        return "候选 " + pickPage.rows.length + " 条 · 点行看图鉴"
+    }
+
+    function goBack() {
+        var win = ApplicationWindow.window
+        if (win && win.navBus) win.navBus.back()
+    }
+    function navigateTo(page, props) {
+        var win = ApplicationWindow.window
+        if (win && win.navBus) win.navBus.navigateTo(page, props || {})
+    }
+
+    function _toArr(v) { return (v && v.length !== undefined) ? v : [] }
+    function _cl(v, lo, hi) { return Math.min(hi, Math.max(lo, v)) }
+
+    // 图鉴条目的 representative_color 是 {h,s,v} (h 0-360, s/v 0-100).
+    // 换算与③详情页同一套写法; 缺字段就返回 null, 由调用方画空格子而不是猜一个色.
+    function _hsv(c) {
+        if (!c || typeof c !== "object" || !isFinite(Number(c.h))) return null
+        return Qt.hsv(pickPage._cl(Number(c.h), 0, 360) / 360,
+                      pickPage._cl(Number(c.s) || 0, 0, 100) / 100,
+                      pickPage._cl(Number(c.v) || 0, 0, 100) / 100)
+    }
+
+    // 换图 / 换界门 → 候选与主色一起作废 (规则 ④)
+    function _resetMatch() {
+        pickPage.rows = []
+        pickPage.userColor = null
+    }
+
+    function selectKingdom(k) {
+        if (pickPage.currentKingdom === k) return
+        pickPage.currentKingdom = k
+        pickPage._resetMatch()
+        pickPage.note = ""
+    }
+
+    function setImage(url) {
+        pickPage.currentImageSource = url
+        pickPage._resetMatch()
+    }
+
+    // === 取色 + 匹配 =========================================================
+    // 2026-09-14 的 P0 还在: 之前这里硬编码 HSV {h:90,s:60,v:80}, 跟照片无关.
+    // 网格采样是同步的 (<1ms), 所以没有加载态可画 —— 不假装 busy.
+    function runMatch() {
+        pickPage._resetMatch()
+        pickPage.note = ""
+        if (pickPage.currentImagePath === "") {
+            pickPage.note = "还没有可取色的图片"
+            return
+        }
+        var svc = kingdomService(pickPage.currentKingdom)
+        if (!svc) {
+            pickPage.note = "图鉴服务还没就绪"
+            return
+        }
+        var info = ImageColorExtractor.extractFromFile(pickPage.currentImagePath, 8)
+        if (!info || !info.ok) {
+            pickPage.note = "取色失败: " + ((info && info.error) ? info.error : "接口没给原因")
+            return
+        }
+        pickPage.userColor = { h: Number(info.h), s: Number(info.s), v: Number(info.v) }
+        var user = pickPage.userColor
+        var res = pickPage._toArr(svc.matchByColor(user, 5))
+        var out = []
+        for (var i = 0; i < res.length; ++i) {
+            var e = res[i]
+            var cat = String(e.category || "")
+            out.push({
+                speciesId: String(e.id || ""),
+                plate: CommonOptions.plateCode("SP", String(e.id || "")),
+                name: String(e.commonName || "未命名"),
+                sci: String(e.scientificName || ""),
+                cat: cat.length > 0 ? CommonOptions.speciesCategoryLabel(cat) : "",
+                level: Number(e.dangerLevel) || 0,
+                sim: Math.round(pickPage._cl(Number(e.similarity) || 0, 0, 100)),
+                swatch: pickPage._hsv(e.representativeColor)
+            })
+        }
+        pickPage.rows = out
+        if (out.length === 0) {
+            // matchByColor 只跳过 representative_color 为空的条目, 四本图鉴都有色,
+            // 所以真取到 0 条只可能是这一界本身是空的 —— 就说这件事, 别说"换个角度拍".
+            pickPage.note = pickPage.kingdomCount(pickPage.currentKingdom) === 0
+                            ? "本界 0 条条目, 没有可比对的代表色"
+                            : "接口返回 0 条候选"
+        }
+        console.log("[ImagePick] h=" + user.h + " s=" + user.s + " v=" + user.v
+                    + " k=" + pickPage.currentKingdom + " -> " + out.length + " rows")
+    }
+
+    Component.onCompleted: {
+        if (!androidPlatform) pickPage.note = "这台设备没有拍照/相册通道"
+    }
+
+    onCurrentImageSourceChanged: {
+        if (pickPage.currentImageSource.toString().length === 0) {
+            pickPage.currentImagePath = ""
+            pickPage._resetMatch()
+        }
+    }
+
+    // === 版面 ================================================================
     ColumnLayout {
         anchors.fill: parent
         spacing: 0
 
-        // 顶部工具栏: 返回 + 4 大类
-        Rectangle {
+        // --- 标题条 (54px: 微标签 / 页名 / 读数行, 右上 26px 方角返回) ---
+        Item {
             Layout.fillWidth: true
-            Layout.preferredHeight: 56
-            color: CommonOptions.colorSurface
-            RowLayout {
-                anchors.fill: parent
-                anchors.margins: 8
-                spacing: 8
+            Layout.preferredHeight: 54
+            Layout.leftMargin: styles.pageMargin
+            Layout.rightMargin: styles.pageMargin
 
-                ToolButton {
-                    text: "←"
-                    font.pixelSize: 20
-                    onClicked: pickPage.ApplicationWindow.window.navBus.back()
+            Column {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                anchors.rightMargin: 40      // 给右上角方角让位
+                spacing: 3
+                Text {
+                    text: "IMAGE MATCH"
+                    font.family: styles.monoFont
+                    font.pixelSize: styles.fsXs
+                    font.letterSpacing: 1.8
+                    color: CommonOptions.colorInk3
                 }
+                Text {
+                    width: parent.width
+                    text: "拍照检索图鉴"
+                    font.pixelSize: styles.fs2xl
+                    font.bold: true
+                    color: CommonOptions.colorText
+                    elide: Text.ElideRight
+                }
+                Text {
+                    width: parent.width
+                    text: pickPage.statusLine
+                    font.pixelSize: styles.fsXs
+                    color: CommonOptions.colorInk3
+                    elide: Text.ElideRight
+                }
+            }
 
-                ComboBox {
-                    id: kingdomCombo
-                    Layout.fillWidth: true
-                    model: pickPage.kingdomOptions
-                    textRole: "label"
-                    valueRole: "value"
-                    // 2026-09-30: 同 FieldGuidePage - label 是 PUA 码位, 必须显式
-                    //   指定 Material Icons 字体, 否则真机默认字体无字形 → 方框.
-                    font.family: "Material Icons"
-                    // 2026-09-20: 之前 currentIndex: pickPage.currentKingdom + onActivated
-                    //   回写是双向绑定, currentKingdom 外部改动会触发 ping-pong.
-                    //   改为单次 Component.onCompleted 初始化 + onActivated 单向通知.
-                    Component.onCompleted: currentIndex = pickPage.currentKingdom
-                    onActivated: pickPage.currentKingdom = currentValue
+            Rectangle {
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.topMargin: styles.spXs
+                width: 26
+                height: 26
+                color: CommonOptions.colorSurface
+                border.color: CommonOptions.colorText
+                border.width: styles.lineHair
+                IconLabel {
+                    anchors.centerIn: parent
+                    name: "back"
+                    size: styles.icSm
+                    tintColor: CommonOptions.colorText
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    anchors.margins: -9
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: pickPage.goBack()
                 }
             }
         }
 
-        // 操作区
+        // --- 界门 chip ---
+        Flow {
+            Layout.fillWidth: true
+            Layout.leftMargin: styles.pageMargin
+            Layout.rightMargin: styles.pageMargin
+            Layout.topMargin: styles.spSm
+            spacing: styles.spXs
+
+            Repeater {
+                model: pickPage.kingdoms
+                delegate: Chip {
+                    required property var modelData
+                    text: modelData.label + " " + pickPage.kingdomCount(modelData.k)
+                    checked: pickPage.currentKingdom === modelData.k
+                    accent: CommonOptions.kingdomColor(modelData.k)
+                    textSize: styles.fsSm
+                    onClicked: pickPage.selectKingdom(modelData.k)
+                }
+            }
+        }
+        Text {
+            Layout.fillWidth: true
+            Layout.leftMargin: styles.pageMargin
+            Layout.rightMargin: styles.pageMargin
+            Layout.topMargin: styles.spXs
+            text: "数字 = 本界条目数 · 换界门会清空候选"
+            font.pixelSize: styles.fsXs
+            color: CommonOptions.colorTextDim
+            elide: Text.ElideRight
+        }
+
+        // --- 预览 (取色读数贴在图下沿, 规则 ①) ---
         Rectangle {
             Layout.fillWidth: true
+            Layout.preferredHeight: styles.chartH
+            Layout.leftMargin: styles.pageMargin
+            Layout.rightMargin: styles.pageMargin
+            Layout.topMargin: styles.spSm
+            color: CommonOptions.colorSurface
+            border.color: CommonOptions.colorRule
+            border.width: styles.lineHair
+
+            Image {
+                id: previewImage
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                anchors.margins: 4
+                // 读数带占 26px, 让出来, 否则照片下沿被自己的读数压住
+                anchors.bottomMargin: pickPage.userColor !== null ? 30 : 4
+                source: pickPage.currentImageSource
+                fillMode: Image.PreserveAspectFit
+                asynchronous: true
+                cache: true
+                opacity: status === Image.Ready ? 1 : 0
+                visible: opacity > 0
+                Behavior on opacity { NumberAnimation { duration: 250 } }
+            }
+            Text {
+                anchors.centerIn: parent
+                visible: !previewImage.visible && previewImage.status !== Image.Loading
+                         && previewImage.status !== Image.Error
+                text: pickPage.currentImageSource.toString().length > 0 ? "等待解码" : "选一张照片"
+                color: CommonOptions.colorTextDim
+                font.pixelSize: styles.fsMd
+            }
+            BusyIndicator {
+                anchors.centerIn: parent
+                width: styles.icXl
+                height: styles.icXl
+                running: previewImage.status === Image.Loading
+                visible: previewImage.status === Image.Loading
+            }
+            Text {
+                anchors.centerIn: parent
+                visible: previewImage.status === Image.Error
+                text: "这张图解码失败\n换一张,或改用拍照"
+                color: CommonOptions.colorDanger
+                font.pixelSize: styles.fsSm
+                horizontalAlignment: Text.AlignHCenter
+            }
+
+            Rectangle {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                height: 26
+                visible: pickPage.userColor !== null
+                color: CommonOptions.colorSurface
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    height: styles.lineHair
+                    color: CommonOptions.colorRule
+                }
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: styles.spSm
+                    anchors.rightMargin: styles.spSm
+                    spacing: styles.spSm
+                    Rectangle {
+                        Layout.preferredWidth: 14
+                        Layout.preferredHeight: 14
+                        Layout.alignment: Qt.AlignVCenter
+                        color: pickPage.userColor
+                               ? pickPage._hsv(pickPage.userColor) : CommonOptions.colorSurfaceDim
+                        border.color: CommonOptions.colorText
+                        border.width: styles.lineHair
+                    }
+                    Text {
+                        Layout.alignment: Qt.AlignVCenter
+                        // 只装拉丁与数字: H/S/V 与数值 (monoFont 不许混汉字)
+                        text: pickPage.userColor
+                              ? ("H " + Math.round(pickPage.userColor.h)
+                                 + "  S " + Math.round(pickPage.userColor.s)
+                                 + "  V " + Math.round(pickPage.userColor.v))
+                              : ""
+                        font.family: styles.monoFont
+                        font.pixelSize: styles.fsSm
+                        font.letterSpacing: 1.2
+                        color: CommonOptions.colorText
+                    }
+                    Item { Layout.fillWidth: true }
+                    Text {
+                        Layout.alignment: Qt.AlignVCenter
+                        text: "8×8 网格主色"
+                        font.pixelSize: styles.fsXs
+                        color: CommonOptions.colorTextDim
+                    }
+                }
+            }
+        }
+
+        // --- 取图 ---
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.leftMargin: styles.pageMargin
+            Layout.rightMargin: styles.pageMargin
+            Layout.topMargin: styles.spSm
+            spacing: styles.spSm
+
+            OutlineButton {
+                Layout.fillWidth: true
+                text: "从相册选择"
+                tone: CommonOptions.colorText
+                onClicked: fileDialog.open()
+            }
+            // 拍照在 Android 侧才接得上 (requestTakePhoto 是 AndroidPlatform 的 invokable)
+            OutlineButton {
+                Layout.fillWidth: true
+                text: "拍照"
+                tone: CommonOptions.colorText
+                enabled: androidPlatform ? true : false
+                onClicked: {
+                    if (androidPlatform) androidPlatform.requestTakePhoto()
+                }
+            }
+        }
+
+        PrimaryButton {
+            Layout.fillWidth: true
+            Layout.leftMargin: styles.pageMargin
+            Layout.rightMargin: styles.pageMargin
+            Layout.topMargin: styles.spSm
+            text: "按主色匹配"
+            iconName: "search"        // 已核验码位 (原 \ue412 实为 photo, 不是 search)
+            tone: CommonOptions.colorAccent
+            enabled: pickPage.currentImagePath !== ""
+            onClicked: pickPage.runMatch()
+        }
+
+        // --- 常驻提示 (规则 ③) ---
+        Text {
+            Layout.fillWidth: true
+            Layout.leftMargin: styles.pageMargin
+            Layout.rightMargin: styles.pageMargin
+            Layout.topMargin: styles.spSm
+            visible: pickPage.note.length > 0
+            text: pickPage.note
+            font.pixelSize: styles.fsSm
+            color: CommonOptions.colorLegendAmber
+            wrapMode: Text.WordWrap
+        }
+
+        // --- 候选区头 (兼作相似度的图例) ---
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.leftMargin: styles.pageMargin
+            Layout.rightMargin: styles.pageMargin
+            Layout.topMargin: styles.spMd
+            visible: pickPage.rows.length > 0
+            spacing: styles.spSm
+
+            Text {
+                Layout.alignment: Qt.AlignVCenter
+                text: "CANDIDATES"
+                font.family: styles.monoFont
+                font.pixelSize: styles.fsXs
+                font.letterSpacing: 1.6
+                color: CommonOptions.colorInk3
+            }
+            Text {
+                Layout.alignment: Qt.AlignVCenter
+                text: String(pickPage.rows.length)
+                font.family: styles.monoFont
+                font.pixelSize: styles.fsXs
+                color: CommonOptions.colorText
+            }
+            Item { Layout.fillWidth: true }
+            Text {
+                Layout.alignment: Qt.AlignVCenter
+                text: "色块 = 图鉴代表色 · 条 = 接近度"
+                font.pixelSize: styles.fsXs
+                color: CommonOptions.colorTextDim
+                elide: Text.ElideRight
+            }
+        }
+
+        Item {
+            Layout.fillWidth: true
             Layout.fillHeight: true
-            color: CommonOptions.colorBg
+            Layout.leftMargin: styles.pageMargin
+            Layout.rightMargin: styles.pageMargin
+            Layout.topMargin: styles.spXs
+            Layout.bottomMargin: styles.pageGap
 
-            ColumnLayout {
+            ListView {
+                id: candList
                 anchors.fill: parent
-                anchors.margins: 16
-                spacing: 12
+                clip: true
+                boundsBehavior: Flickable.StopAtBounds
+                spacing: 0
+                model: pickPage.rows
+                visible: pickPage.rows.length > 0
 
-                Text {
-                    text: "\ue412 选择或拍摄图片"  // Material Icons: camera_alt
-                    font.family: "Material Icons"
-                    color: CommonOptions.colorText
-                    font.pixelSize: 18
-                    font.bold: true
-                }
+                delegate: Item {
+                    required property var modelData
+                    required property int index
+                    width: candList.width
+                    // 行里两排信息 (名称+学名 / 编号+类目+接近度), 60 装不下第二排
+                    height: styles.rowHTall + styles.spMd
 
-                Text {
-                    Layout.fillWidth: true
-                    text: "本功能基于图像颜色特征粗筛,结果仅供参考。务必对照图鉴二次确认。"
-                    color: CommonOptions.colorTextMuted
-                    font.pixelSize: 12
-                    wrapMode: Text.WordWrap
-                }
-
-                // 2026-09-11: 图片预览框 (有图时显示图, 无图时显示提示)
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 200
-                    color: CommonOptions.colorSurface
-                    radius: 6
-                    border.color: CommonOptions.colorTextMuted
-                    border.width: 1
-
-                    Image {
-                        id: previewImage
+                    MouseArea {
                         anchors.fill: parent
-                        anchors.margins: 4
-                        source: pickPage.currentImageSource
-                        fillMode: Image.PreserveAspectFit
-                        asynchronous: true
-                        cache: true
-                        // 2026-09-21: 用 status 显式判断, 加 opacity 淡入
-                        opacity: status === Image.Ready ? 1 : 0
-                        visible: opacity > 0
-                        Behavior on opacity { NumberAnimation { duration: 250 } }
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: pickPage.navigateTo(
+                                       "FieldGuideDetailPage",
+                                       { speciesId: modelData.speciesId })
                     }
-                    Text {
-                        anchors.centerIn: parent
-                        visible: !previewImage.visible && previewImage.status !== Image.Loading
-                        text: "\ue2c8\n点击下方按钮选择图片"  // Material Icons: folder_open
-                        font.family: "Material Icons"
-                        color: CommonOptions.colorTextMuted
-                        horizontalAlignment: Text.AlignHCenter
-                        font.pixelSize: 16
-                    }
-                    // 加载中: spinner
-                    BusyIndicator {
-                        anchors.centerIn: parent
-                        width: 32; height: 32
-                        running: previewImage.status === Image.Loading
-                        visible: previewImage.status === Image.Loading
-                    }
-                    // 加载失败提示
-                    Text {
-                        anchors.centerIn: parent
-                        visible: previewImage.status === Image.Error
-                        text: "图片加载失败\n可能格式不支持或文件不存在"
-                        color: CommonOptions.colorDanger
-                        font.pixelSize: 12
-                        horizontalAlignment: Text.AlignHCenter
-                    }
-                }
 
-                // 选图按钮
-                Button {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 48
-                    text: "\ue2c8 从相册选择"  // Material Icons: folder_open
-                    font.family: "Material Icons"
-                    Material.background: CommonOptions.colorAccent
-                    Material.foreground: "white"
-                    font.pixelSize: 16
-                    onClicked: fileDialog.open()
-                }
+                    ColumnLayout {
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 3
 
-                // 拍照按钮 (2026-09-16: 改用 Q_INVOKABLE requestTakePhoto)
-                Button {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 48
-                    text: "\ue412 拍照"  // Material Icons: camera_alt
-                    font.family: "Material Icons"
-                    Material.background: CommonOptions.colorWarn
-                    Material.foreground: "white"
-                    font.pixelSize: 16
-                    enabled: androidPlatform && androidPlatform.requestTakePhoto
-                    onClicked: {
-                        if (androidPlatform && androidPlatform.requestTakePhoto) {
-                            androidPlatform.requestTakePhoto()
-                        }
-                    }
-                }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: styles.spSm
 
-                // 匹配按钮
-                Button {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 48
-                    text: "\ue8b6 匹配图鉴"  // Material Icons: search
-                    font.family: "Material Icons"
-                    Material.background: CommonOptions.colorAccent
-                    Material.foreground: "white"
-                    font.pixelSize: 16
-                    enabled: pickPage.currentImagePath !== "" && !pickPage._matching
-                    onClicked: {
-                        // 2026-09-14: P0 修复假匹配. 之前硬编码 HSV {h:90,s:60,v:80}
-                        // 跟图片完全无关. 现在用 ImageColorExtractor 提取真实主色
-                        // (Qt QImage 8x8 网格采样, < 1ms).
-                        // 2026-09-20: 加 _matching 锁, 防止用户连点; 失败时 Toast 提示.
-                        pickPage._matching = true
-                        var colorInfo = ImageColorExtractor.extractFromFile(
-                            pickPage.currentImagePath, 8)
-                        if (!colorInfo.ok) {
-                            pickPage._matching = false
-                            toast.error("颜色提取失败: " + (colorInfo.error || "未知"))
-                            return
-                        }
-                        var userColor = {
-                            "h": colorInfo.h,
-                            "s": colorInfo.s,
-                            "v": colorInfo.v
-                        }
-                        // 2026-09-16: 4 个 service 都有 matchByColor 了, 不用三元保护
-                        if (currentKingdom === 0) {
-                            pickPage.currentResults = plantService.matchByColor(userColor, 5)
-                        } else if (currentKingdom === 1) {
-                            pickPage.currentResults = animalService.matchByColor(userColor, 5)
-                        } else if (currentKingdom === 2) {
-                            pickPage.currentResults = insectService.matchByColor(userColor, 5)
-                        } else if (currentKingdom === 3) {
-                            pickPage.currentResults = mushroomService.matchByColor(userColor, 5)
-                        }
-                        pickPage._matching = false
-                        console.log("[ImagePicker] matched " + pickPage.currentResults.length + " results, user color h=" + userColor.h + " s=" + userColor.s + " v=" + userColor.v)
-                        if (pickPage.currentResults.length === 0) {
-                            toast.warn("未找到匹配物种, 试试换张照片")
-                        }
-                    }
-                }
-
-                // 候选结果列表
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    color: CommonOptions.colorSurface
-                    radius: 6
-                    visible: pickPage.currentResults.length > 0
-
-                    ListView {
-                        anchors.fill: parent
-                        anchors.margins: 8
-                        spacing: 4
-                        clip: true
-
-                        model: pickPage.currentResults
-                        delegate: Rectangle {
-                            width: ListView.view.width
-                            height: 80
-                            color: CommonOptions.colorSurface
-                            radius: 4
-
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.margins: 8
-                                spacing: 8
-
-                                // 相似度大圆
-                                Rectangle {
-                                    Layout.preferredWidth: 60
-                                    Layout.preferredHeight: 60
-                                    radius: 30
-                                    color: modelData.similarity >= 70 ? CommonOptions.colorSuccess :
-                                           modelData.similarity >= 40 ? CommonOptions.colorWarn : CommonOptions.colorDanger
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: Math.round(modelData.similarity) + "%"
-                                        color: "white"
-                                        font.pixelSize: 12
-                                        font.bold: true
-                                    }
-                                }
-
-                                ColumnLayout {
+                            Rectangle {
+                                Layout.preferredWidth: 22
+                                Layout.preferredHeight: 22
+                                Layout.alignment: Qt.AlignVCenter
+                                // 图鉴条目没填代表色时留空格子, 不猜一个颜色 (规则 ①)
+                                color: modelData.swatch ? modelData.swatch
+                                                        : CommonOptions.colorSurfaceDim
+                                border.color: CommonOptions.colorText
+                                border.width: styles.lineHair
+                            }
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 1
+                                Text {
                                     Layout.fillWidth: true
-                                    spacing: 2
-                                    Text {
-                                        text: modelData.commonName || "未知"
-                                        color: CommonOptions.colorText
-                                        font.pixelSize: 14
-                                        font.bold: true
-                                    }
-                                    // 2026-09-20: 危险等级 chip 统一 (5 阶段架构重构 Phase 3 接入)
-                                    RowLayout {
-                                        spacing: 6
-                                        DangerChip {
-                                            level: modelData.dangerLevel || 0
-                                            compact: true
-                                        }
-                                        Text {
-                                            text: modelData.category || ""
-                                            color: CommonOptions.colorTextMuted
-                                            font.pixelSize: 11
-                                        }
-                                    }
+                                    text: modelData.name
+                                    font.pixelSize: styles.fsMd
+                                    font.bold: true
+                                    color: CommonOptions.colorText
+                                    elide: Text.ElideRight
                                 }
+                                Text {
+                                    Layout.fillWidth: true
+                                    visible: modelData.sci.length > 0
+                                    text: modelData.sci
+                                    font.pixelSize: styles.fsXs
+                                    color: CommonOptions.colorTextDim
+                                    elide: Text.ElideRight
+                                }
+                            }
+                            DangerChip {
+                                Layout.alignment: Qt.AlignVCenter
+                                level: modelData.level
+                                compact: true
+                            }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: styles.spSm
+
+                            Text {
+                                Layout.alignment: Qt.AlignVCenter
+                                text: modelData.plate
+                                font.family: styles.monoFont
+                                font.pixelSize: styles.fsXs
+                                font.letterSpacing: 1.2
+                                color: CommonOptions.colorInk3
+                            }
+                            Text {
+                                Layout.alignment: Qt.AlignVCenter
+                                visible: modelData.cat.length > 0
+                                text: modelData.cat
+                                font.pixelSize: styles.fsXs
+                                color: CommonOptions.colorTextDim
+                            }
+                            Item { Layout.fillWidth: true }
+                            Rectangle {
+                                Layout.preferredWidth: 60
+                                Layout.preferredHeight: 5
+                                Layout.alignment: Qt.AlignVCenter
+                                color: CommonOptions.colorSurfaceAlt
+                                Rectangle {
+                                    anchors.left: parent.left
+                                    anchors.top: parent.top
+                                    anchors.bottom: parent.bottom
+                                    width: parent.width * modelData.sim / 100
+                                    color: CommonOptions.colorText
+                                }
+                            }
+                            Text {
+                                Layout.alignment: Qt.AlignVCenter
+                                text: modelData.sim + "%"
+                                font.family: styles.monoFont
+                                font.pixelSize: styles.fsSm
+                                color: CommonOptions.colorText
                             }
                         }
                     }
+
+                    Rectangle {
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        height: styles.lineHair
+                        color: CommonOptions.colorRuleSoft
+                        visible: index < pickPage.rows.length - 1
+                    }
                 }
             }
-        }
 
-        // 底部免责声明
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 40
-            color: CommonOptions.colorDanger
-            visible: pickPage.currentResults.length > 0
-            Text {
-                anchors.fill: parent
-                anchors.margins: 8
-                text: "\ue002 相似度仅供参考,务必对照图鉴二次确认"  // Material Icons: warning
-                font.family: "Material Icons"
-                color: "white"
-                font.pixelSize: 12
-                wrapMode: Text.WordWrap
+            EmptyState {
+                anchors.centerIn: parent
+                visible: pickPage.rows.length === 0
+                iconName: "search"
+                text: pickPage.currentImagePath === "" ? "还没有图片" : "还没有匹配结果"
+                hint: pickPage.currentImagePath === ""
+                      ? "从相册选一张,或拍一张 · 只比主色,不比形状"
+                      : "色已经取到 · 点「按主色匹配」取前 5 条"
+                actionText: pickPage.currentImagePath === "" ? "从相册选择" : "立即匹配"
+                onActionTriggered: {
+                    if (pickPage.currentImagePath === "") fileDialog.open()
+                    else pickPage.runMatch()
+                }
             }
         }
     }
 
-    // 2026-09-11: FileDialog 从相册选图
-    // 2026-09-16: 兼容 Qt 6.7 新 API (currentFile) 和 旧 API (selectedFile)
+    // === 取图通道 ============================================================
+    // 兼容 Qt 6.7 的 currentFile 与更早的 selectedFile; Android 11+ 返回 content://,
+    // 必须先 importImage 复制进沙盒拿本地路径 —— 直接把 URI 当路径喂给取色接口,
+    // 报的是 "file not found", 用户会以为是自己照片的问题.
     FileDialog {
         id: fileDialog
         title: "选择图片"
         nameFilters: ["图片文件 (*.jpg *.jpeg *.png)", "所有文件 (*)"]
         onAccepted: {
-            // 优先 currentFile (Qt 6.7+), 退回 selectedFile
             var url = ""
             if (currentFile && currentFile.toString().length > 0) {
                 url = currentFile.toString()
             } else if (selectedFile && selectedFile.toString().length > 0) {
                 url = selectedFile.toString()
             }
-            if (url.length > 0) {
-                // 2026-09-16: Android 11+ FileDialog 返回 content:// URI
-                // 1) 设 currentImageSource 让 Image 显示 (Qt 6.7 Image 支持 content://)
-                // 2) 调 importImage 复制到沙盒,得到本地路径给 ImageColorExtractor
-                pickPage.currentImageSource = url
-                if (androidPlatform && androidPlatform.importImage) {
-                    var local = androidPlatform.importImage(url)
-                    if (local && local.length > 0) {
-                        pickPage.currentImagePath = local
-                    } else {
-                        // 已经是 file://, 直接剥前缀
-                        pickPage.currentImagePath = url.replace(/^file:\/\//, "")
-                    }
-                } else {
-                    pickPage.currentImagePath = url.replace(/^file:\/\//, "")
-                }
-                console.log("[ImagePicker] selected: " + pickPage.currentImagePath)
-            } else {
-                console.warn("[ImagePicker] FileDialog 接受但 selectedFile/currentFile 都空")
+            if (url.length === 0) {
+                console.warn("[ImagePick] FileDialog 接受但 currentFile/selectedFile 都空")
+                pickPage.note = "系统没回传图片地址"
+                return
             }
+            pickPage.setImage(url)
+            if (androidPlatform) {
+                var local = androidPlatform.importImage(url)
+                if (local && local.length > 0) {
+                    pickPage.currentImagePath = local
+                    pickPage.note = ""
+                } else {
+                    pickPage.currentImageSource = ""
+                    pickPage.currentImagePath = ""
+                    pickPage._resetMatch()
+                    pickPage.note = "这张图复制不进应用目录, 换一张或改用拍照"
+                }
+            } else {
+                pickPage.currentImagePath = url.replace(/^file:\/\//, "")
+            }
+            console.log("[ImagePick] selected: " + pickPage.currentImagePath)
         }
     }
 
-    // 2026-09-16: 监听拍照完成 signal, 设 currentImageSource + currentImagePath
+    // 拍照完成由 AndroidPlatform 回 file:// URI, 已经是本地文件, 不用再复制
     Connections {
-        // 2026-09-17: 去掉 typeof 包装 (QML context property typeof 永远 undefined)
         target: androidPlatform ? androidPlatform : null
         function onPhotoTaken(uri) {
-            if (uri && uri.length > 0) {
-                pickPage.currentImageSource = uri
-                pickPage.currentImagePath = uri.replace(/^file:\/\//, "")
-                console.log("[ImagePicker] photo taken: " + pickPage.currentImagePath)
-            }
+            if (!uri || uri.length === 0) return
+            pickPage.setImage(uri)
+            pickPage.currentImagePath = uri.replace(/^file:\/\//, "")
+            pickPage.note = ""
+            console.log("[ImagePick] photo: " + pickPage.currentImagePath)
         }
     }
 }

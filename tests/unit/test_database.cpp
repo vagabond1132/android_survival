@@ -56,8 +56,10 @@ private slots:
         QVERIFY(q.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='route_favorites'"));
         QVERIFY(q.next());
 
-        // 验证 User 库 equipment_lists
-        QVERIFY(q.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='equipment_lists'"));
+        // 2026-10-16: 原断言查 equipment_lists, 但 2026-09-10 那次清理已把
+        // equipment_lists / equipment_check_progress 从 User 库 schema 删掉
+        // (EquipmentService 只用 QSettings, 不接 Database), 改查仍然建的 user_preferences.
+        QVERIFY(q.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='user_preferences'"));
         QVERIFY(q.next());
 
         // 验证 Settings 库的 app_settings

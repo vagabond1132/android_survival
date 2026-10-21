@@ -243,7 +243,16 @@ bool RouteService::loadFromJson() {
         r.isWild = o["is_wild"].toBool(false);
         r.hasPermit = o["has_permit"].toBool(r.permitRequired);
         r.score = o["score"].toInt(0);
-        r.scoreDetail = o["score_detail"].toString();
+        // routes.json 里这一项写成驼峰 "scoreDetail" 且是对象, 而本文件其余字段一律
+        // 读下划线键 —— 原来那句 o["score_detail"].toString() 两重都落空: 键不存在,
+        // 而且 QJsonValue::toString() 对对象返回空串. 结果 entity.scoreDetail 全站恒为
+        // 空, 详情页拿不到 11 项分项 (海拔/路况/水源/蛇虫/补给...).
+        // 两种拼法都收, 对象先序列化再存, 与 associatedSpeciesJson 同一口径.
+        const QJsonValue sd = o.contains("score_detail") ? o.value("score_detail")
+                                                         : o.value("scoreDetail");
+        r.scoreDetail = sd.isObject()
+                ? QString::fromUtf8(QJsonDocument(sd.toObject()).toJson(QJsonDocument::Compact))
+                : sd.toString();
         if (o.contains("associated_species")) {
             r.associatedSpeciesJson = QString(QJsonDocument(o["associated_species"].toObject()).toJson(QJsonDocument::Compact));
         }

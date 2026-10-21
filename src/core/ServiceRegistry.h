@@ -55,6 +55,11 @@ class QQmlContext;
 
 namespace outdoor {
 
+// 2026-10-20: 罗盘只在前向声明 + 裸指针 (QObject parent 归本 registry 管),
+// 因为 CompassSensor.h 要带 <QCompass>, 塞进这个被 QML 模块全域包含的头会引入
+// QtSensors 的 incomplete-type 连锁 (同上面 QQmlContext 那条坑).
+class CompassSensor;
+
 class ServiceRegistry : public QObject {
     Q_OBJECT
 public:
@@ -91,6 +96,7 @@ public:
     EquipmentService*    equipment()   const { return m_equipment.get(); }
     MapService*         mapService()  const { return m_map.get(); }
     ImageFetcherService* imageFetcher() const { return m_imageFetcher.get(); }  // 2026-09-19
+    CompassSensor*       compass()      const { return m_compass; }             // 2026-10-20
 
 private:
     Database* m_database = nullptr;
@@ -112,6 +118,7 @@ private:
     std::unique_ptr<EquipmentService>   m_equipment;
     std::unique_ptr<MapService>        m_map;
     std::unique_ptr<ImageFetcherService> m_imageFetcher;  // 2026-09-19
+    CompassSensor* m_compass = nullptr;  // 2026-10-20: QObject parent = this, 不 manual delete
 };
 
 } // namespace outdoor

@@ -37,11 +37,19 @@ QString SettingsStore::getString(const QString& key, const QString& defaultValue
 }
 
 int SettingsStore::getInt(const QString& key, int defaultValue) {
-    return settings().value(key, defaultValue).toInt();
+    // 2026-10-16 修: value(key, default).toInt() 遇到非数字字符串返回 0, 调用方给的
+    // 兜底默认值被吃掉 (如 getInt("retry", 3) 读到脏数据 -> 0 次重试).
+    const QVariant v = settings().value(key);
+    bool ok = false;
+    const int parsed = v.toInt(&ok);
+    return (!v.isValid() || !ok) ? defaultValue : parsed;
 }
 
 double SettingsStore::getDouble(const QString& key, double defaultValue) {
-    return settings().value(key, defaultValue).toDouble();
+    const QVariant v = settings().value(key);
+    bool ok = false;
+    const double parsed = v.toDouble(&ok);
+    return (!v.isValid() || !ok) ? defaultValue : parsed;
 }
 
 bool SettingsStore::getBool(const QString& key, bool defaultValue) {

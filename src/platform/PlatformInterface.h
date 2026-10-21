@@ -71,6 +71,26 @@ public:
 
     QString m_lastCapturedUri;
 
+    // 2026-10-20: ⑤求助页「复制位置文本」.
+    // 为什么放在平台层而不是 QML: QML 侧没有剪贴板 API, 且①⑤两处读数都要复用同一句
+    // 文案 (emergencyService.formatLocationMessage), 复制动作必须跨端一致.
+    // 桌面端 stub: 用 Qt 剪贴板, 无需 JNI.
+    Q_INVOKABLE virtual bool copyToClipboard(const QString& text) {
+        Q_UNUSED(text);
+        return false;
+    }
+
+    // 2026-10-20: ⑤求助页「生成短信草稿」— 只拉起系统短信编辑页, 收件人和正文填好,
+    // 发送键在用户手里. 与 sendSMS() 的区别是这条路径永远不会自己把短信发出去:
+    // SmsManager.sendTextMessage (AndroidPlatform::sendSMS) 是直接发送, 在野外误触
+    // 就是真发一条, 所以 SOS 流程一律走草稿, 不给直接发送留入口.
+    // 桌面端 stub: 无事可做, 返回 false 让 UI 提示不可用.
+    Q_INVOKABLE virtual bool openSmsDraft(const QString& number, const QString& body) {
+        Q_UNUSED(number);
+        Q_UNUSED(body);
+        return false;
+    }
+
     // 2026-09-16: 把任意 URI (file:// / content://) 复制到 app 沙盒, 返回本地绝对路径
     // 桌面端 stub: 原样返回 (没复制)
     Q_INVOKABLE virtual QString importImage(const QString& srcUri) {

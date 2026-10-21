@@ -350,6 +350,76 @@ QVariantMap FieldGuideHistory::addNote(qint64 id, const QString& note) {
     return toQVariant(Ok(true));
 }
 
+// 详情页的收藏开关: 已有浏览记录就翻 is_favorite, 一条都没有就先落一条再收藏.
+// 只看 viewed_at 最新那行, 和 getFavorites() 的读法对齐, 免得同一物种被收成两行.
+QVariantMap FieldGuideHistory::toggleFavoriteByEntity(const QString& entityId,
+                                                      const QString& kingdom,
+                                                      const QString& commonName,
+                                                      const QString& scientificName,
+                                                      const QString& category,
+                                                      int dangerLevel) {
+    using namespace outdoor::internal;
+    const QString ctx = "FieldGuideHistory::toggleFavoriteByEntity";
+    if (entityId.isEmpty())
+        return fail(ServiceErrorCode::InvalidArgument, QStringLiteral("entityId 为空"), ctx);
+    if (auto e = dbOpenCheck(m_db, Database::Name::Settings, ctx)) return *e;
+
+    QSqlDatabase db = m_db->get(Database::Name::Settings);
+    QSqlQuery q(db);
+    const QVariantMap found = DbHelper::selectOne(q,
+        "SELECT id, is_favorite FROM field_guide_history WHERE entity_id = ? "
+        "ORDER BY viewed_at DESC LIMIT 1",
+        {entityId}, ctx,
+        [](const QSqlQuery& r) {
+            QVariantMap m;
+            m["id"] = r.value(0).toLongLong();
+            m["favorite"] = r.value(1).toBool();
+            return m;
+        });
+
+    QVariantMap out;
+    if (!found.isEmpty()) {
+        const bool next = !found.value("favorite").toBool();
+        QVariantMap res = setFavorite(found.value("id").toLongLong(), next);
+        if (!isOk(res)) return res;
+        out["favorite"] = next;
+        out["recordId"] = found.value("id");
+        return toQVariant(Ok(out));
+    }
+
+    ViewRecord rec;
+    rec.entityId = entityId;
+    rec.kingdom = kingdom;
+    rec.commonName = commonName;
+    rec.scientificName = scientificName;
+    rec.category = category;
+    rec.dangerLevel = dangerLevel;
+    rec.viewSource = QStringLiteral("manual");
+    rec.isFavorite = true;
+    rec.viewedAt = QDateTime::currentDateTime();
+    QVariantMap res = addRecord(rec);
+    if (!isOk(res)) return res;
+    out["favorite"] = true;
+    out["recordId"] = res.value("value");
+    return toQVariant(Ok(out));
+}
+
+bool FieldGuideHistory::isFavoriteEntity(const QString& entityId) {
+    if (!m_db || !m_db->isOpen(Database::Name::Settings) || entityId.isEmpty()) return false;
+    QSqlDatabase db = m_db->get(Database::Name::Settings);
+    QSqlQuery q(db);
+    const QVariantMap found = DbHelper::selectOne(q,
+        "SELECT is_favorite FROM field_guide_history WHERE entity_id = ? "
+        "ORDER BY viewed_at DESC LIMIT 1",
+        {entityId}, QStringLiteral("FieldGuideHistory::isFavoriteEntity"),
+        [](const QSqlQuery& r) {
+            QVariantMap m;
+            m["favorite"] = r.value(0).toBool();
+            return m;
+        });
+    return found.value("favorite").toBool();
+}
+
 QVariantMap FieldGuideHistory::cleanOldRecords(int daysOld) {
     using namespace outdoor::internal;
     const QString ctx = "FieldGuideHistory::cleanOldRecords";

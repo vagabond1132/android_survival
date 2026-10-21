@@ -30,6 +30,7 @@
 #include "../equipment/EquipmentService.h"
 #include "../map/MapService.h"
 #include "ImageFetcherService.h"  // 2026-09-19
+#include "CompassSensor.h"        // 2026-10-20: 丁骨架朝向来源
 
 namespace outdoor {
 
@@ -74,7 +75,10 @@ bool ServiceRegistry::initializeAll() {
     // 2026-09-19: 运行时图册 (无 db 依赖)
     m_imageFetcher = std::make_unique<ImageFetcherService>();
 
-    Logger::info("ServiceRegistry: 16 services constructed");
+    // 2026-10-20: 罗盘 (丁骨架 ①营地/⑤求助 的朝向来源). parent = this, 随本对象析构.
+    m_compass = new CompassSensor(this);
+
+    Logger::info("ServiceRegistry: 16 services + 1 compass constructed");
     return true;
 }
 
@@ -133,7 +137,9 @@ void ServiceRegistry::registerToQmlContext(QQmlContext* ctx) {
     ctx->setContextProperty("imageFetcher",         static_cast<QObject*>(m_imageFetcher.get()));
     // 2026-09-11: 注册 androidPlatform, 让 QML 端能调 takePhoto (P1 地图改版 3.26).
     ctx->setContextProperty("androidPlatform",      static_cast<QObject*>(m_platform));
-    Logger::info("ServiceRegistry: 16 services + 1 platform registered to QML context");
+    // 2026-10-20: 罗盘. ①营地方位盘 / ⑤求助读数 / 地图方向指针读同一个 heading.
+    ctx->setContextProperty("compassSensor",        static_cast<QObject*>(m_compass));
+    Logger::info("ServiceRegistry: 16 services + 1 platform + 1 compass registered to QML context");
 }
 
 } // namespace outdoor

@@ -1,13 +1,40 @@
 /**
  * @file RouteListPage.qml
- * @brief 路线列表 (2026-09-14 UI 改版)
+ * @brief 徒步路线目录 (2026-10-20 v9 F1 同款, 丁骨架二级页)
  *
- * 改进:
- *   - 顶部 hero 渐变 (深绿山主题) + 标题 + 副标题
- *   - 筛选区: 卡片化, 圆角 12, padding 12
- *   - 列表项: 难度色条 + 卡片 + 元信息
- *   - 全部用 CommonOptions + Styles 设计 token
+ * 入口是顶栏菜单抽屉的「路线」(Main.qml case "route"), 压在 stackView 上,
+ * 不是④地图那一格的根页, 所以没有底栏, 返回走标题条右上角的方角.
+ *
+ * 版式逐块对应已评审的 mock (手册目录 F1 母版):
+ *   标题条   左三段 (ROUTE 微标签 / 页名 / 读数行), 右上 26px 方角返回.
+ *   筛选卡   难度 6 枚 chip 单行 + 一行说明上限语义的汉字注, 省份/月份走 combo.
+ *   分组     按省份分组 (33 个省, 组头带条数), 组内按图鉴编号序.
+ *   行       3px 难度条 + 46px 编号列 + 名称/里程·天数·性质 + 5 格难度梯 + 人字纹.
+ *
+ * 三条不能破的规则:
+ *   ① 不编数字. 读数行与组头条数全部来自 routeService.getAdvanced() 一次取回的那份库,
+ *      页面不写死. 749 是 totalCount, 能列出来的是 747 —— 差额是被"不推荐"规则
+ *      (notRecommended 或 6000m+ 且非休闲类) 剔掉的库拉岗日与玉珠峰两条. 旧版 Hero
+ *      写"共 749 条经典徒步路线"却列 747 条, 这一版把差额直接说出来.
+ *   ② 难度是上限不是精确匹配. 选"3 星"= 1~3 星 (野外选线问的是"我走不走得动这个及以下"),
+ *      这个语义写在 chip 下面那行注里, 不靠用户猜.
+ *   ③ 汉字不进等宽. 编号与 SKILLS 类微标签走 monoFont + letterSpacing, 名称/副行走默认字体
+ *      (见 [[qml-monofont-no-cjk]]).
+ *
+ * 2026-10-20 改版顺带换掉的三处旧实现:
+ *   - 不再用 ServiceListModel + getFiltered 每改一次筛选回表一次. 三个筛选条件全在
+ *      客户端算: 747 行一次取回, 换条件只重排一遍, 省掉每次点击的 Result 解包, 也
+ *      避免 getFiltered 遍历 QHash 时组内顺序每次启动都可能变.
+ *   - 省份/月份的下拉框 index 改成从页面状态反查的绑定. 旧版 resetFilters() 直接写
+ *      filterRowProv.comboBoxInstance.currentIndex = 0 (从外面扳组件内部的 Loader 实例),
+ *      重置得靠那句才生效; 现在状态是单一来源, FilterRow 自己跟着变.
+ *   - 行尾的 "★" 与手抄 "›" 字符去掉, 难度改用 Ladder 格梯 (星号要挤进等宽族才有形状,
+ *      而汉字不许进等宽), 人字纹改用 IconLabel chevron_right.
  */
+
+// delegate 里要读 routeListPage 的方法与状态, qmlcachegen 静态编译下必须 Bound,
+// 否则真机静默 ReferenceError (见 [[qml-delegate-outer-id-pragma]]).
+pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Controls.Material
@@ -16,308 +43,447 @@ import OutdoorSurvival 1.0
 
 Page {
     id: routeListPage
+
+    Styles { id: styles; visible: false }
+
     title: "路线"
-
-    property int filterDifficulty: 0
-    property string filterProvince: "全部"
-    property int filterMonth: 0
-
-    property var provinces: ["全部"]
-    property var months: ["全部"]
-
-    // 2026-09-21: 同 TravelListPage — FilterRow 暴露的 ComboBox 替代之前不存在的
-    //   provinceCombo / monthCombo id.
-    property int _provIndex: 0
-    property int _monthIndex: 0
-
     background: Rectangle { color: CommonOptions.colorBg }
-    Styles { id: styles }
 
-    function rebuildList() {
-        var provinceKey = filterProvince === "全部" ? "" : filterProvince
-        // 2026-09-14 修: 难度 chip 选 N 星 = 显示 1-N 星 (难度上限语义)
-        var minDiff = 1
-        var maxDiff = filterDifficulty === 0 ? 5 : filterDifficulty
-        // 2026-09-20: 用 ServiceListModel 替代 clear+for+append 模板 (Phase 3)
-        routeModel.args = [provinceKey, minDiff, maxDiff, filterMonth]
-        // 2026-09-20: Qt.callLater 让 ServiceListModel.Component.onCompleted 的
-        //   auto-refresh 先跑 (此时 args 已是当前值), 避免 race 导致首次结果为空.
-        Qt.callLater(function() { routeModel.refresh() })
-        // 2026-09-28: 删掉结果计数的手写赋值. 之前在这同步读 routeModel.count,
-        //   但 refresh() 被 Qt.callLater 延后 → 首次必显示"共 0 条路线", 之后每次
-        //   筛选显示的都是上一次的旧值. 改为 resultLabel 声明式绑定 routeModel.count
-        //   (ListModel.count 是 NOTIFYable), refresh 完成后自动刷新.
+    // === 筛选状态 ===========================================================
+    property int maxDifficulty: 0      // 0 = 全部; N = 只看 ≤N 星
+    property string province: ""       // "" = 全部
+    property int month: 0              // 0 = 全部
+
+    // === 数据 ===============================================================
+    // library = 一次取回的全部"可推荐"路线 (11 个键, 见 getAdvanced)
+    // rows    = 当前筛选结果: {kind:"head"|"item", ...} 混合, 交给同一个 ListView
+    property var library: []
+    property var rows: []
+    property var provinceChoices: ["全部"]
+    property int shownCount: 0
+    // 库覆盖率 (不随筛选变, 描述的是"这一库有什么")
+    property int provinceTotal: 0
+    property int diffLo: 0
+    property int diffHi: 0
+
+    readonly property int libCount: library.length
+    readonly property int hiddenCount: routeService ? (routeService.totalCount - libCount) : 0
+
+    function navigateTo(page, props) {
+        var win = ApplicationWindow.window
+        if (win && win.navBus) win.navBus.navigateTo(page, props || {})
+    }
+    function goBack() {
+        var win = ApplicationWindow.window
+        if (win && win.navBus) win.navBus.back()
+    }
+
+    // getAdvanced 是这套服务里唯一一次就给全行情的口子: 距离/天数/性质/野线/最高海拔/
+    // 适宜月份都在返回里, 而且返回的是裸 QVariantList (没有 Result 包装).
+    // 12 个参数取"不加过滤"的组合: 省份空串 / 难度 1~5 / 月份 0 / 性质空串 /
+    // 野线与景区都收 / 天数与里程区间 0.
+    function loadLibrary() {
+        if (!routeService) { library = []; return }
+        var fetched = routeService.getAdvanced("", 1, 5, 0, "", true, true, 0, 0, 0, 0)
+        library = (fetched && fetched.length !== undefined) ? fetched : []
+
+        var seen = ({})
+        var lo = 0
+        var hi = 0
+        for (var i = 0; i < library.length; ++i) {
+            var r = library[i]
+            var p = String(r.province || "")
+            if (p !== "") seen[p] = true
+            var d = Number(r.difficulty) || 0
+            if (lo === 0 || d < lo) lo = d
+            if (d > hi) hi = d
+        }
+        var keys = []
+        for (var k in seen) keys.push(k)
+        // 码位序 —— 与 C++ 侧 getAvailableProvinces() 的 std::sort 同一条序,
+        // 两处若各排各的, 下拉框与组头会读成两个顺序.
+        keys.sort(function (a, b) { return a < b ? -1 : (a > b ? 1 : 0) })
+        provinceChoices = ["全部"].concat(keys)
+        provinceTotal = keys.length
+        diffLo = lo
+        diffHi = hi
+    }
+
+    function hasMonth(seasons, m) {
+        if (!seasons || seasons.length === undefined) return false
+        var token = m + "月"
+        for (var i = 0; i < seasons.length; ++i) {
+            if (String(seasons[i]) === token) return true
+        }
+        return false
+    }
+
+    function formatKm(km) {
+        // 里程右边界要对齐: 35.2 与 8 都写一位小数, 取整后补 ".0" 反而更啰嗦,
+        // 所以只在整数时丢掉小数点.
+        if (km <= 0) return "0"
+        return (km === Math.round(km)) ? String(Math.round(km)) : km.toFixed(1)
+    }
+
+    function rebuild() {
+        var bucket = ({})
+        var order = []
+        var shown = 0
+        for (var i = 0; i < library.length; ++i) {
+            var r = library[i]
+            var d = Number(r.difficulty) || 1
+            if (maxDifficulty > 0 && d > maxDifficulty) continue
+            var p = String(r.province || "未标注")
+            if (province !== "" && p !== province) continue
+            if (month > 0 && !hasMonth(r.bestSeason, month)) continue
+            if (!bucket[p]) { bucket[p] = []; order.push(p) }
+            bucket[p].push({
+                kind: "item",
+                id: String(r.id || ""),
+                name: String(r.name || "未命名路线"),
+                difficulty: d,
+                km: Number(r.distanceKm) || 0,
+                days: Number(r.daysNeeded) || 1,
+                nature: String(r.routeNature || ""),
+                wild: r.isWild === true,
+                plate: CommonOptions.plateCode("RT", String(r.id || "")),
+                tone: CommonOptions.difficultyColor(d)
+            })
+            shown++
+        }
+
+        order.sort(function (a, b) { return a < b ? -1 : (a > b ? 1 : 0) })
+        var out = []
+        for (var g = 0; g < order.length; ++g) {
+            var key = order[g]
+            var members = bucket[key]
+            // 组内按编号排, 目录序才稳定 (getAdvanced 遍历 QHash, 原始序每次启动都可能变)
+            members.sort(function (a, b) { return a.plate < b.plate ? -1 : (a.plate > b.plate ? 1 : 0) })
+            out.push({ kind: "head", label: key, count: members.length })
+            for (var m = 0; m < members.length; ++m) out.push(members[m])
+        }
+        shownCount = shown
+        rows = out
+    }
+
+    function resetFilters() {
+        routeListPage.maxDifficulty = 0
+        routeListPage.province = ""
+        routeListPage.month = 0
+    }
+
+    // 读数行: 有筛选时先报"现 N 条", 再报库的覆盖面.
+    readonly property string statusLine: {
+        if (libCount === 0) return "路线数据尚未载入 · 检查 assets/data/routes.json"
+        var filtering = (maxDifficulty > 0 || province !== "" || month > 0)
+        var t = filtering ? ("现 " + shownCount + " / " + libCount + " 条")
+                          : (libCount + " 条")
+        t += " · " + provinceTotal + " 省 · 难度 " + diffLo + "~" + diffHi
+        if (province !== "") t += " · " + province
+        if (maxDifficulty > 0) t += " · " + maxDifficulty + " 星及以下"
+        if (month > 0) t += " · " + month + " 月"
+        if (hiddenCount > 0) t += " · 另有 " + hiddenCount + " 条不推荐未列"
+        return t
     }
 
     Component.onCompleted: {
-        provinces = routeService.getAvailableProvinces()
-        months = routeService.getAvailableMonths()
-        rebuildList()
+        loadLibrary()
+        rebuild()
     }
+    Connections {
+        target: routeService
+        function onDataChanged() {
+            routeListPage.loadLibrary()
+            routeListPage.rebuild()
+        }
+    }
+    onMaxDifficultyChanged: rebuild()
+    onProvinceChanged: rebuild()
+    onMonthChanged: rebuild()
 
+    // === 版面 ==============================================================
     ColumnLayout {
         anchors.fill: parent
         spacing: 0
 
-        // === 顶部 hero (统一深青绿) ===
-        Rectangle {
+        // --- 标题条 (54px: 微标签 / 页名 / 读数行, 右上 26px 方角返回) ---
+        Item {
             Layout.fillWidth: true
-            Layout.preferredHeight: 100
-            color: "#00695C"  // 深青绿
-            gradient: Gradient {
-                GradientStop { position: 0.0; color: "#00695C" }
-                GradientStop { position: 1.0; color: "#00897B" }
-            }
+            Layout.preferredHeight: 54
+            Layout.leftMargin: styles.pageMargin
+            Layout.rightMargin: styles.pageMargin
 
-            RowLayout {
-                anchors.fill: parent
-                anchors.margins: styles.spLg
-                spacing: styles.spMd
-
+            Column {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                // 给右上角的方角让位, 否则读数行从它底下穿过
+                anchors.rightMargin: 40
+                spacing: 3
                 Text {
-                    text: "\ue536"  // Material Icons: hiking (2026-09-19: 之前 \ue52f 是 bicycle, 改 hiking)
-                    font.family: "Material Icons"
-                    font.pixelSize: 32
+                    text: "ROUTE / TRAIL INDEX"
+                    font.family: styles.monoFont
+                    font.pixelSize: styles.fsXs
+                    font.letterSpacing: 1.8
+                    color: CommonOptions.colorInk3
                 }
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 2
-                    Text {
-                        text: "徒步路线"
-                        color: "white"
-                        font.pixelSize: styles.fs2xl
-                        font.bold: true
-                    }
-                    Text {
-                        text: "国内经典徒步路线合集"
-                        color: "#B0BEC5"
-                        font.pixelSize: styles.fsSm
-                    }
+                Text {
+                    width: parent.width
+                    text: "徒步路线"
+                    font.pixelSize: styles.fs2xl
+                    font.bold: true
+                    color: CommonOptions.colorText
+                    elide: Text.ElideRight
                 }
-            }
-        }
-
-        // === 筛选区 (卡片) ===
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.margins: styles.spLg
-            Layout.topMargin: styles.spLg
-            Layout.preferredHeight: filterCol.implicitHeight + 24
-            color: CommonOptions.colorSurface
-            radius: styles.rLg
-            border.color: Qt.darker(CommonOptions.colorSurface, 1.2)
-            border.width: 1
-
-            ColumnLayout {
-                id: filterCol
-                anchors.fill: parent
-                anchors.margins: styles.spMd
-                spacing: styles.spSm
-
-                // 2026-09-20: 改用 FilterRow 组件 (chip + combo), 跟 TravelListPage /
-                //   NearbyTab 风格统一. chipCount=5 表示 1-5 星, chipSelected=0 表示"全部".
-                FilterRow {
-                    Layout.fillWidth: true
-                    label: "难度"
-                    chipCount: 5
-                    chipSelected: routeListPage.filterDifficulty
-                    onChipClicked: (n) => routeListPage.filterDifficulty = n
-                }
-                FilterRow {
-                    id: filterRowProv
-                    Layout.fillWidth: true
-                    label: "省份"
-                    comboModel: routeListPage.provinces
-                    comboCurrentIndex: routeListPage._provIndex
-                    onComboActivated: (i, v) => {
-                        routeListPage._provIndex = i
-                        routeListPage.filterProvince = v
-                    }
-                }
-                FilterRow {
-                    id: filterRowMonth
-                    Layout.fillWidth: true
-                    label: "月份"
-                    comboModel: routeListPage.months
-                    comboCurrentIndex: routeListPage._monthIndex
-                    onComboActivated: (i, v) => {
-                        routeListPage._monthIndex = i
-                        if (v === "全部") routeListPage.filterMonth = 0
-                        else {
-                            var digits = String(v).replace(/[^0-9]/g, "")
-                            routeListPage.filterMonth = parseInt(digits) || 0
-                        }
-                    }
-                }
-
-                // 计数 + 重置
-                RowLayout {
-                    Layout.fillWidth: true
-                    Layout.topMargin: styles.spXs
-                    spacing: 4
-                    // 2026-09-29: 同 TravelListPage — 图标字形拆到 IconLabel, 中文/
-                    //   数字用默认字体, 避免 PUA 码位 (\ue01d 等) 与中文混排.
-                    IconLabel {
-                        name: "hiking"
-                        size: 13
-                        tintColor: CommonOptions.colorTextMuted
-                    }
-                    Text {
-                        id: resultLabel
-                        // 2026-09-28: 声明式绑定 routeModel.count (NOTIFYable),
-                        //   refresh() 完成后自动更新, 修复"共 0 条路线"恒定 bug.
-                        text: "共 " + (routeModel.count || 0) + " 条路线"
-                        color: CommonOptions.colorTextMuted
-                        font.pixelSize: styles.fsSm
-                        Layout.fillWidth: true
-                    }
-                    RowLayout {
-                        spacing: 4
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                routeListPage.filterDifficulty = 0
-                                routeListPage.filterProvince = "全部"
-                                routeListPage.filterMonth = 0
-                                // 2026-09-21: 同 TravelListPage — 用 page 自身 _xxIndex
-                                //   + filterRow.comboBoxInstance.
-                                routeListPage._provIndex = 0
-                                routeListPage._monthIndex = 0
-                                if (filterRowProv.comboBoxInstance) filterRowProv.comboBoxInstance.currentIndex = 0
-                                if (filterRowMonth.comboBoxInstance) filterRowMonth.comboBoxInstance.currentIndex = 0
-                            }
-                        }
-                        IconLabel {
-                            name: "refresh"
-                            size: 13
-                            tintColor: CommonOptions.colorAccent
-                        }
-                        Text {
-                            text: "重置"
-                            color: CommonOptions.colorAccent
-                            font.pixelSize: styles.fsSm
-                        }
-                    }
+                Text {
+                    width: parent.width
+                    text: routeListPage.statusLine
+                    font.pixelSize: styles.fsXs
+                    color: CommonOptions.colorInk3
+                    elide: Text.ElideRight
                 }
             }
-        }
 
-        // === 列表 ===
-        ListView {
-            id: listView
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            Layout.margins: styles.spLg
-            Layout.topMargin: 0
-            spacing: styles.spSm
-            clip: true
-
-            model: ServiceListModel {
-                id: routeModel
-                service: routeService
-                method: "getFiltered"
-            }
-
-            delegate: Rectangle {
-                width: ListView.view.width
-                height: 90
-                radius: styles.rMd
+            Rectangle {
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.topMargin: styles.spXs
+                width: 26
+                height: 26
                 color: CommonOptions.colorSurface
-                border.color: Qt.darker(CommonOptions.colorSurface, 1.15)
-                border.width: 1
-
-                // 2026-09-29: bestSeason 安全格式化 (同 TravelListPage) — 防
-                //   非数组容器被字符串化成 "QQmlListModel(...)" 之类脏数据.
-                readonly property string _seasonText: {
-                    var s = model.bestSeason
-                    if (s === undefined || s === null || s === "") return ""
-                    if (Array.isArray(s)) return s.join("、")
-                    if (typeof s === "object") {
-                        var out = []
-                        var n = (s.length !== undefined) ? s.length : 0
-                        for (var i = 0; i < n; i++) out.push(s[i])
-                        return out.join("、")
-                    }
-                    return String(s)
+                border.color: CommonOptions.colorText
+                border.width: styles.lineHair
+                IconLabel {
+                    anchors.centerIn: parent
+                    name: "back"
+                    size: styles.icSm
+                    tintColor: CommonOptions.colorText
                 }
-
                 MouseArea {
                     anchors.fill: parent
+                    anchors.margins: -9
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        ApplicationWindow.window.navBus.navigateTo("RouteDetailPage", {routeId: model.id})
+                    onClicked: routeListPage.goBack()
+                }
+            }
+        }
+
+        // --- 筛选卡 ---
+        Card {
+            Layout.fillWidth: true
+            Layout.leftMargin: styles.pageMargin
+            Layout.rightMargin: styles.pageMargin
+            Layout.topMargin: styles.spSm
+            spacing: styles.spSm
+
+            // 难度 6 枚 chip 压成一行: 每枚 Layout.fillWidth, 于是宽度均分、不换行,
+            // 省掉 Flow 那种两行 chip 占掉的 ~40px (列表才是这一页的主角).
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: styles.spXs
+
+                Repeater {
+                    model: [0, 1, 2, 3, 4, 5]
+                    delegate: Chip {
+                        required property int modelData
+                        Layout.fillWidth: true
+                        text: modelData === 0 ? "全部" : (modelData + " 星")
+                        // 选中那枚染难度色, 与行左的 3px 条 / 难度梯同源;
+                        // 未选中的保持灰面, 不然六枚全彩等于没有指示.
+                        checked: routeListPage.maxDifficulty === modelData
+                        accent: modelData === 0 ? CommonOptions.colorAccent
+                                                : CommonOptions.difficultyColor(modelData)
+                        textSize: styles.fsSm
+                        onClicked: routeListPage.maxDifficulty =
+                                   (routeListPage.maxDifficulty === modelData) ? 0 : modelData
                     }
                 }
+            }
 
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.margins: styles.spSm
-                    spacing: styles.spSm
+            Text {
+                Layout.fillWidth: true
+                text: "选难度 = 该星及以下 · 再点一次取消"
+                font.pixelSize: styles.fsXs
+                color: CommonOptions.colorInk3
+                elide: Text.ElideRight
+            }
 
-                    // 左侧难度色条
-                    Rectangle {
-                        width: 6
-                        Layout.fillHeight: true
-                        radius: 3
-                        color: {
-                            if (model.difficulty >= 5) return "#B71C1C"
-                            if (model.difficulty >= 4) return CommonOptions.colorDanger
-                            if (model.difficulty >= 3) return CommonOptions.colorWarn
-                            if (model.difficulty >= 2) return "#FBC02D"
-                            return CommonOptions.colorSuccess
-                        }
+            FilterRow {
+                Layout.fillWidth: true
+                label: "省份"
+                comboModel: routeListPage.provinceChoices
+                comboCurrentIndex: {
+                    if (routeListPage.province === "") return 0
+                    var i = routeListPage.provinceChoices.indexOf(routeListPage.province)
+                    return i > 0 ? i : 0
+                }
+                onComboActivated: (idx, value) => {
+                    routeListPage.province = idx === 0 ? "" : String(value)
+                }
+            }
+
+            FilterRow {
+                Layout.fillWidth: true
+                label: "月份"
+                comboModel: CommonOptions.monthOptions()
+                comboTextRole: "label"
+                comboValueRole: "value"
+                comboCurrentIndex: {
+                    var opts = CommonOptions.monthOptions()
+                    for (var i = 0; i < opts.length; ++i) {
+                        if (opts[i].value === routeListPage.month) return i
                     }
+                    return 0
+                }
+                onComboActivated: (idx, value) => { routeListPage.month = value }
+            }
+        }
 
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 4
+        // --- 目录 ---
+        Item {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.topMargin: styles.spSm
+            Layout.leftMargin: styles.pageMargin
+            Layout.rightMargin: styles.pageMargin
+
+            ListView {
+                id: routeList
+                anchors.fill: parent
+                clip: true
+                boundsBehavior: Flickable.StopAtBounds
+                model: routeListPage.rows
+
+                delegate: Item {
+                    required property var modelData
+                    width: routeList.width
+                    height: modelData.kind === "head" ? 30 : styles.touchMin
+
+                    // 分组标题 (省份). 这一页的分组轴没有颜色语义 —— 省份不是危险也不是
+                    // 植被, 所以左条走中性灰, 不借用难度色假装信息.
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.rightMargin: styles.spXs
+                        spacing: styles.spSm
+                        visible: modelData.kind === "head"
+
+                        Rectangle {
+                            Layout.preferredWidth: styles.lineAccent
+                            Layout.fillHeight: true
+                            Layout.topMargin: 9
+                            Layout.bottomMargin: 9
+                            color: CommonOptions.colorTextMuted
+                        }
                         Text {
                             Layout.fillWidth: true
-                            text: model.name
+                            text: modelData.label
                             color: CommonOptions.colorText
                             font.pixelSize: styles.fsLg
                             font.bold: true
                             elide: Text.ElideRight
                         }
+                        // 拉丁微标签才加字距, 中文不加 (样式铁律)
                         Text {
-                            text: "★".repeat(model.difficulty) + " · " +
-                                  model.distanceKm + " km"
-                            color: CommonOptions.colorWarn
-                            font.pixelSize: styles.fsSm
+                            text: modelData.count + " ROUTES"
+                            font.family: styles.monoFont
+                            font.pixelSize: styles.fsXs
+                            font.letterSpacing: 1.4
+                            color: CommonOptions.colorInk3
                         }
-                        // 2026-09-29: 图标字形 (\ue0c8) 从混排 Text 中拆出, 中文/
-                        //   数字用默认字体; 分隔符由 "  ·  " 收敛为 " · ".
-                        RowLayout {
+                    }
+
+                    // 条目行
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.rightMargin: styles.spXs
+                        spacing: 9
+                        visible: modelData.kind === "item"
+
+                        Rectangle {
+                            Layout.fillHeight: true
+                            Layout.preferredWidth: styles.lineAccent
+                            color: modelData.tone
+                        }
+                        Plate {
+                            Layout.preferredWidth: styles.plateW
+                            Layout.alignment: Qt.AlignVCenter
+                            code: modelData.plate
+                            tone: CommonOptions.colorInk3
+                        }
+                        ColumnLayout {
                             Layout.fillWidth: true
-                            spacing: 4
-                            IconLabel {
-                                name: "place"
-                                size: 12
-                                tintColor: CommonOptions.colorTextMuted
+                            spacing: 1
+                            Text {
+                                Layout.fillWidth: true
+                                text: modelData.name
+                                color: CommonOptions.colorText
+                                font.pixelSize: styles.fsMd
+                                font.bold: true
+                                elide: Text.ElideRight
                             }
                             Text {
                                 Layout.fillWidth: true
-                                text: (model.province || "") +
-                                      (_seasonText ? " · " + _seasonText : "")
-                                color: CommonOptions.colorTextMuted
+                                text: routeListPage.formatKm(modelData.km) + " km · "
+                                      + modelData.days + " 天"
+                                      + (modelData.nature ? " · " + modelData.nature : "")
+                                      + (modelData.wild ? " · 野线" : "")
+                                color: CommonOptions.colorInk3
                                 font.pixelSize: styles.fsXs
                                 elide: Text.ElideRight
                             }
                         }
+                        // 难度梯 5 格: 实心格数 = 该条难度, 颜色与左侧 3px 条同源.
+                        Ladder {
+                            Layout.alignment: Qt.AlignVCenter
+                            value: modelData.difficulty
+                            tone: CommonOptions.difficultyColor(modelData.difficulty)
+                        }
+                        IconLabel {
+                            Layout.alignment: Qt.AlignVCenter
+                            name: "chevron_right"
+                            size: 14
+                            tintColor: CommonOptions.colorInk3
+                        }
                     }
 
-                    Text {
-                        text: "›"
-                        color: "#607D8B"
-                        font.pixelSize: 22
+                    // 组标题下不留描边 (分组靠空白分级), 条目行才有 1px 组线
+                    Rectangle {
+                        visible: modelData.kind === "item"
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        height: styles.lineHair
+                        color: CommonOptions.colorRuleSoft
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        enabled: modelData.kind === "item"
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: routeListPage.navigateTo("RouteDetailPage",
+                                                            { routeId: modelData.id })
+                    }
+                }
+            }
+
+            EmptyState {
+                anchors.centerIn: parent
+                visible: routeListPage.rows.length === 0
+                iconName: "map"
+                text: routeListPage.libCount === 0 ? "路线库没有载入" : "这一档筛不出路线"
+                hint: routeListPage.libCount === 0
+                      ? "重装 APK 或检查 assets/data/routes.json 是否打进包里"
+                      : "换个省份、放宽难度或换个月份 —— 适宜季节是按整月匹配的"
+                actionText: routeListPage.libCount === 0 ? "重新载入" : "重置筛选"
+                onActionTriggered: {
+                    if (routeListPage.libCount === 0) {
+                        routeListPage.loadLibrary()
+                        routeListPage.rebuild()
+                    } else {
+                        routeListPage.resetFilters()
                     }
                 }
             }
         }
     }
-
-    onFilterDifficultyChanged: rebuildList()
-    onFilterProvinceChanged: rebuildList()
-    onFilterMonthChanged: rebuildList()
 }

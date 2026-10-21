@@ -137,13 +137,20 @@ bool Database::createSchema(Name name) {
     // 4. Routes(明文) - 同上
     if (name == Name::Routes) { return true; }
 
-    // 5. User(加密) - 紧急联系人 + 路线收藏 + 装备清单 + 装备检查进度
+    // 5. User(加密) - 紧急联系人 + 路线收藏 + 装备检查进度
     if (name == Name::User) {
+        // 2026-10-16 修 bug: 这份 CREATE 漏了 updated_at / is_deleted 两列, 而它比
+        // EmergencyService::ctor 的同名 CREATE 先跑, IF NOT EXISTS 让后者变成空操作,
+        // 结果 emergency_contacts 里根本没有 is_deleted → 所有
+        // "WHERE is_deleted = 0" 的 SELECT 报 no such column, 联系人写得进读不出,
+        // contactCount() 恒 0, triggerSOS() 发不出短信. 现在补齐, 老库靠 migrate_2_to_3 修.
         exec("CREATE TABLE IF NOT EXISTS emergency_contacts ("
              "id INTEGER PRIMARY KEY AUTOINCREMENT, "
              "name TEXT NOT NULL, phone TEXT NOT NULL, "
              "relation TEXT, is_primary INTEGER DEFAULT 0, "
-             "created_at TEXT)");
+             "created_at TEXT DEFAULT (datetime('now')), "
+             "updated_at TEXT DEFAULT (datetime('now')), "
+             "is_deleted INTEGER DEFAULT 0)");
         exec("CREATE TABLE IF NOT EXISTS route_favorites ("
              "route_id TEXT NOT NULL, "
              "created_at TEXT, "
@@ -244,7 +251,9 @@ bool Database::migrateToLatest(Name name) {
     if (v < 2) {
         ok &= migrate_1_to_2(name);
     }
-    // v < 3 时加: if (v < 3) ok &= migrate_2_to_3(name);
+    if (v < 3) {
+        ok &= migrate_2_to_3(name);
+    }
 
     if (ok) ok &= setVersion(name, kCurrentSchemaVersion);
     return ok;
@@ -258,6 +267,47 @@ bool Database::migrate_1_to_2(Name name) {
     Q_UNUSED(name);
     Logger::info("migrate_1_to_2: knot_progress table owned by KnotService::ensureSchema()");
     return true;
+}
+
+bool Database::migrate_2_to_3(Name name) {
+    // v2 -> v3: User 库 emergency_contacts 补 created_at / updated_at / is_deleted.
+    // 老库里这张表是按 v2 那份缺列的 schema 建的, CREATE TABLE IF NOT EXISTS 不会改已有表,
+    // 只能 ALTER 补. 补完 EmergencyService 的 "WHERE is_deleted = 0" 才读得到数据.
+    if (name != Name::User) return true;
+    if (!m_databases.contains(name) || !m_databases[name].isOpen()) return false;
+
+    QSqlDatabase db = m_databases.value(name);
+    QStringList cols;
+    {
+        QSqlQuery q(db);
+        if (!q.exec("PRAGMA table_info(emergency_contacts)")) {
+            Logger::warn("migrate_2_to_3: PRAGMA table_info 失败: " + q.lastError().text());
+            return false;
+        }
+        while (q.next()) cols << q.value(1).toString();
+    }
+    if (cols.isEmpty()) return true;  // 表还不存在, createSchema 会按新 schema 建全
+
+    static const struct { const char* column; const char* ddl; } kMissing[] = {
+        {"created_at", "created_at TEXT DEFAULT (datetime('now'))"},
+        {"updated_at", "updated_at TEXT DEFAULT (datetime('now'))"},
+        {"is_deleted", "is_deleted INTEGER DEFAULT 0"},
+    };
+    bool ok = true;
+    for (const auto& c : kMissing) {
+        if (cols.contains(QLatin1String(c.column))) continue;
+        QSqlQuery a(db);
+        const QString sql = QString("ALTER TABLE emergency_contacts ADD COLUMN %1")
+                                .arg(QLatin1String(c.ddl));
+        if (!a.exec(sql)) {
+            Logger::warn(QString("migrate_2_to_3: %1 失败: %2")
+                             .arg(sql, a.lastError().text()));
+            ok = false;
+        } else {
+            Logger::info(QString("migrate_2_to_3: emergency_contacts 补列 %1").arg(c.column));
+        }
+    }
+    return ok;
 }
 
 } // namespace outdoor

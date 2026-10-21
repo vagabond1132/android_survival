@@ -78,13 +78,18 @@ private slots:
         QCOMPARE(MapService::getAltitudeLevel(1500.0), AltitudeLevel::L2);
         QCOMPARE(MapService::getAltitudeLevel(2500.0), AltitudeLevel::L3);
         QCOMPARE(MapService::getAltitudeLevel(3500.0), AltitudeLevel::L4);
-        QCOMPARE(MapService::getAltitudeLevel(8848.0), AltitudeLevel::L4);   // 封顶
+        // 2026-10-21 (#18 C3): 原来这里写死 8848 → L4 "封顶", 是 MapService 自己那份
+        //   5 段枚举的行为. 统一到 src/common/AltitudeLevel.h 的 7 段后, 与装备侧同读法:
+        QCOMPARE(MapService::getAltitudeLevel(4500.0), AltitudeLevel::L5);
+        QCOMPARE(MapService::getAltitudeLevel(5500.0), AltitudeLevel::L6);
+        QCOMPARE(MapService::getAltitudeLevel(8848.0), AltitudeLevel::L6);
     }
 
     void test_altitudeLevelMetadata() {
         QCOMPARE(MapService::getAltitudeLevelName(AltitudeLevel::L0), QStringLiteral("低海拔"));
         QCOMPARE(MapService::getAltitudeLevelName(AltitudeLevel::L4), QStringLiteral("极高海拔"));
-        QVERIFY(MapService::getAltitudeLevelColor(AltitudeLevel::L0).startsWith('#'));
+        // 颜色不在服务层 (C3 删掉了两个服务各自的 getAltitudeLevelColor):
+        //   界面按 level 取 CommonOptions::altitudeColor, 单测在 test_common_options 里锁.
         QCOMPARE(MapService::getAltitudeLevelMin(AltitudeLevel::L1), 500.0);
         QCOMPARE(MapService::getAltitudeLevelMax(AltitudeLevel::L1), 1500.0);
     }

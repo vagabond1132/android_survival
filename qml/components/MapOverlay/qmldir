@@ -1,5 +1,4 @@
 module OutdoorSurvival
-DirectionCompassOverlay 1.0 DirectionCompassOverlay.qml
-MapRightButtonColumn 1.0 MapRightButtonColumn.qml
+MapInstrumentOverlay 1.0 MapInstrumentOverlay.qml
 MapBottomSheet 1.0 MapBottomSheet.qml
 RouteSummaryPanel 1.0 RouteSummaryPanel.qml

@@ -6,6 +6,8 @@
 #include <QtTest>
 #include <QCoreApplication>
 #include <QTemporaryDir>
+#include <QJsonDocument>
+#include <QJsonObject>
 
 #include "src/routes/RouteService.h"
 #include "src/core/Database.h"
@@ -223,6 +225,49 @@ private slots:
             m_service->getAll().first().toMap()["id"].toString());
         int score = r["score"].toInt();
         QVERIFY(score >= 0 && score <= 100);
+    }
+
+    // === 评分分项 ===
+    // 2026-10-20 修 loader: routes.json 里这一项是驼峰键 "scoreDetail" 而且值是对象,
+    // 原来读的是下划线 "score_detail" 并用 QJsonValue::toString() 取对象 —— 键不存在,
+    // 且 toString() 对对象也返回空串, 两道都落空. 后果是 entity.scoreDetail 全站恒为
+    // 空, 详情页 11 项分项 (海拔/路况/爬升/水源/蛇虫/危险/长度/补给/季节/救援/线路调整)
+    // 一个都渲染不出来. 这条把契约钉住: 有分的路线必须带可解析的分项 JSON, 分项之和 == score.
+    void test_score_detail_json_roundtrip() {
+        int withScore = 0;
+        for (const auto& v : m_service->getAll()) {
+            const QString id = v.toMap()["id"].toString();
+            const QVariantMap r = m_service->getById(id);
+            const int score = r["score"].toInt();
+            const QString detail = r["scoreDetail"].toString();
+
+            // 库里 749 条有 22 条既没有 score 也没有 scoreDetail (青神山那批),
+            // 两者必须同进同退 —— 有分无项 / 有项无分都算数据口径破了.
+            if (score <= 0) {
+                QVERIFY2(detail.isEmpty(),
+                         qPrintable(id + ": score 为 0 却带 scoreDetail"));
+                continue;
+            }
+            ++withScore;
+            QVERIFY2(!detail.isEmpty(), qPrintable(id + ": scoreDetail 为空"));
+
+            QJsonParseError err;
+            const QJsonDocument doc = QJsonDocument::fromJson(detail.toUtf8(), &err);
+            QVERIFY2(err.error == QJsonParseError::NoError,
+                     qPrintable(id + ": " + err.errorString()));
+            QVERIFY(doc.isObject());
+
+            const QJsonObject o = doc.object();
+            QVERIFY2(o.contains("altitude") && o.contains("road") && o.contains("danger"),
+                     qPrintable(id + ": 分项键不全"));
+            int sum = 0;
+            for (auto it = o.constBegin(); it != o.constEnd(); ++it) sum += it.value().toInt();
+            QVERIFY2(sum == score,
+                     qPrintable(id + QString(": 分项和 %1 != score %2").arg(sum).arg(score)));
+        }
+        // 全部路线都跑一遍, 至少要覆盖到有分项的那批 (库里 727/749 有分)
+        QVERIFY2(withScore > 500, "带分项的路线太少, 说明 loader 又读空了");
+        qInfo() << "scoreDetail round-trip checked on" << withScore << "routes";
     }
 };
 

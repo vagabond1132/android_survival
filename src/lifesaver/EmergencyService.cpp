@@ -56,6 +56,10 @@ EmergencyService::EmergencyService(Database* db, PlatformInterface* platform,
     // 启动时检查表
     if (m_db && m_db->isOpen(Database::Name::User)) {
         // 2026-09-21 阶段 L2.2: 切 DbHelper::execDdl (内含错误日志)
+        // 2026-10-16: 权威 schema 在 Database::createSchema(Name::User), 这里只是
+        // "Database 还没 migrate 过" 的兜底. 两处字段必须一致 —— 之前正是因为
+        // Database 那份漏了 is_deleted/updated_at 且先跑, 让本函数的 CREATE 空转,
+        // 全表读取静默失败. 改表时两边一起改.
         QSqlQuery q(m_db->get(Database::Name::User));
         DbHelper::execDdl(q, R"(
             CREATE TABLE IF NOT EXISTS emergency_contacts (
@@ -416,6 +420,7 @@ QVariantMap EmergencyService::getCurrentLocation() {
         result["lat"] = m_currentLocation.latitude();
         result["lon"] = m_currentLocation.longitude();
         result["accuracy"] = m_accuracy;
+        result["altitude"] = m_elevation;  // NaN = 本次定位没带高程
     }
     return result;
 }
@@ -554,6 +559,10 @@ void EmergencyService::onPositionUpdated(const QGeoPositionInfo& info) {
     m_accuracy = info.hasAttribute(QGeoPositionInfo::HorizontalAccuracy)
                      ? info.attribute(QGeoPositionInfo::HorizontalAccuracy)
                      : 0;
+    // 2026-10-20: ①营地/⑤求助 的仪表要读海拔. Qt 6.7 的 QGeoPositionInfo::Attribute
+    // 里根本没有 Elevation/Altitude (只有 Direction/Speed/Accuracy 那几个), 高程走
+    // coordinate().altitude(), 后端没给时它自己返回 NaN —— 界面据此显示 "--".
+    m_elevation = coord.altitude();
     emit locationUpdated(coord.latitude(), coord.longitude(), m_accuracy);
     Logger::debug(QString("GPS update: lat=%1 lon=%2 acc=%3")
                       .arg(coord.latitude(), 0, 'f', 6)
@@ -572,6 +581,9 @@ void EmergencyService::onJavaLocationUpdated(double lat, double lon,
     if (!coord.isValid()) return;
     m_currentLocation = coord;
     m_accuracy = accuracy;
+    // JNI 这条路只给 lat/lon/acc, QGeoCoordinate 的 altitude 是 NaN, 海拔就跟着
+    // 变"无" —— 不要留着上一条定位的海拔继续显示 (用户会以为是当前值).
+    m_elevation = coord.altitude();
     emit locationUpdated(lat, lon, accuracy);
     Logger::debug(QString("GPS update (from Java): lat=%1 lon=%2 acc=%3 time=%4")
                       .arg(lat, 0, 'f', 6)

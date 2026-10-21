@@ -66,6 +66,9 @@ private:
 
 private slots:
     void init() {
+        // 2026-10-16 修: 成员 QTemporaryDir 只建一次, 用例间共用同一个 db 会让
+        // 上一条用例写的浏览记录漏进下一条 (count 类断言全歪). 每个用例换新临时目录.
+        m_tmpDir = QTemporaryDir();
         QVERIFY(m_tmpDir.isValid());
         m_db = new Database();
         QVERIFY(m_db->open(m_tmpDir.path()));

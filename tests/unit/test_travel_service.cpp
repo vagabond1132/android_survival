@@ -161,6 +161,35 @@ private slots:
         QCOMPARE(m_service->search("").size(), m_service->totalCount());
     }
 
+    // === tag 字段 (2026-10-20) ===
+    // travel.json 用的是单数 "tag" + "/" 连接字符串, loader 原本读复数数组 "tags"
+    // → 每条 tags 恒空 → 按标签搜永远 0 命中. 这条钉住拆分与搜索两条链路.
+    void test_tags_split_and_searchable() {
+        QVariantList all = m_service->getAll();
+        QVERIFY(all.size() >= 100);
+        int withTags = 0;
+        for (const auto& v : all) {
+            const QStringList tags = v.toMap()["tags"].toStringList();
+            if (!tags.isEmpty()) withTags++;
+            // 拆分后不该再残留分隔符, 也不该有空段
+            for (const QString& t : tags) {
+                QVERIFY2(!t.contains('/'), qPrintable(t));
+                QVERIFY2(!t.trimmed().isEmpty(), qPrintable(t));
+            }
+        }
+        QCOMPARE(withTags, all.size());
+
+        // "318" 只出现在 tag 里 (路线名是 "川藏线南线(成都-拉萨)" 之类),
+        // 之前恒为空 → 命中 0; 现在应能搜到.
+        QVariantList byTag = m_service->search("318");
+        QVERIFY2(byTag.size() > 0, "search(\"318\") 没命中, tag 链路又断了");
+        bool sawKnown = false;
+        for (const auto& v : m_service->getAll()) {
+            if (v.toMap()["tags"].toStringList().contains(QStringLiteral("川西"))) sawKnown = true;
+        }
+        QVERIFY2(sawKnown, "没有任何一条的 tag 段是「川西」, 拆分口径变了");
+    }
+
     // === 收藏/计数 ===
     void test_add_delete_favorite() {
         QVariantList all = m_service->getAll();
@@ -193,10 +222,11 @@ private slots:
 
     void test_available_months() {
         QStringList months = m_service->getAvailableMonths();
-        QVERIFY(months.size() > 0);
-        for (const auto& m : months) {
-            // 格式如 "5月"
-            QVERIFY(m.contains("月"));
+        QVERIFY(months.size() > 1);
+        // 2026-09-14 起首项固定是筛选用 "全部", 不带 "月", 从第 2 项起才是月份
+        QCOMPARE(months.first(), QStringLiteral("全部"));
+        for (int i = 1; i < months.size(); ++i) {
+            QVERIFY(months.at(i).contains("月"));
         }
     }
 };

@@ -21,6 +21,9 @@ private:
 
 private slots:
     void init() {
+        // 2026-10-16 修: QTemporaryDir 成员只在测试对象构造时建一次, 每个用例又复用
+        // 同一个 db 文件 → 上一个用例 learn 的绳结会漏进下一个用例, isLearned 判断失真.
+        m_tmpDir = QTemporaryDir();
         QVERIFY(m_tmpDir.isValid());
         m_db = new Database();
         QVERIFY(m_db->open(m_tmpDir.path()));

@@ -23,6 +23,7 @@ class SurvivalService : public ServiceBase {
     Q_PROPERTY(int fireMethodsCount READ fireMethodsCount NOTIFY dataChanged)
     Q_PROPERTY(int shelterCount READ shelterCount NOTIFY dataChanged)
     Q_PROPERTY(int toolCount READ toolCount NOTIFY dataChanged)
+    Q_PROPERTY(int totalCount READ totalCount NOTIFY dataChanged)
 
 public:
     enum class Topic {
@@ -61,6 +62,7 @@ public:
     int fireMethodsCount() const;
     int shelterCount() const;
     int toolCount() const;
+    int totalCount() const;
 
     // 查询
     Q_INVOKABLE QVariantList getByTopic(Topic topic);

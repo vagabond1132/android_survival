@@ -169,57 +169,25 @@ QString MapService::getBaseMapName(BaseMapType type) const {
     return "未知";
 }
 
+// ===== 海拔段位: 全部转发 src/common/AltitudeLevel.h (#18 C3) =====
+// 2026-10-21 起这里不再有第二份阈值, 也不再自带颜色.
+// 行为变化 (有意): 原来 >=3500 一律封在 L4, 现在 3500-4500=L4 / 4500-5500=L5 / >=5500=L6,
+// 与装备侧读法一致, QML 的 CommonOptions.altitudeColor(0..6) 也才拿得到后两档.
+
 AltitudeLevel MapService::getAltitudeLevel(double altitudeM) {
-    if (altitudeM < 500) return AltitudeLevel::L0;
-    if (altitudeM < 1500) return AltitudeLevel::L1;
-    if (altitudeM < 2500) return AltitudeLevel::L2;
-    if (altitudeM < 3500) return AltitudeLevel::L3;
-    if (altitudeM < 5000) return AltitudeLevel::L4;
-    return AltitudeLevel::L4;  // 封顶 5000m
+    return AltitudeScale::fromMeters(altitudeM);
 }
 
 QString MapService::getAltitudeLevelName(AltitudeLevel level) {
-    switch (level) {
-        case AltitudeLevel::L0: return "低海拔";
-        case AltitudeLevel::L1: return "中海拔";
-        case AltitudeLevel::L2: return "中高海拔";
-        case AltitudeLevel::L3: return "高海拔";
-        case AltitudeLevel::L4: return "极高海拔";
-    }
-    return "未知";
-}
-
-QString MapService::getAltitudeLevelColor(AltitudeLevel level) {
-    switch (level) {
-        case AltitudeLevel::L0: return "#4CAF50";
-        case AltitudeLevel::L1: return "#8BC34A";
-        case AltitudeLevel::L2: return "#FFC107";
-        case AltitudeLevel::L3: return "#FF9800";
-        case AltitudeLevel::L4: return "#F44336";
-    }
-    return "#757575";
+    return AltitudeScale::nameOf(level);
 }
 
 double MapService::getAltitudeLevelMin(AltitudeLevel level) {
-    switch (level) {
-        case AltitudeLevel::L0: return 0;
-        case AltitudeLevel::L1: return 500;
-        case AltitudeLevel::L2: return 1500;
-        case AltitudeLevel::L3: return 2500;
-        case AltitudeLevel::L4: return 3500;
-    }
-    return 0;
+    return AltitudeScale::minM(level);
 }
 
 double MapService::getAltitudeLevelMax(AltitudeLevel level) {
-    switch (level) {
-        case AltitudeLevel::L0: return 500;
-        case AltitudeLevel::L1: return 1500;
-        case AltitudeLevel::L2: return 2500;
-        case AltitudeLevel::L3: return 3500;
-        case AltitudeLevel::L4: return 5000;
-    }
-    return 5000;
+    return AltitudeScale::maxM(level);
 }
 
 QString MapService::formatDistance(double meters) {

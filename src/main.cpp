@@ -83,13 +83,19 @@ int main(int argc, char* argv[]) {
     App& theApp = App::instance();
 
     // 关键: release 包 debuggable=false, run-as 不能用
-    // 写日志位置: 同时写两个, 取能读的那个:
-    //   1. /sdcard/Android/data/com.outdoor.survival/files/stage0.log  (应用沙盒, 无权限)
-    //   2. /data/local/tmp/stage0.log (全局可写, adb shell 可读)
-    // 注意: QStandardPaths 需要 QGuiApplication 才能正确解析, 这里直接用硬编码路径.
+    // 写日志位置: 三个候选全试着打开, 谁写得进去用谁 (下面的循环只留 isOpen 的):
+    //   1. /sdcard/Android/data/<pkg>/files/stage0.log        (release 沙盒, adb pull 无权限)
+    //   2. /sdcard/Android/data/<pkg>.debug/files/stage0.log  (debug 包 —— build.gradle:104
+    //      有 applicationIdSuffix ".debug", 沙盒目录跟着变, 少这一条 debug 包就只剩 3 能写)
+    //   3. /data/local/tmp/stage0.log                          (全局可写, adb shell 可读)
+    // 包名一律从 CMake 的 APP_PACKAGE_NAME 宏取, 不在这里抄字面量 —— 同一个坑
+    // AndroidPlatform.cpp:395 (openAppSettings) 已经踩过并改成运行时取 getPackageName,
+    // 但这里在 QGuiApplication 之前 (JNI activity 还不可用), 只能走编译期宏.
+    // 注意: QStandardPaths 需要 QGuiApplication 才能正确解析, 所以仍旧是拼绝对路径.
     QStringList logPaths = {
-        "/sdcard/Android/data/com.outdoor.survival/files/stage0.log",
-        "/data/local/tmp/stage0.log"
+        QStringLiteral("/sdcard/Android/data/%1/files/stage0.log").arg(APP_PACKAGE_NAME),
+        QStringLiteral("/sdcard/Android/data/%1.debug/files/stage0.log").arg(APP_PACKAGE_NAME),
+        QStringLiteral("/data/local/tmp/stage0.log")
     };
     // 2026-09-30: 写入文件作用域的 g_diagLogFiles (而非局部 logFiles),
     //   使下面无捕获的 qInstallMessageHandler lambda 能引用到它.
@@ -264,6 +270,11 @@ int main(int argc, char* argv[]) {
             logToFile(QString("=== STAGE 0: Material Icons 字体已加载 id=%1 from=%2, families=%3 ===")
                 .arg(fontId).arg(successPath).arg(families.join(",")));
         }
+        // 把结果透出给 QML: IconLabel 读 CommonOptions.iconFontReady 决定是否
+        // 用 "Material Icons" 字族画 PUA 码位 (原先它引用 Main.qml 的 id
+        // materialIconsFont — QML id 不跨文件, 那个判断恒为 false, 只能靠
+        // 每次求值全量扫 Qt.fontFamilies(), 又慢又不准).
+        CommonOptions::setIconFontReady(fontId != -1);
     }
 
     QQmlApplicationEngine engine;

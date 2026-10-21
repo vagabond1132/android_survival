@@ -123,6 +123,8 @@ set(CORE_SOURCES
     src/core/CommonOptions.cpp
     # 2026-09-19: 运行时图册获取 (Wikimedia Commons + 本地缓存)
     src/core/ImageFetcherService.cpp
+    # 2026-10-20: 电子罗盘 (丁骨架 ①营地/⑤求助 的朝向来源, QtSensors QCompass)
+    src/core/CompassSensor.cpp
 )
 
 set(COMMON_SOURCES
@@ -224,6 +226,8 @@ set(APP_HEADERS
     src/core/ServiceRegistry.h
     src/core/ImageColorExtractor.h
     src/core/ImageFetcherService.h
+    # 2026-10-20: 罗盘封装 (QCompass)
+    src/core/CompassSensor.h
     # 2026-09-21 阶段 L2: Service 基类 (12 service 继承)
     src/common/ServiceBase.h
     # 2026-09-21 阶段 L4.2: Repository 接口
@@ -232,6 +236,8 @@ set(APP_HEADERS
     src/common/SettingsStore.h
     # 2026-09-21 阶段 L5.2: CRUD 模板
     src/common/QueryTemplate.h
+    # 2026-10-21 (#18 C3): 海拔段位唯一定义 (原先 MapService 5 段 / EquipmentService 7 段两份)
+    src/common/AltitudeLevel.h
 
     # 救命链路 (P0)
     src/lifesaver/FirstAidService.h
@@ -319,7 +325,8 @@ qt_add_qml_module(${APP_NAME}
         qml/pages/FieldGuidePage.qml
         qml/pages/FieldGuideDetailPage.qml
         qml/pages/FieldGuideImagePickPage.qml
-        qml/pages/SpeciesDetailPage.qml
+        # 2026-10-20 #60: SpeciesDetailPage.qml 已删, danger_species 库的详情走
+        #   FieldGuideDetailPage (同一 ③ 版式, speciesId 入参).
         qml/pages/SurvivalPage.qml
         qml/pages/SurvivalDetailPage.qml
         qml/pages/KnotPage.qml
@@ -330,7 +337,6 @@ qt_add_qml_module(${APP_NAME}
         #   不再直接跳 EquipmentPage 表单. 未注册则 qmldir 不含 → push 时 module not found 崩.
         qml/pages/RouteGearRecommendPage.qml
         qml/pages/ChecklistPage.qml
-        qml/pages/ChecklistDetailPage.qml
         qml/pages/TravelListPage.qml
         qml/pages/TravelDetailPage.qml
         # 之前缺漏 (6 个): MapPage / ResultPage / EquipmentPage / EquipmentDetailPage /
@@ -338,47 +344,96 @@ qt_add_qml_module(${APP_NAME}
         # import 报 "module not found" → 跳到这些页直接崩
         # 2026-09-20: ResultPage 是僵尸 (Main.qml 用 inline searchResults ListView,
         #   全 qml 无引用), 删除避免误导新人
+        # 2026-10-21 #65 全站孤儿清扫: 上面那批里 CategorySection / MapToolButton 与
+        #   下面这些也都已无任何引用方, 一并删除 ——
+        #   ChecklistDetailPage (④ 勾选动作面早就并到 ChecklistPage),
+        #   CameraPage (占位页, 拍照实际走 RecordTab 的 requestTakePhoto),
+        #   HomePageComponents/HomeEntry, FieldGuidePageComponents/SpeciesServiceRegistry
+        #   (②③ 改版后各自在页内自己列 service),
+        #   components/base/{FunctionEntry,InfoItem,PageHeader,ServiceListModel,Hero}
+        #   (图版头 150px + 读数带取代 hero/pageheader; 列表行就地画;
+        #    四个列表页都改成一次拉全库本地分桶, 不再要 notifier 注入).
+        #   判据与复查脚本见 doc/08-索引与概览/全代码索引.md 的 QML 可达性一节.
         qml/pages/MapPage.qml
         qml/pages/EquipmentPage.qml
         qml/pages/EquipmentDetailPage.qml
-        qml/pages/CameraPage.qml
         # 2026-09-14: P1 轨迹分析详情页 (海拔/速度曲线 + 8 项统计 + 分段 + 卡路里 + 休息点)
         qml/pages/TrackDetailPage.qml
 
         # 通用组件 (qml/components/base/) - 阶段 I-1 拆分
         # 纯通用, 无业务字段, 任何 page 复用
         qml/components/base/Section.qml
+        # 2026-10-16 整体改版: 章节标题行 (IconLabel + 文字), 替代 "图标+中文" 混写
+        qml/components/base/SectionTitle.qml
         # 2026-09-28: StatCard.qml 已删 (问题4 删首页「关键统计」行后无使用方, 成孤儿组件)
-        qml/components/base/FunctionEntry.qml
-        qml/components/base/CategoryChip.qml
-        qml/components/base/DifficultyChip.qml
+        # 2026-10-16: CategoryChip / DifficultyChip / DetailLoader 已删
+        #   (重构 Phase 3 建的通用组件, 全站 0 引用, 各页一直自己画 chip)
         qml/components/base/DangerChip.qml
-        qml/components/base/InfoItem.qml
         # 2026-09-14: Material Icons 字体图标组件 (依赖 assets/fonts/MaterialIcons-Regular.ttf)
         qml/components/base/IconLabel.qml
-        # 2026-09-14: 通用页面顶部工具栏 (返回+标题), 统一各子页返回
-        qml/components/base/PageHeader.qml
         qml/components/base/FilterRow.qml
+        # 2026-10-19 整体改版: 页面骨架组件 (截图 1-6.jpg 里各页手抄 hero/卡片/
+        #   列表行导致高度档位混乱、副标题溢出屏幕、按钮文案被截断).
+        #   2026-10-21: Hero 随 TrackDetailPage 上 v9 图版头后 0 引用, 已删;
+        #   二级页的头部现在一律是页内 150px colorSurfaceDim 图版头 + 四格读数带.
+        qml/components/base/Card.qml
+        qml/components/base/ListRow.qml
+        qml/components/base/Chip.qml
+        qml/components/base/StatTile.qml
+        qml/components/base/PrimaryButton.qml
+        qml/components/base/EmptyState.qml
         # 2026-09-20: 5 阶段架构重构 Phase 3 - 设计模式 + QML 公共组件
-        # - Toast.qml / ServiceListModel.qml / DetailLoader.qml 通用
+        # - Toast.qml 通用 (2026-10-21: ServiceListModel 0 引用已删, 列表页改为
+        #   一次 getFiltered 拉全库再本地分桶)
         # - Styles.qml 间距/字号/圆角 设计 token (Singleton)
         qml/components/base/Toast.qml
-        qml/components/base/ServiceListModel.qml
-        qml/components/base/DetailLoader.qml
         qml/components/base/Styles.qml
+        # 2026-10-20 「地物图例」丁骨架共用件 (底色方案 A 已锁定)
+        #   DuoRule 双线 / Plate 图鉴编号角标
+        #   BearingCell 50px 方位列 / PositionReadout 墨底仪表 (①营地与⑤求助共用)
+        #   Dial 野外方位盘 / NavBands 底部 5 方位带导航
+        # 2026-10-21: RegMarks (套准角标) 移出构建 —— 全站 0 处实例化, 已评审的
+        #   v8/v9 mock 里也没有四角墨线. 纯装饰且没有设计出处 → 不留死文件.
+        #   文件搬到 _scratch_debug/qml_quarantine/RegMarks.qml.unused-20261021 (它从未入过 git, 删了就找不回).
+        qml/components/base/DuoRule.qml
+        qml/components/base/Plate.qml
+        qml/components/base/BearingCell.qml
+        qml/components/base/PositionReadout.qml
+        qml/components/base/Dial.qml
+        qml/components/base/NavBands.qml
+        # ②图鉴的类目占比环 (Canvas 弧段, 与 Dial 同一条画法)
+        qml/components/base/CategoryRing.qml
+        # ③详情的方位条 (0-360 横向刻度带, 与类目环同一套 Canvas 自绘)
+        qml/components/base/BearingBar.qml
+        # ⑤求助的号码/SOS 入口: 长按 2 秒进度条确认, 顶掉原来的 tap-to-dial
+        qml/components/base/HoldConfirmRow.qml
+        # 直角空心次级按钮 (32px 高), 与场卡同一套角; 主按钮仍是 PrimaryButton
+        qml/components/base/OutlineButton.qml
+        # 危险提示卡的 6px 斜纹边记 (③绳结详情的"常见错误" / 装备清单的"缺 N 项必备")
+        qml/components/base/HazardBand.qml
+        # 清单行的 15px 方角勾选块 (整行可点, 不用 Controls CheckBox)
+        qml/components/base/CheckTick.qml
+        # 档位梯 (绳结难度 3 格 / 野外生活难度 5 格 / 急救紧急度 5 格)
+        qml/components/base/Ladder.qml
+        # 第 5 格「我」的根页 (装备/标注/收藏/轨迹/联系人/设置 入口)
+        qml/pages/MePage.qml
 
         # 业务组件 (qml/pages/<XxxPageComponents>/) - 阶段 I-1 下放
         # 业务专属, 引用具体 context property (equipmentService 等)
-        qml/pages/HomePageComponents/HomeEntry.qml
-        qml/pages/MapPageComponents/MapToolButton.qml
-        qml/pages/SOSPageComponents/SOSButton.qml
-        qml/pages/SOSPageComponents/QuickCallButton.qml
-        qml/pages/EquipmentPageComponents/CategorySection.qml
-        qml/pages/FieldGuidePageComponents/SpeciesServiceRegistry.qml
+        # 2026-10-20: qml/pages/SOSPageComponents/ (SOSButton + QuickCallButton) 已删.
+        #   QuickCallButton 是 tap-to-dial, ⑤改版后全站拨号统一走 HoldConfirmRow 长按门;
+        #   SOSButton 早在 Main.qml 移除顶层 SOS 圆盘时就没人引用了. 号码入口现在共用
+        #   qml/components/base/HoldConfirmRow.qml (上面已列).
+        # 2026-10-21 #65: HomePageComponents/HomeEntry, MapPageComponents/MapToolButton,
+        #   EquipmentPageComponents/CategorySection, FieldGuidePageComponents/
+        #   SpeciesServiceRegistry 四个业务组件 0 引用, 已删 (①营地与④地图改版后
+        #   行与按钮都在页内就地画; service 调度也收进各自页面). 本目录剩下的组件
+        #   都还在 MapPageComponents/ 里被 MapPage 直接实例化.
 
         # 地图跨页组件 (qml/components/MapOverlay/) - 保留, 跨页复用
-        qml/components/MapOverlay/DirectionCompassOverlay.qml
-        qml/components/MapOverlay/MapRightButtonColumn.qml
+        # 2026-10-20 #61: DirectionCompassOverlay / MapRightButtonColumn 随 ④地图 改版
+        #   删除 (迷你盘叠在图上 + 浮卡取代了两块旧浮层), 新增 MapInstrumentOverlay.
+        qml/components/MapOverlay/MapInstrumentOverlay.qml
         qml/components/MapOverlay/MapBottomSheet.qml
         qml/components/MapOverlay/RouteSummaryPanel.qml  # 2026-09-15: 概览面板
 
@@ -387,9 +442,6 @@ qt_add_qml_module(${APP_NAME}
         qml/pages/MapPageComponents/NavigationTab.qml
         qml/pages/MapPageComponents/NearbyTab.qml
         qml/pages/MapPageComponents/SearchTab.qml
-
-        # SurvivalPage 专属组件
-        qml/pages/SurvivalPageComponents/SurvivalList.qml
 
     RESOURCES
         assets/data/firstaid_entries.json
@@ -594,7 +646,11 @@ target_compile_definitions(${APP_NAME} PRIVATE
     APP_VERSION_PATCH=${APP_VERSION_PATCH}
     APP_VERSION_CODE=${APP_VERSION_CODE}
     APP_PACKAGE_NAME="${APP_PACKAGE_NAME}"
-    APP_NAME="${APP_DISPLAY_NAME}"
+    # 2026-10-21 (#18 C1): 原来这里还有一行 APP_NAME="${APP_DISPLAY_NAME}" —— 和上面
+    #   set(APP_NAME "OutdoorSurvival") 同名两义 (一个是 CMake 目标名, 一个是 C++ 里的
+    #   显示名"荒野手册"). src/ 全仓 grep 该宏 0 处引用, 显示名走 manifest 的
+    #   android:label / QT_ANDROID_X 那一套, 所以直接删宏, 而不是改名保留.
+    #   APP_PACKAGE_NAME 则是真在用: main.cpp 拿它拼 stage0.log 的沙盒路径.
 )
 
 # 输出配置摘要

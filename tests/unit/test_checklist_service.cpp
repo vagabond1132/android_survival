@@ -221,6 +221,39 @@ private slots:
         QCOMPARE(m_svc->getTotalWeight(newId), 110.0);
     }
 
+    void test_importedItemsActuallyPersist() {
+        // getById 先命中内存缓存, 上面那条回环测试看不出条目有没有真的落库.
+        // checklist_items.id 是全局 PRIMARY KEY, 曾经 importFromJson 照搬导出文件里的
+        // item id → INSERT 撞主键、整份导入清单只在内存里活着, 重启后 0 项.
+        const QString id = m_svc->createCustom(QStringLiteral("导入落库"))
+                             .value("value").toString();
+        ChecklistService::Item item;
+        item.name = QStringLiteral("滤水器");
+        item.weightG = 310;
+        item.quantity = 1;
+        QVERIFY(m_svc->addItem(id, item).value("ok").toBool());
+
+        const QVariantMap imp = m_svc->importFromJson(m_svc->exportToJson(id));
+        QVERIFY2(imp.value("ok").toBool(), qPrintable(ok(imp)));
+        const QString newId = imp.value("value").toString();
+
+        delete m_svc;
+        m_svc = new ChecklistService(m_db);
+        QVERIFY(m_svc->loadInitialData());
+
+        const QVariantMap persisted = m_svc->getById(newId);
+        QVERIFY2(!persisted.isEmpty(), "导入的清单重启后没了");
+        const QVariantList items = persisted.value(QLatin1String("items")).toList();
+        QVERIFY2(items.size() == 1,
+                 qPrintable(QStringLiteral("导入条目没落库, 重启后 %1 项").arg(items.size())));
+        QCOMPARE(items.first().toMap().value(QLatin1String("name")).toString(),
+                 QStringLiteral("滤水器"));
+        // 导入是新建清单, 条目 id 必须重新生成, 不能跟源清单同 id
+        QVERIFY(items.first().toMap().value(QLatin1String("id")).toString() !=
+                m_svc->getById(id).value("items").toList().first().toMap()
+                    .value(QLatin1String("id")).toString());
+    }
+
     void test_importFromJsonRejectsGarbage() {
         const QVariantMap r = m_svc->importFromJson(QJsonObject{});
         QVERIFY2(!r.value("ok").toBool(), "空 JSON 不应导入成功");
@@ -249,6 +282,33 @@ private slots:
         QVERIFY(m_svc->loadInitialData());
         // 自定义清单在 user.db, 重建服务后应仍在
         QVERIFY(!m_svc->getById(id).isEmpty());
+    }
+
+    // 2026-10-20 修模板勾选态丢失: loadTemplates() 原来每次启动都给条目新建 UUID 且
+    // checked=false, 紧接着 saveChecklist → saveChecklistItems 的 DELETE+INSERT 把
+    // 用户打的勾整片覆盖 (出门前勾了 16 项, 重启清零). 现在按 name 回填库里的勾选,
+    // 条目 id 也改成 (scenario, 序号) 派生的稳定串 —— QML 端点行时拿 item.id 当键,
+    // id 每启动换一次的话连"勾哪一条"都对不上.
+    void test_templateCheckAndItemIdsSurviveRestart() {
+        const QString scn = QStringLiteral("hike_1day");
+        const QVariantList items = m_svc->getById(scn).value("items").toList();
+        QVERIFY2(items.size() >= 20, qPrintable(QStringLiteral("条目数 %1").arg(items.size())));
+        const QString itemId = items.first().toMap().value("id").toString();
+        QVERIFY2(itemId == QStringLiteral("hike_1day:0"),
+                 qPrintable(QStringLiteral("模板条目 id 应为 scenario:序号, 实为 %1").arg(itemId)));
+
+        QVERIFY(m_svc->setItemChecked(scn, itemId, true).value("ok").toBool());
+        QCOMPARE(m_svc->getById(scn).value("checkedCount").toInt(), 1);
+
+        delete m_svc;
+        m_svc = new ChecklistService(m_db);
+        QVERIFY(m_svc->loadInitialData());
+
+        const QVariantMap after = m_svc->getById(scn);
+        QCOMPARE(after.value("checkedCount").toInt(), 1);
+        QVERIFY2(after.value("items").toList().first().toMap().value("checked").toBool(),
+                 "重启后第一条的勾选丢了");
+        QCOMPARE(after.value("items").toList().first().toMap().value("id").toString(), itemId);
     }
 };
 

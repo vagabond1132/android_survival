@@ -47,12 +47,13 @@ public:
      *   v2: 2026-09-10+ KnotService V1→V2 数据迁移, 加 knot_progress 表
      *        (schema 实际由 KnotService::ensureSchema() 在 Survival db 建,
      *         Database::migrateToLatest() 仅负责 user_version 计数)
-     *   v3: 预留
+     *   v3: 2026-10-16 emergency_contacts 补 created_at / updated_at / is_deleted
+     *        (旧版这份 schema 漏列, 导致 EmergencyService 所有读取失败)
      *
      * 每次有破坏性 schema 变更 (加表/加列/重命名), 递增该常量并新增
      * migrate_X_to_Y() 方法.
      */
-    static constexpr int kCurrentSchemaVersion = 2;
+    static constexpr int kCurrentSchemaVersion = 3;
 
     // 迁移
     bool migrate();
@@ -66,6 +67,7 @@ private:
     bool setVersion(Name name, int version);
     bool migrateToLatest(Name name);
     bool migrate_1_to_2(Name name);  // 当前 no-op (knot_progress 由 KnotService::ensureSchema 建)
+    bool migrate_2_to_3(Name name);  // User 库 emergency_contacts 补 updated_at / is_deleted
 
     QHash<Name, QSqlDatabase> m_databases;
     QString m_dataPath;

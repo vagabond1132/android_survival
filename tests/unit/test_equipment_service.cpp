@@ -4,7 +4,9 @@
  *
  * 2026-10-16: 本套件此前从未编译通过, 按 EquipmentService.h 的真实 API 重写:
  *   - 构造函数是 EquipmentService(QObject*), 不吃 Database; 初始化叫 initialize() 不叫 loadInitialData()
- *   - 海拔枚举是 EquipmentAltitudeLevel (L0-L6, 7 段), 与 MapService::AltitudeLevel (L0-L4) 不同名同义易混
+ *   - 海拔枚举现在只有一个定义源 src/common/AltitudeLevel.h (7 段 L0-L6)，
+ *     EquipmentAltitudeLevel 只是它的别名；2026-10-21 #18 C3 之前这里有两份
+ *     (MapService 那份是 5 段封顶)，同一个高度两边读成不同档
  *   - generateList(name, QVariantMap) 返回 {id, critical/important/recommended/optional}, 没有 "items"
  *   - startCheck/getCheckProgress 返回 {listId, total, checked, progress}, 没有 "totalItems"
  */
@@ -14,6 +16,7 @@
 #include <QTemporaryDir>
 
 #include "src/equipment/EquipmentService.h"
+#include "src/map/MapService.h"  // 2026-10-21 (#18 C3): 跨服务比对同一个高度的档位读法
 
 using namespace outdoor;
 
@@ -86,7 +89,16 @@ private slots:
         for (int i = 0; i <= 6; ++i) {
             const EquipmentAltitudeLevel lvl = static_cast<EquipmentAltitudeLevel>(i);
             QVERIFY(!m_engine->getAltitudeLevelName(lvl).isEmpty());
-            QVERIFY(!m_engine->getAltitudeLevelColor(lvl).isEmpty());
+            // getAltitudeLevelColor 已于 2026-10-21 (#18 C3) 删除: 色源只剩 CommonOptions.
+        }
+    }
+
+    // === 两个服务对同一个高度必须读成同一档 (#18 C3 的意义所在) ===
+    void test_altitude_level_matches_map_service() {
+        const int heights[] = { 0, 499, 500, 1500, 2500, 3500, 4500, 5500, 8848 };
+        for (int h : heights) {
+            QCOMPARE(static_cast<int>(m_engine->getAltitudeLevel(h)),
+                     static_cast<int>(MapService::getAltitudeLevel(static_cast<double>(h))));
         }
     }
 

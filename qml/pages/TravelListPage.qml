@@ -1,13 +1,32 @@
 /**
  * @file TravelListPage.qml
- * @brief 自驾游路线列表 (2026-09-14 UI 改版)
+ * @brief 自驾游路线目录 (2026-10-20 v9 F1 母版, 丁骨架二级页)
  *
- * 改进:
- *   - 顶部 hero 渐变 (深海蓝主题) + 标题 + 副标题
- *   - 筛选区: 卡片化, 圆角 12, padding 12
- *   - 列表项: 卡片 + 元信息 + 右箭头
- *   - 全部用 CommonOptions + Styles 设计 token
+ * 入口: 侧边抽屉 "car" (Main.qml: window.navBus.navigateTo("TravelListPage", {})).
+ *       这是抽屉推上来的二级页 → 有右上 26px 方角返回, 没有底部导航带.
+ *
+ * 版式逐块对应已评审的 mock (F1 目录母版, 与徒步路线目录同一套骨架):
+ *   标题条  54px 三行 (拉丁微标签 / 页名 / 读数行) + 右上 26px 方角返回 (热区外扩 9px).
+ *   筛选卡  两行各 5 枚 chip (天数区间 / 里程区间) + 省份下拉 + 月份下拉.
+ *   目录    ListView 混排 head/item: head = 3px 中性条 + 分组名 + "N ROUTES";
+ *           item = 3px 紫条 + 编号 + 名称/副行 + 最高海拔 + chevron, 只有 item 有 1px 组线.
+ *
+ * 这一版换掉的东西与原因:
+ *   - Hero + ListRow + ServiceListModel → 一次 getFiltered 拉全库再本地分桶.
+ *     原因与 RouteListPage 一致: 每次动一个筛选就重跑一次服务调用, 而且 QHash 遍历序
+ *     不稳, 目录次序会每次启动都变; 101 条一次拉完, 本地筛是即时的.
+ *   - 删掉 resetFilters() 里那四句 filterRowXxx.comboBoxInstance.currentIndex = 0 ——
+ *     那是隔着组件去捅别人的内部节点; 现在下拉框的当前项由 comboCurrentIndex 声明式
+ *     反查, 状态只有一个来源 (province / month 这些字段本身).
+ *   - "›" 手抄箭头换成 IconLabel chevron_right; 计数行不再手抄 "共 N 条路线",
+ *     读数行同时报"筛出 / 全库 / 分组数 / 里程跨度".
+ *
+ * 不编读数 (规则 ①): 天数/里程/最高海拔/路面类型/适游季月份全部来自 travelService;
+ *   分组用的是数据里的 province 原值 —— 9 条跨省环线写的就是 "四川/西藏" 这种串,
+ *   不拆成两个组 (拆了会出现"同一条线在两个组里各出现一次"的假象).
  */
+
+pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Controls.Material
@@ -16,383 +35,528 @@ import OutdoorSurvival 1.0
 
 Page {
     id: travelListPage
+
+    Styles { id: styles; visible: false }
+
     title: "自驾游"
-
-    property string filterProvince: "全部"
-    property int filterMinDays: 0
-    property int filterMaxDays: 0
-    property int filterMonth: 0
-    property real filterMinKm: 0
-    property real filterMaxKm: 0
-
-    property var provinces: ["全部"]
-    property var months: ["全部"]
-
-    // 2026-09-21: FilterRow 内部 ComboBox 暴露为 comboBoxInstance, 改用 page 自身
-    //   的 _xxIndex 字段保存当前 index, 让 onComboActivated 更新自身状态而非依赖
-    //   不存在的 provCombo 等 id. 重置时直接对这些字段写 0.
-    property int _provIndex: 0
-    property int _daysIndex: 0
-    property int _distIndex: 0
-    property int _monthIndex: 0
-
     background: Rectangle { color: CommonOptions.colorBg }
-    Styles { id: styles }
 
-    function refresh() {
-        var provKey = filterProvince === "全部" ? "" : filterProvince
-        // 2026-09-20: 用 ServiceListModel 替代 clear+for+append 模板 (Phase 3)
-        routeModel.args = [provKey, filterMinDays, filterMaxDays,
-                           filterMinKm, filterMaxKm, filterMonth]
-        // 2026-09-20: Qt.callLater 让 ServiceListModel.Component.onCompleted 的
-        //   auto-refresh 先跑, 避免 race.
-        Qt.callLater(function() { routeModel.refresh() })
-        // 2026-09-28: 删掉结果计数的手写赋值 (与 RouteListPage 同构). 之前在这
-        //   同步读 routeModel.count, 但 refresh() 被 Qt.callLater 延后 → 首次必
-        //   显示"共 0 条路线", 之后每次筛选显示的都是上一次的旧值. 改为
-        //   resultLabel 声明式绑定 routeModel.count (ListModel.count 是
-        //   NOTIFYable), refresh 完成后自动刷新.
+    // === 筛选状态 ==========================================================
+    // 0 = 全部; 1..4 = 区间档 (与下面两行 chip 的 model 一一对应)
+    property int daysBucket: 0
+    property int kmBucket: 0
+    property string province: ""   // "" = 全部
+    property int month: 0          // 0 = 全部
+
+    // === 数据 ==============================================================
+    property var library: []
+    property var rows: []
+    property var provinceChoices: ["全部"]
+    property int shownCount: 0
+    property int provinceTotal: 0
+    property int kmLo: 0
+    property int kmHi: 0
+    readonly property int libCount: library.length
+
+    // 区间表: 下标 = chip 档位. 天数取闭区间 (数据是整数天), 里程取 [lo, hi)
+    // —— 里程可能有小数 (服务层是 double), 闭区间会在 500 这种边界上两头都不落.
+    // hi === 0 表示上不封顶.
+    readonly property var dayRanges: [[0, 0], [1, 2], [3, 5], [6, 10], [11, 0]]
+    readonly property var kmRanges: [[0, 0], [0, 500], [500, 1000], [1000, 2000], [2000, 0]]
+
+    function navigateTo(page, props) {
+        var win = ApplicationWindow.window
+        if (win && win.navBus) win.navBus.navigateTo(page, props || {})
+    }
+    function goBack() {
+        var win = ApplicationWindow.window
+        if (win && win.navBus) win.navBus.back()
+    }
+
+    // getFiltered 全给"不过滤"的参数 = 全库, 返回的是 Result 信封 {ok,value,error}
+    // (2026-09-21 Phase 5 改的), 所以取 value.
+    function loadLibrary() {
+        if (!travelService) { library = []; return }
+        var res = travelService.getFiltered("", 0, 0, 0, 0, 0)
+        var fetched = (res && res.ok && res.value && res.value.length !== undefined)
+                      ? res.value : []
+        library = fetched
+
+        var seen = ({})
+        var lo = 0
+        var hi = 0
+        for (var i = 0; i < library.length; ++i) {
+            var t = library[i]
+            var p = String(t.province || "")
+            if (p !== "") seen[p] = true
+            var km = Math.round(Number(t.distanceKm) || 0)
+            if (km <= 0) continue
+            if (lo === 0 || km < lo) lo = km
+            if (km > hi) hi = km
+        }
+        var keys = []
+        for (var k in seen) keys.push(k)
+        // 码位序 —— 与 C++ 侧 getAvailableProvinces() 的 std::sort 同一条序.
+        keys.sort(function (a, b) { return a < b ? -1 : (a > b ? 1 : 0) })
+        provinceChoices = ["全部"].concat(keys)
+        provinceTotal = keys.length
+        kmLo = lo
+        kmHi = hi
+    }
+
+    // 数据里的适游季就是 "5月" 这种 token
+    function hasMonth(seasons, m) {
+        if (!seasons || seasons.length === undefined) return false
+        var token = m + "月"
+        for (var i = 0; i < seasons.length; ++i) {
+            if (String(seasons[i]) === token) return true
+        }
+        return false
+    }
+
+    function formatKm(km) {
+        if (km <= 0) return "0"
+        return (km === Math.round(km)) ? String(Math.round(km)) : km.toFixed(1)
+    }
+
+    // 0 表示"库里没这个数" —— 一旦选了区间档, 没有数的条目就不该混进来
+    function inDays(d) {
+        if (daysBucket === 0) return true
+        if (d <= 0) return false
+        var lo = dayRanges[daysBucket][0]
+        var hi = dayRanges[daysBucket][1]
+        return d >= lo && (hi <= 0 || d <= hi)
+    }
+    function inKm(km) {
+        if (kmBucket === 0) return true
+        if (km <= 0) return false
+        var lo = kmRanges[kmBucket][0]
+        var hi = kmRanges[kmBucket][1]
+        return km >= lo && (hi <= 0 || km < hi)
+    }
+
+    function rebuild() {
+        var bucket = ({})
+        var order = []
+        var shown = 0
+        for (var i = 0; i < library.length; ++i) {
+            var t = library[i]
+            var p = String(t.province || "未标注")
+            if (province !== "" && p !== province) continue
+            if (month > 0 && !hasMonth(t.bestSeason, month)) continue
+            var days = Number(t.days) || 0
+            if (!inDays(days)) continue
+            var km = Number(t.distanceKm) || 0
+            if (!inKm(km)) continue
+            if (!bucket[p]) { bucket[p] = []; order.push(p) }
+            var sName = String(t.startName || t.startCity || "")
+            var eName = String(t.endName || t.endCity || "")
+            bucket[p].push({
+                kind: "item",
+                id: String(t.id || ""),
+                name: String(t.name || "未命名路线"),
+                km: km,
+                days: days,
+                alt: Number(t.maxAltitude) || 0,
+                road: String(t.roadType || ""),
+                // 起终点同名 = 环线 (数据里 88/101 是这种). 环线只写一处地名,
+                // 写 "上海 → 上海" 会读成脏数据.
+                loop: (sName !== "" && sName === eName),
+                loopAt: sName,
+                fromTo: [sName, eName]
+                        .filter(function (s) { return !!(s && String(s).length) })
+                        .join(" → ") || "起终点未标注",
+                plate: CommonOptions.plateCode("TV", String(t.id || ""))
+            })
+            shown++
+        }
+
+        order.sort(function (a, b) { return a < b ? -1 : (a > b ? 1 : 0) })
+        var out = []
+        for (var g = 0; g < order.length; ++g) {
+            var key = order[g]
+            var members = bucket[key]
+            // 组内按编号排, 目录序才稳定 (服务层遍历 QHash, 原始序每次启动都可能变)
+            members.sort(function (a, b) { return a.plate < b.plate ? -1 : (a.plate > b.plate ? 1 : 0) })
+            out.push({ kind: "head", label: key, count: members.length })
+            for (var m = 0; m < members.length; ++m) out.push(members[m])
+        }
+        shownCount = shown
+        rows = out
+    }
+
+    function resetFilters() {
+        travelListPage.daysBucket = 0
+        travelListPage.kmBucket = 0
+        travelListPage.province = ""
+        travelListPage.month = 0
+    }
+
+    // 读数行: 有筛选时先报"现 N 条", 再报库的覆盖面.
+    readonly property string statusLine: {
+        if (libCount === 0) return "自驾数据尚未载入 · 检查 assets/data/travel.json"
+        var filtering = (daysBucket > 0 || kmBucket > 0 || province !== "" || month > 0)
+        var t = filtering ? ("现 " + shownCount + " / " + libCount + " 条")
+                          : (libCount + " 条")
+        t += " · " + provinceTotal + " 组 · 里程 " + kmLo + "~" + kmHi + " km"
+        if (province !== "") t += " · " + province
+        if (daysBucket > 0) t += " · " + daysBucketLabel(daysBucket)
+        if (kmBucket > 0) t += " · " + kmBucketLabel(kmBucket)
+        if (month > 0) t += " · " + month + " 月"
+        return t
+    }
+
+    // 档位标签只有一处定义: chip 文案与读数行共用, 免得两处写歪
+    function daysBucketLabel(n) {
+        if (n === 1) return "1-2 天"
+        if (n === 2) return "3-5 天"
+        if (n === 3) return "6-10 天"
+        return "10 天以上"
+    }
+    function kmBucketLabel(n) {
+        if (n === 1) return "500 km 内"
+        if (n === 2) return "500-1000 km"
+        if (n === 3) return "1000-2000 km"
+        return "2000 km 以上"
     }
 
     Component.onCompleted: {
-        // 2026-09-14: travelService.getAvailableProvinces() 已返回中文全称
-        // 不再手动加 "全部" 前缀, 避免重复
-        provinces = travelService.getAvailableProvinces()
-        months = travelService.getAvailableMonths()
-        refresh()
+        loadLibrary()
+        rebuild()
     }
+    Connections {
+        target: travelService
+        function onDataChanged() {
+            travelListPage.loadLibrary()
+            travelListPage.rebuild()
+        }
+    }
+    onDaysBucketChanged: rebuild()
+    onKmBucketChanged: rebuild()
+    onProvinceChanged: rebuild()
+    onMonthChanged: rebuild()
 
+    // === 版面 ==============================================================
     ColumnLayout {
         anchors.fill: parent
         spacing: 0
 
-        // === 顶部 hero (统一深青绿) ===
-        Rectangle {
+        // --- 标题条 (54px: 微标签 / 页名 / 读数行, 右上 26px 方角返回) ---
+        Item {
             Layout.fillWidth: true
-            Layout.preferredHeight: 100
-            color: "#00695C"  // 深青绿
-            gradient: Gradient {
-                GradientStop { position: 0.0; color: "#00695C" }
-                GradientStop { position: 1.0; color: "#00897B" }
+            Layout.preferredHeight: 54
+            Layout.leftMargin: styles.pageMargin
+            Layout.rightMargin: styles.pageMargin
+
+            Column {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                // 给右上角的方角让位, 否则读数行从它底下穿过
+                anchors.rightMargin: 40
+                spacing: 3
+                Text {
+                    text: "DRIVE ROUTE INDEX"
+                    font.family: styles.monoFont
+                    font.pixelSize: styles.fsXs
+                    font.letterSpacing: 1.8
+                    color: CommonOptions.colorInk3
+                }
+                Text {
+                    width: parent.width
+                    text: "自驾游"
+                    font.pixelSize: styles.fs2xl
+                    font.bold: true
+                    color: CommonOptions.colorText
+                    elide: Text.ElideRight
+                }
+                Text {
+                    width: parent.width
+                    text: travelListPage.statusLine
+                    font.pixelSize: styles.fsXs
+                    color: CommonOptions.colorInk3
+                    elide: Text.ElideRight
+                }
+            }
+
+            Rectangle {
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.topMargin: styles.spXs
+                width: 26
+                height: 26
+                color: CommonOptions.colorSurface
+                border.color: CommonOptions.colorText
+                border.width: styles.lineHair
+                IconLabel {
+                    anchors.centerIn: parent
+                    name: "back"
+                    size: styles.icSm
+                    tintColor: CommonOptions.colorText
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    anchors.margins: -9
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: travelListPage.goBack()
+                }
+            }
+        }
+
+        // --- 筛选卡 ---
+        Card {
+            Layout.fillWidth: true
+            Layout.leftMargin: styles.pageMargin
+            Layout.rightMargin: styles.pageMargin
+            Layout.topMargin: styles.spSm
+            spacing: styles.spSm
+
+            // 天数 5 枚 chip 压成一行: 每枚 Layout.fillWidth → 宽度均分、不换行.
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: styles.spXs
+                Repeater {
+                    model: [0, 1, 2, 3, 4]
+                    delegate: Chip {
+                        required property int modelData
+                        Layout.fillWidth: true
+                        text: modelData === 0 ? "全部" : travelListPage.daysBucketLabel(modelData)
+                        checked: travelListPage.daysBucket === modelData
+                        accent: CommonOptions.colorPlum
+                        textSize: styles.fsXs
+                        onClicked: travelListPage.daysBucket =
+                                   (travelListPage.daysBucket === modelData) ? 0 : modelData
+                    }
+                }
+            }
+            Text {
+                Layout.fillWidth: true
+                text: "第一行按天数区间 · 再点一次取消"
+                font.pixelSize: styles.fsXs
+                color: CommonOptions.colorInk3
+                elide: Text.ElideRight
             }
 
             RowLayout {
-                anchors.fill: parent
-                anchors.margins: styles.spLg
-                spacing: styles.spMd
-
-                Text {
-                    text: "\ue531"  // Material Icons: directions_car
-                    font.family: "Material Icons"
-                    font.pixelSize: 32
-                }
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 2
-                    Text {
-                        text: "自驾游"
-                        color: "white"
-                        font.pixelSize: styles.fs2xl
-                        font.bold: true
-                    }
-                    Text {
-                        text: "国内经典自驾路线合集"
-                        color: "#B0BEC5"
-                        font.pixelSize: styles.fsSm
-                    }
-                }
-            }
-        }
-
-        // === 筛选区 (卡片) ===
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.margins: styles.spLg
-            Layout.topMargin: styles.spLg
-            Layout.preferredHeight: filterCol.implicitHeight + 24
-            color: CommonOptions.colorSurface
-            radius: styles.rLg
-            border.color: Qt.darker(CommonOptions.colorSurface, 1.2)
-            border.width: 1
-            clip: false   // 允许 ComboBox popup 溢出
-
-            ColumnLayout {
-                id: filterCol
-                anchors.fill: parent
-                anchors.margins: styles.spMd
-                spacing: styles.spSm
-
-                // 2026-09-20: 全部改用 FilterRow 组件, 视觉风格与 RouteListPage /
-                //   NearbyTab 完全一致
-                // 2026-09-21: FilterRow 把内部 ComboBox 暴露为 comboBoxInstance,
-                //   之前直接用 provCombo 等 id 报 "is not defined" 因为 ComboBox
-                //   藏在 Loader 里. 现在改成有 id 的 FilterRow, 通过
-                //   filterRowProv.comboBoxInstance.currentIndex 操作.
-                FilterRow {
-                    id: filterRowProv
-                    Layout.fillWidth: true
-                    label: "省份"
-                    comboModel: travelListPage.provinces
-                    comboCurrentIndex: travelListPage._provIndex
-                    onComboActivated: (i, v) => {
-                        travelListPage._provIndex = i
-                        travelListPage.filterProvince = v
-                    }
-                }
-                FilterRow {
-                    id: filterRowDays
-                    Layout.fillWidth: true
-                    label: "天数"
-                    comboModel: ["全部", "1-2 天", "3-5 天", "6-10 天", "10+ 天"]
-                    comboCurrentIndex: travelListPage._daysIndex
-                    onComboActivated: (i, v) => {
-                        travelListPage._daysIndex = i
-                        if (v === "1-2 天") { travelListPage.filterMinDays = 1; travelListPage.filterMaxDays = 2 }
-                        else if (v === "3-5 天") { travelListPage.filterMinDays = 3; travelListPage.filterMaxDays = 5 }
-                        else if (v === "6-10 天") { travelListPage.filterMinDays = 6; travelListPage.filterMaxDays = 10 }
-                        else if (v === "10+ 天") { travelListPage.filterMinDays = 11; travelListPage.filterMaxDays = 99 }
-                        else { travelListPage.filterMinDays = 0; travelListPage.filterMaxDays = 0 }
-                    }
-                }
-                FilterRow {
-                    id: filterRowDist
-                    Layout.fillWidth: true
-                    label: "距离"
-                    comboModel: ["全部", "<500km", "500-1000km", "1000-2000km", "2000km+"]
-                    comboCurrentIndex: travelListPage._distIndex
-                    onComboActivated: (i, v) => {
-                        travelListPage._distIndex = i
-                        if (v === "<500km") { travelListPage.filterMinKm = 0; travelListPage.filterMaxKm = 500 }
-                        else if (v === "500-1000km") { travelListPage.filterMinKm = 500; travelListPage.filterMaxKm = 1000 }
-                        else if (v === "1000-2000km") { travelListPage.filterMinKm = 1000; travelListPage.filterMaxKm = 2000 }
-                        else if (v === "2000km+") { travelListPage.filterMinKm = 2000; travelListPage.filterMaxKm = 99999 }
-                        else { travelListPage.filterMinKm = 0; travelListPage.filterMaxKm = 0 }
-                    }
-                }
-                FilterRow {
-                    id: filterRowMonth
-                    Layout.fillWidth: true
-                    label: "月份"
-                    comboModel: travelListPage.months
-                    comboCurrentIndex: travelListPage._monthIndex
-                    onComboActivated: (i, v) => {
-                        travelListPage._monthIndex = i
-                        if (v === "全部") travelListPage.filterMonth = 0
-                        else travelListPage.filterMonth = parseInt(String(v).replace(/[^0-9]/g, "")) || 0
-                    }
-                }
-
-                // 计数 + 重置
-                RowLayout {
-                    Layout.fillWidth: true
-                    Layout.topMargin: styles.spXs
-                    spacing: 4
-                    IconLabel {
-                        name: "car"
-                        size: 13
-                        tintColor: CommonOptions.colorTextMuted
-                    }
-                    Text {
-                        id: resultLabel
-                        // 2026-09-28: 声明式绑定 routeModel.count (NOTIFYable),
-                        //   refresh() 完成后自动更新, 修复"共 0 条路线"恒定 bug.
-                        // 2026-09-29: 图标已拆到左侧 IconLabel, 此处只放中文/数字,
-                        //   去掉硬编码 font.family "Material Icons" (中文会落回系统
-                        //   字体导致混排).
-                        text: "共 " + (routeModel.count || 0) + " 条路线"
-                        color: CommonOptions.colorTextMuted
-                        font.pixelSize: styles.fsSm
+                Layout.fillWidth: true
+                spacing: styles.spXs
+                Repeater {
+                    model: [0, 1, 2, 3, 4]
+                    delegate: Chip {
+                        required property int modelData
                         Layout.fillWidth: true
-                    }
-                    // 2026-09-29: 重置按钮拆成 [图标][文字] 两个元素, 文字独立
-                    //   用默认字体; MouseArea 铺在整行上, 点击区域不变.
-                    RowLayout {
-                        spacing: 4
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                travelListPage.filterProvince = "全部"
-                                travelListPage.filterMinDays = 0
-                                travelListPage.filterMaxDays = 0
-                                travelListPage.filterMinKm = 0
-                                travelListPage.filterMaxKm = 0
-                                travelListPage.filterMonth = 0
-                                // 2026-09-21: 之前用 provCombo.currentIndex = 0 等,
-                                //   导致 "provCombo is not defined" 因为 ComboBox 藏在
-                                //   FilterRow 的 Loader 里. 改操作 page 自身的 _xxIndex
-                                //   + 内部 ComboBox 实例.
-                                travelListPage._provIndex = 0
-                                travelListPage._daysIndex = 0
-                                travelListPage._distIndex = 0
-                                travelListPage._monthIndex = 0
-                                if (filterRowProv.comboBoxInstance) filterRowProv.comboBoxInstance.currentIndex = 0
-                                if (filterRowDays.comboBoxInstance) filterRowDays.comboBoxInstance.currentIndex = 0
-                                if (filterRowDist.comboBoxInstance) filterRowDist.comboBoxInstance.currentIndex = 0
-                                if (filterRowMonth.comboBoxInstance) filterRowMonth.comboBoxInstance.currentIndex = 0
-                            }
-                        }
-                        IconLabel {
-                            name: "refresh"
-                            size: 13
-                            tintColor: CommonOptions.colorAccent
-                        }
-                        Text {
-                            text: "重置"
-                            color: CommonOptions.colorAccent
-                            font.pixelSize: styles.fsSm
-                        }
+                        text: modelData === 0 ? "全部" : travelListPage.kmBucketLabel(modelData)
+                        checked: travelListPage.kmBucket === modelData
+                        accent: CommonOptions.colorPlum
+                        textSize: styles.fsXs
+                        onClicked: travelListPage.kmBucket =
+                                   (travelListPage.kmBucket === modelData) ? 0 : modelData
                     }
                 }
             }
+            Text {
+                Layout.fillWidth: true
+                text: "第二行按里程区间 (单位 km)"
+                font.pixelSize: styles.fsXs
+                color: CommonOptions.colorInk3
+                elide: Text.ElideRight
+            }
+
+            FilterRow {
+                Layout.fillWidth: true
+                label: "省份"
+                comboModel: travelListPage.provinceChoices
+                comboCurrentIndex: {
+                    if (travelListPage.province === "") return 0
+                    var i = travelListPage.provinceChoices.indexOf(travelListPage.province)
+                    return i > 0 ? i : 0
+                }
+                onComboActivated: (idx, value) => {
+                    travelListPage.province = idx === 0 ? "" : String(value)
+                }
+            }
+
+            FilterRow {
+                Layout.fillWidth: true
+                label: "月份"
+                comboModel: CommonOptions.monthOptions()
+                comboTextRole: "label"
+                comboValueRole: "value"
+                comboCurrentIndex: {
+                    var opts = CommonOptions.monthOptions()
+                    for (var i = 0; i < opts.length; ++i) {
+                        if (opts[i].value === travelListPage.month) return i
+                    }
+                    return 0
+                }
+                onComboActivated: (idx, value) => { travelListPage.month = value }
+            }
+
+            OutlineButton {
+                Layout.alignment: Qt.AlignRight
+                text: "重置筛选"
+                tone: CommonOptions.colorTextMuted
+                textSize: styles.fsXs
+                onClicked: travelListPage.resetFilters()
+            }
         }
 
-        // === 列表 ===
-        ListView {
-            id: listView
+        // --- 目录 ---
+        Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            Layout.margins: styles.spLg
-            Layout.topMargin: 0
-            spacing: styles.spSm
-            clip: true
-            model: ServiceListModel {
-                id: routeModel
-                service: travelService
-                method: "getFiltered"
-            }
+            Layout.topMargin: styles.spSm
+            Layout.leftMargin: styles.pageMargin
+            Layout.rightMargin: styles.pageMargin
 
-            delegate: Rectangle {
-                width: ListView.view.width
-                height: 132
-                radius: styles.rMd
-                color: CommonOptions.colorSurface
-                border.color: Qt.darker(CommonOptions.colorSurface, 1.15)
-                border.width: 1
+            ListView {
+                id: driveList
+                anchors.fill: parent
+                clip: true
+                boundsBehavior: Flickable.StopAtBounds
+                model: travelListPage.rows
 
-                // 2026-09-29: bestSeason 经 ListModel 存储后可能是 JS 数组 /
-                //   QStringList 包装对象 / 纯字符串; 统一安全格式化成 "5月、6月".
-                //   不做防护时, 非数组对象会被字符串化成 "QQmlListModel(...)"
-                //   之类脏数据直接渲染到界面 (用户报"下方QQ 什么的信息").
-                readonly property string _seasonText: {
-                    var s = model.bestSeason
-                    if (s === undefined || s === null || s === "") return "全年"
-                    if (Array.isArray(s)) return s.length ? s.join("、") : "全年"
-                    if (typeof s === "object") {
-                        var out = []
-                        var n = (s.length !== undefined) ? s.length : 0
-                        for (var i = 0; i < n; i++) out.push(s[i])
-                        return out.length ? out.join("、") : "全年"
-                    }
-                    return String(s)
-                }
+                delegate: Item {
+                    required property var modelData
+                    width: driveList.width
+                    height: modelData.kind === "head" ? 30 : styles.touchMin
 
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        ApplicationWindow.window.navBus.navigateTo("TravelDetailPage", { travelId: model.id })
-                    }
-                }
+                    // 分组标题 (省份原值). 分组轴没有颜色语义 → 左条走中性灰.
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.rightMargin: styles.spXs
+                        spacing: styles.spSm
+                        visible: modelData.kind === "head"
 
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.margins: styles.spSm
-                    spacing: styles.spSm
-
-                    // 左侧色条 (蓝色主题)
-                    Rectangle {
-                        width: 6
-                        Layout.fillHeight: true
-                        radius: 3
-                        color: CommonOptions.colorAccent
-                    }
-
-                    // 2026-09-29: 之前 4 行信息全塞进单个 Text 且硬编码
-                    //   font.family "Material Icons", 但内容里 PUA 图标码位
-                    //   (\ue531 等) 与中文/拉丁混排 → 因该 TTF 只含图标字形,
-                    //   中文回退系统字体 → 排版散乱; "   ·   " 三连空格又制造
-                    //   "大量空格". 现改为: 每行 = IconLabel(纯图标字形) +
-                    //   Text(默认字体, 中文/数字), 分隔符统一 " · "(单空格).
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 4
+                        Rectangle {
+                            Layout.preferredWidth: styles.lineAccent
+                            Layout.fillHeight: true
+                            Layout.topMargin: 9
+                            Layout.bottomMargin: 9
+                            color: CommonOptions.colorTextMuted
+                        }
                         Text {
                             Layout.fillWidth: true
-                            text: model.name
+                            text: modelData.label
                             color: CommonOptions.colorText
                             font.pixelSize: styles.fsLg
                             font.bold: true
                             elide: Text.ElideRight
                         }
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: 4
-                            IconLabel {
-                                name: "car"
-                                size: 14
-                                tintColor: CommonOptions.colorAccent
-                            }
-                            Text {
-                                Layout.fillWidth: true
-                                text: (model.startName || model.startCity || "起点") +
-                                      " → " + (model.endName || model.endCity || "终点") +
-                                      " · " + model.distanceKm + " km" +
-                                      " · " + model.days + " 天"
-                                color: CommonOptions.colorAccent
-                                font.pixelSize: styles.fsSm
-                                elide: Text.ElideRight
-                            }
-                        }
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: 4
-                            IconLabel {
-                                name: "calendar"
-                                size: 13
-                                tintColor: CommonOptions.colorTextMuted
-                            }
-                            Text {
-                                Layout.fillWidth: true
-                                text: _seasonText + " · " + (model.province || "")
-                                color: CommonOptions.colorTextMuted
-                                font.pixelSize: styles.fsXs
-                                elide: Text.ElideRight
-                            }
-                        }
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: 4
-                            IconLabel {
-                                name: "terrain"
-                                size: 13
-                                tintColor: CommonOptions.colorTextMuted
-                            }
-                            Text {
-                                Layout.fillWidth: true
-                                text: "最高 " + (model.maxAltitude || 0) + " m · " +
-                                      (model.roadType || "—")
-                                color: CommonOptions.colorTextMuted
-                                font.pixelSize: styles.fsXs
-                                elide: Text.ElideRight
-                            }
+                        // 拉丁微标签才加字距, 中文不加 (样式铁律)
+                        Text {
+                            text: modelData.count + " ROUTES"
+                            font.family: styles.monoFont
+                            font.pixelSize: styles.fsXs
+                            font.letterSpacing: 1.4
+                            color: CommonOptions.colorInk3
                         }
                     }
 
-                    Text {
-                        text: "›"
-                        color: "#607D8B"
-                        font.pixelSize: 22
+                    // 条目行
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.rightMargin: styles.spXs
+                        spacing: 9
+                        visible: modelData.kind === "item"
+
+                        // 紫 = 地物图例里的"路线"色, 与地图上的自驾线同源
+                        Rectangle {
+                            Layout.fillHeight: true
+                            Layout.preferredWidth: styles.lineAccent
+                            color: CommonOptions.colorPlum
+                        }
+                        Plate {
+                            Layout.preferredWidth: styles.plateW
+                            Layout.alignment: Qt.AlignVCenter
+                            code: modelData.plate
+                            tone: CommonOptions.colorInk3
+                        }
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 1
+                            Text {
+                                Layout.fillWidth: true
+                                text: modelData.name
+                                color: CommonOptions.colorText
+                                font.pixelSize: styles.fsMd
+                                font.bold: true
+                                elide: Text.ElideRight
+                            }
+                            Text {
+                                Layout.fillWidth: true
+                                text: (modelData.loop ? "环线 · " + modelData.loopAt
+                                                      : modelData.fromTo)
+                                      + " · " + travelListPage.formatKm(modelData.km) + " km"
+                                      + (modelData.road ? " · " + modelData.road : "")
+                                color: CommonOptions.colorInk3
+                                font.pixelSize: styles.fsXs
+                                elide: Text.ElideRight
+                            }
+                        }
+                        // 最高海拔: 数字走等宽, 单位单独一个节点 (汉字不进 mono)
+                        ColumnLayout {
+                            Layout.alignment: Qt.AlignVCenter
+                            spacing: 0
+                            visible: modelData.alt > 0
+                            Text {
+                                text: String(modelData.alt)
+                                font.family: styles.monoFont
+                                font.pixelSize: styles.fsSm
+                                color: CommonOptions.colorText
+                            }
+                            Text {
+                                text: "米"
+                                font.pixelSize: styles.fsXs
+                                color: CommonOptions.colorInk3
+                            }
+                        }
+                        IconLabel {
+                            Layout.alignment: Qt.AlignVCenter
+                            name: "chevron_right"
+                            size: 14
+                            tintColor: CommonOptions.colorInk3
+                        }
+                    }
+
+                    // 组标题下不留描边 (分组靠空白分级), 条目行才有 1px 组线
+                    Rectangle {
+                        visible: modelData.kind === "item"
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        height: styles.lineHair
+                        color: CommonOptions.colorRuleSoft
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        enabled: modelData.kind === "item"
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: travelListPage.navigateTo("TravelDetailPage",
+                                                            { travelId: modelData.id })
+                    }
+                }
+            }
+
+            EmptyState {
+                anchors.centerIn: parent
+                visible: travelListPage.rows.length === 0
+                iconName: "car"
+                text: travelListPage.libCount === 0 ? "自驾数据没有载入" : "这一档筛不出路线"
+                hint: travelListPage.libCount === 0
+                      ? "重装 APK 或检查 assets/data/travel.json 是否打进包里"
+                      : "换个省份、放宽天数或里程区间 —— 适游季是按整月匹配的"
+                actionText: travelListPage.libCount === 0 ? "重新载入" : "重置筛选"
+                onActionTriggered: {
+                    if (travelListPage.libCount === 0) {
+                        travelListPage.loadLibrary()
+                        travelListPage.rebuild()
+                    } else {
+                        travelListPage.resetFilters()
                     }
                 }
             }
         }
     }
-
-    onFilterProvinceChanged: refresh()
-    onFilterMinDaysChanged: refresh()
-    onFilterMaxDaysChanged: refresh()
-    onFilterMonthChanged: refresh()
-    onFilterMinKmChanged: refresh()
-    onFilterMaxKmChanged: refresh()
 }

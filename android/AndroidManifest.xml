@@ -49,6 +49,11 @@
     <uses-feature
         android:name="android.hardware.location.gps"
         android:required="false" />
+    <!-- 2026-10-20: ①营地方位盘的朝向来源. required=false: 没罗盘的机型照样能用,
+         CompassSensor.available 会回 false, 界面退成"空盘 + 手动方位"而不是崩. -->
+    <uses-feature
+        android:name="android.hardware.sensor.compass"
+        android:required="false" />
     <uses-feature
         android:name="android.hardware.telephony"
         android:required="false" />

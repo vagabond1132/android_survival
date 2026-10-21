@@ -39,8 +39,13 @@ if not exist "%QT_PATH%" (
 
 set QT_QPA=
 if "%TARGET_ABI%"=="arm64-v8a" set QT_QPA=%QT_PATH%\android_arm64_v8a
-if "%TARGET_ABI%"=="armeabi-v7a" set QT_QPA=%QT_PATH%\android_armv7
 if "%TARGET_ABI%"=="x86_64" set QT_QPA=%QT_PATH%\android_x86_64
+rem 2026-10-21: armeabi-v7a 去掉 —— 构建镜像没装 android_armv7 这个 Qt kit, 只出
+rem   arm64-v8a / x86_64. 与 build_apk.sh 同一处判断保持一致, 别让人以为还能打 v7a.
+if "%TARGET_ABI%"=="armeabi-v7a" (
+    echo [ERROR] armeabi-v7a not supported: no android_armv7 Qt kit in the build image
+    exit /b 1
+)
 
 if not exist "%QT_QPA%" (
     echo [ERROR] Qt Android package not found: %QT_QPA%

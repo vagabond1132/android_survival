@@ -134,8 +134,16 @@ void TestFirstAidService::testGetByCategory() {
     }
 }
 
+// getAllEntries() 从 Phase 5 批次 3 起返回 Result 信封 {ok, value, error},
+// 不是裸列表. 测试统一走这个 helper 解包, 否则会拿到信封的 5 个 key.
+static QVariantList allEntriesOf(FirstAidService* s) {
+    QVariantMap env = s->getAllEntries();
+    if (!env["ok"].toBool()) return {};
+    return env["value"].toList();
+}
+
 void TestFirstAidService::testGetByCategoryAll() {
-    auto all = m_service->getAllEntries();
+    auto all = allEntriesOf(m_service);
     QVERIFY(all.size() >= 8);
 
     auto critical = m_service->getByCategory(FirstAidService::Category::Critical);
@@ -228,7 +236,9 @@ void TestFirstAidService::testGetKitTemplate_valid() {
     QVariantMap kit = m_service->getKitTemplate("hike_1day");
     QVERIFY(!kit.isEmpty());
     QVERIFY(!kit["items"].toList().isEmpty());
-    QVERIFY(kit["totalWeightG"].toInt() > 0);
+    // getKitTemplate() 原样透传 firstaid_entries.json 的下划线字段,
+    // 只有 getKitTemplates() 会重命名成 totalWeightG.
+    QVERIFY(kit["total_weight_g"].toInt() > 0);
 }
 
 void TestFirstAidService::testGetKitTemplate_invalid() {
@@ -250,7 +260,8 @@ void TestFirstAidService::testGetRelatedSpecies() {
 // ============================================================================
 
 void TestFirstAidService::testDataIntegrity_titleNotEmpty() {
-    auto all = m_service->getAllEntries();
+    auto all = allEntriesOf(m_service);
+    QVERIFY(!all.isEmpty());
     for (const auto& e : all) {
         QVERIFY2(!e.toMap()["title"].toString().isEmpty(),
                  qPrintable("Title is empty for id: " +
@@ -259,17 +270,22 @@ void TestFirstAidService::testDataIntegrity_titleNotEmpty() {
 }
 
 void TestFirstAidService::testDataIntegrity_criticalActionsForHighUrgency() {
+    // getCritical() 是精简摘要 (id/title/urgency/category), 不含 criticalActions;
+    // 完整性要逐条回到 getById() 取全量字段再校验.
     auto critical = m_service->getCritical();
+    QVERIFY(!critical.isEmpty());
     for (const auto& e : critical) {
-        QVariantMap map = e.toMap();
-        QVERIFY2(!map["criticalActions"].toList().isEmpty(),
+        QVariantMap summary = e.toMap();
+        QVariantMap full = m_service->getById(summary["id"].toString());
+        QVERIFY2(!full["criticalActions"].toList().isEmpty(),
                  qPrintable("Critical entry missing critical_actions: " +
-                            map["id"].toString()));
+                            summary["id"].toString()));
     }
 }
 
 void TestFirstAidService::testDataIntegrity_urgencyInRange() {
-    auto all = m_service->getAllEntries();
+    auto all = allEntriesOf(m_service);
+    QVERIFY(!all.isEmpty());
     for (const auto& e : all) {
         int urgency = e.toMap()["urgency"].toInt();
         QVERIFY(urgency >= 1 && urgency <= 5);

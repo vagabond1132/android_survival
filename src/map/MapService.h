@@ -22,6 +22,7 @@
 #include <QVariantMap>
 #include <QVariantList>
 #include "../common/ServiceBase.h"  // 2026-09-21 阶段 L2
+#include "../common/AltitudeLevel.h"  // 2026-10-21 (#18 C3): 海拔段位改这里统一取
 
 // 轨迹记录频率
 enum class TrackFrequency {
@@ -47,10 +48,9 @@ enum class TileSource {
     Offline     // 离线瓦片
 };
 
-// 海拔段位（5 段 L0-L4）
-enum class AltitudeLevel {
-    L0 = 0, L1 = 1, L2 = 2, L3 = 3, L4 = 4
-};
+// 海拔段位的 enum 与阈值都在 ../common/AltitudeLevel.h (2026-10-21 #18 C3: 这里原来
+// 自己另立了一份 5 段 L0-L4, 与装备侧的 7 段读成不同档; 颜色也从这里删掉了 —— 色源单一,
+// 界面上的海拔色一律走 CommonOptions.altitudeColor(level)).
 
 // 照片结构
 struct MapPhoto {
@@ -133,10 +133,9 @@ public:
     Q_INVOKABLE QString getTileUrl(int z, int x, int y);
     Q_INVOKABLE QString getBaseMapName(BaseMapType type) const;
 
-    // 海拔段位
+    // 海拔段位 (真身在 ../common/AltitudeLevel.h, 这里只是转发 + 给单测一个入口)
     Q_INVOKABLE static AltitudeLevel getAltitudeLevel(double altitudeM);
     Q_INVOKABLE static QString getAltitudeLevelName(AltitudeLevel level);
-    Q_INVOKABLE static QString getAltitudeLevelColor(AltitudeLevel level);
     Q_INVOKABLE static double getAltitudeLevelMin(AltitudeLevel level);
     Q_INVOKABLE static double getAltitudeLevelMax(AltitudeLevel level);
 

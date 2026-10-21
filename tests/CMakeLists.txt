@@ -15,7 +15,7 @@ set(CMAKE_AUTOUIC ON)
 # Positioning: QGeoCoordinate/QGeoPositionInfo (EmergencyService, MapService)
 # Xml:         QXmlStreamReader (GPX 解析)
 # Qml:         QQmlContext (PlatformInterface / AndroidPlatform 头文件)
-find_package(Qt6 6.7 REQUIRED COMPONENTS Core Gui Sql Network Test Positioning Xml Qml)
+find_package(Qt6 6.7 REQUIRED COMPONENTS Core Gui Sql Network Test Positioning Sensors Xml Qml)
 
 set(APP_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/..")
 
@@ -34,6 +34,9 @@ set(COMMON_SRC
     ${APP_ROOT}/src/core/Logger.cpp
     ${APP_ROOT}/src/core/AssetLoader.cpp
     ${APP_ROOT}/src/core/PathService.cpp
+    # 2026-10-20 Wave C3: 颜色 token + stripEntryMarker/plateCode 都在这一份,
+    #   test_common_options 要直接链它 (主 CMakeLists.txt:123 同源)
+    ${APP_ROOT}/src/core/CommonOptions.cpp
     ${APP_ROOT}/src/common/DbHelper.cpp
     ${APP_ROOT}/src/common/SettingsStore.cpp
     # header-only 的 Q_OBJECT 类必须列进源文件列表, AUTOMOC 才会生成 moc_ServiceBase.cpp;
@@ -64,6 +67,9 @@ set(COMMON_SRC
     ${APP_ROOT}/src/map/MapService_species.cpp
     ${APP_ROOT}/src/platform/PlatformInterface.cpp
     ${APP_ROOT}/src/platform/AndroidPlatform.cpp
+    # 2026-10-20: 罗盘 (丁骨架朝向来源). ServiceRegistry 没进这份列表, 但这个类
+    # 要在这里过一遍类型检查 —— 否则只有 38 分钟的 arm64 构建能发现它编不过.
+    ${APP_ROOT}/src/core/CompassSensor.cpp
 )
 
 # 23 个用例进程共用同一份服务实现: 编成 OBJECT 库只编一次,
@@ -75,7 +81,7 @@ target_include_directories(outdoor_test_objs PUBLIC
     ${APP_ROOT}
 )
 target_link_libraries(outdoor_test_objs PUBLIC
-    Qt6::Core Qt6::Gui Qt6::Sql Qt6::Network Qt6::Positioning Qt6::Xml Qt6::Qml
+    Qt6::Core Qt6::Gui Qt6::Sql Qt6::Network Qt6::Positioning Qt6::Sensors Qt6::Xml Qt6::Qml
 )
 target_compile_definitions(outdoor_test_objs PUBLIC APP_VERSION="0.0.1")
 
@@ -101,6 +107,8 @@ add_unit_test(test_result            ${TESTS_DIR}/test_result.cpp)
 add_unit_test(test_db_helper         ${TESTS_DIR}/test_db_helper.cpp)
 add_unit_test(test_asset_loader      ${TESTS_DIR}/test_asset_loader.cpp)
 add_unit_test(test_settings_store    ${TESTS_DIR}/test_settings_store.cpp)
+# 2026-10-20 Wave C3: 展示层 helper (数据正文前缀净化 + 图鉴编号)
+add_unit_test(test_common_options    ${TESTS_DIR}/test_common_options.cpp)
 add_unit_test(test_rule_condition_strategy ${TESTS_DIR}/test_rule_condition_strategy.cpp)
 add_unit_test(test_first_aid         ${TESTS_DIR}/test_first_aid.cpp)
 add_unit_test(test_first_aid_service ${TESTS_DIR}/test_first_aid_service.cpp)

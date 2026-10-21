@@ -94,6 +94,17 @@ public:
     Q_INVOKABLE QVariantMap setFavorite(qint64 id, bool favorite);
     Q_INVOKABLE QVariantMap addNote(qint64 id, const QString& note);
 
+    // ViewRecord 没有 Q_GADGET, QML 既构造不出这个结构体, 也没法按位置传它那 12 个
+    // 参数 (2026-10-20 真机上图鉴详情"收藏"点了没反应就是这个). 详情页只有 entity
+    // 级别的上下文, 所以收藏走下面两个基本类型入口.
+    Q_INVOKABLE QVariantMap toggleFavoriteByEntity(const QString& entityId,
+                                                   const QString& kingdom,
+                                                   const QString& commonName,
+                                                   const QString& scientificName,
+                                                   const QString& category,
+                                                   int dangerLevel);
+    Q_INVOKABLE bool isFavoriteEntity(const QString& entityId);
+
     // 清理
     Q_INVOKABLE QVariantMap cleanOldRecords(int daysOld = 90);
 

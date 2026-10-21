@@ -16,6 +16,8 @@
 #include <QFile>
 #include <QByteArray>
 #include <QDateTime>
+#include <QGuiApplication>
+#include <QClipboard>
 #ifdef Q_OS_ANDROID
 #include <QJniObject>
 #include <QJniEnvironment>
@@ -298,6 +300,76 @@ void AndroidPlatform::openUrl(const QString& url) {
                                intent.object());
 #else
     Q_UNUSED(url);
+#endif
+}
+
+bool AndroidPlatform::copyToClipboard(const QString& text) {
+    if (text.isEmpty()) return false;
+    // Qt 6 在 Android 上有自己的剪贴板后端 (ClipboardAndroid), 不必走 JNI.
+    // 指针仍判空: 无头/离线跑单测时 QGuiApplication 可能还没建好.
+    QClipboard* cb = QGuiApplication::clipboard();
+    if (!cb) {
+        Logger::warn("copyToClipboard: no clipboard available");
+        return false;
+    }
+    cb->setText(text);
+    return true;
+}
+
+bool AndroidPlatform::openSmsDraft(const QString& number, const QString& body) {
+#ifdef Q_OS_ANDROID
+    // 只拉起短信编辑页, 发送键留给用户 —— 见 PlatformInterface::openSmsDraft 注释.
+    QJniObject activity = getActivity();
+    if (!activity.isValid()) {
+        Logger::warn("openSmsDraft: activity invalid");
+        return false;
+    }
+
+    QJniObject intent("android/content/Intent", "()V");
+    QJniObject action = QJniObject::fromString("android.intent.action.SENDTO");
+    intent.callObjectMethod("setAction", "(Ljava/lang/String;)Landroid/content/Intent;",
+                            action.object());
+
+    // ACTION_SENDTO + smsto: 是唯一各家短信 App 都认的写法.
+    // ACTION_VIEW + sms: 在第三方短信客户端里常被当成网址处理.
+    const QString scheme = number.isEmpty() ? QStringLiteral("smsto:")
+                                            : QStringLiteral("smsto:") + number;
+    QJniObject uriString = QJniObject::fromString(scheme);
+    QJniObject uri = QJniObject::callStaticObjectMethod(
+        "android/net/Uri", "parse", "(Ljava/lang/String;)Landroid/net/Uri;",
+        uriString.object()
+    );
+    if (!uri.isValid()) {
+        Logger::warn("openSmsDraft: uri parse failed");
+        return false;
+    }
+    intent.callObjectMethod("setData", "(Landroid/net/Uri;)Landroid/content/Intent;",
+                            uri.object());
+
+    if (!body.isEmpty()) {
+        QJniObject key = QJniObject::fromString("sms_body");
+        QJniObject val = QJniObject::fromString(body);
+        intent.callObjectMethod(
+            "putExtra",
+            "(Ljava/lang/String;Ljava/lang/String;)Landroid/content/Intent;",
+            key.object(), val.object());
+    }
+    intent.callObjectMethod("addFlags", "(I)Landroid/content/Intent;", 0x10000000);
+
+    activity.callMethod<void>("startActivity", "(Landroid/content/Intent;)V",
+                              intent.object());
+    // 机器上没装短信应用时 startActivity 抛 ActivityNotFoundException.
+    // JNI 的 Java 异常不会传播成 C++ 异常, 但会挂在环境里让下一次 JNI 调用崩,
+    // 所以必须 ExceptionCheck + ExceptionClear 后再回 false.
+    QJniEnvironment env;
+    if (env->ExceptionCheck()) {
+        env->ExceptionClear();
+        Logger::warn("openSmsDraft: startActivity threw (no SMS client?)");
+        return false;
+    }
+    return true;
+#else
+    return PlatformInterface::openSmsDraft(number, body);
 #endif
 }
 
@@ -721,6 +793,26 @@ void AndroidPlatform::takePhoto(std::function<void(const QString& uri)> callback
     if (callback) callback(QString());
     return;
 #else
+    if (!callback) return;
+    // 2026-10-16: 修 run.txt 15:58:23 "Permission Denial: ... IMAGE_CAPTURE ...
+    //   com.hihonor.camera/.ThirdCamera ... with revoked permission CAMERA".
+    //   荣耀系统相机 Activity 声明要求调用方持有 CAMERA, 未授予时 PhotoCaptureActivity
+    //   的 startActivityForResult(IMAGE_CAPTURE) 被 ActivityManager 直接拒绝 → 拍照无响应.
+    //   在真正拉起前统一 gate: 无权限 → 先申请, 授予后递归再走 (传原始 callback, 避免
+    //   二次包装导致 photoTaken 重复发射); 用户拒绝 → 回调空串, 上层提示.
+    if (!checkPermission("android.permission.CAMERA")) {
+        Logger::warn("takePhoto: CAMERA 未授予, 先申请再拉起");
+        requestPermission("android.permission.CAMERA",
+                          [this, callback](bool granted) {
+                              if (granted) {
+                                  takePhoto(callback);
+                              } else {
+                                  Logger::warn("takePhoto: 用户拒绝 CAMERA 权限");
+                                  callback(QString());
+                              }
+                          });
+        return;
+    }
     // 2026-09-15: 包装 callback, 触发后同时发 photoTaken 信号 (QML 入口)
     // Q_INVOKABLE requestTakePhoto() 内部也会到这里, 通过 photoTaken 信号送达 QML.
     std::function<void(const QString&)> wrapped = [this, callback](const QString& uri) {
@@ -859,12 +951,70 @@ QString AndroidPlatform::importImage(const QString& srcUri) {
         return QString();
     }
 
-    // 2026-09-17: 用 Java InputStream.readAll() 一次性读, 避开 QJniObject::fromLocalArray
-    // (该 API 在 Qt 6.7.2 不存在)
-    QJniObject byteArr = inputStream.callObjectMethod("readAll", "()[B");
+    // 2026-10-19 真机 (Magic5 / Android 14) stage0.log:
+    //   java.lang.NoSuchMethodError: no non-static method
+    //   "Landroid/os/ParcelFileDescriptor$AutoCloseInputStream;.readAll()[B"
+    //   → importImage 每次都返回空, 拍照检索整条链路拿不到图片字节.
+    //   原因: InputStream.readAll() 是 Java 9 API, ART 只在新版本的部分流实现上
+    //   补齐, AutoCloseInputStream 这条包装链没有; callObjectMethod 不做编译期校验,
+    //   到运行时才抛 NoSuchMethodError, 表现为"返回 null".
+    //   改成分块 read([B) + ByteArrayOutputStream 循环拷贝, 只用 API 1 就有的方法.
+    constexpr int kChunkBytes = 64 * 1024;
+    QJniEnvironment env;
+    jobject inObj = inputStream.object();
+    jclass inCls = env->GetObjectClass(inObj);
+    jmethodID readMid = env->GetMethodID(inCls, "read", "([B)I");
+    if (env->ExceptionCheck()) env->ExceptionClear();
+    QJniObject baos = QJniObject("java/io/ByteArrayOutputStream");
+    if (readMid == nullptr || !baos.isValid()) {
+        Logger::warn("importImage: JNI stream bridge unavailable for " + path);
+        inputStream.callMethod<void>("close");
+        outFile.close();
+        outFile.remove();
+        return QString();
+    }
+    jclass baosCls = env->GetObjectClass(baos.object());
+    jmethodID writeMid = env->GetMethodID(baosCls, "write", "([BII)V");
+    jmethodID toArrMid = env->GetMethodID(baosCls, "toByteArray", "()[B");
+    jbyteArray chunk = env->NewByteArray(kChunkBytes);
+
+    qint64 total = 0;
+    bool failed = false;
+    for (;;) {
+        jint n = env->CallIntMethod(inObj, readMid, chunk);
+        if (env->ExceptionCheck()) {
+            env->ExceptionClear();
+            failed = true;
+            break;
+        }
+        if (n < 0) break;          // EOF
+        // read([B) 只有在数组长度为 0 时才可能返回 0, 我们的 chunk 恒为 64KB,
+        // 所以 n==0 只可能是异常实现 —— 当结束处理, 避免死循环.
+        if (n == 0) break;
+        env->CallVoidMethod(baos.object(), writeMid, chunk, 0, n);
+        if (env->ExceptionCheck()) {
+            env->ExceptionClear();
+            failed = true;
+            break;
+        }
+        total += n;
+        if (total > 64 * 1024 * 1024) {  // 64MB 兜底, 防异常大文件撑爆内存
+            Logger::warn("importImage: source larger than 64MB, aborting " + path);
+            failed = true;
+            break;
+        }
+    }
     inputStream.callMethod<void>("close");
-    if (!byteArr.isValid()) {
-        Logger::warn("importImage: readAll() returned null for " + path);
+    env->DeleteLocalRef(chunk);
+
+    QJniObject byteArr;
+    if (!failed) {
+        byteArr = QJniObject::fromLocalRef(
+            env->CallObjectMethod(baos.object(), toArrMid));
+        if (env->ExceptionCheck()) env->ExceptionClear();
+    }
+    if (failed || !byteArr.isValid()) {
+        Logger::warn("importImage: stream copy failed for " + path);
         outFile.close();
         outFile.remove();
         return QString();
@@ -872,7 +1022,7 @@ QString AndroidPlatform::importImage(const QString& srcUri) {
     // 2026-09-17: Java 数组 length 是字段, 不是方法 - 必须用 GetArrayLength
     // 之前用 callMethod<jsize>("length") 会 pending JNI exception, 下次 JNI 调用 abort
     jbyteArray jba = static_cast<jbyteArray>(byteArr.object());
-    jsize len = QJniEnvironment()->GetArrayLength(jba);
+    jsize len = env->GetArrayLength(jba);
     if (len <= 0) {
         outFile.close();
         outFile.remove();

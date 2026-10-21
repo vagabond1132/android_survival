@@ -221,40 +221,18 @@ int EquipmentService::totalItems() const { return m_items.size(); }
 int EquipmentService::totalRules() const { return m_rules.size(); }
 
 EquipmentAltitudeLevel EquipmentService::getAltitudeLevel(int altitudeM) {
-    if (altitudeM < 500) return EquipmentAltitudeLevel::L0;
-    if (altitudeM < 1500) return EquipmentAltitudeLevel::L1;
-    if (altitudeM < 2500) return EquipmentAltitudeLevel::L2;
-    if (altitudeM < 3500) return EquipmentAltitudeLevel::L3;
-    if (altitudeM < 4500) return EquipmentAltitudeLevel::L4;
-    if (altitudeM < 5500) return EquipmentAltitudeLevel::L5;
-    return EquipmentAltitudeLevel::L6;
+    // 阈值唯一来源: src/common/AltitudeLevel.h (#18 C3)
+    return AltitudeScale::fromMeters(static_cast<double>(altitudeM));
 }
 
 QString EquipmentService::getAltitudeLevelName(EquipmentAltitudeLevel level) {
-    switch (level) {
-        case EquipmentAltitudeLevel::L0: return "低海拔";
-        case EquipmentAltitudeLevel::L1: return "中海拔";
-        case EquipmentAltitudeLevel::L2: return "中高海拔";
-        case EquipmentAltitudeLevel::L3: return "高海拔";
-        case EquipmentAltitudeLevel::L4: return "极高海拔";
-        case EquipmentAltitudeLevel::L5: return "超高海拔";
-        case EquipmentAltitudeLevel::L6: return "极高山";
-    }
-    return "未知";
+    return AltitudeScale::nameOf(level);
 }
 
-QString EquipmentService::getAltitudeLevelColor(EquipmentAltitudeLevel level) {
-    switch (level) {
-        case EquipmentAltitudeLevel::L0: return "#4CAF50";
-        case EquipmentAltitudeLevel::L1: return "#8BC34A";
-        case EquipmentAltitudeLevel::L2: return "#FFC107";
-        case EquipmentAltitudeLevel::L3: return "#FF9800";
-        case EquipmentAltitudeLevel::L4: return "#F44336";
-        case EquipmentAltitudeLevel::L5: return "#9C27B0";
-        case EquipmentAltitudeLevel::L6: return "#212121";
-    }
-    return "#757575";
-}
+// 2026-10-21 (#18 C3): 这里原来还有 getAltitudeLevelName / getAltitudeLevelColor 两份
+//   switch. 名称转发到 AltitudeScale::nameOf; **颜色函数整个删掉** —— 它返回的是改版前
+//   的 Material 老色 (#4CAF50 / #9C27B0 / #212121), 与 #E8ECEA 底不搭, 而 QML 侧早就改拿
+//   CommonOptions.altitudeColor(level) 了 (EquipmentPage.qml:941/971). 色源只留 CommonOptions 一处.
 
 // 2026-09-23: 数值 → 等级换算 (QML 只给 windSpeed / uvIndex 时用)
 WindLevel EquipmentService::windLevelFromSpeed(float speedMs) {
@@ -277,7 +255,8 @@ QJsonObject EquipmentService::getAltitudeSegment(EquipmentAltitudeLevel level) {
     QJsonObject seg;
     seg["level"] = static_cast<int>(level);
     seg["name"] = getAltitudeLevelName(level);
-    seg["color"] = getAltitudeLevelColor(level);
+    // 2026-10-21 (#18 C3): 原来这里塞了 seg["color"] = 老 Material 十六进制.
+    //   色不进数据层: 界面按 level 取 CommonOptions.altitudeColor(level).
     return seg;
 }
 
