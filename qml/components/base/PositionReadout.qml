@@ -125,7 +125,10 @@ Rectangle {
             Layout.fillWidth: true
             text: readout.coordText
             font.family: styles.monoFont
-            font.pixelSize: 13.5
+            // 14 而非 13.5: pixelSize 是 int, 写字面小数是**加载期硬错误**
+            // ("Invalid property assignment: int expected", 整页起不来);
+            // 走 styles.fsXs 这类 real 绑定反而没事, Qt 会四舍五入 (8.5→9).
+            font.pixelSize: 14
             color: CommonOptions.colorOnInk
             elide: Text.ElideRight
             // 不带盘时一行读完; ⑤嵌了 74px 盘之后剩下的宽度不够一行, 这时必须折行
@@ -171,7 +174,7 @@ Rectangle {
                     Text {
                         text: valueText
                         font.family: styles.monoFont
-                        font.pixelSize: 11.5
+                        font.pixelSize: 12
                         color: CommonOptions.colorOnInk
                         wrapMode: Text.NoWrap
                     }

@@ -281,21 +281,29 @@ int main(int argc, char* argv[]) {
     logToFile("=== STAGE 0: QQmlApplicationEngine created ===");
 
     // 2026-09-21: 监听 QML 加载错误, 写到 logcat + 文件, 不阻断主流程
+    // 2026-10-21 重写: 上一版只 qCritical/qWarning 一句 "加载失败", 具体是哪一行哪个
+    //   类型看不到 —— 真机 PositionReadout 的 `font.pixelSize: 13.5` (int 属性吃字面
+    //   小数 = 加载期硬错误) 让整个 app 起不来, stage0.log 里只留下
+    //   "QQmlApplicationEngine failed to load component" 一句, 定位花了两个小时.
+    //   两个坑:
+    //     1) 走 qWarning 会被下面那个"同一毫秒只留一行"的 handler 去重吃掉, 而引擎
+    //        恰恰是同一毫秒连着吐多条错误 —— 第一条之后的全丢. 所以这里绕开 handler,
+    //        直接 logToFile 逐条写.
+    //     2) Qt::QueuedConnection 永远不触发: rootObjects 空时 main 直接 shutdown +
+    //        return -1, 事件循环根本没转起来. 改 DirectConnection.
+    //   /data/local/tmp 在 release 包里写不动 (上一版 stage1.log 一直是空的), 统一落 stage0.log.
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed,
-                     &app, []() {
-        qCritical() << "QML objectCreationFailed - QML 加载失败";
-        QFile f("/data/local/tmp/stage1.log");
-        if (f.open(QIODevice::WriteOnly | QIODevice::Append)) {
-            QTextStream(&f) << "objectCreationFailed at "
-                             << QDateTime::currentDateTime().toString(Qt::ISODate) << "\n";
-        }
-    }, Qt::QueuedConnection);
+                     &app, [logToFile](const QUrl &url) {
+        logToFile(QStringLiteral("=== STAGE 0: QML objectCreationFailed url=%1 ===").arg(url.toString()));
+    }, Qt::DirectConnection);
+    // 详细错误 (哪一行、哪个类型、什么属性赋错) 全在这条信号里, 不在 objectCreationFailed 里.
+    // Qt 6.7 的 objectCreationFailed 只给一个 url; 也没有 QQmlApplicationEngine::outputErrors()
+    // (那是 QQmlComponent::errors() 的东西) —— 首版按 "errors 列表" 写, 编译直接不过.
     QObject::connect(&engine, &QQmlApplicationEngine::warnings,
-                     [](const QList<QQmlError>& warnings) {
-        for (const auto& w : warnings) {
-            qWarning() << "QML warning:" << w.toString();
-        }
-    });
+                     &app, [logToFile](const QList<QQmlError>& warnings) {
+        for (const auto& w : warnings)
+            logToFile(QStringLiteral("  [QML error] %1").arg(w.toString()));
+    }, Qt::DirectConnection);
 
     // 2026-09-10: 注册 FirstAidService 枚举 (Category/Urgency) 让 QML 端能取
     // 之前 setContextProperty 注入的 firstAidService 是裸 QObject, Q_ENUM 不能直接

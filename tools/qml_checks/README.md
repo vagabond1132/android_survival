@@ -6,7 +6,7 @@
 
 - 默认扫描根目录 = 本文件所在目录的 `../../qml`（数据类检查器是 `../../assets/data`），
   所以从仓库任何位置都能跑；也可以传第一个参数指定别的根目录。
-- 判读：`pragma/layout_prop/mono_cjk/crossfile_id` 这 4 个是 **pass/fail 门禁，期望 0 条**；
+- 判读：`pragma/layout_prop/mono_cjk/crossfile_id/int_prop` 这 5 个是 **pass/fail 门禁，期望 0 条**；
   后 3 个是**打印诊断**，不给出退出码结论。
 - 逐条判读规则与对账表见 `doc/08-索引与概念/全代码索引.md` §18.1。
 
@@ -20,9 +20,19 @@ export ELECTRON_RUN_AS_NODE=1
 "/c/Users/Administrator/AppData/Local/Programs/Qoder/Qoder.exe" pragma_check.js
 ```
 
-`ut` 容器里**没有 node**（`which node` 空），所以这 7 个检查器只在 Windows 主机跑。
+传根目录时**必须给 Windows 看得懂的路径**（`D:/build_docker/...`），不要给
+`/tmp/...` 或 `/d/...` —— Electron 是原生 Windows 进程，`/d/x` 会被它当成
+`D:\d\x`，`fs.existsSync` 直接 false，检查器一声不响地报 0 条，看起来像"全绿"。
+这个坑实测踩过：拿一个故意写坏的 fixture 验 `int_prop_check.js`，前两次都返回 0，
+以为脚本坏了，其实是根目录压根没被读到。**任何"0 条"结论都要先用一个已知命中的
+样例反证脚本是活的。**
+
+`ut` 容器里**没有 node**（`which node` 空），所以这 8 个检查器只在 Windows 主机跑。
 搬进仓库是为了进版本控制、并且根目录不再写死绝对路径；哪天容器装了 node，
 直接 `node tools/qml_checks/pragma_check.js` 即可（仓库挂载在 `/project`）。
+
+需要真正**实例化**组件树才能暴露的那一类（见下一节），不在这里，在
+`tools/qml_load_check.sh`（跑在 ut 容器里，用桌面 Qt 的 `qml` + offscreen）。
 
 ## 清单
 
@@ -32,6 +42,7 @@ export ELECTRON_RUN_AS_NODE=1
 | `layout_prop_check.js` | 布局子项上写 `width:/height:/anchors:`，或写 `Layout.visible`（Qt6.7 的 `QQuickLayoutAttached` 没这个属性，是加载期硬错误，整页白屏） | 0 条 |
 | `mono_cjk_check.js` | `styles.monoFont` / `Material Icons` 字形对象里混进汉字（该字体没有 CJK 字形，回退失败出方框） | 0 条 |
 | `crossfile_id_check.js` | 跨文件抓别的 QML 的 id（`mapPage.x` 之类）—— id 是文件级作用域，运行期 ReferenceError，只能靠宿主透传属性 | 0 条 |
+| `int_prop_check.js` | **int 属性写了字面小数**，如 `font.pixelSize: 13.5`。加载期硬错误 `Invalid property assignment: int expected`，整棵组件树建不起来、app 启动即退；qmllint / qmlcachegen / ctest 三道都不报（2026-10-21 真机就是这么炸的）。只报值本身带小数的字面量：`2.0` 放过，`styles.fsXs`（real 绑定，Qt round-half-up：8.5→9）放过 | 0 条 |
 | `nav_reach_check.js` | 每页被谁 `navigateTo`，反查孤儿页。**有盲区**：URL 是算出来的那几页（HomePage / MePage / FieldGuidePage / TrackDetailPage）会误报"无人调用" | 人工核对 |
 | `route_list_logic_check.js` | 把 `RouteListPage.rebuild()` 照搬到 JS，对真数据跑一遍，打印分组数/条数/月份分布，用来肉眼看筛选语义有没有跑偏 | 人工核对 |
 | `travel_list_logic_check.js` | 同上，针对 `TravelListPage`。当前会报「编号撞车 5 对」—— plateCode 全局唯一只是好看，组内不重复才影响阅读；数据本轮冻结不动 | 人工核对 |
