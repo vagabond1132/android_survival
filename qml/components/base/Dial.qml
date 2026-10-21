@@ -50,11 +50,21 @@ Item {
     implicitHeight: implicitWidth
 
     // 指针平滑: 朝向是传感器逐帧推的, 不做插值会抖成一片糊
-    // 2026-10-21 真机: 少了 `property: "heading"`, RotationAnimator 默认动画 "rotation",
-    //   和 Behavior 的目标属性对不上 → 每帧刷 "property name conflict" (一次巡检 7,986 条)
-    //   并且平滑根本没生效。
+    // 2026-10-21 走弯路两次, 记下来:
+    //   ① 原来写 `RotationAnimator {}` 不带属性名 → 它默认动画 "rotation", 与 Behavior
+    //      的目标 heading 对不上, 每帧刷 "property name conflict" (一次巡检 7,986 条),
+    //      平滑也没生效。
+    //   ② 我照着报错补了 `property: "heading"` → **加载期硬错误**
+    //      `Cannot assign to non-existent property "property"`: `property` 只存在于
+    //      PropertyAnimation/NumberAnimation, Animator 家族 (QQuickAbstractAnimator)
+    //      根本没这个属性。整棵 Dial 不可用 → PositionReadout → SOSPage/HomePage/
+    //      MapInstrumentOverlay → MapPage 全部连带画不出来, 是 tools/qml_load_check.sh
+    //      在容器里实例化时才抓到的, qmllint 只报 Warning。
+    //   正解: heading 是普通 real (0-359.9), 用 NumberAnimation —— Behavior 里它自动
+    //   动画 Behavior 自己的目标属性, 不需要也不能写 property。
+    //   已知代价: 跨 359.9→0.1 时会反向快扫一圈 (260ms 一帧, 肉眼是一闪)。
     Behavior on heading {
-        RotationAnimator { property: "heading"; duration: 260 }
+        NumberAnimation { duration: 260 }
     }
 
     Canvas {

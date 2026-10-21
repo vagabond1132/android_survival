@@ -186,16 +186,14 @@ int main(int argc, char* argv[]) {
     QGuiApplication app(argc, argv);
     logToFile("=== STAGE 0: QGuiApplication created ===");
 
-    // 诊断桩 2026-09-10: 卡死定位
-    // PID 静默 10s 无输出, 没 crash log, 锁死在 116→128 之间某处
-    // 每个可疑点前加 logToFile + stderr, 看具体卡哪
-    logToFile("=== STAGE 0: before setOrganizationName ===");
+    // 2026-10-21 (#18 E1): 这里原本有 4 行 "before setOrganizationName/Domain/
+    //   ApplicationName/ApplicationVersion" —— 那是 2026-09-10 查"PID 静默 10s 卡死"
+    //   时逐点插的桩, 四个 setter 不会阻塞, 留着只让 stage0.log 开头多 4 行噪声。
+    //   保留 "metadata set" 这一条收尾即可证明启动链走到了哪一步;
+    //   QQuickStyle::setStyle 那对桩**留着** —— 样式模块加载是真会失败/会卡的点。
     QCoreApplication::setOrganizationName("Outdoor");
-    logToFile("=== STAGE 0: before setOrganizationDomain ===");
     QCoreApplication::setOrganizationDomain("outdoor.com");
-    logToFile("=== STAGE 0: before setApplicationName ===");
     QCoreApplication::setApplicationName("荒野手册");
-    logToFile("=== STAGE 0: before setApplicationVersion ===");
     QCoreApplication::setApplicationVersion(APP_VERSION);
     logToFile("=== STAGE 0: QCoreApplication metadata set ===");
 
@@ -351,7 +349,8 @@ int main(int argc, char* argv[]) {
         theApp.shutdown();
         return -1;
     }
-    logToFile("=== STAGE 0: loadFromModule returned ===");
+    // 2026-10-21 (#18 E1): 这里原来还有一行 "loadFromModule returned" —— 与上面
+    //   "after engine.loadFromModule (returned)" 是同一条信息, 删掉。
     logToFile("=== STAGE 0: QML rootObjects OK, entering event loop ===");
 
     int ret = app.exec();
