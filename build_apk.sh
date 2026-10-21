@@ -1403,22 +1403,33 @@ EOF
     # ----------------------------------------------------------------------------
     # 优化 2: APK inputs hash 缓存 (FORCE_GRADLE=1 强制跑, 默认 0 自动跳过)
     # ----------------------------------------------------------------------------
-    # 节省: 20-40s (跳过整个 gradle assembleRelease)
+    # 节省: 实测 STAGE 3 13m49s 里 gradle 占 12m5s (--rerun-tasks 50 个 task 全跑),
+    #       跳过 gradle 才是这个缓存的价值 (旧注释写 "20-40s" 是想当然)
     # 原理: 算所有影响 APK 的 inputs 的 sha256 摘要, 与上次一致且 APK 已存在
     #       → 直接复用现有 APK, 不调 gradle
     # 风险: 漏算某个 inputs → 旧 APK 装上. 缓解: 全面扫描 + FORCE_GRADLE=1 强制开关
     # 注意: --rerun-tasks 仍会强制重跑所有 task, 跳过 gradle 才是真正节省
+    # 覆盖度核对 (2026-10-21): gradle 打进 APK 的就是 java→dex / jniLibs→lib / res /
+    #   manifest / 签名; 站点数据 (sqlite、json) 与 QML 都在主 .so 里 (qmlcachegen +
+    #   Qt 资源系统), 那个 .so 已在指纹内, 所以没有 "只改数据不改指纹" 的盲区。
     # ----------------------------------------------------------------------------
     APK_STAMP="$BUILD_DIR/.apk.inputs.sha256"
     APK_OUTPUT_REL="app/build/outputs/apk/release/app-release.apk"
     APK_OUTPUT="$BUILD_DIR/android-build/$APK_OUTPUT_REL"
     SHOULD_RUN_GRADLE=1
     GRADLE_SKIP_REASON=""
+    NEW_HASH=""
 
-    if [ "${FORCE_GRADLE:-0}" != "1" ] && [ -f "$APK_OUTPUT" ] && [ -f "$APK_STAMP" ]; then
-        log_info "计算 APK inputs 指纹..."
-        # 用 () 子 shell + {} 列表精确分组, 避免 -o 优先级陷阱
-        NEW_HASH=$( (
+    # 2026-10-21 修: 指纹原来只在 "stamp 已存在" 那个分支里才算, 而 stamp 又只在
+    #   NEW_HASH 非空时才写 —— 先有 stamp 才有指纹, 先有指纹才有 stamp.
+    #   实测: 连续多次构建后 $BUILD_DIR/.apk.inputs.sha256 依然不存在, 每次日志都打
+    #   "必须跑 gradle 一次建立基线" 却永远建不出来, 这 13m49s 一次没省过。
+    #   所以指纹无条件算 (一次 sha256sum, 秒级), 只有 FORCE_GRADLE=1 时不比较。
+    log_info "计算 APK inputs 指纹..."
+    # 用 () 子 shell + {} 列表精确分组, 避免 -o 优先级陷阱
+    # `|| NEW_HASH=""`: 上面 1382 行开了 pipefail, 整个脚本又是 set -e。指纹算不出来
+    #   顶多是"这次不复用 APK", 不该把已经成功的 cmake 阶段带崩, 所以显式吞掉非零。
+    NEW_HASH=$( (
             # 项目 java 源
             find "$BUILD_DIR/android-build/app/src/main/java" -type f 2>/dev/null
             # native 库
@@ -1440,9 +1451,16 @@ EOF
             # C++ 主 lib
             [ -f "$BUILD_DIR/lib${APP_NAME_SAFE}_${TARGET_ABI}.so" ] && \
                 echo "$BUILD_DIR/lib${APP_NAME_SAFE}_${TARGET_ABI}.so"
-        ) | sort -u | xargs -r sha256sum 2>/dev/null | sha256sum | cut -d' ' -f1)
+        ) | sort -u | xargs -r sha256sum 2>/dev/null | sha256sum | cut -d' ' -f1) || NEW_HASH=""
 
-        OLD_HASH=$(cat "$APK_STAMP" 2>/dev/null)
+    if [ "${FORCE_GRADLE:-0}" = "1" ]; then
+        log_info "  FORCE_GRADLE=1, 强制跑 gradle (stamp 仍会在成功后刷新)"
+    elif [ ! -f "$APK_OUTPUT" ]; then
+        log_info "  APK 不存在, 首次构建必须跑 gradle"
+    elif [ ! -f "$APK_STAMP" ]; then
+        log_info "  无 stamp 基线 (new=${NEW_HASH:0:12}...), 跑 gradle 后建立"
+    else
+        OLD_HASH=$(cat "$APK_STAMP" 2>/dev/null) || OLD_HASH=""
         if [ -n "$NEW_HASH" ] && [ "$NEW_HASH" = "$OLD_HASH" ]; then
             SHOULD_RUN_GRADLE=0
             GRADLE_SKIP_REASON="APK inputs 未变且 APK 已存在 (sha256=${NEW_HASH:0:12}...)"
@@ -1450,12 +1468,6 @@ EOF
         else
             log_info "  inputs 已变 (old=${OLD_HASH:0:12}... new=${NEW_HASH:0:12}...) → 重跑 gradle"
         fi
-    elif [ "${FORCE_GRADLE:-0}" = "1" ]; then
-        log_info "  FORCE_GRADLE=1, 强制跑 gradle"
-    elif [ ! -f "$APK_OUTPUT" ]; then
-        log_info "  APK 不存在, 首次构建必须跑 gradle"
-    elif [ ! -f "$APK_STAMP" ]; then
-        log_info "  无 stamp 文件, 必须跑 gradle 一次建立基线"
     fi
 
     if [ "$SHOULD_RUN_GRADLE" = "1" ]; then
