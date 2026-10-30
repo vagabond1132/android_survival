@@ -5,3 +5,17 @@ qtquick3d/
 *.tmp
 *.bak
 .DS_Store
+
+# 2026-10-30: 上下文瘦身 —— Dockerfile 最后一层是 `COPY . /project/`, 而这些东西
+#   运行时都由 compose 的 bind mount 覆盖提供, 打进镜像没有任何作用, 只让每次
+#   `docker compose build` 重传 1.3G 上下文 + 导出几分钟 (实测 build/ 就有 1.3G)。
+#   注意: 不能写 *.zip —— qtquick3d-6.7.2.zip / qtquick3d-assimp-5.4.1.zip 是镜像
+#   构建期 COPY 进去源码编译的, 排除掉镜像就编不出 qtquick3d 了。
+build/
+build-host/
+android-build/
+dist/
+photo/
+*.log
+# 签名私钥不进镜像 (运行时从挂载点读; 历史镜像里被 COPY 进去过一份)
+keystore/

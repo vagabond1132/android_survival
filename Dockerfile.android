@@ -96,7 +96,12 @@ RUN aqt install-qt linux android 6.7.2 android_arm64_v8a -O /opt/Qt -m qtmultime
 #   Permission denied. 项目实际只在 arm64-v8a 上运行 (CMakeLists.txt 只声明 arm64-v8a),
 #   跳过 armv7 不影响最终 APK 构建. 需要 armv7 时再单独排查 aqt 安装.
 # RUN aqt install-qt linux android 6.7.2 android_armv7 -O /opt/Qt -m qtmultimedia qtlocation qtpositioning qtcharts qtwebview qtsensors qtvirtualkeyboard qtquick3d qtshadertools
-RUN aqt install-qt linux android 6.7.2 android_x86_64 -O /opt/Qt -m qtmultimedia qtlocation qtpositioning qtcharts qtwebview qtsensors qtvirtualkeyboard qtquick3d qtshadertools
+# x86_64: 2026-10-29 曾随「只出 arm64-v8a」一起注释掉, 2026-10-30 用户选定
+#   「补 x86_64 kit + 装模拟器」重新启用。但**这条不在这里放开** —— 见下方
+#   qtquick3d 段末尾的 x86_64 块: kit 安装与源码编译写在同一个 RUN 里, 是为了保住
+#   上面「桌面 Qt 安装 + qtquick3d arm64 源码编译」那几层的构建缓存 (在本行位置插一条
+#   RUN, Docker 会把它之后所有层全部重建, 白等 20 多分钟)。
+# RUN aqt install-qt linux android 6.7.2 android_x86_64 -O /opt/Qt -m qtmultimedia qtlocation qtpositioning qtcharts qtwebview qtsensors qtvirtualkeyboard qtquick3d qtshadertools
 
 # 桌面版（宿主机工具链）— 必须装 qtshadertools + qtquick3d
 # 关键 (2026-09-09 修复 build.txt 12/17 第二次失败):
@@ -200,8 +205,13 @@ RUN cd /tmp && unzip -q qtquick3d-6.7.2.zip && \
     cmake --install ${QT_SRC_DIR}/build_arm64 && \
     rm -rf ${QT_SRC_DIR}/build_arm64
 
-# x86_64 ABI 同样需要
-RUN ${QT_PATH}/android_x86_64/bin/qt-cmake -S ${QT_SRC_DIR} -B ${QT_SRC_DIR}/build_x86_64 -G Ninja \
+# x86_64 ABI (2026-10-30 恢复): 模拟器验证需要. 两条一起放在这里 (而不是 line 102
+#   那处 + 上面的注释块) 是为了让上面 arm64 那一大段构建缓存继续命中 ——
+#   kit 下载 + qtquick3d 源码编译合计约 25-30 分钟, 是本段唯一的新增成本.
+#   交付包仍然是 arm64-v8a (用户 2026-10-29 定的口径), x86_64 只用于模拟器复核,
+#   出这种测试包时必须带 VERSION_BUMP=0, 不然白占一个发布版本号.
+RUN aqt install-qt linux android 6.7.2 android_x86_64 -O /opt/Qt -m qtmultimedia qtlocation qtpositioning qtcharts qtwebview qtsensors qtvirtualkeyboard qtquick3d qtshadertools && \
+    ${QT_PATH}/android_x86_64/bin/qt-cmake -S ${QT_SRC_DIR} -B ${QT_SRC_DIR}/build_x86_64 -G Ninja \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=${QT_PATH}/android_x86_64 \
         -DBUILD_SHARED_LIBS=ON \

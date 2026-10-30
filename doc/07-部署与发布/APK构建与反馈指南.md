@@ -997,15 +997,18 @@ docker compose run --rm android-builder \
 # 5. 查看输出
 ls -lh dist/
 
-# 6. 验证 APK
-$ANDROID_HOME/build-tools/34.0.0/aapt dump badging dist/OutdoorSurvival-v0.0.1-release-arm64-v8a.apk
-# 预期: package: name='com.outdoor.survival' versionCode=1 versionName='0.0.1'
+# 6. 验证 APK（版本号取 CMakeLists.txt 的 project(... VERSION 0.0.2)）
+$ANDROID_HOME/build-tools/34.0.0/aapt dump badging dist/OutdoorSurvival-v0.0.2-release-arm64-v8a.apk
+# 预期: package: name='com.outdoor.survival' versionCode=2 versionName='0.0.2'
+# 注意 versionCode 由 android/app/build.gradle 决定：build_apk.sh 会用仓库里的这份
+# 覆盖 android-build/app/build.gradle，CMakeLists.txt:59 的 APP_VERSION_CODE 只喂模板。
+# 三处（CMakeLists VERSION / build.gradle / AndroidManifest）不同步时，文件名和包内版本会分叉。
 
 # 7. 启动应用(Activity 是全限定名, 不要用 .QtActivity 简写)
 adb shell am start -n com.outdoor.survival/org.qtproject.qt.android.bindings.QtActivity
 
 # 8. 复制到桌面（Windows）
-cp dist/OutdoorSurvival-v0.0.1-release-arm64-v8a.apk /mnt/c/Users/Public/Desktop/
+cp dist/OutdoorSurvival-v0.0.2-release-arm64-v8a.apk /mnt/c/Users/Public/Desktop/
 ```
 
 ## 附录 B：反馈工作流

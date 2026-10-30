@@ -48,6 +48,11 @@ logs/
 PasteFile
 verify_only.sh.bak
 Dockerfile - 副本.*
+# 一次性抓的构建/logcat 转储 (build_apk.sh 每轮覆盖 run.txt; 手工重定向 build.txt).
+#   2026-10-27 #133 移出版本库: 单轮 diff 上万行, 且内容是上一台机器上一秒的现场,
+#   对下一个人没有可复现价值 —— 要看现场请重新跑构建, 不要靠历史转储.
+build.txt
+run.txt
 
 # OS
 .DS_Store
@@ -55,3 +60,13 @@ Thumbs.db
 
 # 备份目录 (约定: .bak_* 不入库)
 .bak_*
+
+# 真机巡检的编号截图 (2026-10-27 #133): 判完布局就是历史证据, 每轮新增一批会让
+#   `git status` 长期挂着 6 个未跟踪二进制. 唯一例外是 photo/1.jpg —— 上一轮
+#   4db6d0c 明确写了"只保留 1.jpg 作为参考".
+photo/*.jpg
+!photo/1.jpg
+
+# 个人 GPS 轨迹原始导出 (两步路 KML): 只入库派生记录与 scripts/kml_to_routes.js,
+#   源文件里带着家里小区门口的坐标, 不进版本库。
+*.kml

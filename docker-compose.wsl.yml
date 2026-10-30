@@ -1,0 +1,29 @@
+# 2026-10-30: WSL2 + Docker Engine 专用覆盖 (只在 Windows 主机没有 Docker Desktop、
+# 改用 WSL 里的 docker-ce 时使用)
+#
+#   docker compose -f docker-compose.yml -f docker-compose.wsl.yml run --rm ...
+#
+# 为什么单独一份, 不改主 compose:
+#   主文件的 `./:/project:rw` 在 WSL 里会把 D:\build_docker\app 变成 9P 网络盘
+#   (/mnt/d)。源码走 9P 只读没问题, 但 build_apk.sh 把 CMake/Ninja 的构建树写在
+#   $APP_DIR/build/ (= /project/build) —— 那棵树实测 1.3G、几十万个小文件
+#   (CMakeFiles、qmlcache、android-build 里的 jar/so/res)。全写在 9P 上:
+#     1) ninja 的 stat/hash 每个文件都要跨协议往返, 编译时间放大数倍;
+#     2) docker-compose.yml 里 unit-test 段已经记过同族的坑 —— NTFS/9P 挂载上
+#        链接出来的 ELF 会变 0 字节。
+#   所以把 /project/build 单独换成 ext4 上的命名卷, 其余路径维持原样。
+#
+# 代价 (必须知道):
+#   build/build_<type>_<abi>.log 落在卷里, Windows 侧看不到。构建命令末尾把日志
+#   拷到 /project/dist/ (那是 Windows 的 app\dist\) 再读。
+#
+# 卷是持久的: 第二次构建仍走增量 (CMakeCache + ninja .o + qmlcache 都留着),
+#   想彻底重来用 `docker volume rm app_android-build`。
+
+services:
+  android-builder:
+    volumes:
+      - android-build:/project/build
+
+volumes:
+  android-build:
