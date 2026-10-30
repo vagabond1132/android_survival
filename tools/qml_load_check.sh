@@ -13,9 +13,17 @@
 #   只有真的把组件树实例化一次才会炸出来. 这里用桌面 gcc_64 的 qml + offscreen 平台
 #   在容器里跑, 一次几秒钟, 不用等 28 分钟的 APK.
 #
-# 用法 (在 ut 容器内, 仓库挂在 /project):
+# 用法 (只在 unit-test 服务里跑得动 —— outdoor-survival-builder 的桌面 Qt 没装
+#   QtLocation/QtPositioning, 会在 MapPage 上报 "Type MapPage unavailable" 而整支失败;
+#   仓库挂在 /project):
+#   docker compose -f docker-compose.yml --profile test run --rm unit-test \
+#       bash -c "cd /project && bash tools/qml_load_check.sh"
 #   bash tools/qml_load_check.sh            # 退出码 0 = 组件树能加载; 1 = 有致命错误
 #   VERBOSE=1 bash tools/qml_load_check.sh  # 连非致命的 ReferenceError 一起打出来
+#
+#   ⚠️ 别在命令尾巴上加 `| tail`: Bash 拿到的是 tail 的退出码, 脚本自己 exit 1 也显示 rc=0
+#   (2026-10-28 就这么被骗过一次)。要判绿只认输出里那行
+#   `✅ 组件树加载通过: Main.qml + 25 个页全部可实例化`。
 #
 # 噪声与判据 (重要, 别误读):
 #   App / CommonOptions / xxxService 全是 main.cpp 里 setContextProperty + 单例注入的
@@ -34,7 +42,7 @@ QML_BIN=${QML_BIN:-/opt/Qt/6.7.2/gcc_64/bin/qml}
 ROOT=${ROOT:-/project}
 MODDIR=${MODDIR:-/tmp/osw-loadcheck}
 
-[ -x "$QML_BIN" ] || { echo "找不到 $QML_BIN (ut 容器里的桌面 Qt)"; exit 2; }
+[ -x "$QML_BIN" ] || { echo "找不到 $QML_BIN —— 桌面 Qt 6.7.2 gcc_64 只在镜像里有, 用 unit-test 服务跑 (见上面用法)"; exit 2; }
 
 # 裸 qml 只认 <importPath>/<ModuleName>/qmldir 这层目录结构, 所以要把整棵 qml/
 # 摆成 OutdoorSurvival/ 再写一份"文件名=类型名"的 qmldir. 只动 /tmp, 不碰仓库.

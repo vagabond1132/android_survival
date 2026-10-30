@@ -28,12 +28,24 @@
  *      (见 [[qml-monofont-no-cjk]]). 坐标 5 位小数是 GPS 原生精度, 不四舍五入成 2 位.
  *
  * 2026-10-21 顺带修掉的两处:
- *   - 两张曲线只在 ChartView 自己的 Component.onCompleted 画一次. 同一条轨迹重新
+ *   - 两张曲线只在图表控件自己的 Component.onCompleted 画一次. 同一条轨迹重新
  *     记录或重新导入 (mapService 发 dataChanged → refresh() 重取 profile) 之后,
  *     数字条会变、图还是旧的. 现在连 profile 变化一起重画.
  *   - 全站没有任何地方能删轨迹: mapService.deleteTrack 是能用的 C++ 接口 (删
  *     track_<id>.json + track_<id>_points.json 并 emit dataChanged), 但 QML 里零引用
  *     —— 导错的 GPX 只能一直躺在列表里. 底栏给出入口, 不可逆的动作先过确认对话框.
+ *
+ * 2026-10-26 任务 #121 A25: 本页原来是 import QtCharts + ChartView 画两条曲线, 真机
+ * 一进本页必崩 (8 份 dump 同一栈: QChart 构造 → ChartTitle → QGraphicsTextItem →
+ * QWidgetTextControl::setCursorWidth SIGSEGV). 根因是 QtCharts 的图内标题走 widgets
+ * 栈, 而本工程只跑 QGuiApplication. 现在两条曲线换成 qml/components/base/LineProfile.qml
+ * 自绘 —— 别再引回 QtCharts, CMakeLists 里 Charts 组件也一并删了 (主二进制不再链
+ * libQt6Charts / libQt6Widgets; .so 还在 APK 里, 因为 build_apk.sh 无差别拷整个
+ * Qt kit 的 libQt6*.so, 只是运行时没人加载它们, 见 CMakeLists.txt 同段说明).
+ *
+ * 2026-10-29 (用户问题3/4): 两张曲线能双指缩放 / 单指横拖 / 双击复位, 手势与抽稀都在
+ * LineProfile 内部 (组件自带 Tap/Pinch/Drag), 本页只负责在图下面写一行提示 —— 手势是
+ * 隐形的, 不写出来没人会去试.
  */
 
 // delegate 里要读 trackDetail 的属性与方法, qmlcachegen 静态编译下必须 Bound.
@@ -42,7 +54,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls.Material
 import QtQuick.Layouts
-import QtCharts
 import OutdoorSurvival 1.0
 
 Page {
@@ -72,6 +83,54 @@ Page {
     readonly property int _kcal: Math.round(Number(stats.calorieKcal || 0))
     readonly property var _splits: _toArr(stats.splits)
     readonly property var _rests: _toArr(stats.restPoints)
+
+    // 2026-10-26「精度到 1 m」: 高程这一族数据现在是"有就写、没有就不写".
+    //   原来这里无条件读 `Number(stats.maxAlt || 0)`, 一条纯 2D 的轨迹就被画成
+    //   "最高海拔 0 m / 最低海拔 0 m / 累计下降 0 m" —— 三个假数看着像实测.
+    //   所以整行按 hasAltitude 出现或消失, 换成一行真数: 这条轨迹的平均定位精度.
+    readonly property bool _hasAlt: stats.hasAltitude === true
+    readonly property real _accAvg: Number(stats.accuracyAvgM)
+    // 2026-10-29 #168: 速度曲线只在真凑得出窗口的轨迹上出现。getTrackProfile 的速度取自
+    //   >=30 s 位移窗 (与 stats.maxSpeed 同一条序列), 全程没有时刻的导入文件一个窗口都凑
+    //   不齐 → 整条序列是 0。原来两张图共用一个 visible (只看 distances 有没有), 于是画出
+    //   一条贴着 0 的"速度曲线"、峰值标 0.0 —— 看着像这趟全程静止。
+    //   海拔那张同治: 没有高程的点 C++ 填 0, hasAltitude 为假时整块藏, 不画假剖面。
+    readonly property bool _hasSpeedCurve: {
+        var s = trackDetail._toArr(profile.speeds)
+        for (var i = 0; i < s.length; ++i) {
+            if (Number(s[i]) > 0) return true
+        }
+        return false
+    }
+    readonly property var statRows: {
+        var out = []
+        // 2026-10-29 #168: 速度/卡路里这三行原来无条件 push。formatSpeed(0) 给 "0.0",
+        //   于是一条没时间戳的导入轨迹写着"平均速度 0.0 km/h / 最大速度 0.0 km/h",
+        //   热量算不出来写 "0 kcal" —— 全是假读数。C++ 侧现在算不出就不写键
+        //   (MapService_species.cpp 的 if (mt.hasMaxSpeed)), 这一族未知整行不出现,
+        //   与上面高程那一族同一口径 ([[no-fake-readout-rule]])。
+        if (Number(stats.avgSpeed) > 0) {
+            out.push({ k: "平均速度", v: trackDetail.formatSpeed(stats.avgSpeed) + " km/h" })
+        }
+        if (Number(stats.maxSpeed) > 0) {
+            out.push({ k: "最大速度", v: trackDetail.formatSpeed(stats.maxSpeed) + " km/h" })
+        }
+        if (trackDetail._hasAlt) {
+            out.push({ k: "累计下降", v: trackDetail._loss + " m" })
+            out.push({ k: "最高海拔", v: trackDetail._maxAlt + " m" })
+            out.push({ k: "最低海拔", v: trackDetail._minAlt + " m" })
+        }
+        if (isFinite(trackDetail._accAvg) && trackDetail._accAvg > 0) {
+            out.push({ k: "定位精度", v: "±" + Math.round(trackDetail._accAvg) + " m" })
+            out.push({ k: "最好 / 最差",
+                       v: "±" + Math.round(Number(stats.accuracyBestM))
+                          + " / ±" + Math.round(Number(stats.accuracyWorstM)) + " m" })
+        }
+        if (trackDetail._kcal > 0) {
+            out.push({ k: "卡路里", v: trackDetail._kcal + " kcal" })
+        }
+        return out
+    }
 
     // 来源: 本机记录 vs 导入 (导入时把原始格式带上, 数据里有 originalFormat)
     readonly property string sourceLine: {
@@ -295,7 +354,7 @@ Page {
                     spacing: styles.spSm
                     Plate {
                         Layout.alignment: Qt.AlignVCenter
-                        code: "PLATE " + CommonOptions.plateCode("TR", trackDetail.trackId)
+                        code: CommonOptions.plateCode("TR", trackDetail.trackId)
                         tone: CommonOptions.colorInk3
                     }
                     Item { Layout.fillWidth: true }
@@ -347,10 +406,8 @@ Page {
                     spacing: styles.spSm
                     Text {
                         Layout.alignment: Qt.AlignVCenter
-                        text: "TRACK READOUT"
-                        font.family: styles.monoFont
+                        text: "轨迹读数"
                         font.pixelSize: styles.fsXs
-                        font.letterSpacing: 1.4
                         color: CommonOptions.colorInk3
                     }
                     Item { Layout.fillWidth: true }
@@ -368,10 +425,12 @@ Page {
                     spacing: 0
                     Repeater {
                         model: [
-                            { k: "DIST", v: trackDetail._km > 0 ? trackDetail._km.toFixed(2) : "—" },
-                            { k: "TIME", v: trackDetail.formatDuration(Number(trackDetail.stats.durationS || 0)) },
-                            { k: "GAIN", v: trackDetail._gain > 0 ? ("+" + trackDetail._gain) : "0" },
-                            { k: "PACE", v: trackDetail.formatPace(trackDetail.stats.avgPace) }
+                            { k: "里程", v: trackDetail._km > 0 ? trackDetail._km.toFixed(2) : "—" },
+                            { k: "用时", v: trackDetail.formatDuration(Number(trackDetail.stats.durationS || 0)) },
+                            { k: "爬升", v: trackDetail._hasAlt
+                                    ? (trackDetail._gain > 0 ? ("+" + trackDetail._gain) : "0")
+                                    : "—" },
+                            { k: "配速", v: trackDetail.formatPace(trackDetail.stats.avgPace) }
                         ]
                         delegate: RowLayout {
                             required property var modelData
@@ -390,9 +449,7 @@ Page {
                                 Text {
                                     Layout.fillWidth: true
                                     text: modelData.k
-                                    font.family: styles.monoFont
                                     font.pixelSize: styles.fsXs
-                                    font.letterSpacing: 1.2
                                     color: CommonOptions.colorInk3
                                     elide: Text.ElideRight
                                 }
@@ -424,6 +481,7 @@ Page {
         ScrollView {
             Layout.fillWidth: true
             Layout.fillHeight: true
+            Layout.bottomMargin: styles.bottomClearance   // A41: 末行给下面的吸底条让位
             contentWidth: width
             clip: true
 
@@ -443,12 +501,12 @@ Page {
                     wrapMode: Text.WordWrap
                 }
 
-                // 海拔 / 速度 —— 两张图都要真取到 profile 才出现 (规则 ②)
+                // 海拔 / 速度 —— 各自还要看这一族有没有真读数 (见 _hasSpeedCurve)
                 Repeater {
                     model: [
-                        { kick: "ELEVATION", name: "海拔曲线", unit: "海拔 m",
+                        { name: "海拔曲线", unit: "海拔 m",
                           tone: CommonOptions.colorForest, series: "alt" },
-                        { kick: "SPEED", name: "速度曲线", unit: "速度 km/h",
+                        { name: "速度曲线", unit: "速度 km/h",
                           tone: CommonOptions.colorWater, series: "spd" }
                     ]
                     delegate: ColumnLayout {
@@ -461,6 +519,8 @@ Page {
                         // distances/elevations/speeds 三样都来自同一个 profile
                         visible: trackDetail.profile.ok === true
                                  && trackDetail._toArr(trackDetail.profile.distances).length > 1
+                                 && (chartBlock.modelData.series === "alt"
+                                     ? trackDetail._hasAlt : trackDetail._hasSpeedCurve)
 
                         RowLayout {
                             Layout.fillWidth: true
@@ -479,19 +539,12 @@ Page {
                                 color: CommonOptions.colorText
                             }
                             Item { Layout.fillWidth: true }
-                            // 汉字与码位分开两个节点: monoFont 里没有 CJK 字形
                             Text {
                                 Layout.alignment: Qt.AlignVCenter
-                                text: "横轴 距离 km"
+                                // 自绘曲线没有轴标题, 单位只能在这行说清: 纵轴的数值由
+                                // LineProfile 画在左侧读数里 (只有数字, 不带单位)
+                                text: "纵轴 " + chartBlock.modelData.unit + " · 横轴 km"
                                 font.pixelSize: styles.fsXs
-                                color: CommonOptions.colorInk3
-                            }
-                            Text {
-                                Layout.alignment: Qt.AlignVCenter
-                                text: chartBlock.modelData.kick
-                                font.family: styles.monoFont
-                                font.pixelSize: styles.fsXs
-                                font.letterSpacing: 1.2
                                 color: CommonOptions.colorInk3
                             }
                         }
@@ -503,87 +556,30 @@ Page {
                             border.color: CommonOptions.colorRule
                             border.width: styles.lineHair
 
-                            ChartView {
-                                id: chart
+                            // LineProfile 而不是 ChartView (2026-10-26 任务 #121 A25):
+                            // QtCharts 在纯 QML (QGuiApplication) 进程里创建 QChart 即
+                            // SIGSEGV —— 真机 8 份 dump 同一栈, 详见 LineProfile.qml 头.
+                            LineProfile {
                                 anchors.fill: parent
-                                anchors.margins: styles.spXs
-                                antialiasing: true
-                                legend.visible: false
-                                title: ""
-                                backgroundColor: CommonOptions.colorSurface
-                                plotAreaColor: CommonOptions.colorSurface
-
-                                property bool isAlt: chartBlock.modelData.series === "alt"
-
-                                ValueAxis {
-                                    id: axisX
-                                    titleText: "距离 (km)"
-                                    labelFormat: "%.1f"
-                                    min: 0
-                                    max: Number(trackDetail.stats.distanceM || 0) > 0
-                                         ? trackDetail._km : 1
-                                }
-                                ValueAxis {
-                                    id: axisY
-                                    titleText: chartBlock.modelData.unit
-                                    labelFormat: chart.isAlt ? "%.0f" : "%.1f"
-                                    min: 0
-                                    max: 1
-                                }
-                                LineSeries {
-                                    id: series
-                                    name: chartBlock.modelData.name
-                                    axisX: axisX
-                                    axisY: axisY
-                                    color: chartBlock.modelData.tone
-                                    width: 2
-                                }
-
-                                // 规则 ②: 只画 profile 里真实存在的点, 不插值不平滑不补首尾.
-                                // 距离与数值两组数组长度可能不一致 (导入的 GPX 缺 ele),
-                                // 按短的截 —— 多出来的点没有配对值, 画出来就是编的.
-                                function redraw() {
-                                    series.clear()
-                                    var d = trackDetail._toArr(trackDetail.profile.distances)
-                                    if (d.length < 2) return
-                                    var vals = trackDetail._toArr(chart.isAlt
-                                                                   ? trackDetail.profile.elevations
-                                                                   : trackDetail.profile.speeds)
-                                    var n = Math.min(d.length, vals.length)
-                                    var i
-                                    if (chart.isAlt) {
-                                        var hi = -1e9, lo = 1e9
-                                        for (i = 0; i < n; ++i) {
-                                            if (vals[i] > hi) hi = vals[i]
-                                            if (vals[i] < lo) lo = vals[i]
-                                        }
-                                        if (hi === lo) { hi += 100; lo = Math.max(0, lo - 100) }
-                                        axisY.min = Math.floor(lo / 100) * 100
-                                        axisY.max = Math.ceil(hi / 100) * 100
-                                    } else {
-                                        var mx = 0
-                                        for (i = 0; i < n; ++i) {
-                                            if (vals[i] > mx) mx = vals[i]
-                                        }
-                                        if (mx < 0.1) mx = 1
-                                        axisY.min = 0
-                                        axisY.max = Math.ceil((mx * 3.6) / 2) * 2
-                                    }
-                                    for (i = 0; i < n; ++i) {
-                                        series.append(d[i] / 1000.0,
-                                                      chart.isAlt ? vals[i] : vals[i] * 3.6)
-                                    }
-                                }
-
-                                Component.onCompleted: redraw()
-                                // profile 每次 refresh 是整体重新赋值 → 变化信号必须重画.
-                                // 旧版只在 onCompleted 画一次, 重新记录/导入之后数字条变了
-                                // 曲线还是旧的.
-                                Connections {
-                                    target: trackDetail
-                                    function onProfileChanged() { chart.redraw() }
-                                }
+                                anchors.margins: styles.spSm
+                                distances: trackDetail._toArr(trackDetail.profile.distances)
+                                values: trackDetail._toArr(chartBlock.modelData.series === "alt"
+                                                           ? trackDetail.profile.elevations
+                                                           : trackDetail.profile.speeds)
+                                // 速度库内是 m/s, 卡头写的单位是 km/h → 换算在组件外说清
+                                displayScale: chartBlock.modelData.series === "alt" ? 1 : 3.6
+                                decimals: chartBlock.modelData.series === "alt" ? 0 : 1
+                                tone: chartBlock.modelData.tone
                             }
+                        }
+
+                        // 手势只有一条提示, 两张图共用一种操作. 之前点开没有缩放能力,
+                        // 用户也不会去试; 现在能缩能拖, 不写一行就没有发现路径 (问题3).
+                        Text {
+                            Layout.fillWidth: true
+                            text: "双指缩放 · 单指拖动 · 双击复位"
+                            font.pixelSize: styles.fsXs
+                            color: CommonOptions.colorInk3
                         }
                     }
                 }
@@ -615,10 +611,10 @@ Page {
                         Item { Layout.fillWidth: true }
                         Text {
                             Layout.alignment: Qt.AlignVCenter
-                            text: "READOUT 6"
-                            font.family: styles.monoFont
+                            // 行数随数据变 (无高程就少三行, 有精度读数多两行), 写死
+                            //   "六格"会在纯 2D 轨迹上谎报格子数 —— 这是文案层的假读数.
+                            text: trackDetail.statRows.length + " 项读数"
                             font.pixelSize: styles.fsXs
-                            font.letterSpacing: 1.2
                             color: CommonOptions.colorInk3
                         }
                     }
@@ -630,14 +626,9 @@ Page {
                         columnSpacing: styles.spLg
 
                         Repeater {
-                            model: [
-                                { k: "平均速度", v: trackDetail.formatSpeed(trackDetail.stats.avgSpeed) + " km/h" },
-                                { k: "最大速度", v: trackDetail.formatSpeed(trackDetail.stats.maxSpeed) + " km/h" },
-                                { k: "累计下降", v: trackDetail._loss + " m" },
-                                { k: "最高海拔", v: trackDetail._maxAlt + " m" },
-                                { k: "最低海拔", v: trackDetail._minAlt + " m" },
-                                { k: "卡路里", v: trackDetail._kcal + " kcal" }
-                            ]
+                            // 行集由 statRows 现算: 没有高程就不列海拔三行, 带精度读数
+                            //   才列精度两行 (见上面的 hasAltitude 注释).
+                            model: trackDetail.statRows
                             delegate: RowLayout {
                                 required property var modelData
                                 Layout.fillWidth: true
@@ -702,10 +693,8 @@ Page {
                         Item { Layout.fillWidth: true }
                         Text {
                             Layout.alignment: Qt.AlignVCenter
-                            text: trackDetail._splits.length + " SPLIT"
-                            font.family: styles.monoFont
+                            text: trackDetail._splits.length + " 段"
                             font.pixelSize: styles.fsXs
-                            font.letterSpacing: 1.2
                             color: CommonOptions.colorInk3
                         }
                     }
@@ -904,22 +893,14 @@ Page {
             wrapMode: Text.WordWrap
         }
 
-        footer: RowLayout {
-            spacing: styles.spSm
-            Item { Layout.fillWidth: true }
-            OutlineButton {
-                text: "留着"
-                tone: CommonOptions.colorTextMuted
-                onClicked: deleteDialog.close()
-            }
-            PrimaryButton {
-                text: "删除"
-                tone: CommonOptions.colorDanger
-                textSize: styles.fsMd
-                onClicked: {
-                    deleteDialog.close()
-                    trackDetail.doDelete()
-                }
+        footer: DialogFooter {
+            cancelText: "留着"
+            confirmText: "删除"
+            confirmCode: "不可撤"
+            onCancel: deleteDialog.close()
+            onConfirm: {
+                deleteDialog.close()
+                trackDetail.doDelete()
             }
         }
     }

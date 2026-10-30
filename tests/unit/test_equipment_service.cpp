@@ -110,8 +110,8 @@ private slots:
     // === 装备项 ===
     void test_get_all_items() {
         const QVariantList items = m_engine->getAllItems();
-        // equipment_base.json 有 43 条
-        QVERIFY2(items.size() >= 43, qPrintable(QStringLiteral("装备库 %1 条").arg(items.size())));
+        // equipment_base.json 有 49 条
+        QVERIFY2(items.size() >= 49, qPrintable(QStringLiteral("装备库 %1 条").arg(items.size())));
         QCOMPARE(items.size(), m_engine->totalItems());
         for (const auto& i : items) {
             QVERIFY(!i.toMap()["id"].toString().isEmpty());
@@ -182,7 +182,7 @@ private slots:
 
         const QVariantMap low = m_engine->getList(
             m_engine->generateList("低海拔", tripParams(100, 1))["id"].toString());
-        // totalWeightG = sum of all items 无论 altitude 都一样 (兜底规则把 43 项都塞进桶),
+        // totalWeightG = sum of all items 无论 altitude 都一样 (兜底规则把 49 项都塞进桶),
         //   所以桶数量 (critical + important + recommended) 才是高海拔"背得更多"的体现.
         const int hiActive = list["critical"].toList().size()
                            + list["important"].toList().size()
@@ -208,6 +208,147 @@ private slots:
                                 .arg(r7["totalWeightG"].toInt())));
     }
 
+    // === 2026-10-21: 冬季降雪档位真的改清单 (用户报"选冬天没有雪的选择") ===
+    // 注意断言的是**档位**, 不是"有没有出现": 库里没被任何规则选中的 item 会被
+    // _base_fallback 兜底进 Optional 桶, 49 项永远全在场.
+    void test_generate_list_winter_snow_promotes_buckets() {
+        auto bucketOf = [](const QVariantMap& list, const QString& itemId) -> QString {
+            for (const QString& b : {QStringLiteral("critical"), QStringLiteral("important"),
+                                     QStringLiteral("recommended")})
+                for (const QVariant& v : list[b].toList())
+                    if (v.toMap()["id"].toString() == itemId) return b;
+            return QString();
+        };
+        auto winter = [](int precip) {
+            QVariantMap p = tripParams(1200, 2);
+            p["season"] = static_cast<int>(Season::Winter);
+            p["precipitation"] = precip;
+            // 2026-10-22 规则重写: 保暖档位改由 temp_min 分带决定, 雪档只管防滑/雪镜/手套.
+            //   把夜间最低钉在 8℃ (温和冬夜, 一条 temp_min 保暖规则都不触发),
+            //   这样下面读到的档位只可能来自雪规则, 测试才有归因.
+            p["tempMin"] = 8.0;
+            p["tempAvg"] = 11.0;
+            return p;
+        };
+        auto list = [this](const QString& name, const QVariantMap& p) {
+            return m_engine->getList(m_engine->generateList(name, p)["id"].toString());
+        };
+
+        const QVariantMap dry   = list("冬·无雪", winter(static_cast<int>(Precipitation::None)));
+        const QVariantMap light = list("冬·小雪", winter(static_cast<int>(Precipitation::SnowLight)));
+        const QVariantMap storm = list("冬·暴雪", winter(static_cast<int>(Precipitation::SnowStorm)));
+        QVERIFY(!dry.isEmpty() && !light.isEmpty() && !storm.isEmpty());
+
+        // 冰爪: 无雪不进档位, 小雪起进推荐, 大雪以上提到强必带
+        QCOMPARE(bucketOf(dry, "crampons"), QString());
+        QCOMPARE(bucketOf(light, "crampons"), QStringLiteral("recommended"));
+        QCOMPARE(bucketOf(storm, "crampons"), QStringLiteral("important"));
+        // 雪镜只在雪档, 且暴雪是"防雪盲"级别的必带
+        QCOMPARE(bucketOf(dry, "snow_goggles"), QString());
+        QCOMPARE(bucketOf(storm, "snow_goggles"), QStringLiteral("critical"));
+        // 薄羽绒不再跟着雪走 (原来 R_SNOW_GRIP 把 crampons + light_down_jacket 捆在一条),
+        // 捆在一起的后果是"下小雪就得带羽绒", 现在保暖只看温度 —— 见下面的分带用例.
+        QCOMPARE(bucketOf(light, "light_down_jacket"), QString());
+        QCOMPARE(bucketOf(storm, "down_jacket"), QString());
+
+        // 反向: 雨档不能误触雪规则 (snow_* 与 heavy/storm 是两套 token)
+        QVariantMap rain = tripParams(1200, 2);
+        rain["precipitation"] = static_cast<int>(Precipitation::Heavy);
+        const QVariantMap rainy = list("夏·大雨", rain);
+        QCOMPARE(bucketOf(rainy, "crampons"), QString());
+        QCOMPARE(bucketOf(rainy, "down_jacket"), QString());
+        // 2026-10-22 补数据后的正向锁: 雨具规则原来因 rain_jacket 不在库里整条空转,
+        //   现在必须真的涨档 (这条断言同时也是"规则引用了库外 id"的哨兵).
+        QCOMPARE(bucketOf(rainy, "rain_jacket"), QStringLiteral("critical"));
+    }
+
+    // === 2026-10-22: 保暖看温度分带, 不再看海拔/季节猜 (用户报"没区分轻装重装") ===
+    void test_generate_list_warmth_follows_temperature() {
+        auto bucketOf = [](const QVariantMap& list, const QString& itemId) -> QString {
+            for (const QString& b : {QStringLiteral("critical"), QStringLiteral("important"),
+                                     QStringLiteral("recommended")})
+                for (const QVariant& v : list[b].toList())
+                    if (v.toMap()["id"].toString() == itemId) return b;
+            return QString();
+        };
+        auto cold = [this](float tempMin) {
+            QVariantMap p = tripParams(1200, 2);
+            p["season"] = static_cast<int>(Season::Winter);
+            p["tempMin"] = tempMin;
+            p["tempAvg"] = tempMin + 4.0;
+            return m_engine->getList(
+                m_engine->generateList(QStringLiteral("夜温 %1").arg(tempMin), p)["id"].toString());
+        };
+
+        // 分带互斥: 一件厚羽绒 (-5..-15) 与一件极地羽绒 (<= -16) 不会同时必带
+        const QVariantMap m5   = cold(-5.0f);
+        const QVariantMap m20  = cold(-20.0f);
+        QCOMPARE(bucketOf(m5, "down_jacket"), QStringLiteral("critical"));
+        QCOMPARE(bucketOf(m5, "expedition_down"), QString());
+        QCOMPARE(bucketOf(m20, "down_jacket"), QString());
+        QCOMPARE(bucketOf(m20, "expedition_down"), QStringLiteral("critical"));
+        // 睡袋按同一套温度带来: 0℃ 以上 5℃ 袋, -13℃ 以下 -30℃ 袋
+        QCOMPARE(bucketOf(m5, "sleeping_bag_m30c"), QString());
+        QCOMPARE(bucketOf(m20, "sleeping_bag_m30c"), QStringLiteral("critical"));
+        QVERIFY2(m20["totalWeightG"].toInt() > m5["totalWeightG"].toInt(),
+                 qPrintable(QStringLiteral("-20℃=%1 -5℃=%2")
+                                .arg(m20["totalWeightG"].toInt())
+                                .arg(m5["totalWeightG"].toInt())));
+    }
+
+    // === 2026-10-22: 轻装一日 ≠ 多日重装 (原来两边读出来是同一份清单) ===
+    void test_generate_list_light_vs_heavy_load() {
+        auto bucketOf = [](const QVariantMap& list, const QString& itemId) -> QString {
+            for (const QString& b : {QStringLiteral("critical"), QStringLiteral("important"),
+                                     QStringLiteral("recommended")})
+                for (const QVariant& v : list[b].toList())
+                    if (v.toMap()["id"].toString() == itemId) return b;
+            return QString();
+        };
+        // 轻装一日: 1200m / 1 天 / 难度 2 → 推断为 DayHike
+        const QVariantMap day = m_engine->getList(
+            m_engine->generateList("轻装一日", tripParams(1200, 1))["id"].toString());
+        // 多日重装: 3500m / 5 天 / 难度 3 → 推断为 Expedition
+        QVariantMap heavy = tripParams(3500, 5);
+        heavy["difficulty"] = 3;
+        const QVariantMap exp = m_engine->getList(
+            m_engine->generateList("多日重装", heavy)["id"].toString());
+        QVERIFY(!day.isEmpty() && !exp.isEmpty());
+
+        QCOMPARE(day["load"].toInt(), static_cast<int>(LoadStyle::DayHike));
+        QCOMPARE(exp["load"].toInt(), static_cast<int>(LoadStyle::Expedition));
+        // 宿营三件 (帐篷 / 防潮垫 / 炉具) 只在重装出现
+        QCOMPARE(bucketOf(day, "tent_3season"), QString());
+        QCOMPARE(bucketOf(day, "stove"), QString());
+        QCOMPARE(bucketOf(exp, "tent_3season"), QStringLiteral("critical"));
+        QCOMPARE(bucketOf(exp, "stove"), QStringLiteral("critical"));
+        // 包本身也要分档: 28L 给轻装, 55L 给重装
+        QCOMPARE(bucketOf(day, "pack_28l"), QStringLiteral("critical"));
+        QCOMPARE(bucketOf(day, "pack_55l"), QString());
+        QCOMPARE(bucketOf(exp, "pack_55l"), QStringLiteral("critical"));
+        // 定量: 5 天重装的口粮根数必须多于 2 天基线
+        auto qtyOf = [](const QVariantMap& list, const QString& itemId) -> int {
+            for (const QString& b : {QStringLiteral("critical"), QStringLiteral("important"),
+                                     QStringLiteral("recommended"), QStringLiteral("optional")})
+                for (const QVariant& v : list[b].toList()) {
+                    const QVariantMap m = v.toMap();
+                    if (m["id"].toString() == itemId) return m["qty"].toInt();
+                }
+            return 0;
+        };
+        QVERIFY2(qtyOf(exp, "energy_bar") > qtyOf(day, "energy_bar"),
+                 qPrintable(QStringLiteral("能量棒 轻装=%1 重装=%2")
+                                .arg(qtyOf(day, "energy_bar")).arg(qtyOf(exp, "energy_bar"))));
+        // 背负合计真的按档位变了 —— 这条是拦"总重恒等于整库重量"那个 bug 的:
+        // 修之前两份都是 28285 g (可选兜底把 77 件全算上包了).
+        const int wDay = day["totalWeightG"].toInt();
+        const int wExp = exp["totalWeightG"].toInt();
+        QVERIFY2(wDay > 0 && wDay <= 5000,
+                 qPrintable(QStringLiteral("轻装一日合计 %1 g, 不该超过 5 kg").arg(wDay)));
+        QVERIFY2(wExp > wDay * 2,
+                 qPrintable(QStringLiteral("轻装 %1 g vs 多日重装 %2 g 没拉开").arg(wDay).arg(wExp)));
+    }
+
     void test_generate_list_persisted_and_deletable() {
         const QString id = m_engine->generateList("待删除", tripParams(800, 1))["id"].toString();
         QVERIFY(!id.isEmpty());
@@ -217,8 +358,16 @@ private slots:
         for (const QVariant& v : all.value("value").toList()) ids << v.toMap()["id"].toString();
         QVERIFY2(ids.contains(id), qPrintable(QStringLiteral("getAllLists 未包含 %1").arg(id)));
 
+        // 2026-10-22: 删除必须发信号, 否则 QML 端要靠重开页面才回表 (用户报)
+        QSignalSpy deleted(m_engine, &EquipmentService::dataChanged);
         QVERIFY(m_engine->deleteList(id).value("ok").toBool());
+        QCOMPARE(deleted.count(), 1);
         QVERIFY(m_engine->getList(id).isEmpty());
+
+        // 删不存在的清单不该发信号 (失败路径不刷表)
+        deleted.clear();
+        QVERIFY(!m_engine->deleteList(id).value("ok").toBool());
+        QCOMPARE(deleted.count(), 0);
     }
 
     // === 偏好记忆 ===
@@ -299,6 +448,164 @@ private slots:
 
     void test_check_item_unknown_list() {
         QVERIFY(!m_engine->checkItem("list_not_exist", "any", true).value("ok").toBool());
+    }
+
+    // === 2026-10-22 P3: 往年天气 (省 × 月 气候常态表) =========================
+    // 表里存的是代表站海拔处的常年值, 海拔修正/档位换算全在 climateFor 里做,
+    // 所以断言看的是**修正后的读数**, 不是 JSON 原文。
+    void test_climate_table_loaded() {
+        QCOMPARE(m_engine->climateTotalProvinces(), 34);
+        const QStringList names = m_engine->climateProvinceNames();
+        QCOMPARE(names.size(), 34);
+        QVERIFY(names.contains(QStringLiteral("北京")));
+        QVERIFY(names.contains(QStringLiteral("黑龙江")));
+        QVERIFY(names.contains(QStringLiteral("西藏")));
+    }
+
+    void test_climate_altitude_correction() {
+        // 四川锚点是成都平原 (500m), 1 月均温 6℃ / 夜间 1℃ / 7mm。
+        // 路线在 4000m: 直减率 -6.5℃/1000m → 均温该掉到 -16.75℃ 左右,
+        // 紫外线按 +12%/1000m 上浮, 那点毛毛雨也因此变成雪档。
+        const QVariantMap plain = m_engine->climateFor(QStringLiteral("四川"), 1, 500);
+        const QVariantMap ridge = m_engine->climateFor(QStringLiteral("四川"), 1, 4000);
+        QVERIFY(!plain.isEmpty() && !ridge.isEmpty());
+
+        const double drop = plain["tempAvg"].toDouble() - ridge["tempAvg"].toDouble();
+        QVERIFY2(qAbs(drop - 22.75) < 0.2,
+                 qPrintable(QStringLiteral("500→4000m 温差 %1, 期望 22.75").arg(drop)));
+        QVERIFY2(ridge["tempMin"].toDouble() <= -16.0,
+                 qPrintable(QStringLiteral("4000m 夜间 %1℃ 还不够冷").arg(ridge["tempMin"].toDouble())));
+        QVERIFY(ridge["uvIndex"].toDouble() > plain["uvIndex"].toDouble());
+        QCOMPARE(plain["precipitation"].toInt(), static_cast<int>(Precipitation::Light));
+        QCOMPARE(ridge["precipitation"].toInt(), static_cast<int>(Precipitation::SnowLight));
+        // 季节按气象月: 1 月是冬
+        QCOMPARE(ridge["season"].toInt(), static_cast<int>(Season::Winter));
+    }
+
+    void test_climate_slash_province_average() {
+        // 跨省路线 "北京/天津" 拆开各算再平均, 不等于任一省的单值
+        const QVariantMap bj = m_engine->climateFor(QStringLiteral("北京"), 1, 50);
+        const QVariantMap tj = m_engine->climateFor(QStringLiteral("天津"), 1, 50);
+        const QVariantMap both = m_engine->climateFor(QStringLiteral("北京 / 天津"), 1, 50);
+        QVERIFY(!bj.isEmpty() && !tj.isEmpty() && !both.isEmpty());
+        const double mean = (bj["tempAvg"].toDouble() + tj["tempAvg"].toDouble()) / 2.0;
+        QVERIFY2(qAbs(both["tempAvg"].toDouble() - mean) < 0.2,
+                 qPrintable(QStringLiteral("平均 %1 vs 两省中值 %2")
+                                .arg(both["tempAvg"].toDouble()).arg(mean)));
+        QCOMPARE(both["climateProvince"].toString(), QStringLiteral("北京/天津"));
+    }
+
+    void test_climate_unknown_returns_empty() {
+        // 查不到就返回空 map —— 宁可让页面提示"这一带没有往年天气", 也不编一份假天气
+        QVERIFY(m_engine->climateFor(QStringLiteral("不存在的省"), 7, 1000).isEmpty());
+        QVERIFY(m_engine->climateFor(QString(), 7, 1000).isEmpty());
+        QVERIFY(m_engine->climateFor(QStringLiteral("四川"), 0, 1000).isEmpty());
+        QVERIFY(m_engine->climateFor(QStringLiteral("四川"), 13, 1000).isEmpty());
+        // 部分对上: 只把认得出的省算进去, 来源里也只留那一个
+        const QVariantMap partial = m_engine->climateFor(QStringLiteral("四川/不存在的省"), 1, 500);
+        QCOMPARE(partial["climateProvince"].toString(), QStringLiteral("四川"));
+    }
+
+    void test_climate_readout_keys_match_qml() {
+        // QML 那两页 (EquipmentPage 的读数条 + RouteGearRecommendPage 的"送进引擎的天气")
+        // 是直接按字符串取键的: climateFor 少给一个键, 页面上就是一片空白或 "undefined ℃",
+        // 而 qmllint / load_check / ctest 三道都看不见 —— 字符串取键没有编译期约束.
+        // 所以把 QML 用到的键在这里逐个钉住, 改 C++ 时漏键会在这里红.
+        static const char* kKeys[] = {
+            "tempAvg", "tempMin", "windSpeed", "uvIndex", "precipitation", "humidity",
+            "diurnalRange", "season", "isRainySeason",
+            "windLevel", "uvLevel",
+            "climateProvince", "climateMonth", "climateAltitudeM",
+            "climatePrecipMm", "climateRefAltitudeM", "climateCorrectC"
+        };
+        // 除了 climateProvince (字符串) 和 isRainySeason (布尔), 其余全是数字
+        static const char* kNumeric[] = {
+            "tempAvg", "tempMin", "windSpeed", "uvIndex", "precipitation", "humidity",
+            "diurnalRange", "season", "windLevel", "uvLevel", "climateMonth",
+            "climateAltitudeM", "climatePrecipMm", "climateRefAltitudeM", "climateCorrectC"
+        };
+        const QVariantMap c = m_engine->climateFor(QStringLiteral("四川"), 1, 4000);
+        QVERIFY(!c.isEmpty());
+        for (const char* k : kKeys) {
+            QVERIFY2(c.contains(QString::fromLatin1(k)), k);
+        }
+        for (const char* k : kNumeric) {
+            const QString key = QString::fromLatin1(k);
+            bool ok = false;
+            c.value(key).toDouble(&ok);
+            QVERIFY2(ok, qPrintable(key + QStringLiteral(" 不是数字 (页面会渲染成 undefined)")));
+        }
+        QVERIFY(c.value(QStringLiteral("isRainySeason")).canConvert<bool>());
+        QVERIFY(!c.value(QStringLiteral("climateProvince")).toString().isEmpty());
+
+        // 档位与数值必须同源: 页面把 windLevel/uvLevel 直接当档位显示, 又把
+        // windSpeed/uvIndex 当数值显示, 两者对不上就是"显示强、发出去是中等".
+        // 阈值抄 EquipmentService.h:322-323 的注释 (蒲福 + WHO), 作为独立 oracle.
+        auto windBand = [](double ms) {
+            return ms < 0.3 ? 0 : ms < 3.4 ? 1 : ms < 8.0 ? 2 : ms < 10.8 ? 3 : 4;
+        };
+        auto uvBand = [](double uv) {
+            return uv < 3.0 ? 0 : uv < 6.0 ? 1 : uv < 8.0 ? 2 : uv < 11.0 ? 3 : 4;
+        };
+        QCOMPARE(c["windLevel"].toInt(), windBand(c["windSpeed"].toDouble()));
+        QCOMPARE(c["uvLevel"].toInt(), uvBand(c["uvIndex"].toDouble()));
+
+        // 修正量与海拔差自洽: 4000 m 相对 500 m 的代表站, 应往下修 ~22.75 ℃
+        QVERIFY2(c["climateRefAltitudeM"].toInt() == 500,
+                 "四川代表站海拔应为 500 m");
+        QVERIFY2(qAbs(c["climateCorrectC"].toDouble() - (-22.8)) < 0.15,
+                 qPrintable(QStringLiteral("修正量异常: ")
+                            + QString::number(c["climateCorrectC"].toDouble())));
+        // 月份原样回显, 页面 SRC 行直接用它
+        QCOMPARE(c["climateMonth"].toInt(), 1);
+        QCOMPARE(c["climateAltitudeM"].toInt(), 4000);
+    }
+
+    void test_climate_feeds_generate_list() {
+        auto bucketOf = [](const QVariantMap& list, const QString& itemId) -> QString {
+            for (const QString& b : {QStringLiteral("critical"), QStringLiteral("important"),
+                                     QStringLiteral("recommended")})
+                for (const QVariant& v : list[b].toList())
+                    if (v.toMap()["id"].toString() == itemId) return b;
+            return QString();
+        };
+        // 用往年天气生成清单: 表单只剩海拔/天数/难度, 天气由省 × 月推出来。
+        // (QVERIFY 不能在返回值的 lambda 里用, 所以这里只组装参数, 断言留在用例体内)
+        auto withClimate = [this](const QString& province, int month, int altitudeMax, int days) {
+            QVariantMap p = tripParams(altitudeMax, days);
+            const QVariantMap c = m_engine->climateFor(province, month, altitudeMax);
+            for (const QString& k : {QStringLiteral("tempAvg"), QStringLiteral("tempMin"),
+                                     QStringLiteral("windSpeed"), QStringLiteral("uvIndex"),
+                                     QStringLiteral("precipitation"), QStringLiteral("humidity"),
+                                     QStringLiteral("diurnalRange"), QStringLiteral("season"),
+                                     QStringLiteral("isRainySeason")})
+                p[k] = c[k];
+            return p;
+        };
+        auto generate = [this](const QVariantMap& p) {
+            return m_engine->getList(m_engine->generateList(QStringLiteral("往年天气"), p)["id"].toString());
+        };
+
+        // 黑龙江 1 月: 夜温 -24.5℃ 级, 极寒羽绒必须进必带
+        const QVariantMap harsh = generate(withClimate(QStringLiteral("黑龙江"), 1, 300, 2));
+        QVERIFY2(!bucketOf(harsh, "expedition_down").isEmpty(),
+                 QStringLiteral("黑龙江1月没出极地羽绒").toUtf8().constData());
+        // 四川 4000m 1 月: 成都平原的毛毛雨修正到海拔后是轻雪, 冰爪要上场
+        const QVariantMap icy = generate(withClimate(QStringLiteral("四川"), 1, 4000, 2));
+        QVERIFY2(!bucketOf(icy, "crampons").isEmpty(),
+                 QStringLiteral("四川4000m1月没出冰爪").toUtf8().constData());
+        // 海南 7 月: 湿热多雨 —— 雨具在场, 羽绒一律不上榜
+        const QVariantMap tropic = generate(withClimate(QStringLiteral("海南"), 7, 200, 1));
+        QVERIFY2(bucketOf(tropic, "down_jacket").isEmpty()
+                     && bucketOf(tropic, "expedition_down").isEmpty(),
+                 QStringLiteral("海南7月误出羽绒").toUtf8().constData());
+        QVERIFY2(!bucketOf(tropic, "rain_jacket").isEmpty(),
+                 QStringLiteral("海南7月没出雨具").toUtf8().constData());
+        // 同一条引擎, 换个地点月份, 上包的重量就该跟着气候走
+        QVERIFY2(tropic["totalWeightG"].toInt() < harsh["totalWeightG"].toInt(),
+                 qPrintable(QStringLiteral("海南7月 %1 g 不该比黑龙江1月 %2 g 还重")
+                                .arg(tropic["totalWeightG"].toInt())
+                                .arg(harsh["totalWeightG"].toInt())));
     }
 };
 

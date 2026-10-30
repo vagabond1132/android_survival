@@ -44,6 +44,21 @@ RowLayout {
     property string comboTextRole: ""
     property string comboValueRole: ""
     property int comboCurrentIndex: 0
+    // 2026-10-29 真机 (A43): ②资源切界门后省份框整块空白 (月份框正常) —— 差别只在省份
+    //   传的是 ListModel 且页面会原地 clear()+append() 重建。ComboBox 在模型被清空那一刻
+    //   会把内部 currentIndex 打回 -1, 而调用方给 comboCurrentIndex 求出来还是 0 —— 值没变
+    //   就不发 changed, 下面那条 currentIndex 绑定根本不重跑, 没人把 -1 拽回来, displayText
+    //   就成了空字符串。同进程 A/B 实测: 绑定块直连 prov.count 的那版一直显示"全部", 隔了
+    //   comboCurrentIndex 这一层的那版重建后 idx=-1 / displayText=""。
+    //   所以这里额外读一次"行数", 让 currentIndex 那条绑定必然跟着重建重跑一遍。
+    //   ListModel 走 count, JS 数组 / QStringList 走 length (RouteList/TravelList/SearchTab
+    //   那几个调用方传的是数组, 不能只认 count)。
+    property int comboRowCount: !comboModel ? 0
+                              : (comboModel.count !== undefined ? comboModel.count
+                                 : (Array.isArray(comboModel) ? comboModel.length : 0))
+    // 2026-10-27 真机 (A38): 省份 33 项的下拉按 Material 默认取整列 contentHeight,
+    //   比屏幕还高 → 底下几项滚不到。弹出层最多显示这么多行, 其余走 ListView 滚动。
+    property int comboPopupMaxRows: 10
     signal comboActivated(int index, var value)
 
     // stepper 模式 (半径 ±)
@@ -85,19 +100,50 @@ RowLayout {
             model: filterRow.comboModel
             textRole: filterRow.comboTextRole
             valueRole: filterRow.comboValueRole
-            currentIndex: filterRow.comboCurrentIndex
+            currentIndex: {
+                var want = filterRow.comboCurrentIndex
+                var n = filterRow.comboRowCount
+                return n > 0 ? Math.min(want, n - 1) : 0
+            }
             implicitHeight: styles.rowHSm
             font.pixelSize: styles.fsMd
             topPadding: 0
             bottomPadding: 0
+            // 2026-10-23 真机 (#114 布局): 收起态外框吃的是 Material 默认的深描边,
+            //   在一片 colorSurface 里像一块"被圈出来的错误". 全站描边口径是 hairline +
+            //   colorDivider, 只有正在交互 (弹出中 / 拿到焦点) 才升成 colorText.
+            background: Rectangle {
+                radius: styles.rSm
+                color: CommonOptions.colorSurface
+                border.width: styles.lineHair
+                border.color: (comboBoxItem.popup.visible || comboBoxItem.activeFocus)
+                              ? CommonOptions.colorText : CommonOptions.colorDivider
+            }
             // 2026-10-16: Material 的弹出列表挂在 Overlay 上, 不继承 control.font,
             //   必须显式给 delegate, 否则弹出项回退系统字体 → 图标变方框.
             delegate: ItemDelegate {
+                id: comboDelegate
                 required property var model
                 required property var modelData
                 required property int index
                 width: comboBoxItem.width
                 height: styles.rowHSm
+                // 2026-10-23 真机 (#114): 选中/高亮那一行原来靠 Material 的淡灰
+                //   hover 底 + colorTextOnAccent 白字 —— 白字画在淡灰上, 强光下完全
+                //   看不出"当前选的是哪一条" (省下拉里那条「全部」就是这么丢的).
+                //   改成浅底深字 + 左侧强调条, 和 ListRow/Chip 的选中口径一致.
+                background: Rectangle {
+                    color: comboDelegate.highlighted ? CommonOptions.colorSurfaceDim
+                                                     : "transparent"
+                    Rectangle {
+                        anchors.left: parent.left
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        width: styles.lineAccent
+                        visible: comboDelegate.highlighted
+                        color: CommonOptions.colorAccentSoft
+                    }
+                }
                 contentItem: Text {
                     // 2026-10-19 真机 stage0.log: "FilterRow.qml:102: Unable to assign
                     //   [undefined] to QString" —— 调用方 (RouteListPage / TravelListPage /
@@ -107,7 +153,7 @@ RowLayout {
                     //   只有 FieldGuidePage 用 {name}/{label} 对象数组, 才需要走 textRole.
                     text: filterRow.comboTextRole !== ""
                           ? model[filterRow.comboTextRole] : modelData
-                    color: highlighted ? CommonOptions.colorTextOnAccent : CommonOptions.colorText
+                    color: CommonOptions.colorText
                     font.pixelSize: styles.fsMd
                     elide: Text.ElideRight
                     verticalAlignment: Text.AlignVCenter
@@ -115,6 +161,22 @@ RowLayout {
                 highlighted: comboBoxItem.highlightedIndex === index
                 hoverEnabled: false
             }
+            // 2026-10-27 真机 (A38): Material 的 ComboBoxPopup 高度取自 contentItem
+            //   (一个 ListView) 的 implicitHeight, 而它默认 = contentHeight —— 33 个省
+            //   直接顶穿屏幕, 底下几项点不到。只给那个 ListView 上高度上限, 不整体重写
+            //   popup: 重写要引 Popup 类型, 和本工程"只 import QtQuick.Controls.Material"
+            //   的打包口径冲突 (见 controls_import_check.js)。
+            Component.onCompleted: {
+                if (!popup || !popup.contentItem)
+                    return
+                var lv = popup.contentItem
+                lv.clip = true
+                lv.implicitHeight = Qt.binding(function () {
+                    return Math.min(lv.contentHeight,
+                                    filterRow.comboPopupMaxRows * styles.rowHSm)
+                })
+            }
+
             onActivated: filterRow.comboActivated(currentIndex, currentValue)
         }
         // 2026-09-21: Loader 加载完后, 内部 ComboBox 实例暴露给外部

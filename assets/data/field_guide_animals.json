@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "kingdom": "animalia",
-  "updated_at": "2026-09-29",
+  "updated_at": "2026-10-28",
   "description": "全国常见危险动物图鉴(毒蛇/无毒蛇/伤人兽/两栖)",
   "animals": [
     {
@@ -232,38 +232,50 @@
       "category": "venomous_snake",
       "danger_level": 5,
       "alias": [
-        "七寸蛇"
+        "七寸蛇",
+        "蝮蛇",
+        "七寸子",
+        "土球子"
       ],
       "features": [
         "体长 50-70cm",
         "头三角,吻尖出",
         "体色沙黄或灰褐",
-        "背部有深色横斑"
+        "背部有深色横斑",
+        "头三角形,与颈区分明显",
+        "背部土黄或灰褐,有深色圆斑",
+        "眼后到口角有黑带",
+        "有颊窝(热定位)"
       ],
       "distribution": [
         "山西",
         "河北",
         "河南(豫西)",
         "内蒙古",
-        "陕西"
+        "陕西",
+        "甘肃"
       ],
       "min_elevation": 500,
-      "max_elevation": 2500,
+      "max_elevation": 2800,
       "habitats": [
         "山地",
         "草原",
-        "灌丛"
+        "灌丛",
+        "草地",
+        "石堆"
       ],
       "active_months": [
         "5",
         "6",
         "7",
         "8",
-        "9"
+        "9",
+        "4",
+        "10"
       ],
       "venom_type": "blood_toxin",
       "attack_distance_cm": 30,
-      "active_time": "日间",
+      "active_time": "昼间与黄昏",
       "hibernation_months": [
         "11",
         "12",
@@ -274,7 +286,10 @@
       "protection_level": "无",
       "symptoms": [
         "局部肿痛、出血",
-        "全身出血"
+        "全身出血",
+        "咬伤处剧痛、迅速肿胀",
+        "皮下瘀斑、出血倾向",
+        "严重者复视、呼吸困难"
       ],
       "look_alike": [
         {
@@ -289,12 +304,32 @@
       },
       "protective_gear": [
         "高帮鞋",
-        "蛇裤"
+        "蛇裤",
+        "登山杖打草",
+        "手电"
       ],
       "route_associations": [
         {
           "route_id": "route_sx_hengshan_yw_xx",
           "months": [
+            "6",
+            "7",
+            "8"
+          ]
+        },
+        {
+          "route_id": "route_wutaishan",
+          "months": [
+            "5",
+            "6",
+            "7",
+            "8"
+          ]
+        },
+        {
+          "route_id": "route_hengshan_north",
+          "months": [
+            "5",
             "6",
             "7",
             "8"
@@ -307,15 +342,17 @@
         "v": 65
       },
       "images": [
-        "whole"
+        "whole",
+        "head"
       ],
-      "description": "北方山地草原常见毒蛇。",
+      "description": "华北山地高海拔蝮蛇,五台山、恒山一带常见。血循毒,咬伤后 6-12 小时肿胀达峰。",
       "source": "中国蛇类志",
       "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Gloydius intermedius",
         "中介蝮 animal"
-      ]
+      ],
+      "venom_location": "上颌毒牙(管牙)"
     },
     {
       "id": "animal_protobothrops",
@@ -639,13 +676,18 @@
       "alias": [
         "中华眼镜蛇",
         "膨颈蛇",
-        "饭铲头"
+        "饭铲头",
+        "扁颈蛇"
       ],
       "features": [
         "体长 1.0-1.5 米",
         "颈部可扩张呈扁平状(眼镜状斑纹)",
         "体色黑褐色或深灰色",
-        "激怒时直立颈部,发出呼呼声"
+        "激怒时直立颈部,发出呼呼声",
+        "体长 100-150cm",
+        "受惊时颈膨扁(关键)",
+        "颈背有白色眼镜状斑",
+        "体背黑褐有白横纹"
       ],
       "distribution": [
         "安徽",
@@ -659,7 +701,11 @@
         "贵州",
         "云南",
         "四川",
-        "重庆"
+        "重庆",
+        "河南(南部)",
+        "山西(南部)",
+        "山东(南部)",
+        "陕西(南部)"
       ],
       "min_elevation": 0,
       "max_elevation": 1500,
@@ -667,7 +713,9 @@
         "平原",
         "丘陵",
         "灌丛",
-        "村边"
+        "村边",
+        "农田",
+        "林缘"
       ],
       "active_months": [
         "5",
@@ -675,27 +723,39 @@
         "7",
         "8",
         "9",
-        "10"
+        "10",
+        "4"
       ],
       "venom_type": "neuro_toxin",
-      "attack_distance_cm": 50,
+      "attack_distance_cm": 100,
       "active_time": "日间",
       "hibernation_months": [
         "12",
         "1",
-        "2"
+        "2",
+        "11",
+        "3"
       ],
-      "protection_level": "无",
+      "protection_level": "无(三有保护)",
       "symptoms": [
         "局部症状轻:微痛麻木",
         "1-4h 后全身:眼睑下垂、吞咽困难",
-        "严重者呼吸衰竭"
+        "严重者呼吸衰竭",
+        "咬伤局部麻木、疼痛",
+        "眼睑下垂、复视",
+        "呼吸肌麻痹,可致呼吸衰竭"
       ],
       "look_alike": [
         {
           "name": "眼镜王蛇",
           "distinction": "眼镜王蛇更大(可达 3-4 米),颈斑呈倒 V",
           "fatality": "极高"
+        },
+        {
+          "id": "animal_naja",
+          "name": "眼镜蛇属(近缘)",
+          "distinction": "舟山眼镜蛇颈背有眼镜斑、体黑褐;均剧毒,受激将颈膨扁",
+          "fatality": "高"
         }
       ],
       "first_aid_id": "firstaid_snake_bite",
@@ -704,7 +764,10 @@
       },
       "protective_gear": [
         "高帮鞋",
-        "手电"
+        "手电",
+        "穿高帮鞋",
+        "勿惊扰",
+        "勿徒手捕捉"
       ],
       "route_associations": [
         {
@@ -715,6 +778,14 @@
             "8",
             "9"
           ]
+        },
+        {
+          "route_id": "route_taishan_dong",
+          "months": [
+            "6",
+            "7",
+            "8"
+          ]
         }
       ],
       "representative_color": {
@@ -724,15 +795,17 @@
       },
       "images": [
         "whole",
-        "hood"
+        "hood",
+        "head"
       ],
-      "description": "中国南方常见剧毒蛇。神经毒素为主,呼吸麻痹是主要死因。",
-      "source": "中国蛇类志",
-      "reviewer": "XX 教授(动物学)",
+      "description": "中国南方及华北南部剧毒眼镜蛇,受激时颈膨扁、颈背现眼镜斑。神经毒可致呼吸麻痹,遇之应远避。",
+      "source": "中国蛇类图鉴",
+      "reviewer": "XX 教授(两栖爬行学)",
       "photo_sources": [
         "Naja atra",
         "舟山眼镜蛇 animal"
-      ]
+      ],
+      "venom_location": "前沟牙"
     },
     {
       "id": "animal_bungarus",
@@ -1717,87 +1790,6 @@
       ]
     },
     {
-      "id": "animal_bufo",
-      "common_name": "中华蟾蜍",
-      "scientific_name": "Bufo gargarizans",
-      "kingdom": "animalia",
-      "category": "amphibian",
-      "danger_level": 2,
-      "alias": [
-        "癞蛤蟆"
-      ],
-      "features": [
-        "体长 5-10cm",
-        "皮肤粗糙多疣",
-        "体色暗褐或黑褐",
-        "耳后腺和皮肤腺分泌毒液"
-      ],
-      "distribution": [
-        "山东",
-        "山西",
-        "河北",
-        "河南",
-        "全国广布"
-      ],
-      "min_elevation": 0,
-      "max_elevation": 2000,
-      "habitats": [
-        "田边",
-        "水边",
-        "湿地"
-      ],
-      "active_months": [
-        "4",
-        "5",
-        "6",
-        "7",
-        "8",
-        "9",
-        "10"
-      ],
-      "venom_type": "bufotoxin",
-      "venom_location": "耳后腺、皮肤腺",
-      "attack_distance_cm": 0,
-      "active_time": "夜间",
-      "hibernation_months": [
-        "11",
-        "12",
-        "1",
-        "2",
-        "3"
-      ],
-      "protection_level": "无",
-      "symptoms": [
-        "眼/伤口接触毒液可致剧烈刺激",
-        "误食可致心律失常"
-      ],
-      "look_alike": [],
-      "first_aid_id": "",
-      "first_aid_links": {
-        "接触": "firstaid_contact_dermatitis"
-      },
-      "protective_gear": [
-        "勿用手揉眼",
-        "接触后洗手"
-      ],
-      "route_associations": [],
-      "representative_color": {
-        "h": 30,
-        "s": 50,
-        "v": 40
-      },
-      "images": [
-        "whole"
-      ],
-      "description": "北方常见。毒液(蟾酥)入中药,但接触皮肤伤口有风险。",
-      "source": "中国两栖爬行动物志",
-      "reviewer": "XX 教授(动物学)",
-      "photo_sources": [
-        "Bufo gargarizans",
-        "中华蟾蜍 animal"
-      ]
-    },
-    {
       "id": "animal_rana",
       "common_name": "黑斑蛙",
       "scientific_name": "Pelophylax nigromaculatus",
@@ -2627,73 +2619,6 @@
       ]
     },
     {
-      "id": "animal_canis",
-      "common_name": "狼",
-      "scientific_name": "Canis lupus",
-      "kingdom": "animalia",
-      "category": "mammal_dangerous",
-      "danger_level": 4,
-      "alias": [
-        "灰狼"
-      ],
-      "features": [
-        "体长 1-1.5 米",
-        "体色灰黄",
-        "耳直立",
-        "尾下垂"
-      ],
-      "distribution": [
-        "山西(吕梁)",
-        "河北(坝上)",
-        "内蒙古"
-      ],
-      "min_elevation": 500,
-      "max_elevation": 3000,
-      "habitats": [
-        "山地",
-        "森林",
-        "草原"
-      ],
-      "active_months": [
-        "全年"
-      ],
-      "venom_type": "none",
-      "venom_location": "",
-      "attack_distance_cm": 0,
-      "active_time": "夜间",
-      "hibernation_months": [],
-      "protection_level": "国家二级",
-      "symptoms": [
-        "狼群袭击可致重伤",
-        "咬伤狂犬病风险"
-      ],
-      "look_alike": [],
-      "first_aid_id": "",
-      "first_aid_links": {
-        "咬伤": "firstaid_animal_bite"
-      },
-      "protective_gear": [
-        "不要接近狼群",
-        "食物密封"
-      ],
-      "route_associations": [],
-      "representative_color": {
-        "h": 30,
-        "s": 30,
-        "v": 50
-      },
-      "images": [
-        "whole"
-      ],
-      "description": "北方山区有零星分布。已极少见。",
-      "source": "中国哺乳动物志",
-      "reviewer": "XX 教授(动物学)",
-      "photo_sources": [
-        "Canis lupus",
-        "狼 animal"
-      ]
-    },
-    {
       "id": "animal_lynx",
       "common_name": "猞猁",
       "scientific_name": "Lynx lynx",
@@ -2758,65 +2683,6 @@
       ]
     },
     {
-      "id": "animal_talpidae",
-      "common_name": "麝鼹",
-      "scientific_name": "Scaptochirus moschatus",
-      "kingdom": "animalia",
-      "category": "mammal_common",
-      "danger_level": 0,
-      "alias": [
-        "地老鼠"
-      ],
-      "features": [
-        "体长 10-13cm",
-        "体圆筒形",
-        "前爪特化挖掘",
-        "眼退化"
-      ],
-      "distribution": [
-        "山东",
-        "山西",
-        "河北",
-        "河南"
-      ],
-      "min_elevation": 0,
-      "max_elevation": 1500,
-      "habitats": [
-        "土质疏松的农田",
-        "菜地"
-      ],
-      "active_months": [
-        "全年"
-      ],
-      "venom_type": "none",
-      "venom_location": "",
-      "attack_distance_cm": 0,
-      "active_time": "日夜",
-      "hibernation_months": [],
-      "protection_level": "无",
-      "symptoms": [],
-      "look_alike": [],
-      "first_aid_id": "",
-      "first_aid_links": {},
-      "protective_gear": [],
-      "route_associations": [],
-      "representative_color": {
-        "h": 30,
-        "s": 30,
-        "v": 40
-      },
-      "images": [
-        "whole"
-      ],
-      "description": "地下生活的哺乳动物,挖土能力强。",
-      "source": "中国哺乳动物志",
-      "reviewer": "XX 教授(动物学)",
-      "photo_sources": [
-        "Scaptochirus moschatus",
-        "麝鼹 animal"
-      ]
-    },
-    {
       "id": "animal_vulpes",
       "common_name": "赤狐",
       "scientific_name": "Vulpes vulpes",
@@ -2825,29 +2691,49 @@
       "danger_level": 2,
       "alias": [
         "狐狸",
-        "红狐"
+        "红狐",
+        "草狐"
       ],
       "features": [
         "体长 50-70cm",
         "体红褐色",
-        "尾大蓬松,尾尖白色"
+        "尾大蓬松,尾尖白色",
+        "体长 60-90cm",
+        "体毛红褐、尾粗大蓬松(关键)",
+        "尾尖白色",
+        "耳尖黑色"
       ],
       "distribution": [
         "山东",
         "山西",
         "河北",
         "河南",
-        "全国广布"
+        "全国广布",
+        "内蒙古",
+        "西藏"
       ],
       "min_elevation": 0,
-      "max_elevation": 2500,
+      "max_elevation": 3500,
       "habitats": [
         "森林",
         "草原",
-        "农田"
+        "农田",
+        "山地"
       ],
       "active_months": [
-        "全年"
+        "全年",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12"
       ],
       "venom_type": "none",
       "venom_location": "",
@@ -2857,17 +2743,40 @@
       "protection_level": "无(部分省级保护)",
       "symptoms": [
         "狂犬病宿主",
-        "受惊可能咬人"
+        "受惊可能咬人",
+        "一般避人",
+        "被逼可咬",
+        "可能携带狂犬病毒"
       ],
-      "look_alike": [],
+      "look_alike": [
+        {
+          "id": "animal_nyctereutes",
+          "name": "貉(近缘)",
+          "distinction": "赤狐体红褐、尾粗尾尖白;貉体灰褐、脸有黑眼罩",
+          "fatality": "低"
+        }
+      ],
       "first_aid_id": "",
       "first_aid_links": {
         "咬伤": "firstaid_animal_bite"
       },
       "protective_gear": [
-        "远观勿接近"
+        "远观勿接近",
+        "勿投喂",
+        "勿徒手捉"
       ],
-      "route_associations": [],
+      "route_associations": [
+        {
+          "route_id": "route_wutaishan",
+          "months": [
+            "1",
+            "2",
+            "6",
+            "7",
+            "8"
+          ]
+        }
+      ],
       "representative_color": {
         "h": 30,
         "s": 60,
@@ -2876,86 +2785,12 @@
       "images": [
         "whole"
       ],
-      "description": "北方常见的野生犬科动物,数量回升中。",
+      "description": "华北山地草原常见中型食肉兽,体红褐、尾大尾尖白。夜行独居,食鼠类与果实,是鼠类重要天敌。",
       "source": "中国哺乳动物志",
       "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Vulpes vulpes",
         "赤狐 animal"
-      ]
-    },
-    {
-      "id": "animal_bombina",
-      "common_name": "东方铃蟾",
-      "scientific_name": "Bombina orientalis",
-      "kingdom": "animalia",
-      "category": "amphibian",
-      "danger_level": 1,
-      "alias": [
-        "铃蟾"
-      ],
-      "features": [
-        "体长 4-5cm",
-        "体扁",
-        "背部疣粒明显",
-        "腹面有醒目红黑斑(警戒色)"
-      ],
-      "distribution": [
-        "山东",
-        "河北",
-        "河南"
-      ],
-      "min_elevation": 0,
-      "max_elevation": 1500,
-      "habitats": [
-        "水边",
-        "湿地"
-      ],
-      "active_months": [
-        "4",
-        "5",
-        "6",
-        "7",
-        "8",
-        "9"
-      ],
-      "venom_type": "mild",
-      "venom_location": "皮肤分泌物",
-      "attack_distance_cm": 0,
-      "active_time": "日间",
-      "hibernation_months": [
-        "10",
-        "11",
-        "12",
-        "1",
-        "2",
-        "3"
-      ],
-      "protection_level": "无",
-      "symptoms": [
-        "皮肤分泌物可致轻微刺激"
-      ],
-      "look_alike": [],
-      "first_aid_id": "",
-      "first_aid_links": {},
-      "protective_gear": [
-        "勿揉眼"
-      ],
-      "route_associations": [],
-      "representative_color": {
-        "h": 30,
-        "s": 60,
-        "v": 60
-      },
-      "images": [
-        "whole"
-      ],
-      "description": "北方山区溪流常见。",
-      "source": "中国两栖爬行动物志",
-      "reviewer": "XX 教授(动物学)",
-      "photo_sources": [
-        "Bombina orientalis",
-        "东方铃蟾 animal"
       ]
     },
     {
@@ -3373,121 +3208,6 @@
       "photo_sources": [
         "Rana amurensis",
         "东北林蛙 animal"
-      ]
-    },
-    {
-      "id": "animal_gloydius_intermedius",
-      "common_name": "中介蝮",
-      "scientific_name": "Gloydius intermedius",
-      "kingdom": "animalia",
-      "category": "venomous_snake",
-      "danger_level": 4,
-      "alias": [
-        "蝮蛇",
-        "七寸子",
-        "土球子"
-      ],
-      "features": [
-        "体长 50-70cm",
-        "头三角形,与颈区分明显",
-        "背部土黄或灰褐,有深色圆斑",
-        "眼后到口角有黑带",
-        "有颊窝(热定位)"
-      ],
-      "distribution": [
-        "河北",
-        "山西",
-        "内蒙古",
-        "陕西",
-        "甘肃"
-      ],
-      "min_elevation": 500,
-      "max_elevation": 2800,
-      "habitats": [
-        "山地",
-        "灌丛",
-        "草地",
-        "石堆"
-      ],
-      "active_months": [
-        "4",
-        "5",
-        "6",
-        "7",
-        "8",
-        "9",
-        "10"
-      ],
-      "venom_type": "blood_toxin",
-      "venom_location": "上颌毒牙(管牙)",
-      "attack_distance_cm": 30,
-      "active_time": "昼间与黄昏",
-      "hibernation_months": [
-        "11",
-        "12",
-        "1",
-        "2",
-        "3"
-      ],
-      "protection_level": "无",
-      "symptoms": [
-        "咬伤处剧痛、迅速肿胀",
-        "皮下瘀斑、出血倾向",
-        "严重者复视、呼吸困难"
-      ],
-      "look_alike": [
-        {
-          "id": "animal_gloydius_brevicaudus",
-          "name": "短尾蝮",
-          "distinction": "短尾蝮体短尾短,中介蝮尾较细长,分布海拔更高",
-          "fatality": "剧毒"
-        }
-      ],
-      "first_aid_id": "",
-      "first_aid_links": {
-        "咬伤": "firstaid_snake_bite"
-      },
-      "protective_gear": [
-        "高帮鞋",
-        "登山杖打草",
-        "手电"
-      ],
-      "route_associations": [
-        {
-          "route_id": "route_wutaishan",
-          "months": [
-            "5",
-            "6",
-            "7",
-            "8"
-          ]
-        },
-        {
-          "route_id": "route_hengshan_north",
-          "months": [
-            "5",
-            "6",
-            "7",
-            "8"
-          ]
-        }
-      ],
-      "representative_color": {
-        "h": 35,
-        "s": 40,
-        "v": 45
-      },
-      "images": [
-        "whole",
-        "head"
-      ],
-      "description": "华北山地高海拔蝮蛇,五台山、恒山一带常见。血循毒,咬伤后 6-12 小时肿胀达峰。",
-      "source": "中国蛇类志",
-      "reviewer": "XX 教授(动物学)",
-      "photo_sources": [
-        "Gloydius intermedius",
-        "Gloydius intermedius",
-        "中介蝮 animal"
       ]
     },
     {
@@ -4055,13 +3775,18 @@
       "alias": [
         "狸猫",
         "山猫",
-        "石虎"
+        "石虎",
+        "山狸子"
       ],
       "features": [
         "体长 45-60cm(不含尾)",
         "体背黄褐,布满黑褐斑点",
         "耳背有白斑",
-        "尾粗,有黑色环纹"
+        "尾粗,有黑色环纹",
+        "体长 45-75cm",
+        "体背黄褐满布黑斑(关键)",
+        "两眼内缘有白色纵纹",
+        "尾粗有黑环"
       ],
       "distribution": [
         "山东",
@@ -4069,14 +3794,18 @@
         "河北",
         "山西",
         "陕西",
-        "全国广布"
+        "全国广布",
+        "内蒙古",
+        "西藏"
       ],
-      "min_elevation": 100,
+      "min_elevation": 0,
       "max_elevation": 3000,
       "habitats": [
         "山地",
         "林区",
-        "灌丛"
+        "灌丛",
+        "山地林缘",
+        "农田"
       ],
       "active_months": [
         "1",
@@ -4097,10 +3826,13 @@
       "attack_distance_cm": 0,
       "active_time": "夜间",
       "hibernation_months": [],
-      "protection_level": "国家二级",
+      "protection_level": "国家二级保护",
       "symptoms": [
         "抓咬伤可感染",
-        "可能传播狂犬病"
+        "可能传播狂犬病",
+        "被逼可扑咬",
+        "抓伤可致感染",
+        "可能携带狂犬病毒"
       ],
       "look_alike": [
         {
@@ -4108,16 +3840,26 @@
           "name": "猞猁",
           "distinction": "猞猁耳尖有黑毛簇,体型更大;豹猫体型小,斑点密",
           "fatality": "中"
+        },
+        {
+          "id": "animal_felis_bieti",
+          "name": "荒漠猫(近缘)",
+          "distinction": "豹猫体有黑斑、体型较大;荒漠猫体色较淡、斑纹弱",
+          "fatality": "低"
         }
       ],
       "first_aid_id": "",
       "first_aid_links": {
         "抓咬伤": "firstaid_animal_bite",
-        "感染风险": "firstaid_animal_disease"
+        "感染风险": "firstaid_animal_disease",
+        "咬伤": "firstaid_animal_bite",
+        "外伤": "firstaid_bleeding"
       },
       "protective_gear": [
         "不投喂不接近",
-        "夜间收好食物"
+        "夜间收好食物",
+        "勿惊扰",
+        "勿徒手捉"
       ],
       "route_associations": [
         {
@@ -4138,6 +3880,15 @@
             "7",
             "8"
           ]
+        },
+        {
+          "route_id": "route_taibai_baoji",
+          "months": [
+            "6",
+            "7",
+            "8",
+            "9"
+          ]
         }
       ],
       "representative_color": {
@@ -4148,8 +3899,8 @@
       "images": [
         "whole"
       ],
-      "description": "华北山地夜行猫科,国家二级保护。多为独居,一般主动避人。",
-      "source": "中国兽类志",
+      "description": "华北山地常见小型野生猫科,体背黄褐满布黑斑、尾有黑环。夜行独居善捕鼠,是国家二级保护动物。",
+      "source": "中国兽类图鉴",
       "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Prionailurus bengalensis",
@@ -6792,7 +6543,7 @@
       ],
       "look_alike": [
         {
-          "id": "animal_canis",
+          "id": "animal_canis_lupus",
           "name": "狼",
           "distinction": "狼耳直立、吻长、冬季体色灰;豺耳圆、吻短、体色红棕",
           "fatality": "中"
@@ -7244,7 +6995,7 @@
       ],
       "look_alike": [
         {
-          "id": "animal_bufo",
+          "id": "animal_bufo_gargarizans",
           "name": "中华蟾蜍",
           "distinction": "中华蟾蜍体型更大、疣粒更长;花背蟾蜍体型小、背有花斑",
           "fatality": "低"
@@ -8284,7 +8035,7 @@
     },
     {
       "id": "animal_takydromus_septentrionalis",
-      "common_name": "白条草蜥",
+      "common_name": "北草蜥",
       "scientific_name": "Takydromus septentrionalis",
       "kingdom": "animalia",
       "category": "reptile",
@@ -8961,30 +8712,38 @@
         "体长 4-5cm",
         "体背灰绿有疣粒",
         "腹面橙红带黑斑(关键)",
-        "受惊翻肚示警"
+        "受惊翻肚示警",
+        "体扁",
+        "背部疣粒明显",
+        "腹面有醒目红黑斑(警戒色)"
       ],
       "distribution": [
         "河北",
         "山西",
         "山东(山区)",
-        "东北"
+        "东北",
+        "山东",
+        "河南"
       ],
-      "min_elevation": 200,
+      "min_elevation": 0,
       "max_elevation": 2000,
       "habitats": [
         "山溪",
         "水潭",
-        "湿石缝"
+        "湿石缝",
+        "水边",
+        "湿地"
       ],
       "active_months": [
         "5",
         "6",
         "7",
         "8",
-        "9"
+        "9",
+        "4"
       ],
       "venom_type": "bufotoxin",
-      "venom_location": "皮肤腺",
+      "venom_location": "皮肤分泌物",
       "attack_distance_cm": 0,
       "active_time": "昼夜",
       "hibernation_months": [
@@ -9000,7 +8759,8 @@
       "symptoms": [
         "皮肤分泌物刺激黏膜",
         "误入眼致红肿刺痛",
-        "误食致呕吐"
+        "误食致呕吐",
+        "皮肤分泌物可致轻微刺激"
       ],
       "look_alike": [
         {
@@ -9523,7 +9283,7 @@
     },
     {
       "id": "animal_haemadipsa",
-      "common_name": "山蛭",
+      "common_name": "日本山蛭",
       "scientific_name": "Haemadipsa japonica",
       "kingdom": "animalia",
       "category": "leech",
@@ -10025,7 +9785,6 @@
       "symptoms": [],
       "look_alike": [
         {
-          "id": "animal_hirundo_daurica",
           "name": "金腰燕(近缘)",
           "distinction": "家燕腰无金红斑、喉栗红;金腰燕腰有金色横带、喉有细纹",
           "fatality": "无"
@@ -10113,7 +9872,6 @@
       "symptoms": [],
       "look_alike": [
         {
-          "id": "animal_anthus",
           "name": "鹨属(近缘)",
           "distinction": "树鹨上树、背橄榄褐;水鹨栖水边湿草、色偏灰褐",
           "fatality": "无"
@@ -10199,7 +9957,6 @@
       "symptoms": [],
       "look_alike": [
         {
-          "id": "animal_emberiza",
           "name": "鹀属(近缘)",
           "distinction": "三道眉草鹀头有三道纵纹、胸栗有条纹;黄胸鹀体色黄绿、胸黄",
           "fatality": "无"
@@ -10286,7 +10043,6 @@
       "symptoms": [],
       "look_alike": [
         {
-          "id": "animal_carduelis",
           "name": "金翅雀属(近缘)",
           "distinction": "金翅雀翼有金黄斑、腰金黄;红额金翅雀额红、翼斑黄白",
           "fatality": "无"
@@ -10639,7 +10395,6 @@
       ],
       "look_alike": [
         {
-          "id": "animal_japalura",
           "name": "攀蜥属(近缘)",
           "distinction": "丽纹攀蜥背有黄绿横纹、背鬣发达;草蜥体细长、尾极长",
           "fatality": "无"
@@ -10730,7 +10485,6 @@
       ],
       "look_alike": [
         {
-          "id": "animal_phrynocephalus",
           "name": "沙蜥属(近缘)",
           "distinction": "荒漠沙蜥体沙黄、eye睑有锯齿;变色沙蜥体色随环境变化更明显",
           "fatality": "无"
@@ -10818,7 +10572,6 @@
       "symptoms": [],
       "look_alike": [
         {
-          "id": "animal_gekko",
           "name": "壁虎属(近缘)",
           "distinction": "原尾蜥虎体背有疣粒、趾吸盘更宽;无蹼壁虎体背疣较稀",
           "fatality": "无"
@@ -11310,7 +11063,7 @@
       "scientific_name": "Bufo gargarizans",
       "kingdom": "animalia",
       "category": "amphibian",
-      "danger_level": 1,
+      "danger_level": 2,
       "alias": [
         "癞蛤蟆",
         "蟾蜍",
@@ -11320,7 +11073,11 @@
         "体长 8-12cm",
         "体背墨绿有大量疣粒(关键)",
         "耳后腺发达",
-        "不善跳,多爬行"
+        "不善跳,多爬行",
+        "体长 5-10cm",
+        "皮肤粗糙多疣",
+        "体色暗褐或黑褐",
+        "耳后腺和皮肤腺分泌毒液"
       ],
       "distribution": [
         "山东",
@@ -11334,7 +11091,10 @@
       "habitats": [
         "田野",
         "沟渠",
-        "村庄"
+        "村庄",
+        "田边",
+        "水边",
+        "湿地"
       ],
       "active_months": [
         "3",
@@ -11354,17 +11114,20 @@
         "11",
         "12",
         "1",
-        "2"
+        "2",
+        "3"
       ],
       "protection_level": "无(三有保护)",
       "symptoms": [
         "皮肤分泌蟾毒,刺激黏膜",
         "误入眼致红肿刺痛",
-        "误食致呕吐、心律异常"
+        "误食致呕吐、心律异常",
+        "眼/伤口接触毒液可致剧烈刺激",
+        "误食可致心律失常"
       ],
       "look_alike": [
         {
-          "id": "animal_bufo",
+          "id": "animal_bufo_gargarizans",
           "name": "蟾蜍属(近缘)",
           "distinction": "中华蟾蜍体背墨绿疣粒大;花背蟾蜍背有玫红斑纹",
           "fatality": "低"
@@ -11377,7 +11140,8 @@
       "protective_gear": [
         "接触后洗手",
         "勿揉眼",
-        "勿徒手捉"
+        "勿徒手捉",
+        "勿用手揉眼"
       ],
       "route_associations": [
         {
@@ -11400,7 +11164,11 @@
       ],
       "description": "华北田野村庄最常见蟾蜍,体背墨绿多疣、耳后腺发达。分泌蟾毒刺激黏膜,接触后须洗手勿揉眼。",
       "source": "中国两栖爬行动物志",
-      "reviewer": "XX 教授(两栖爬行学)"
+      "reviewer": "XX 教授(两栖爬行学)",
+      "photo_sources": [
+        "Bufo gargarizans",
+        "中华蟾蜍 animal"
+      ]
     },
     {
       "id": "animal_cynops_orientalis",
@@ -11605,21 +11373,27 @@
         "体长 100-140cm",
         "体毛黄褐灰杂(关键)",
         "尾下垂,常垂夹于后腿间",
-        "耳竖立、吻较犬长"
+        "耳竖立、吻较犬长",
+        "体长 1-1.5 米",
+        "体色灰黄",
+        "耳直立",
+        "尾下垂"
       ],
       "distribution": [
         "内蒙古",
         "山西",
         "河北(坝上)",
         "河南(山区)",
-        "西藏"
+        "西藏",
+        "山西(吕梁)"
       ],
-      "min_elevation": 800,
+      "min_elevation": 500,
       "max_elevation": 4000,
       "habitats": [
         "山地",
         "草原",
-        "荒漠"
+        "荒漠",
+        "森林"
       ],
       "active_months": [
         "1",
@@ -11633,7 +11407,8 @@
         "9",
         "10",
         "11",
-        "12"
+        "12",
+        "全年"
       ],
       "venom_type": "none",
       "venom_location": "",
@@ -11644,11 +11419,13 @@
       "symptoms": [
         "扑咬致撕咬伤、骨折",
         "可能携带狂犬病毒",
-        "伤口易感染"
+        "伤口易感染",
+        "狼群袭击可致重伤",
+        "咬伤狂犬病风险"
       ],
       "look_alike": [
         {
-          "id": "animal_canis",
+          "id": "animal_canis_lupus",
           "name": "家犬(近缘)",
           "distinction": "狼尾常下垂、耳竖、吻长;家犬尾多上扬。野外成群者多为野狗或狼",
           "fatality": "高"
@@ -11662,7 +11439,9 @@
       "protective_gear": [
         "结伴同行",
         "勿投喂",
-        "夜间勿宿兽道"
+        "夜间勿宿兽道",
+        "不要接近狼群",
+        "食物密封"
       ],
       "route_associations": [
         {
@@ -11686,8 +11465,12 @@
         "whole"
       ],
       "description": "华北山地草原顶级捕食者,体毛黄褐灰杂、尾常下垂。成群活动,遇人应缓退勿奔逃,是二级保护动物。",
-      "source": "中国兽类图鉴",
-      "reviewer": "XX 教授(动物学)"
+      "source": "中国哺乳动物志",
+      "reviewer": "XX 教授(动物学)",
+      "photo_sources": [
+        "Canis lupus",
+        "狼 animal"
+      ]
     },
     {
       "id": "animal_capreolus_pygargus",
@@ -11782,104 +11565,6 @@
       "reviewer": "XX 教授(动物学)"
     },
     {
-      "id": "animal_prionailurus_bengalensis",
-      "common_name": "豹猫",
-      "scientific_name": "Prionailurus bengalensis",
-      "kingdom": "animalia",
-      "category": "mammal_common",
-      "danger_level": 2,
-      "alias": [
-        "山狸子",
-        "狸猫",
-        "石虎"
-      ],
-      "features": [
-        "体长 45-75cm",
-        "体背黄褐满布黑斑(关键)",
-        "两眼内缘有白色纵纹",
-        "尾粗有黑环"
-      ],
-      "distribution": [
-        "河北",
-        "山西",
-        "山东",
-        "河南",
-        "内蒙古",
-        "西藏"
-      ],
-      "min_elevation": 0,
-      "max_elevation": 3000,
-      "habitats": [
-        "山地林缘",
-        "灌丛",
-        "农田"
-      ],
-      "active_months": [
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7",
-        "8",
-        "9",
-        "10",
-        "11",
-        "12"
-      ],
-      "venom_type": "none",
-      "venom_location": "",
-      "attack_distance_cm": 0,
-      "active_time": "夜间",
-      "hibernation_months": [],
-      "protection_level": "国家二级保护",
-      "symptoms": [
-        "被逼可扑咬",
-        "抓伤可致感染",
-        "可能携带狂犬病毒"
-      ],
-      "look_alike": [
-        {
-          "id": "animal_felis_bieti",
-          "name": "荒漠猫(近缘)",
-          "distinction": "豹猫体有黑斑、体型较大;荒漠猫体色较淡、斑纹弱",
-          "fatality": "低"
-        }
-      ],
-      "first_aid_id": "",
-      "first_aid_links": {
-        "咬伤": "firstaid_animal_bite",
-        "外伤": "firstaid_bleeding"
-      },
-      "protective_gear": [
-        "勿惊扰",
-        "勿徒手捉"
-      ],
-      "route_associations": [
-        {
-          "route_id": "route_taibai_baoji",
-          "months": [
-            "6",
-            "7",
-            "8",
-            "9"
-          ]
-        }
-      ],
-      "representative_color": {
-        "h": 35,
-        "s": 55,
-        "v": 60
-      },
-      "images": [
-        "whole"
-      ],
-      "description": "华北山地常见小型野生猫科,体背黄褐满布黑斑、尾有黑环。夜行独居善捕鼠,是国家二级保护动物。",
-      "source": "中国兽类图鉴",
-      "reviewer": "XX 教授(动物学)"
-    },
-    {
       "id": "animal_scaptochirus_moschatus",
       "common_name": "麝鼹",
       "scientific_name": "Scaptochirus moschatus",
@@ -11889,13 +11574,18 @@
       "alias": [
         "鼹鼠",
         "地排子",
-        "瞎老鼠"
+        "瞎老鼠",
+        "地老鼠"
       ],
       "features": [
         "体长 12-16cm",
         "眼极小隐于毛下(关键)",
         "前爪宽大如铲",
-        "栖地下穴道"
+        "栖地下穴道",
+        "体长 10-13cm",
+        "体圆筒形",
+        "前爪特化挖掘",
+        "眼退化"
       ],
       "distribution": [
         "河北",
@@ -11909,7 +11599,9 @@
       "habitats": [
         "农田",
         "草甸",
-        "松软土壤"
+        "松软土壤",
+        "土质疏松的农田",
+        "菜地"
       ],
       "active_months": [
         "1",
@@ -11923,7 +11615,8 @@
         "9",
         "10",
         "11",
-        "12"
+        "12",
+        "全年"
       ],
       "venom_type": "none",
       "venom_location": "",
@@ -11937,7 +11630,7 @@
       ],
       "look_alike": [
         {
-          "id": "animal_talpidae",
+          "id": "animal_scaptochirus_moschatus",
           "name": "鼹形鼠(近缘)",
           "distinction": "麝鼹眼极小而隐、前爪如铲;鼹形鼠体较粗。均栖地下",
           "fatality": "无"
@@ -11967,8 +11660,12 @@
         "whole"
       ],
       "description": "华北农田草甸地下穴居兽,眼极小、前爪如铲善掘土。营地下生活拱起土垄,捕食地栖昆虫幼虫。",
-      "source": "中国兽类图鉴",
-      "reviewer": "XX 教授(动物学)"
+      "source": "中国哺乳动物志",
+      "reviewer": "XX 教授(动物学)",
+      "photo_sources": [
+        "Scaptochirus moschatus",
+        "麝鼹 animal"
+      ]
     },
     {
       "id": "animal_petaurista",
@@ -12057,104 +11754,6 @@
         "whole"
       ],
       "description": "华中山地森林大型鼯鼠,体侧翼膜可在树间滑翔数十米。夜行树栖,栖树洞,是少见的三有保护动物。",
-      "source": "中国兽类图鉴",
-      "reviewer": "XX 教授(动物学)"
-    },
-    {
-      "id": "animal_vulpes_vulpes",
-      "common_name": "赤狐",
-      "scientific_name": "Vulpes vulpes",
-      "kingdom": "animalia",
-      "category": "mammal_common",
-      "danger_level": 2,
-      "alias": [
-        "红狐",
-        "狐狸",
-        "草狐"
-      ],
-      "features": [
-        "体长 60-90cm",
-        "体毛红褐、尾粗大蓬松(关键)",
-        "尾尖白色",
-        "耳尖黑色"
-      ],
-      "distribution": [
-        "内蒙古",
-        "山西",
-        "河北",
-        "山东",
-        "河南",
-        "西藏"
-      ],
-      "min_elevation": 0,
-      "max_elevation": 3500,
-      "habitats": [
-        "山地",
-        "草原",
-        "农田"
-      ],
-      "active_months": [
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7",
-        "8",
-        "9",
-        "10",
-        "11",
-        "12"
-      ],
-      "venom_type": "none",
-      "venom_location": "",
-      "attack_distance_cm": 0,
-      "active_time": "夜间",
-      "hibernation_months": [],
-      "protection_level": "无(三有保护)",
-      "symptoms": [
-        "一般避人",
-        "被逼可咬",
-        "可能携带狂犬病毒"
-      ],
-      "look_alike": [
-        {
-          "id": "animal_nyctereutes",
-          "name": "貉(近缘)",
-          "distinction": "赤狐体红褐、尾粗尾尖白;貉体灰褐、脸有黑眼罩",
-          "fatality": "低"
-        }
-      ],
-      "first_aid_id": "",
-      "first_aid_links": {
-        "咬伤": "firstaid_animal_bite"
-      },
-      "protective_gear": [
-        "勿投喂",
-        "勿徒手捉"
-      ],
-      "route_associations": [
-        {
-          "route_id": "route_wutaishan",
-          "months": [
-            "1",
-            "2",
-            "6",
-            "7",
-            "8"
-          ]
-        }
-      ],
-      "representative_color": {
-        "h": 20,
-        "s": 70,
-        "v": 60
-      },
-      "images": [
-        "whole"
-      ],
-      "description": "华北山地草原常见中型食肉兽,体红褐、尾大尾尖白。夜行独居,食鼠类与果实,是鼠类重要天敌。",
       "source": "中国兽类图鉴",
       "reviewer": "XX 教授(动物学)"
     },
@@ -12250,103 +11849,6 @@
         "head"
       ],
       "description": "著名剧毒蛇\"五步蛇\",吻端上翘尖突、体背有方形大斑。血循毒致出血坏死,山区林下须格外警惕。",
-      "source": "中国蛇类图鉴",
-      "reviewer": "XX 教授(两栖爬行学)"
-    },
-    {
-      "id": "animal_naja_atra",
-      "common_name": "舟山眼镜蛇",
-      "scientific_name": "Naja atra",
-      "kingdom": "animalia",
-      "category": "venomous_snake",
-      "danger_level": 4,
-      "alias": [
-        "中华眼镜蛇",
-        "饭铲头",
-        "扁颈蛇"
-      ],
-      "features": [
-        "体长 100-150cm",
-        "受惊时颈膨扁(关键)",
-        "颈背有白色眼镜状斑",
-        "体背黑褐有白横纹"
-      ],
-      "distribution": [
-        "河南(南部)",
-        "山西(南部)",
-        "山东(南部)",
-        "陕西(南部)"
-      ],
-      "min_elevation": 0,
-      "max_elevation": 1200,
-      "habitats": [
-        "丘陵",
-        "农田",
-        "林缘"
-      ],
-      "active_months": [
-        "4",
-        "5",
-        "6",
-        "7",
-        "8",
-        "9",
-        "10"
-      ],
-      "venom_type": "neurotoxin",
-      "venom_location": "前沟牙",
-      "attack_distance_cm": 100,
-      "active_time": "昼间",
-      "hibernation_months": [
-        "11",
-        "12",
-        "1",
-        "2",
-        "3"
-      ],
-      "protection_level": "无(三有保护)",
-      "symptoms": [
-        "咬伤局部麻木、疼痛",
-        "眼睑下垂、复视",
-        "呼吸肌麻痹,可致呼吸衰竭"
-      ],
-      "look_alike": [
-        {
-          "id": "animal_naja",
-          "name": "眼镜蛇属(近缘)",
-          "distinction": "舟山眼镜蛇颈背有眼镜斑、体黑褐;均剧毒,受激将颈膨扁",
-          "fatality": "高"
-        }
-      ],
-      "first_aid_id": "",
-      "first_aid_links": {
-        "咬伤": "firstaid_snake_bite"
-      },
-      "protective_gear": [
-        "穿高帮鞋",
-        "勿惊扰",
-        "勿徒手捕捉"
-      ],
-      "route_associations": [
-        {
-          "route_id": "route_taishan_dong",
-          "months": [
-            "6",
-            "7",
-            "8"
-          ]
-        }
-      ],
-      "representative_color": {
-        "h": 30,
-        "s": 20,
-        "v": 30
-      },
-      "images": [
-        "whole",
-        "head"
-      ],
-      "description": "中国南方及华北南部剧毒眼镜蛇,受激时颈膨扁、颈背现眼镜斑。神经毒可致呼吸麻痹,遇之应远避。",
       "source": "中国蛇类图鉴",
       "reviewer": "XX 教授(两栖爬行学)"
     }

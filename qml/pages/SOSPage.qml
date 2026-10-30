@@ -17,8 +17,8 @@
  *   它内部会 call120() 并群发短信, 是整页后果最重的一次操作.
  *   真机验证时这些行一律不许按满 (项目记忆: 真机绝不触发拨号/短信).
  *
- * 读数不许编: 没定位就写 "NO FIX", 海拔没给就是 "--"; 「生成短信草稿」未定位时
- * 交给 service 的 "GPS 位置未获取到" 文案, 不拼假坐标.
+ * 读数不许编: 没定位时坐标位写 "--", 状态位写 "未定位" (坐标走等宽字体, 塞不进汉字),
+ * 海拔没给就是 "--"; 「生成短信草稿」未定位时交给 service 的 "GPS 位置未获取到" 文案, 不拼假坐标.
  *
  * 坏消息不许过期: 复制/草稿两条失败写进页面常驻的 note 行, 不用 3 秒就消失的
  * toast (成功侧仍用 toast —— 那是一次性确认, 不值得占版面).
@@ -64,6 +64,14 @@ Page {
 
     readonly property bool hasHeading: compassSensor ? compassSensor.valid : false
     readonly property real headingDeg: hasHeading ? compassSensor.heading : 0
+    // 2026-10-26: 第二朝向来源 = GPS 行进方向 (EmergencyService.currentCourse).
+    //   与 ①营地 / ④地图 同一套口径; 两者都没有就不画针、读数给 "--" (不给 0° 假方向).
+    readonly property real courseDeg: emergencyService
+        ? emergencyService.currentCourse : Number.NaN
+    readonly property bool hasCourse: isFinite(courseDeg)
+    readonly property real effHeadingDeg: hasHeading ? headingDeg
+                                                     : (hasCourse ? courseDeg : 0)
+    readonly property bool hasEffHeading: hasHeading || hasCourse
 
     // 最后一次定位的读取时刻. 只有 locationUpdated 会改写它, 所以显示的是"读取"而不是"现在".
     property string fixTime: "--:--"
@@ -77,13 +85,21 @@ Page {
     readonly property string coordText: hasFix
         ? curLat.toFixed(5) + (curLat >= 0 ? " N" : " S") + " / "
           + curLon.toFixed(5) + (curLon >= 0 ? " E" : " W")
-        : "NO FIX"
+        : "--"
     readonly property string altText: (hasFix && isFinite(altM))
         ? CommonOptions.formatElevation(altM) : "--"
-    readonly property string accText: (hasFix && accM >= 0)
+    // 精度: 2026-10-22 #98 起未知是 NaN (以前是 0, 会画成 "±0 m" 这种假数)
+    readonly property string accText: (hasFix && isFinite(accM) && accM > 0)
         ? "\u00b1" + Math.round(accM) + " m" : "--"
-    readonly property string headingText: hasHeading
-        ? Math.round(headingDeg) + "\u00b0" : "--"
+    readonly property string headingText: hasEffHeading
+        ? Math.round(effHeadingDeg) + "°" : "--"
+
+    // 读数空着的原因 (C++ 侧翻好的中文). 求助页上这一行尤其不能省: 救援方最需要的
+    // 就是知道"坐标是实的、精度还不知道".
+    readonly property string fixDiag: emergencyService ? emergencyService.locationDiag : ""
+    readonly property string readoutHint:
+        (hasFix && !isFinite(altM))
+            ? "本次定位不带高程（网络定位常见），海拔读不出" : fixDiag
 
     // 「先做这一步」+「紧急联系人」: 两个 service 方法都没有 NOTIFY, 只能手动取数
     property var triage: []
@@ -184,6 +200,9 @@ Page {
     // === 版面 ===============================================================
     ScrollView {
         anchors.fill: parent
+        // A41 (pass6 b02): 这一页自己没有吸底条, 折边就是底部导航条 (NavBands) 的上描边 ——
+        //   最下面的 SOS 长按条被切掉半截, 看不出是"还能滚"还是"被盖住"。留一格让位。
+        anchors.bottomMargin: styles.bottomClearance
         contentWidth: parent.width
 
         ColumnLayout {
@@ -205,10 +224,8 @@ Page {
                     anchors.rightMargin: 64
                     spacing: 3
                     Text {
-                        text: "SOS"
-                        font.family: styles.monoFont
+                        text: "求助"
                         font.pixelSize: styles.fsXs
-                        font.letterSpacing: 1.6
                         color: CommonOptions.colorInk3
                     }
                     Text {
@@ -224,7 +241,9 @@ Page {
                         text: sosPage.hasFix
                               ? (sosPage.hasHeading
                                  ? "定位就绪 · 朝向 " + sosPage.headingText
-                                 : "定位就绪 · 无罗盘朝向, 按正北读")
+                                 : (sosPage.hasCourse
+                                    ? "定位就绪 · 按行进方向 " + sosPage.headingText
+                                    : "定位就绪 · 无朝向来源, 按正北读"))
                               : "尚未定位 · 草稿里只有时间没有坐标"
                         font.pixelSize: styles.fsSm
                         color: CommonOptions.colorTextMuted
@@ -245,20 +264,23 @@ Page {
                 Layout.leftMargin: styles.pageMargin
                 Layout.rightMargin: styles.pageMargin
                 showDial: true
-                label: "LIVE POSITION"
-                trailing: sosPage.hasFix ? "GPS FIX" : "NO FIX"
+                label: "实时位置"
+                trailing: sosPage.hasFix ? "已定位" : "未定位"
                 trailingColor: sosPage.hasFix
                                ? CommonOptions.colorForest : CommonOptions.colorLegendAmber
                 coordText: sosPage.coordText
+                hint: sosPage.readoutHint
                 cells: [
                     { v: sosPage.altText,   k: "海拔" },
                     { v: sosPage.accText,   k: "精度" },
                     { v: sosPage.fixTime,   k: "读取" }
                 ]
                 dialValue: sosPage.headingText
-                dialLabel: "HDG"
-                dialHeading: sosPage.headingDeg
-                dialHasFix: sosPage.hasFix
+                dialLabel: "方位"
+                dialHeading: sosPage.effHeadingDeg
+                // 与 ①营地 同: 这个属性在 Dial 里的意思是"指针可画", 不是"有定位".
+                //   有定位但两个朝向来源都没数时画一根 0° 的针 = 假方向.
+                dialHasFix: sosPage.hasEffHeading
             }
 
             // --- 两个次级动作: 只加工文本, 不发出去 ---
@@ -299,7 +321,7 @@ Page {
                 Layout.rightMargin: styles.pageMargin
                 Layout.topMargin: 2
                 text: "紧急号码"
-                trailing: "HOLD 2 S"
+                trailing: "长按 2 秒"
             }
 
             Rectangle {
@@ -442,7 +464,7 @@ Page {
                 Layout.rightMargin: styles.pageMargin
                 Layout.topMargin: 2
                 text: "先做这一步"
-                trailing: "TRIAGE"
+                trailing: "分级"
             }
 
             ColumnLayout {
@@ -547,7 +569,7 @@ Page {
                 SectionTitle {
                     Layout.fillWidth: true
                     text: "紧急联系人 " + sosPage.contacts.length + " 位"
-                    trailing: "LIST"
+                    trailing: "清单"
                 }
                 OutlineButton {
                     Layout.alignment: Qt.AlignVCenter

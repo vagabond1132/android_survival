@@ -25,6 +25,12 @@
  *   3. 复合条件 "altitude >= L4 AND season in [...]" 之前只按前缀取了 altitude
  *      一段; AND 拆分逻辑放在 EquipmentService::matchCondition。
  *   4. 取值语法 `in [a, b]` 之前各策略只认 `== 'x'`, 现统一支持。
+ *
+ * 2026-10-22 新增 (装备推荐区分度问题):
+ *   1. 数值比较补 `<=` / `<` / `>` —— 保暖规则的写法是 "temp_min <= -10"
+ *      (越冷越要穿), 只有 `>=` 时一条温度规则都写不出来。
+ *   2. temp_min / temp_avg / load 三个前缀; load 是序数枚举, 同时支持
+ *      `>= overnight` 与 `in [overnight, expedition]`。
  */
 #pragma once
 
@@ -93,13 +99,57 @@ inline QStringList enumValues(const QString& cond, const QString& prefix) {
     return out;
 }
 
-/** @brief 数值比较 "<prefix> >= <num>" */
-inline bool numericGe(const QString& cond, const QString& prefix, double actual) {
-    const QString s = rhsAfterOperator(cond, prefix);
-    if (!s.startsWith(QStringLiteral(">="))) return false;
+/**
+ * @brief 拆掉开头的比较符, 原地返回去掉操作符后的 RHS
+ * @return 命中的操作符文本; 空串 = 不是比较写法
+ */
+inline QString takeCompareOp(QString& rhs) {
+    static const QStringList ops = {
+        QStringLiteral(">="), QStringLiteral("<="), QStringLiteral(">"), QStringLiteral("<")
+    };
+    QString t = rhs.trimmed();
+    for (const QString& op : ops) {
+        if (t.startsWith(op)) {
+            rhs = t.mid(op.size()).trimmed();
+            return op;
+        }
+    }
+    rhs = t;
+    return QString();
+}
+
+/** @brief actual <op> threshold */
+inline bool applyCompare(double actual, const QString& op, double threshold) {
+    if (op == QLatin1String(">=")) return actual >= threshold;
+    if (op == QLatin1String("<=")) return actual <= threshold;
+    if (op == QLatin1String(">"))  return actual >  threshold;
+    if (op == QLatin1String("<"))  return actual <  threshold;
+    return false;
+}
+
+/**
+ * @brief 数值比较: `<prefix> >=|<=|>|< <num>`
+ *
+ * 2026-10-22: 取代只有 `>=` 的 numericGe —— 温度类规则的写法天然是反的,
+ * "越冷越要保暖" 要写 `temp_min <= -10`, 没有 `<=` 就一条温度规则都挂得上,
+ * 42 条规则里 0 条看温度就是这么来的。
+ * @note 数字的 `==` 不走这里 (枚举的 == 由 enumValues 处理)
+ */
+inline bool numericCompare(const QString& cond, const QString& prefix, double actual) {
+    QString rhs = rhsAfterOperator(cond, prefix);
+    const QString op = takeCompareOp(rhs);
+    if (op.isEmpty()) return false;
     bool ok = false;
-    const double threshold = s.mid(2).trimmed().toDouble(&ok);
-    return ok && actual >= threshold;
+    const double threshold = rhs.toDouble(&ok);
+    return ok && applyCompare(actual, op, threshold);
+}
+
+/** @brief 比较符后的取值: ">= overnight" → "overnight" (枚举/序数条件用) */
+inline QString compareOperand(const QString& cond, const QString& prefix, QString* opOut) {
+    QString rhs = rhsAfterOperator(cond, prefix);
+    const QString op = takeCompareOp(rhs);
+    if (opOut) *opOut = op;
+    return rhs;
 }
 
 /** @brief 枚举成员判定: vals 中任一 token 经 table 映射后等于 actual */
@@ -159,7 +209,7 @@ class WindSpeedCondition : public RuleConditionStrategy {
 public:
     QString prefix() const override { return QStringLiteral("wind_speed"); }
     bool matches(const QString& cond, const TripParameters& p) const override {
-        return detail::numericGe(cond, QStringLiteral("wind_speed"), p.windSpeed);
+        return detail::numericCompare(cond, QStringLiteral("wind_speed"), p.windSpeed);
     }
 };
 
@@ -168,7 +218,7 @@ class DaysCondition : public RuleConditionStrategy {
 public:
     QString prefix() const override { return QStringLiteral("days"); }
     bool matches(const QString& cond, const TripParameters& p) const override {
-        return detail::numericGe(cond, QStringLiteral("days"), p.days);
+        return detail::numericCompare(cond, QStringLiteral("days"), p.days);
     }
 };
 
@@ -177,7 +227,7 @@ class DifficultyCondition : public RuleConditionStrategy {
 public:
     QString prefix() const override { return QStringLiteral("difficulty"); }
     bool matches(const QString& cond, const TripParameters& p) const override {
-        return detail::numericGe(cond, QStringLiteral("difficulty"), p.difficulty);
+        return detail::numericCompare(cond, QStringLiteral("difficulty"), p.difficulty);
     }
 };
 
@@ -186,22 +236,73 @@ class DiurnalRangeCondition : public RuleConditionStrategy {
 public:
     QString prefix() const override { return QStringLiteral("diurnal_range"); }
     bool matches(const QString& cond, const TripParameters& p) const override {
-        return detail::numericGe(cond, QStringLiteral("diurnal_range"), p.diurnalRange);
+        return detail::numericCompare(cond, QStringLiteral("diurnal_range"), p.diurnalRange);
+    }
+};
+
+/** temp_min <= <num> (°C) — 夜间最低气温, 2026-10-22 新增
+ *  写法是 "temp_min <= -10" (越冷越要保暖), 保暖/防冻规则从此挂钩温度 */
+class TempMinCondition : public RuleConditionStrategy {
+public:
+    QString prefix() const override { return QStringLiteral("temp_min"); }
+    bool matches(const QString& cond, const TripParameters& p) const override {
+        return detail::numericCompare(cond, QStringLiteral("temp_min"), p.tempMin);
+    }
+};
+
+/** temp_avg <= <num> (°C) — 日间平均温度, 2026-10-22 新增
+ *  用于防暑/补水这类"越热越要"的条件, 也可写 >= 表达低温风险 */
+class TempAvgCondition : public RuleConditionStrategy {
+public:
+    QString prefix() const override { return QStringLiteral("temp_avg"); }
+    bool matches(const QString& cond, const TripParameters& p) const override {
+        return detail::numericCompare(cond, QStringLiteral("temp_avg"), p.tempAvg);
+    }
+};
+
+/**
+ * load >= overnight / load in [overnight, expedition] — 背负方式, 2026-10-22 新增
+ * 序数即档位 (DayHike 0 → Expedition 3), `>=` 比大小, `in [...]` 走枚举表。
+ */
+class LoadCondition : public RuleConditionStrategy {
+public:
+    QString prefix() const override { return QStringLiteral("load"); }
+    bool matches(const QString& cond, const TripParameters& p) const override {
+        static const QHash<QString, LoadStyle> table = {
+            { QStringLiteral("day_hike"),   LoadStyle::DayHike   },
+            { QStringLiteral("fast_pack"),  LoadStyle::FastPack  },
+            { QStringLiteral("overnight"),  LoadStyle::Overnight },
+            { QStringLiteral("expedition"), LoadStyle::Expedition },
+        };
+        QString op;
+        const QString rhs = detail::compareOperand(cond, prefix(), &op);
+        if (!op.isEmpty()) {
+            auto it = table.constFind(rhs);
+            if (it == table.constEnd()) return false;
+            return detail::applyCompare(static_cast<int>(p.load), op,
+                                       static_cast<int>(it.value()));
+        }
+        return detail::anyEquals(detail::enumValues(cond, prefix()), table, p.load);
     }
 };
 
 // ===== 枚举策略 (支持 == 'x' 与 in [a, b]) =====
 
-/** precipitation == 'light'|'moderate'|'heavy'|'storm' / in [heavy, storm] */
+/** precipitation == 'light'|'moderate'|'heavy'|'storm' / in [heavy, storm]
+ *  2026-10-21: 补 snow_* 四档, 冬季表单的降水行按降雪出选项 */
 class PrecipitationCondition : public RuleConditionStrategy {
 public:
     QString prefix() const override { return QStringLiteral("precipitation"); }
     bool matches(const QString& cond, const TripParameters& p) const override {
         static const QHash<QString, Precipitation> table = {
-            { QStringLiteral("light"),    Precipitation::Light    },
-            { QStringLiteral("moderate"), Precipitation::Moderate },
-            { QStringLiteral("heavy"),    Precipitation::Heavy    },
-            { QStringLiteral("storm"),    Precipitation::Storm    },
+            { QStringLiteral("light"),        Precipitation::Light        },
+            { QStringLiteral("moderate"),     Precipitation::Moderate     },
+            { QStringLiteral("heavy"),        Precipitation::Heavy        },
+            { QStringLiteral("storm"),        Precipitation::Storm        },
+            { QStringLiteral("snow_light"),    Precipitation::SnowLight    },
+            { QStringLiteral("snow_moderate"), Precipitation::SnowModerate },
+            { QStringLiteral("snow_heavy"),    Precipitation::SnowHeavy    },
+            { QStringLiteral("snow_storm"),    Precipitation::SnowStorm    },
         };
         return detail::anyEquals(
             detail::enumValues(cond, QStringLiteral("precipitation")), table, p.precipitation);

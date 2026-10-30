@@ -2,3 +2,5 @@ module OutdoorSurvival
 MapInstrumentOverlay 1.0 MapInstrumentOverlay.qml
 MapBottomSheet 1.0 MapBottomSheet.qml
 RouteSummaryPanel 1.0 RouteSummaryPanel.qml
+SheetPanelHead 1.0 SheetPanelHead.qml
+SheetActionBand 1.0 SheetActionBand.qml

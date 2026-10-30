@@ -247,7 +247,7 @@ Page {
                     spacing: styles.spSm
                     Plate {
                         Layout.alignment: Qt.AlignVCenter
-                        code: "PLATE " + CommonOptions.plateCode("SV", entity.id || "")
+                        code: CommonOptions.plateCode("SV", entity.id || "")
                         tone: CommonOptions.colorInk3
                     }
                     Item { Layout.fillWidth: true }
@@ -297,10 +297,8 @@ Page {
                     spacing: styles.spSm
                     Text {
                         Layout.alignment: Qt.AlignVCenter
-                        text: "SKILL READOUT"
-                        font.family: styles.monoFont
+                        text: "技能读数"
                         font.pixelSize: styles.fsXs
-                        font.letterSpacing: 1.4
                         color: CommonOptions.colorInk3
                     }
                     Item { Layout.fillWidth: true }
@@ -318,10 +316,10 @@ Page {
                     spacing: 0
                     Repeater {
                         model: [
-                            { k: "MATERIALS", v: String(survivalDetail._materials.length) },
-                            { k: "STEPS", v: String(survivalDetail._steps.length) },
-                            { k: "WARNINGS", v: String(survivalDetail._warnings.length) },
-                            { k: "TIPS", v: String(survivalDetail._tips.length) }
+                            { k: "材料", v: String(survivalDetail._materials.length) },
+                            { k: "步骤", v: String(survivalDetail._steps.length) },
+                            { k: "警示", v: String(survivalDetail._warnings.length) },
+                            { k: "提示", v: String(survivalDetail._tips.length) }
                         ]
                         delegate: RowLayout {
                             required property var modelData
@@ -341,9 +339,7 @@ Page {
                                 Text {
                                     Layout.fillWidth: true
                                     text: modelData.k
-                                    font.family: styles.monoFont
                                     font.pixelSize: styles.fsXs
-                                    font.letterSpacing: 1.2
                                     color: CommonOptions.colorInk3
                                     elide: Text.ElideRight
                                 }
@@ -365,6 +361,7 @@ Page {
         ScrollView {
             Layout.fillWidth: true
             Layout.fillHeight: true
+            Layout.bottomMargin: styles.bottomClearance   // A41: 末行给下面的吸底条让位
             contentWidth: width
             clip: true
             visible: (survivalDetail.entity.id || "").length > 0
@@ -402,10 +399,8 @@ Page {
                     }
                     Text {
                         Layout.alignment: Qt.AlignVCenter
-                        text: survivalDetail._materials.length + " ITEMS"
-                        font.family: styles.monoFont
+                        text: survivalDetail._materials.length + " 项"
                         font.pixelSize: styles.fsXs
-                        font.letterSpacing: 1.4
                         color: CommonOptions.colorInk3
                     }
                 }
@@ -450,10 +445,8 @@ Page {
                     }
                     Text {
                         Layout.alignment: Qt.AlignVCenter
-                        text: survivalDetail._steps.length + " STEPS"
-                        font.family: styles.monoFont
+                        text: survivalDetail._steps.length + " 个步骤"
                         font.pixelSize: styles.fsXs
-                        font.letterSpacing: 1.4
                         color: CommonOptions.colorInk3
                     }
                 }

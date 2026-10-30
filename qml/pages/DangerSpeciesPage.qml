@@ -91,8 +91,11 @@ Page {
             for (var k = 0; k < src.length; ++k)
                 if (Number(src[k].category) === categoryList[c].id) members.push(src[k])
             if (members.length === 0) continue
+            // head/item 共用一个 delegate: `visible: false` 那一支的绑定照样求值,
+            // 所以两种行的字段都要齐 (10-22 巡检: 缺 tone/name/level 报 206 条).
             out.push({ kind: "head", label: categoryList[c].name,
-                       tone: categoryList[c].tone, count: members.length })
+                       tone: categoryList[c].tone, count: members.length,
+                       speciesId: "", name: "", plate: "", sub: "", level: 0 })
             for (var m = 0; m < members.length; ++m) {
                 var e = members[m]
                 // getDangerous 不给生境与海拔, 逐条从同一 service 取齐 (规则 ①)
@@ -109,6 +112,7 @@ Page {
                     name: String(e.commonName || "未命名"),
                     plate: CommonOptions.plateCode("SP", String(e.id || "")),
                     level: lvl,
+                    label: "", count: 0, tone: categoryList[c].tone,
                     sub: (hab.length > 0 ? hab : "生境未标注")
                          + (elev.length > 0 ? " · " + elev : "")
                 })
@@ -122,7 +126,8 @@ Page {
             if (known.indexOf(Number(src[r].category)) < 0) rest.push(src[r])
         if (rest.length > 0) {
             out.push({ kind: "head", label: "其他危险",
-                       tone: CommonOptions.colorInk3, count: rest.length })
+                       tone: CommonOptions.colorInk3, count: rest.length,
+                       speciesId: "", name: "", plate: "", sub: "", level: 0 })
             for (var q = 0; q < rest.length; ++q) {
                 out.push({
                     kind: "item",
@@ -130,6 +135,7 @@ Page {
                     name: String(rest[q].commonName || "未命名"),
                     plate: CommonOptions.plateCode("SP", String(rest[q].id || "")),
                     level: Number(rest[q].dangerLevel) || 0,
+                    label: "", count: 0, tone: CommonOptions.colorInk3,
                     sub: "类目未归类"
                 })
             }
@@ -174,10 +180,8 @@ Page {
                 anchors.rightMargin: 40      // 给右上角方角让位
                 spacing: 3
                 Text {
-                    text: "DANGER"
-                    font.family: styles.monoFont
+                    text: "危险度"
                     font.pixelSize: styles.fsXs
-                    font.letterSpacing: 1.8
                     color: CommonOptions.colorInk3
                 }
                 Text {
@@ -251,10 +255,8 @@ Page {
                     spacing: styles.spSm
                     Text {
                         Layout.alignment: Qt.AlignVCenter
-                        text: "DANGER SCALE"
-                        font.family: styles.monoFont
+                        text: "危险度标尺"
                         font.pixelSize: styles.fsXs
-                        font.letterSpacing: 1.4
                         color: CommonOptions.colorInk3
                     }
                     Item { Layout.fillWidth: true }
@@ -375,10 +377,8 @@ Page {
                         }
                         Text {
                             Layout.alignment: Qt.AlignVCenter
-                            text: modelData.count + " ITEMS"
-                            font.family: styles.monoFont
+                            text: modelData.count + " 项"
                             font.pixelSize: styles.fsXs
-                            font.letterSpacing: 1.4
                             color: CommonOptions.colorInk3
                         }
                     }

@@ -22,8 +22,8 @@ RowLayout {
 
     property string icon: ""                                  // IconLabel 语义名
     property string text: ""
-    // 右侧拉丁微标签 (mock 里每节标题旁的 "PRIORITY" / "RECORDS").
-    // 只收拉丁/数字: CJK 一律不加字距, 所以这个槽不拿来放中文.
+    // 右侧小字说明 (计数后缀 / "无记录"). 走默认字族: 这里装的是汉字,
+    // 汉字加字距或进 monoFont 都是上一版最刺眼的假印刷感.
     property string trailing: ""
     property color titleColor: CommonOptions.colorText
     property color iconColor: CommonOptions.colorAccent
@@ -50,9 +50,9 @@ RowLayout {
     Text {
         visible: sectionTitle.trailing.length > 0
         text: sectionTitle.trailing
-        font.family: styles.monoFont
+        // trailing 现在装的是汉字说明 (原先是 ROUTES/ITEMS 一类拉丁微标签).
+        //   不走 monoFont: 那套字体没有中文字形, 真机上回退失败出方框; 字距同理只给拉丁.
         font.pixelSize: styles.fsXs
-        font.letterSpacing: 1.4
         color: CommonOptions.colorInk3
         verticalAlignment: Text.AlignVCenter
     }

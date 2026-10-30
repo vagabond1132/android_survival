@@ -167,7 +167,11 @@ Page {
         return t + " · 已学 " + learnedCount
     }
 
+    // rows 是 reload() 里命令式算的, 不是绑定 —— 改筛选必须自己触发重建 (A36)。
+    // callLater: reload() 重写 catCounts, 而 chip 行 model 读着它, 就地重建会把正在
+    //   发 clicked 的 delegate 删在信号栈上。
     Component.onCompleted: reload()
+    onCurrentCategoryChanged: Qt.callLater(knotPage.reload)
     Connections {
         target: knotService
         function onDataChanged() { knotPage.reload() }
@@ -194,10 +198,8 @@ Page {
                 anchors.rightMargin: 40
                 spacing: 3
                 Text {
-                    text: "MANUAL / KNOTS"
-                    font.family: styles.monoFont
+                    text: "手册 · 绳结"
                     font.pixelSize: styles.fsXs
-                    font.letterSpacing: 1.8
                     color: CommonOptions.colorInk3
                 }
                 Text {
@@ -314,12 +316,9 @@ Page {
                             font.bold: true
                             elide: Text.ElideRight
                         }
-                        // 拉丁微标签才加字距, 中文不加 (样式铁律)
                         Text {
-                            text: modelData.count + " KNOTS"
-                            font.family: styles.monoFont
+                            text: modelData.count + " 个绳结"
                             font.pixelSize: styles.fsXs
-                            font.letterSpacing: 1.4
                             color: CommonOptions.colorInk3
                         }
                     }
@@ -371,15 +370,18 @@ Page {
                             size: 13
                             tintColor: CommonOptions.colorForest
                         }
-                        // 难度梯: 3 格实心 = 档数, 第 3 格上色 = 高难. 不用 "★★★":
-                        // 星号既占宽又要在 mono 里排, 而这一栏只表达"要练几遍".
+                        // 难度梯: 3 格实心 = 档数. 色走 difficultyColor (与路线目录、
+                        // 绳结详情同一把尺), 不再用 topTone: colorHazard —— 本页开头
+                        // 就写了"hazard 红这一页一律不碰", 而 2026-10-22 #96(d) 收到的
+                        // 问题正是"难度的格是红的、chip 里的难度是灰的, 哪个才是难度".
+                        // 不用 "★★★": 星号既占宽又要在 mono 里排, 而这一栏只表达"要练几遍".
                         // 走 Ladder 组件而不是内联 Repeater —— 内层 model: 3 会把外层
                         // delegate 的 modelData 遮蔽掉, 梯度在真机上会永远空着.
                         Ladder {
                             Layout.alignment: Qt.AlignVCenter
                             cells: 3
                             value: modelData.difficulty
-                            topTone: CommonOptions.colorHazard
+                            tone: CommonOptions.difficultyColor(modelData.difficulty)
                         }
                         IconLabel {
                             Layout.alignment: Qt.AlignVCenter
@@ -413,7 +415,8 @@ Page {
                 // (写了就是 qmllint missing-property), 高度只能自己按内容算.
                 footer: Item {
                     width: knotList.width
-                    height: footRow.implicitHeight + styles.spMd + styles.spLg
+                    // A41: 末尾那格就是"给吸底条让位"的量, 滚到底时「重置进度」整行露出
+                    height: footRow.implicitHeight + styles.spMd + styles.bottomClearance
 
                     RowLayout {
                         id: footRow

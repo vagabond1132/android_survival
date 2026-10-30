@@ -145,6 +145,16 @@ Page {
         return out
     }
     readonly property bool _bothPointsUsable: _points[0].ok === true && _points[1].ok === true
+    // 端点坐标可信度 (#131): 量化误差与来源都是数据侧字段 (coord_precision_m /
+    // coord_source), 格式化走 CommonOptions, 与地图读数条同一个口径。
+    // "齐"不等于"准": 库里 286 条端点是整数度坐标 (±5.6 公里), 落到图上是一整片山,
+    // 所以读数条必须跟着出现, 而且粗到当不了导航目标时不许标绿。
+    readonly property int _coordPrecisionM: Number(entity.coordPrecisionM) || 0
+    readonly property string _coordPrecisionText: CommonOptions.coordPrecisionLabel(_coordPrecisionM)
+    readonly property string _coordSourceText: CommonOptions.coordSourceLabel(entity.coordSource || "")
+    readonly property bool _coordCoarse: _coordPrecisionM >= 1000
+    // polyline 在不在库: 0 = 地图上只能画起终点示意直线
+    readonly property int _waypointCount: Number(entity.waypointCount) || 0
 
     function _mkPoint(tag, code, rawName, addr, lat, lon, mountain) {
         var la = Number(lat) || 0
@@ -360,7 +370,7 @@ Page {
                     spacing: styles.spSm
                     Plate {
                         Layout.alignment: Qt.AlignVCenter
-                        code: "PLATE " + CommonOptions.plateCode("RT", entity.id || "")
+                        code: CommonOptions.plateCode("RT", entity.id || "")
                         tone: CommonOptions.colorInk3
                     }
                     Item { Layout.fillWidth: true }
@@ -413,10 +423,8 @@ Page {
                     spacing: styles.spSm
                     Text {
                         Layout.alignment: Qt.AlignVCenter
-                        text: "ROUTE READOUT"
-                        font.family: styles.monoFont
+                        text: "路线读数"
                         font.pixelSize: styles.fsXs
-                        font.letterSpacing: 1.4
                         color: CommonOptions.colorInk3
                     }
                     Item { Layout.fillWidth: true }
@@ -434,10 +442,10 @@ Page {
                     spacing: 0
                     Repeater {
                         model: [
-                            { k: "HOURS", v: String(routeDetail._hours) },
-                            { k: "DAYS", v: String(routeDetail._days) },
-                            { k: "GAIN", v: "+" + routeDetail._gain },
-                            { k: "MAX", v: String(routeDetail._maxAlt) }
+                            { k: "小时", v: String(routeDetail._hours) },
+                            { k: "天数", v: String(routeDetail._days) },
+                            { k: "爬升", v: "+" + routeDetail._gain },
+                            { k: "最高", v: String(routeDetail._maxAlt) }
                         ]
                         delegate: RowLayout {
                             required property var modelData
@@ -456,9 +464,7 @@ Page {
                                 Text {
                                     Layout.fillWidth: true
                                     text: modelData.k
-                                    font.family: styles.monoFont
                                     font.pixelSize: styles.fsXs
-                                    font.letterSpacing: 1.2
                                     color: CommonOptions.colorInk3
                                     elide: Text.ElideRight
                                 }
@@ -489,6 +495,7 @@ Page {
         ScrollView {
             Layout.fillWidth: true
             Layout.fillHeight: true
+            Layout.bottomMargin: styles.bottomClearance   // A41: 末行给下面的吸底条让位
             contentWidth: width
             clip: true
             visible: routeDetail.hasEntity
@@ -591,11 +598,36 @@ Page {
                     }
                     Text {
                         Layout.alignment: Qt.AlignVCenter
-                        text: routeDetail._bothPointsUsable ? "坐标齐全" : "有缺坐标"
+                        text: !routeDetail._bothPointsUsable ? "有缺坐标"
+                              : (routeDetail._coordPrecisionText.length > 0
+                                 ? "端点 " + routeDetail._coordPrecisionText
+                                 : "坐标齐全")
                         font.pixelSize: styles.fsXs
-                        color: routeDetail._bothPointsUsable ? CommonOptions.colorForest
-                                                             : CommonOptions.colorLegendAmber
+                        color: (routeDetail._bothPointsUsable && !routeDetail._coordCoarse)
+                               ? CommonOptions.colorForest
+                               : CommonOptions.colorLegendAmber
                     }
+                }
+
+                // 端点是什么性质 + 线是不是实测 (#131)
+                Text {
+                    Layout.fillWidth: true
+                    Layout.leftMargin: styles.pageMargin
+                    Layout.rightMargin: styles.pageMargin
+                    visible: routeDetail._coordSourceText.length > 0
+                             || routeDetail._waypointCount > 0
+                    text: {
+                        var bits = []
+                        if (routeDetail._coordSourceText.length > 0)
+                            bits.push("坐标来源: " + routeDetail._coordSourceText)
+                        bits.push(routeDetail._waypointCount > 0
+                                  ? "路径点 " + routeDetail._waypointCount + " 个 (图上按实测轨迹连线)"
+                                  : "库里没有路径点, 图上那条线是起终点直线示意")
+                        return bits.join("  ·  ")
+                    }
+                    font.pixelSize: styles.fsXs
+                    color: CommonOptions.colorTextMuted
+                    wrapMode: Text.WordWrap
                 }
 
                 Repeater {
@@ -898,10 +930,8 @@ Page {
                     }
                     Text {
                         Layout.alignment: Qt.AlignVCenter
-                        text: routeDetail._seasons.length + " MONTHS"
-                        font.family: styles.monoFont
+                        text: routeDetail._seasons.length + " 个月"
                         font.pixelSize: styles.fsXs
-                        font.letterSpacing: 1.4
                         color: CommonOptions.colorInk3
                     }
                 }
@@ -939,10 +969,8 @@ Page {
                     }
                     Text {
                         Layout.alignment: Qt.AlignVCenter
-                        text: routeDetail._terrainList.length + " TYPES"
-                        font.family: styles.monoFont
+                        text: routeDetail._terrainList.length + " 类地形"
                         font.pixelSize: styles.fsXs
-                        font.letterSpacing: 1.4
                         color: CommonOptions.colorInk3
                     }
                 }
@@ -1006,10 +1034,8 @@ Page {
                         }
                         Text {
                             Layout.alignment: Qt.AlignVCenter
-                            text: routeDetail.assocList.length + " SPECIES"
-                            font.family: styles.monoFont
+                            text: routeDetail.assocList.length + " 个物种"
                             font.pixelSize: styles.fsXs
-                            font.letterSpacing: 1.4
                             color: CommonOptions.colorInk3
                         }
                     }

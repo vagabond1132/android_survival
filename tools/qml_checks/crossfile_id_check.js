@@ -78,3 +78,4 @@ for (const [f, t] of texts) {
     }
 }
 console.log('=== 跨文件 id 引用 ' + n + ' 处 ===');
+process.exit(n ? 1 : 0);

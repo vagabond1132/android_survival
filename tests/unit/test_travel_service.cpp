@@ -6,8 +6,11 @@
 #include <QtTest>
 #include <QCoreApplication>
 #include <QTemporaryDir>
+#include <QJsonArray>
+#include <QJsonObject>
 
 #include "src/travel/TravelService.h"
+#include "src/core/AssetLoader.h"
 #include "src/core/Database.h"
 
 using namespace outdoor;
@@ -36,7 +39,7 @@ private slots:
     }
 
     // === 数据加载 ===
-    void test_load_initial_data() {
+    void test_loadInitialCount() {  // 2026-10-22: 原名 test_load_initial_data, *_data 无配对 = 从不执行
         QVERIFY(m_service->totalCount() >= 100);
         qInfo() << "Loaded travels:" << m_service->totalCount();
     }
@@ -161,6 +164,51 @@ private slots:
         QCOMPARE(m_service->search("").size(), m_service->totalCount());
     }
 
+    // 2026-10-27 #132: 地点级检索. 与 RouteService::searchPlaces 同一张表结构 ——
+    // 「查找」Tab 的地点模式把两个来源合并成同一个列表渲染, 一边缺键就画出一行空字.
+    void test_searchPlaces_contract() {
+        // 注意与 search("") 相反: 地点检索没有"全量端点"这种东西, 空关键词必须是空表
+        QCOMPARE(m_service->searchPlaces(QString()).size(), 0);
+
+        QString poi, routeId;
+        for (const auto& item : m_service->getAll()) {
+            const QVariantMap t = m_service->getById(item.toMap()["id"].toString());
+            const QString n = t["startName"].toString();
+            const double lat = t["startLat"].toDouble();
+            const double lon = t["startLon"].toDouble();
+            if (n.length() >= 2 && !(lat == 0.0 && lon == 0.0)) {
+                poi = n;
+                routeId = t["id"].toString();
+                break;
+            }
+        }
+        QVERIFY2(!poi.isEmpty(), "库里没有一个带坐标的起点名, 这条测试就没意义");
+
+        const QVariantList hits = m_service->searchPlaces(poi, 40);
+        QVERIFY2(hits.size() > 0, qPrintable(QStringLiteral("搜自己的起点名 %1 却 0 命中").arg(poi)));
+        bool ownHit = false;
+        for (const auto& v : hits) {
+            const QVariantMap m = v.toMap();
+            QVERIFY(!m["name"].toString().isEmpty());
+            QVERIFY(!m["routeId"].toString().isEmpty());
+            QVERIFY(!m["routeName"].toString().isEmpty());
+            const QString side = m["side"].toString();
+            QVERIFY2(side == QStringLiteral("起点") || side == QStringLiteral("终点"),
+                     qPrintable(side));
+            QVERIFY(m["id"].toString() == m["routeId"].toString()
+                    + (side == QStringLiteral("起点") ? QStringLiteral("#start")
+                                                      : QStringLiteral("#end")));
+            QVERIFY2(!(m["lat"].toDouble() == 0.0 && m["lon"].toDouble() == 0.0),
+                     "缺坐标的哨兵不该出现在地点结果里");
+            if (m["routeId"].toString() == routeId && side == QStringLiteral("起点"))
+                ownHit = true;
+        }
+        QVERIFY(ownHit);
+        QVERIFY2(hits.first().toMap()["name"].toString()
+                     .contains(poi, Qt::CaseInsensitive),
+                 qPrintable(hits.first().toMap()["name"].toString()));
+    }
+
     // === tag 字段 (2026-10-20) ===
     // travel.json 用的是单数 "tag" + "/" 连接字符串, loader 原本读复数数组 "tags"
     // → 每条 tags 恒空 → 按标签搜永远 0 命中. 这条钉住拆分与搜索两条链路.
@@ -227,6 +275,89 @@ private slots:
         QCOMPARE(months.first(), QStringLiteral("全部"));
         for (int i = 1; i < months.size(); ++i) {
             QVERIFY(months.at(i).contains("月"));
+        }
+    }
+
+    // === 端点精度元数据 (2026-10-27 #131c) ===
+    // 自驾库里 88/101 条的起点坐标与终点坐标逐位相同 —— 两端取的是同一个城区中心
+    // 点。TravelDetailPage 用 coordSource 说清这件事, MapPage 用它拼读数条; 这几句
+    // 话只有在键真的从 travel.json 读到时才成立。写成断言是因为读错键 (蛇形/驼峰混用,
+    // #44 C2) 的表现是"读数条安静地少一段", 肉眼看不出来。
+    void test_coord_metadata_reaches_ui() {
+        int total = 0, cityCenter = 0, editorial = 0, precise = 0;
+        for (const auto& v : m_service->getAll()) {
+            const QString id = v.toMap()["id"].toString();
+            const QVariantMap t = m_service->getById(id);
+            QVERIFY2(!t.isEmpty(), qPrintable(id + " getById 返回空"));
+            ++total;
+            const QString src = t["coordSource"].toString();
+            const int m = t["coordPrecisionM"].toInt();
+            QVERIFY2(src == "city_center" || src == "editorial_estimate",
+                     qPrintable(id + ": coordSource 读出来是 \"" + src + "\""));
+            if (src == "city_center") ++cityCenter; else ++editorial;
+            if (m > 0) ++precise;
+            QVERIFY2(m <= 56000, qPrintable(id + ": 精度读数超出库内上限"));
+            // city_center 的含义就是"两端同一个点", 标记与数据必须互证
+            if (src == "city_center") {
+                QVERIFY2(t["startLat"].toDouble() == t["endLat"].toDouble()
+                         && t["startLon"].toDouble() == t["endLon"].toDouble(),
+                         qPrintable(id + ": 标了 city_center 但两端不是同一个点"));
+            }
+        }
+        QVERIFY2(total >= 100, "自驾库条数不对, 上面这些计数没有意义");
+        // 反证: loader 一个键都没读时 cityCenter/editorial/precise 会一起塌成 0,
+        // 光看 "src 非空" 是挡不住的 (空串不等于任何已知来源, 但 total 仍然过)
+        QVERIFY2(cityCenter >= 50, qPrintable(QString("城区中心点只有 %1 条").arg(cityCenter)));
+        QVERIFY2(editorial >= 5, qPrintable(QString("editorial_estimate 只有 %1 条").arg(editorial)));
+        QVERIFY2(precise == total, qPrintable(QString("%1/%2 条标了精度").arg(precise).arg(total)));
+        qInfo() << "travel coord metadata:" << total << "records,"
+                << cityCenter << "city_center," << editorial << "editorial," << precise << "with precision";
+    }
+
+    // 与 routes 侧同一件事: 全工程"没有坐标"的约定是 (0,0) 这一对。QGeoCoordinate
+    // 未设置时 latitude()/longitude() 返回 91.0/181.0, 那不是 0, QML 的 _validCoord
+    // 会放行并画出一个境外点 —— 所以库里既不许出现哨兵, 标记也必须与数据一致。
+    void test_endpoints_never_leak_invalid_sentinel() {
+        for (const auto& v : m_service->getAll()) {
+            const QString id = v.toMap()["id"].toString();
+            const QVariantMap t = m_service->getById(id);
+            for (const QString& side : {QString("start"), QString("end")}) {
+                const double la = t[side + "Lat"].toDouble();
+                const double lo = t[side + "Lon"].toDouble();
+                QVERIFY2(qAbs(la) <= 90.0 && qAbs(lo) <= 180.0,
+                         qPrintable(id + ": " + side + " = " + QString::number(la) + ", "
+                                    + QString::number(lo) + " (91/181 是 QGeoCoordinate 未设置的哨兵)"));
+                const bool missing = (la == 0.0 && lo == 0.0);
+                if (side == "end") {
+                    // 没有坐标必须有标记, 否则 UI 只能整行不说, 看着像数据丢了
+                    if (missing) QVERIFY2(t["endCoordUnavailable"].toBool(),
+                                          qPrintable(id + ": 终点无坐标但没标 endCoordUnavailable"));
+                } else {
+                    QVERIFY2(!missing, qPrintable(id + ": 起点没有坐标, 自驾页无法定位"));
+                }
+            }
+            // 端点缺坐标时地名必须还在: 不知道在哪 ≠ 不知道是什么地方
+            if (t["endCoordUnavailable"].toBool())
+                QVERIFY2(!t["endName"].toString().isEmpty(), qPrintable(id + ": 终点名字被一起清了"));
+        }
+    }
+
+    // 蛇形键在 travel.json 里等于没写: TravelService::loadFromJson 读的是驼峰,
+    // 这条把键名口径钉住 (门禁 tools/qml_checks/coord_metadata_check.js 从数据侧查同一件事)。
+    void test_travel_json_keys_are_camelcase() {
+        QString err;
+        auto doc = AssetLoader::loadJson("travel.json", &err);
+        QVERIFY2(doc.has_value(), qPrintable(err));
+        const QJsonArray arr = doc->object()["routes"].toArray();
+        QVERIFY(arr.size() >= 100);
+        for (const auto& v : arr) {
+            const QJsonObject o = v.toObject();
+            QVERIFY2(!o.contains("coord_precision_m"),
+                     qPrintable(o["id"].toString() + ": travel.json 出现蛇形键, 解析端读不到"));
+            QVERIFY2(!o.contains("coord_source"),
+                     qPrintable(o["id"].toString() + ": travel.json 出现蛇形键 coord_source"));
+            QVERIFY2(o.contains("coordPrecisionM") && o.contains("coordSource"),
+                     qPrintable(o["id"].toString() + ": 缺 coordPrecisionM/coordSource"));
         }
     }
 };

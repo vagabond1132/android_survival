@@ -8,7 +8,7 @@
  *
  * 版式 (与已评审的 mock 逐行对应):
  *   ┌ 3px 橙条 ┌────────────────────────────────┐
- *   │ LIVE POSITION                    10:42    │  微标签行: 拉丁才加字距
+ *   │ 实时位置                        10:42    │  微标签行: 汉字, 不加字距
  *   │ 40.43721 N / 115.90338 E                  │  等宽一行, 不许折
  *   │ - - - - - - - - - - - - - - - - - - - - -  │  虚线 (印刷套版)
  *   │ 1180 m   ±12 m   184°   10:42             │  四格读数, 每格 数 + 名
@@ -17,8 +17,8 @@
  * 坐标行: 一行读不完就换行而不是 elide —— 坐标被截半比折成两行更糟 (读数会读错
  * 半截). ⑤把 74px 盘嵌进来之后宽度变窄, 走的就是折行分支.
  * coordText 与 cells 的 v 只许装拉丁和数字: 它们画在等宽 Text 里, monospace 族
- * 没有汉字字形, 混排会出方框 (见 Styles ⑦). 未定位就传 "NO FIX", 汉字说明写在
- * 页面标题条那行; 读数单位要中文就放进 cells 的 k 里 (k 用默认字族).
+ * 没有汉字字形, 混排会出方框 (见 Styles ⑦). 未定位就传 "--", "未定位"那类汉字说明
+ * 写在同一行的 trailing 上; 读数单位要中文就放进 cells 的 k 里 (k 用默认字族).
  */
 
 import QtQuick
@@ -35,9 +35,13 @@ Rectangle {
 
     Styles { id: styles; visible: false }
 
-    property string label: "LIVE POSITION"
+    property string label: "实时位置"
     property string trailing: ""            // 右上角时间/状态
     property string coordText: "--"
+    // 2026-10-22 #98: 读数为什么是空的 —— 一句话说明 (汉字, 走默认字族).
+    // "--" 自己不会说话: 用户分不清"还没定到位"和"这台机器定不到位", 只会反复重进页面.
+    // 空串时整行不占版面.
+    property string hint: ""
     // [{ v: "1180 m", k: "海拔" }, ...]  最多 4 格, 多了会挤
     property var cells: []
     property color panelColor: CommonOptions.colorInkPanel
@@ -50,7 +54,7 @@ Rectangle {
     property real dialHeading: 0
     property bool dialHasFix: true
     property string dialValue: "--"
-    property string dialLabel: "HDG"
+    property string dialLabel: "航向"
     property var dialSectors: []
     property var dialTargets: []
 
@@ -104,9 +108,8 @@ Rectangle {
             spacing: 6
             Text {
                 text: readout.label
-                font.family: styles.monoFont
+                // 汉字不进等宽 (monoFont 无中文字形, 真机出方框)
                 font.pixelSize: styles.fsXs
-                font.letterSpacing: 1.4
                 color: CommonOptions.colorOnInkDim
                 Layout.fillWidth: true
                 elide: Text.ElideRight
@@ -114,7 +117,6 @@ Rectangle {
             Text {
                 visible: readout.trailing.length > 0
                 text: readout.trailing
-                font.family: styles.monoFont
                 font.pixelSize: styles.fsXs
                 color: readout.trailingColor
             }
@@ -180,11 +182,23 @@ Rectangle {
                     }
                     Text {
                         text: nameText
-                        font.pixelSize: 7
+                        font.pixelSize: 9
                         color: CommonOptions.colorOnInkDim
                     }
                 }
             }
+        }
+
+        // --- 定位说明 (只在读数缺失时出现) ---
+        Text {
+            visible: readout.hint.length > 0
+            Layout.fillWidth: true
+            text: readout.hint
+            font.pixelSize: styles.fsXs
+            color: CommonOptions.colorBlazeSoft
+            wrapMode: Text.Wrap
+            maximumLineCount: 2
+            elide: Text.ElideRight
         }
         }   // body (ColumnLayout)
     }       // row (RowLayout: 迷你盘 + 读数)

@@ -55,6 +55,9 @@ bool TravelService::loadFromJson() {
         t.endCity = o["endCity"].toString();
         t.startName = o["startName"].toString();
         t.endName = o["endName"].toString();
+        t.coordPrecisionM = o["coordPrecisionM"].toInt();
+        t.coordSource = o["coordSource"].toString();
+        t.endCoordUnavailable = o["endCoordUnavailable"].toBool(false);
         t.startLat = o["startLat"].toDouble();
         t.startLon = o["startLon"].toDouble();
         t.endLat = o["endLat"].toDouble();
@@ -111,6 +114,10 @@ QVariantMap TravelService::getById(const QString& id) {
     result["startLon"] = t.startLon;
     result["endLat"] = t.endLat;
     result["endLon"] = t.endLon;
+    // 端点只是城区中心点、或量化误差大到不能当导航目标时, UI 要如实讲。
+    result["coordPrecisionM"] = t.coordPrecisionM;
+    result["coordSource"] = t.coordSource;
+    result["endCoordUnavailable"] = t.endCoordUnavailable;
     result["distanceKm"] = t.distanceKm;
     result["days"] = t.days;
     result["driveHours"] = t.driveHours;
@@ -161,6 +168,64 @@ QVariantList TravelService::search(const QString& keyword) {
             list.append(m);
         }
     }
+    return list;
+}
+
+// 2026-10-27 #132: 与 RouteService::searchPlaces 同一返回结构, 便于「查找」Tab
+// 把两类来源合并成一个地点列表渲染.
+QVariantList TravelService::searchPlaces(const QString& keyword, int limit) {
+    QVariantList list;
+    const QString kw = keyword.trimmed();
+    if (kw.isEmpty() || limit <= 0) return list;
+
+    struct Hit { int score; QVariantMap m; };
+    QList<Hit> hits;
+
+    for (const auto& t : m_travels) {
+        QStringList routeNames;
+        routeNames << t.name << t.tags.join(QStringLiteral(",")) << t.description;
+        for (int side = 0; side < 2; ++side) {
+            const bool isStart = (side == 0);
+            const QString& poi = isStart ? t.startName : t.endName;
+            const double lat = isStart ? t.startLat : t.endLat;
+            const double lon = isStart ? t.startLon : t.endLon;
+            const QString& city = isStart ? t.startCity : t.endCity;
+            if (poi.isEmpty()) continue;
+            if (lat == 0.0 && lon == 0.0) continue;   // 缺坐标哨兵
+
+            int score = 0;
+            if (poi.contains(kw, Qt::CaseInsensitive) ||
+                city.contains(kw, Qt::CaseInsensitive))
+                score = 3;
+            else if (t.province.contains(kw, Qt::CaseInsensitive))
+                score = 1;
+            else {
+                for (const auto& e : routeNames)
+                    if (e.contains(kw, Qt::CaseInsensitive)) { score = 2; break; }
+            }
+            if (score == 0) continue;
+
+            QVariantMap m;
+            m["id"] = t.id + (isStart ? QStringLiteral("#start") : QStringLiteral("#end"));
+            m["name"] = poi;
+            m["routeId"] = t.id;
+            m["routeName"] = t.name;
+            m["side"] = isStart ? QStringLiteral("起点") : QStringLiteral("终点");
+            m["lat"] = lat;
+            m["lon"] = lon;
+            m["address"] = QString();   // travel.json 没有详细地址字段
+            QStringList region;
+            for (const QString& s : {t.province, city})
+                if (!s.trimmed().isEmpty() && !region.contains(s)) region << s;
+            m["region"] = region.join(QStringLiteral(" · "));
+            hits.append({score, m});
+        }
+    }
+
+    std::stable_sort(hits.begin(), hits.end(),
+                     [](const Hit& a, const Hit& b) { return a.score > b.score; });
+    const int n = std::min(limit, static_cast<int>(hits.size()));
+    for (int i = 0; i < n; ++i) list.append(hits.at(i).m);
     return list;
 }
 

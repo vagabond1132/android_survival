@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "kingdom": "insecta",
-  "updated_at": "2026-10-08",
+  "updated_at": "2026-10-28",
   "description": "全国常见毒虫/节肢动物图鉴(蜱虫/胡蜂/蝎子/蜈蚣/隐翅虫/蚊/蚂蚁)",
   "insects": [
     {
@@ -171,7 +171,7 @@
       ],
       "look_alike": [
         {
-          "id": "insect_bee",
+          "id": "insect_apis_dorsata",
           "name": "蜜蜂",
           "distinction": "蜜蜂体型小腰粗,胡蜂体型大腰细;蜜蜂蛰后死亡,胡蜂可多次蛰",
           "fatality": "高"
@@ -214,117 +214,41 @@
       ]
     },
     {
-      "id": "insect_bee",
-      "common_name": "中华蜜蜂",
-      "scientific_name": "Apis cerana",
-      "kingdom": "insecta",
-      "category": "bee",
-      "danger_level": 2,
-      "alias": [
-        "中蜂",
-        "土蜂"
-      ],
-      "features": [
-        "体长 1-1.5cm",
-        "黄褐色",
-        "群居于树洞或蜂箱"
-      ],
-      "distribution": [
-        "山东",
-        "山西",
-        "河北",
-        "河南",
-        "全国广布"
-      ],
-      "min_elevation": 0,
-      "max_elevation": 2500,
-      "habitats": [
-        "山区",
-        "林缘",
-        "村边"
-      ],
-      "active_months": [
-        "3",
-        "4",
-        "5",
-        "6",
-        "7",
-        "8",
-        "9",
-        "10"
-      ],
-      "venom_type": "bee_venom",
-      "venom_location": "尾部",
-      "active_time": "日间",
-      "hibernation_months": [
-        "11",
-        "12",
-        "1",
-        "2"
-      ],
-      "symptoms": [
-        "蛰伤后剧痛红肿",
-        "过敏者致过敏性休克"
-      ],
-      "look_alike": [
-        {
-          "id": "insect_wasp",
-          "name": "胡蜂",
-          "distinction": "胡蜂体型大腰细,蜜蜂体型小腰粗",
-          "fatality": "低(过敏者高)"
-        }
-      ],
-      "first_aid_links": {
-        "蛰伤": "firstaid_insect_bite"
-      },
-      "protective_gear": [
-        "过敏者随身带肾上腺素"
-      ],
-      "route_associations": [],
-      "representative_color": {
-        "h": 50,
-        "s": 80,
-        "v": 80
-      },
-      "images": [
-        "whole"
-      ],
-      "description": "较温顺,蛰人多为受惊或护巢。",
-      "source": "中国昆虫志",
-      "reviewer": "XX(昆虫学)",
-      "photo_sources": [
-        "Apis cerana",
-        "中华蜜蜂 insect"
-      ]
-    },
-    {
       "id": "insect_centipede",
       "common_name": "少棘蜈蚣",
       "scientific_name": "Scolopendra subspinipes",
       "kingdom": "insecta",
       "category": "centipede",
-      "danger_level": 3,
+      "danger_level": 4,
       "alias": [
-        "蜈蚣"
+        "蜈蚣",
+        "百足虫",
+        "天龙"
       ],
       "features": [
         "体长 10-15cm",
         "体扁,21 节",
         "每节有足 1 对",
-        "具毒颚(头足)"
+        "具毒颚(头足)",
+        "体背墨绿或黄褐,21 对步足(关键)",
+        "第一对足特化为毒颚",
+        "体扁长,行动迅捷"
       ],
       "distribution": [
         "山东",
         "河南",
         "河北",
-        "山西"
+        "山西",
+        "全国广布"
       ],
       "min_elevation": 0,
-      "max_elevation": 1500,
+      "max_elevation": 2000,
       "habitats": [
         "石缝",
         "土块下",
-        "潮湿处"
+        "潮湿处",
+        "砖隙",
+        "潮湿草丛"
       ],
       "active_months": [
         "4",
@@ -336,28 +260,53 @@
         "10"
       ],
       "venom_type": "centipede_venom",
-      "venom_location": "毒颚",
+      "venom_location": "第一对步足(毒颚)",
       "active_time": "夜间",
       "hibernation_months": [
         "11",
         "12",
         "1",
         "2",
-        "3"
+        "3",
+        "4"
       ],
       "symptoms": [
         "咬伤剧痛红肿",
-        "过敏者可能发热、淋巴肿"
+        "过敏者可能发热、淋巴肿",
+        "咬伤即剧痛、红肿",
+        "局部淋巴结肿大",
+        "重者发热、头痛、恶心",
+        "儿童及过敏者症状较重"
       ],
-      "look_alike": [],
+      "look_alike": [
+        {
+          "id": "insect_lithobius",
+          "name": "石蜈蚣(小毒)",
+          "distinction": "石蜈蚣体长约 3cm、步足 15 对、色淡;少棘蜈蚣大、21 对足、色深",
+          "fatality": "低"
+        }
+      ],
       "first_aid_links": {
-        "咬伤": "firstaid_centipede_bite"
+        "咬伤": "firstaid_centipede_bite",
+        "蜇伤": "firstaid_centipede_bite"
       },
       "protective_gear": [
         "翻动石块小心",
-        "夜行手电"
+        "夜行手电",
+        "翻石搬柴戴手套",
+        "勿徒手抓",
+        "咬伤立即冲洗就医"
       ],
-      "route_associations": [],
+      "route_associations": [
+        {
+          "route_id": "route_lao_mountain",
+          "months": [
+            "6",
+            "7",
+            "8"
+          ]
+        }
+      ],
       "representative_color": {
         "h": 30,
         "s": 30,
@@ -366,8 +315,8 @@
       "images": [
         "whole"
       ],
-      "description": "北方常见。中药全蝎用其干燥体。",
-      "source": "中国无脊椎动物志",
+      "description": "华北大型蜈蚣,藏于石缝砖隙,夜出捕食。咬伤剧痛红肿,翻石搬物须戴手套。",
+      "source": "中国动物志·多足纲 / 急救医学",
       "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Scolopendra subspinipes",
@@ -383,25 +332,35 @@
       "danger_level": 3,
       "alias": [
         "全蝎",
-        "钳蝎"
+        "钳蝎",
+        "马氏钳蝎",
+        "蝎子"
       ],
       "features": [
         "体长 5-8cm",
         "头胸部短",
         "后腹部 6 节",
-        "末端有尾刺(毒针)"
+        "末端有尾刺(毒针)",
+        "体长 4-6cm",
+        "全蝎黄褐色,背部有 5 条纵脊(关键)",
+        "尾末端有弯曲毒针",
+        "螯肢发达"
       ],
       "distribution": [
         "山东",
         "河南",
         "河北",
-        "山西"
+        "山西",
+        "全国(北方)"
       ],
       "min_elevation": 0,
-      "max_elevation": 1500,
+      "max_elevation": 2000,
       "habitats": [
         "土墙缝",
-        "石块下"
+        "石块下",
+        "干燥石缝",
+        "土穴",
+        "老墙"
       ],
       "active_months": [
         "4",
@@ -420,21 +379,46 @@
         "12",
         "1",
         "2",
-        "3"
+        "3",
+        "10",
+        "4"
       ],
       "symptoms": [
         "蛰伤剧痛、麻木",
-        "严重者心律失常"
+        "严重者心律失常",
+        "蛰伤剧痛、灼热",
+        "局部红肿麻木",
+        "重者头痛、恶心、出汗",
+        "过敏者可致休克"
       ],
-      "look_alike": [],
+      "look_alike": [
+        {
+          "id": "insect_scorpion",
+          "name": "其他蝎类",
+          "distinction": "东亚钳蝎背有 5 纵脊、黄褐;各地蝎形态相近,均不宜徒手抓",
+          "fatality": "中"
+        }
+      ],
       "first_aid_links": {
         "蛰伤": "firstaid_scorpion_sting"
       },
       "protective_gear": [
         "检查衣物鞋袜",
-        "夜行勿赤脚"
+        "夜行勿赤脚",
+        "夜宿检查鞋内、被褥",
+        "勿徒手翻石缝",
+        "蛰伤立即伤肢制动就医"
       ],
-      "route_associations": [],
+      "route_associations": [
+        {
+          "route_id": "route_tai_mountain",
+          "months": [
+            "6",
+            "7",
+            "8"
+          ]
+        }
+      ],
       "representative_color": {
         "h": 30,
         "s": 50,
@@ -443,8 +427,8 @@
       "images": [
         "whole"
       ],
-      "description": "北方山区有分布。中药全蝎原料,有一定毒性。",
-      "source": "中国无脊椎动物志",
+      "description": "华北干旱山地常见蝎子,白天藏石缝,夜间捕猎。蛰伤剧痛,夜宿须检查鞋袜被褥。",
+      "source": "中国动物志·蛛形纲 / 急救医学",
       "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Mesobuthus martensii",
@@ -851,74 +835,6 @@
       ]
     },
     {
-      "id": "insect_flea",
-      "common_name": "人蚤",
-      "scientific_name": "Pulex irritans",
-      "kingdom": "insecta",
-      "category": "flea",
-      "danger_level": 1,
-      "alias": [
-        "跳蚤"
-      ],
-      "features": [
-        "体长 2-3mm",
-        "侧扁",
-        "后足长善跳跃",
-        "褐色"
-      ],
-      "distribution": [
-        "山东",
-        "山西",
-        "河北",
-        "河南",
-        "全国广布"
-      ],
-      "min_elevation": 0,
-      "max_elevation": 2000,
-      "habitats": [
-        "宿主身上",
-        "床铺",
-        "动物窝"
-      ],
-      "active_months": [
-        "全年"
-      ],
-      "venom_type": "flea_saliva",
-      "venom_location": "口器",
-      "attack_distance_cm": 0,
-      "active_time": "全天",
-      "hibernation_months": [],
-      "symptoms": [
-        "叮咬后红点剧痒",
-        "鼠疫、鼠型斑疹伤寒媒介"
-      ],
-      "look_alike": [],
-      "first_aid_id": "",
-      "first_aid_links": {
-        "叮咬": "firstaid_flea_bite"
-      },
-      "protective_gear": [
-        "灭鼠",
-        "除蚤"
-      ],
-      "route_associations": [],
-      "representative_color": {
-        "h": 30,
-        "s": 50,
-        "v": 30
-      },
-      "images": [
-        "whole"
-      ],
-      "description": "鼠疫主要传播媒介。北方有散布。",
-      "source": "中国媒介生物学",
-      "reviewer": "XX(昆虫学)",
-      "photo_sources": [
-        "Pulex irritans",
-        "人蚤 insect"
-      ]
-    },
-    {
       "id": "insect_mite",
       "common_name": "恙螨",
       "scientific_name": "Trombiculidae",
@@ -1195,81 +1111,6 @@
       "photo_sources": [
         "Periplaneta americana",
         "蟑螂 insect"
-      ]
-    },
-    {
-      "id": "insect_fly",
-      "common_name": "家蝇",
-      "scientific_name": "Musca domestica",
-      "kingdom": "insecta",
-      "category": "fly",
-      "danger_level": 1,
-      "alias": [
-        "苍蝇"
-      ],
-      "features": [
-        "体长 6-7mm",
-        "灰黑色",
-        "复眼大"
-      ],
-      "distribution": [
-        "山东",
-        "山西",
-        "河北",
-        "河南",
-        "全国广布"
-      ],
-      "min_elevation": 0,
-      "max_elevation": 2000,
-      "habitats": [
-        "人居周围"
-      ],
-      "active_months": [
-        "4",
-        "5",
-        "6",
-        "7",
-        "8",
-        "9",
-        "10"
-      ],
-      "venom_type": "none",
-      "venom_location": "",
-      "attack_distance_cm": 0,
-      "active_time": "日间",
-      "hibernation_months": [
-        "11",
-        "12",
-        "1",
-        "2",
-        "3"
-      ],
-      "symptoms": [
-        "不叮咬",
-        "传播肠道疾病"
-      ],
-      "look_alike": [],
-      "first_aid_id": "",
-      "first_aid_links": {},
-      "protective_gear": [
-        "纱窗",
-        "灭蝇"
-      ],
-      "route_associations": [],
-      "representative_color": {
-        "h": 0,
-        "s": 0,
-        "v": 50
-      },
-      "images": [
-        "whole"
-      ],
-      "description": "常见卫生害虫。",
-      "source": "中国卫生害虫",
-      "reviewer": "XX(昆虫学)",
-      "photo_sources": [
-        "Musca domestica",
-        "家蝇 insect"
       ]
     },
     {
@@ -1852,76 +1693,6 @@
       "photo_sources": [
         "Harmonia axyridis",
         "异色瓢虫 insect"
-      ]
-    },
-    {
-      "id": "insect_mantis",
-      "common_name": "中华大刀螳",
-      "scientific_name": "Tenodera sinensis",
-      "kingdom": "insecta",
-      "category": "mantis",
-      "danger_level": 0,
-      "alias": [
-        "刀螂"
-      ],
-      "features": [
-        "体长 7-10cm",
-        "体绿色或褐色",
-        "前足镰刀状"
-      ],
-      "distribution": [
-        "山东",
-        "山西",
-        "河北",
-        "河南",
-        "全国广布"
-      ],
-      "min_elevation": 0,
-      "max_elevation": 1500,
-      "habitats": [
-        "灌丛",
-        "草丛"
-      ],
-      "active_months": [
-        "6",
-        "7",
-        "8",
-        "9",
-        "10"
-      ],
-      "venom_type": "none",
-      "venom_location": "",
-      "attack_distance_cm": 0,
-      "active_time": "日间",
-      "hibernation_months": [
-        "11",
-        "12",
-        "1",
-        "2",
-        "3",
-        "4",
-        "5"
-      ],
-      "symptoms": [],
-      "look_alike": [],
-      "first_aid_id": "",
-      "first_aid_links": {},
-      "protective_gear": [],
-      "route_associations": [],
-      "representative_color": {
-        "h": 90,
-        "s": 50,
-        "v": 60
-      },
-      "images": [
-        "whole"
-      ],
-      "description": "捕食害虫有益。",
-      "source": "中国昆虫志",
-      "reviewer": "XX(昆虫学)",
-      "photo_sources": [
-        "Tenodera sinensis",
-        "中华大刀螳 insect"
       ]
     },
     {
@@ -3211,7 +2982,7 @@
       ],
       "look_alike": [
         {
-          "id": "insect_mantis",
+          "id": "insect_tenodera",
           "name": "中华大刀螳",
           "distinction": "大刀螳体型更大(可达 9cm)、前胸极长;薄翅螳体型中型、前胸较短",
           "fatality": "低"
@@ -3519,88 +3290,6 @@
       ]
     },
     {
-      "id": "insect_pediculidae",
-      "common_name": "头虱",
-      "scientific_name": "Pediculus humanus capitis",
-      "kingdom": "insecta",
-      "category": "louse",
-      "danger_level": 2,
-      "alias": [
-        "虱子",
-        "头虱"
-      ],
-      "features": [
-        "体长 2-3mm",
-        "体扁平灰白",
-        "爪适应攀附毛发",
-        "卵(虮子)黏附发根"
-      ],
-      "distribution": [
-        "山东",
-        "河南",
-        "河北",
-        "山西",
-        "全国广布"
-      ],
-      "min_elevation": 0,
-      "max_elevation": 3000,
-      "habitats": [
-        "人发",
-        "帽内衬",
-        "枕具"
-      ],
-      "active_months": [
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7",
-        "8",
-        "9",
-        "10",
-        "11",
-        "12"
-      ],
-      "venom_type": "louse_saliva",
-      "venom_location": "口器",
-      "active_time": "全天",
-      "hibernation_months": [],
-      "symptoms": [
-        "头皮剧烈瘙痒",
-        "抓破可继发感染",
-        "耳后颈后可见虱卵"
-      ],
-      "look_alike": [],
-      "first_aid_id": "",
-      "first_aid_links": {
-        "叮咬": "firstaid_louse_bite"
-      },
-      "protective_gear": [
-        "不共用帽子梳子",
-        "长线徒步定期检查",
-        "高温清洗衣物"
-      ],
-      "route_associations": [],
-      "representative_color": {
-        "h": 0,
-        "s": 0,
-        "v": 80
-      },
-      "images": [
-        "whole"
-      ],
-      "description": "寄生人体头发的吸血昆虫。卫生条件受限的长线徒步与集体住宿中易传播。",
-      "source": "中国媒介生物学",
-      "reviewer": "XX(昆虫学)",
-      "photo_sources": [
-        "Pediculus humanus capitis",
-        "Pediculus humanus",
-        "头虱 insect"
-      ]
-    },
-    {
       "id": "insect_anax",
       "common_name": "碧伟蜓",
       "scientific_name": "Anax parthenope",
@@ -3843,7 +3532,7 @@
       ],
       "look_alike": [
         {
-          "id": "insect_bee",
+          "id": "insect_apis_dorsata",
           "name": "中华蜜蜂",
           "distinction": "中华蜜蜂体瘦、腹部有环纹;熊蜂体粗壮、绒毛浓密、飞行笨重",
           "fatality": "低"
@@ -4398,7 +4087,7 @@
       ],
       "look_alike": [
         {
-          "id": "insect_flea",
+          "id": "insect_pulex_irritans",
           "name": "人蚤",
           "distinction": "人蚤颊部无栉齿、体较高;猫栉首蚤颊部有栉齿",
           "fatality": "低"
@@ -5041,7 +4730,7 @@
       ],
       "look_alike": [
         {
-          "id": "insect_fly",
+          "id": "insect_musca_domestica",
           "name": "家蝇",
           "distinction": "家蝇口器为舐吸式、不叮人;厩螫蝇口器为刺吸式、能吸血叮人",
           "fatality": "低"
@@ -5138,7 +4827,7 @@
       ],
       "look_alike": [
         {
-          "id": "insect_fly",
+          "id": "insect_musca_domestica",
           "name": "家蝇",
           "distinction": "家蝇体灰黑、眼暗红;大头金蝇体蓝绿金属光泽、复眼大而红褐",
           "fatality": "无"
@@ -5462,107 +5151,6 @@
       ]
     },
     {
-      "id": "insect_scolopendra",
-      "common_name": "少棘蜈蚣",
-      "scientific_name": "Scolopendra subspinipes",
-      "kingdom": "insecta",
-      "category": "centipede",
-      "danger_level": 4,
-      "alias": [
-        "蜈蚣",
-        "百足虫",
-        "天龙"
-      ],
-      "features": [
-        "体长 10-15cm",
-        "体背墨绿或黄褐,21 对步足(关键)",
-        "第一对足特化为毒颚",
-        "体扁长,行动迅捷"
-      ],
-      "distribution": [
-        "山东",
-        "河南",
-        "河北",
-        "山西",
-        "全国广布"
-      ],
-      "min_elevation": 0,
-      "max_elevation": 2000,
-      "habitats": [
-        "石缝",
-        "砖隙",
-        "潮湿草丛"
-      ],
-      "active_months": [
-        "5",
-        "6",
-        "7",
-        "8",
-        "9",
-        "10"
-      ],
-      "venom_type": "cytotoxin",
-      "venom_location": "第一对步足(毒颚)",
-      "active_time": "夜间",
-      "hibernation_months": [
-        "11",
-        "12",
-        "1",
-        "2",
-        "3",
-        "4"
-      ],
-      "symptoms": [
-        "咬伤即剧痛、红肿",
-        "局部淋巴结肿大",
-        "重者发热、头痛、恶心",
-        "儿童及过敏者症状较重"
-      ],
-      "look_alike": [
-        {
-          "id": "insect_lithobius",
-          "name": "石蜈蚣(小毒)",
-          "distinction": "石蜈蚣体长约 3cm、步足 15 对、色淡;少棘蜈蚣大、21 对足、色深",
-          "fatality": "低"
-        }
-      ],
-      "first_aid_id": "",
-      "first_aid_links": {
-        "蜇伤": "firstaid_centipede_bite"
-      },
-      "protective_gear": [
-        "翻石搬柴戴手套",
-        "勿徒手抓",
-        "咬伤立即冲洗就医"
-      ],
-      "route_associations": [
-        {
-          "route_id": "route_lao_mountain",
-          "months": [
-            "6",
-            "7",
-            "8"
-          ]
-        }
-      ],
-      "representative_color": {
-        "h": 60,
-        "s": 70,
-        "v": 60
-      },
-      "images": [
-        "whole"
-      ],
-      "description": "华北大型蜈蚣,藏于石缝砖隙,夜出捕食。咬伤剧痛红肿,翻石搬物须戴手套。",
-      "source": "中国动物志·多足纲 / 急救医学",
-      "reviewer": "XX(昆虫学)",
-      "photo_sources": [
-        "Scolopendra subspinipes",
-        "Scolopendra subspinipes",
-        "少棘蜈蚣 insect"
-      ]
-    },
-    {
       "id": "insect_lithobius",
       "common_name": "石蜈蚣",
       "scientific_name": "Lithobius",
@@ -5619,7 +5207,7 @@
       ],
       "look_alike": [
         {
-          "id": "insect_scolopendra",
+          "id": "insect_centipede",
           "name": "少棘蜈蚣(毒)",
           "distinction": "少棘蜈蚣体大 10-15cm、21 对足;石蜈蚣仅 3cm、15 对足",
           "fatality": "低"
@@ -5655,107 +5243,6 @@
       "photo_sources": [
         "Lithobius",
         "石蜈蚣 insect"
-      ]
-    },
-    {
-      "id": "insect_mesobuthus",
-      "common_name": "东亚钳蝎",
-      "scientific_name": "Mesobuthus martensii",
-      "kingdom": "insecta",
-      "category": "scorpion",
-      "danger_level": 3,
-      "alias": [
-        "马氏钳蝎",
-        "全蝎",
-        "蝎子"
-      ],
-      "features": [
-        "体长 4-6cm",
-        "全蝎黄褐色,背部有 5 条纵脊(关键)",
-        "尾末端有弯曲毒针",
-        "螯肢发达"
-      ],
-      "distribution": [
-        "山东",
-        "河南",
-        "河北",
-        "山西",
-        "全国(北方)"
-      ],
-      "min_elevation": 0,
-      "max_elevation": 2000,
-      "habitats": [
-        "干燥石缝",
-        "土穴",
-        "老墙"
-      ],
-      "active_months": [
-        "5",
-        "6",
-        "7",
-        "8",
-        "9"
-      ],
-      "venom_type": "neurotoxin",
-      "venom_location": "尾刺",
-      "active_time": "夜间",
-      "hibernation_months": [
-        "10",
-        "11",
-        "12",
-        "1",
-        "2",
-        "3",
-        "4"
-      ],
-      "symptoms": [
-        "蛰伤剧痛、灼热",
-        "局部红肿麻木",
-        "重者头痛、恶心、出汗",
-        "过敏者可致休克"
-      ],
-      "look_alike": [
-        {
-          "id": "insect_scorpion",
-          "name": "其他蝎类",
-          "distinction": "东亚钳蝎背有 5 纵脊、黄褐;各地蝎形态相近,均不宜徒手抓",
-          "fatality": "中"
-        }
-      ],
-      "first_aid_id": "",
-      "first_aid_links": {
-        "蛰伤": "firstaid_scorpion_sting"
-      },
-      "protective_gear": [
-        "夜宿检查鞋内、被褥",
-        "勿徒手翻石缝",
-        "蛰伤立即伤肢制动就医"
-      ],
-      "route_associations": [
-        {
-          "route_id": "route_tai_mountain",
-          "months": [
-            "6",
-            "7",
-            "8"
-          ]
-        }
-      ],
-      "representative_color": {
-        "h": 40,
-        "s": 50,
-        "v": 60
-      },
-      "images": [
-        "whole"
-      ],
-      "description": "华北干旱山地常见蝎子,白天藏石缝,夜间捕猎。蛰伤剧痛,夜宿须检查鞋袜被褥。",
-      "source": "中国动物志·蛛形纲 / 急救医学",
-      "reviewer": "XX(昆虫学)",
-      "photo_sources": [
-        "Mesobuthus martensii",
-        "Mesobuthus martensii",
-        "东亚钳蝎 insect"
       ]
     },
     {
@@ -5966,13 +5453,16 @@
       "danger_level": 2,
       "alias": [
         "人头虱",
-        "虱子"
+        "虱子",
+        "头虱"
       ],
       "features": [
         "体长 2-3mm",
         "体灰白,腹部分节(关键)",
         "爪特化可紧握头发",
-        "卵(虮子)黏附发根"
+        "卵(虮子)黏附发根",
+        "体扁平灰白",
+        "爪适应攀附毛发"
       ],
       "distribution": [
         "山东",
@@ -5982,11 +5472,14 @@
         "全国广布"
       ],
       "min_elevation": 0,
-      "max_elevation": 1500,
+      "max_elevation": 3000,
       "habitats": [
         "人体头发",
         "帽内",
-        "枕巾"
+        "枕巾",
+        "人发",
+        "帽内衬",
+        "枕具"
       ],
       "active_months": [
         "1",
@@ -6002,19 +5495,22 @@
         "11",
         "12"
       ],
-      "venom_type": "none",
-      "venom_location": "",
+      "venom_type": "louse_saliva",
+      "venom_location": "口器",
       "active_time": "昼夜",
       "hibernation_months": [],
       "symptoms": [
         "叮咬处剧痒",
         "头皮抓破可继发感染",
         "耳后颈后见虮子",
-        "偶致淋巴结肿大"
+        "偶致淋巴结肿大",
+        "头皮剧烈瘙痒",
+        "抓破可继发感染",
+        "耳后颈后可见虱卵"
       ],
       "look_alike": [
         {
-          "id": "insect_pediculidae",
+          "id": "insect_pediculus_capitis",
           "name": "虱类(通用)",
           "distinction": "头虱寄生于头发;体虱栖衣缝;阴虱栖阴毛;形态极似须镜检",
           "fatality": "无"
@@ -6027,7 +5523,10 @@
       "protective_gear": [
         "不共用帽子、梳子",
         "宿营勤换洗枕巾",
-        "高密度细齿梳篦除"
+        "高密度细齿梳篦除",
+        "不共用帽子梳子",
+        "长线徒步定期检查",
+        "高温清洗衣物"
       ],
       "route_associations": [
         {
@@ -6070,7 +5569,11 @@
         "体长 1.5-3.5mm",
         "体侧扁,后足善跳(关键)",
         "体黑褐,无翅",
-        "口器刺吸式"
+        "口器刺吸式",
+        "体长 2-3mm",
+        "侧扁",
+        "后足长善跳跃",
+        "褐色"
       ],
       "distribution": [
         "山东",
@@ -6080,11 +5583,13 @@
         "全国广布"
       ],
       "min_elevation": 0,
-      "max_elevation": 1800,
+      "max_elevation": 2000,
       "habitats": [
         "人体",
         "床铺",
-        "畜舍"
+        "畜舍",
+        "宿主身上",
+        "动物窝"
       ],
       "active_months": [
         "1",
@@ -6098,16 +5603,19 @@
         "9",
         "10",
         "11",
-        "12"
+        "12",
+        "全年"
       ],
-      "venom_type": "none",
-      "venom_location": "",
+      "venom_type": "flea_saliva",
+      "venom_location": "口器",
       "active_time": "昼夜",
       "hibernation_months": [],
       "symptoms": [
         "叮咬处剧痒,成串红斑",
         "可致过敏、继发感染",
-        "为鼠疫、斑疹伤寒潜在媒介"
+        "为鼠疫、斑疹伤寒潜在媒介",
+        "叮咬后红点剧痒",
+        "鼠疫、鼠型斑疹伤寒媒介"
       ],
       "look_alike": [
         {
@@ -6125,7 +5633,9 @@
       "protective_gear": [
         "勿接触野鼠、旱獭洞",
         "宿营垫高睡垫",
-        "野外穿长裤扎袜"
+        "野外穿长裤扎袜",
+        "灭鼠",
+        "除蚤"
       ],
       "route_associations": [
         {
@@ -6152,7 +5662,8 @@
         "Pulex irritans",
         "Pulex irritans",
         "人蚤 insect"
-      ]
+      ],
+      "attack_distance_cm": 0
     },
     {
       "id": "insect_sarcoptes",
@@ -6755,13 +6266,16 @@
       "danger_level": 1,
       "alias": [
         "大刀螂",
-        "螳螂"
+        "螳螂",
+        "刀螂"
       ],
       "features": [
         "体长 7-9cm",
         "体绿色或褐色",
         "前足镰刀状有刺(关键)",
-        "捕食时前足合抱"
+        "捕食时前足合抱",
+        "体长 7-10cm",
+        "前足镰刀状"
       ],
       "distribution": [
         "山东",
@@ -6837,7 +6351,8 @@
         "Tenodera sinensis",
         "Tenodera sinensis",
         "中华大刀螳 insect"
-      ]
+      ],
+      "attack_distance_cm": 0
     },
     {
       "id": "insect_sympetrum",
@@ -7140,7 +6655,10 @@
         "体长 1-1.3cm",
         "体黑黄相间,腹部环纹清晰(关键)",
         "体毛较家养意蜂密",
-        "常筑巢于洞穴、树洞"
+        "常筑巢于洞穴、树洞",
+        "体长 1-1.5cm",
+        "黄褐色",
+        "群居于树洞或蜂箱"
       ],
       "distribution": [
         "山东",
@@ -7154,7 +6672,10 @@
       "habitats": [
         "山林",
         "岩缝",
-        "树洞"
+        "树洞",
+        "山区",
+        "林缘",
+        "村边"
       ],
       "active_months": [
         "4",
@@ -7163,7 +6684,8 @@
         "7",
         "8",
         "9",
-        "10"
+        "10",
+        "3"
       ],
       "venom_type": "bee_venom",
       "venom_location": "尾刺",
@@ -7179,14 +6701,22 @@
         "蜇伤剧痛、红肿",
         "局部起硬结",
         "多处蜇伤可致头晕、恶心",
-        "过敏者可致休克"
+        "过敏者可致休克",
+        "蛰伤后剧痛红肿",
+        "过敏者致过敏性休克"
       ],
       "look_alike": [
         {
-          "id": "insect_bee",
+          "id": "insect_apis_dorsata",
           "name": "蜜蜂类(通用)",
           "distinction": "中华蜜蜂体较小、野性强;意蜂体大温驯;均蜇后遗留毒刺",
           "fatality": "中"
+        },
+        {
+          "id": "insect_wasp",
+          "name": "胡蜂",
+          "distinction": "胡蜂体型大腰细,蜜蜂体型小腰粗",
+          "fatality": "低(过敏者高)"
         }
       ],
       "first_aid_id": "",
@@ -7197,7 +6727,8 @@
       "protective_gear": [
         "勿捅野蜂窝",
         "远离开花树丛蜂群",
-        "蜇后拔刺冷敷"
+        "蜇后拔刺冷敷",
+        "过敏者随身带肾上腺素"
       ],
       "route_associations": [
         {
@@ -7338,7 +6869,10 @@
         "体长 5-8mm",
         "体灰黑,胸背有 4 条纵纹(关键)",
         "复眼大,口器舐吸式",
-        "足有爪垫可停附光滑面"
+        "足有爪垫可停附光滑面",
+        "体长 6-7mm",
+        "灰黑色",
+        "复眼大"
       ],
       "distribution": [
         "山东",
@@ -7348,11 +6882,12 @@
         "全国广布"
       ],
       "min_elevation": 0,
-      "max_elevation": 1500,
+      "max_elevation": 2000,
       "habitats": [
         "居室",
         "垃圾",
-        "畜舍"
+        "畜舍",
+        "人居周围"
       ],
       "active_months": [
         "4",
@@ -7371,12 +6906,15 @@
         "12",
         "1",
         "2",
-        "3"
+        "3",
+        "11"
       ],
       "symptoms": [
         "一般不叮咬",
         "污染食物传播肠道传染病",
-        "偶致蝇蛆病(误食卵)"
+        "偶致蝇蛆病(误食卵)",
+        "不叮咬",
+        "传播肠道疾病"
       ],
       "look_alike": [
         {
@@ -7393,7 +6931,9 @@
       "protective_gear": [
         "食物加盖防蝇",
         "营地清除垃圾",
-        "勿食蝇爬食物"
+        "勿食蝇爬食物",
+        "纱窗",
+        "灭蝇"
       ],
       "route_associations": [
         {
@@ -7420,7 +6960,8 @@
         "Musca domestica",
         "Musca domestica",
         "家蝇 insect"
-      ]
+      ],
+      "attack_distance_cm": 0
     },
     {
       "id": "insect_papilio_xuthus",
@@ -8797,7 +8338,7 @@
       ],
       "look_alike": [
         {
-          "id": "insect_bee",
+          "id": "insect_apis_dorsata",
           "name": "蜜蜂类(近缘)",
           "distinction": "地蜂体多绒毛、土中筑巢独居;蜜蜂群居、体较光滑",
           "fatality": "无"
@@ -8888,7 +8429,7 @@
       ],
       "look_alike": [
         {
-          "id": "insect_bee",
+          "id": "insect_apis_dorsata",
           "name": "蜜蜂类(近缘)",
           "distinction": "条蜂体型大、飞行迅捷悬停;蜜蜂体较小、多群居",
           "fatality": "无"

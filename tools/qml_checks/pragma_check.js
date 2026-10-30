@@ -55,3 +55,4 @@ for (const f of walk(ROOT, [])) {
 }
 console.log('=== delegate 里引用外层 id 但缺 Bound pragma: ' + hits.length + ' 个 ===');
 for (const [f, ids] of hits) console.log(f + '  →  ' + ids.map(([i, l]) => i + '@~' + l).join(', '));
+process.exit(hits.length ? 1 : 0);

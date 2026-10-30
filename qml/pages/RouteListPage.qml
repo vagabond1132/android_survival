@@ -121,7 +121,9 @@ Page {
     function formatKm(km) {
         // 里程右边界要对齐: 35.2 与 8 都写一位小数, 取整后补 ".0" 反而更啰嗦,
         // 所以只在整数时丢掉小数点.
-        if (km <= 0) return "0"
+        // `!(km > 0)` 而不是 `km <= 0`: 后者放不过 undefined, undefined.toFixed 是
+        // TypeError, 整行的副标题就没了 (10-22 巡检真机报过).
+        if (!(km > 0)) return "0"
         return (km === Math.round(km)) ? String(Math.round(km)) : km.toFixed(1)
     }
 
@@ -147,7 +149,10 @@ Page {
                 nature: String(r.routeNature || ""),
                 wild: r.isWild === true,
                 plate: CommonOptions.plateCode("RT", String(r.id || "")),
-                tone: CommonOptions.difficultyColor(d)
+                tone: CommonOptions.difficultyColor(d),
+                // head 那一支的字段: delegate 是一个 Item 里两个 RowLayout,
+                // `visible: false` 不阻止绑定求值, 缺了就报 Unable to assign [undefined].
+                label: "", count: 0
             })
             shown++
         }
@@ -159,7 +164,11 @@ Page {
             var members = bucket[key]
             // 组内按编号排, 目录序才稳定 (getAdvanced 遍历 QHash, 原始序每次启动都可能变)
             members.sort(function (a, b) { return a.plate < b.plate ? -1 : (a.plate > b.plate ? 1 : 0) })
-            out.push({ kind: "head", label: key, count: members.length })
+            out.push({
+                kind: "head", label: key, count: members.length,
+                id: "", name: "", plate: "", difficulty: 0, km: 0, days: 0,
+                nature: "", wild: false, tone: CommonOptions.colorInk3
+            })
             for (var m = 0; m < members.length; ++m) out.push(members[m])
         }
         shownCount = shown
@@ -178,7 +187,8 @@ Page {
         var filtering = (maxDifficulty > 0 || province !== "" || month > 0)
         var t = filtering ? ("现 " + shownCount + " / " + libCount + " 条")
                           : (libCount + " 条")
-        t += " · " + provinceTotal + " 省 · 难度 " + diffLo + "~" + diffHi
+        t += " · " + provinceTotal + " 省 · 难度 "
+          + (diffLo === diffHi ? diffLo : diffLo + "~" + diffHi)
         if (province !== "") t += " · " + province
         if (maxDifficulty > 0) t += " · " + maxDifficulty + " 星及以下"
         if (month > 0) t += " · " + month + " 月"
@@ -221,10 +231,8 @@ Page {
                 anchors.rightMargin: 40
                 spacing: 3
                 Text {
-                    text: "ROUTE / TRAIL INDEX"
-                    font.family: styles.monoFont
+                    text: "路线 · 步道索引"
                     font.pixelSize: styles.fsXs
-                    font.letterSpacing: 1.8
                     color: CommonOptions.colorInk3
                 }
                 Text {
@@ -382,12 +390,9 @@ Page {
                             font.bold: true
                             elide: Text.ElideRight
                         }
-                        // 拉丁微标签才加字距, 中文不加 (样式铁律)
                         Text {
-                            text: modelData.count + " ROUTES"
-                            font.family: styles.monoFont
+                            text: modelData.count + " 条路线"
                             font.pixelSize: styles.fsXs
-                            font.letterSpacing: 1.4
                             color: CommonOptions.colorInk3
                         }
                     }

@@ -10,14 +10,16 @@
 #   这里用当前源码临时拼一个模块目录: 每个 .qml 按"文件名 = 类型名"写进 qmldir,
 #   C++ 侧类型的 qmltypes 从最近一次构建产物里取. 不改动仓库里任何 QML.
 #
-# 用法 (在 android-builder / ut 容器内):
+# 用法 (容器内; 2026-10-28 实测 outdoor-survival-builder 与 unit-test 服务都能跑,
+#   前者告警多 130 行是因为它的桌面 Qt 缺 QtLocation/QtPositioning, 两侧 ^Error 都是 0):
+#   docker exec outdoor-survival-builder bash -c "cd /project && bash tools/qml_lint.sh"
 #   bash tools/qml_lint.sh qml/pages/MapPage.qml qml/components/MapOverlay/*.qml
 #   不给参数 = 全量 qml/
 #
 # 已知解析不了的: CommonOptions 和 xxxService 都是 setContextProperty 注入的上下文属性,
 #   qmllint 拿不到它们的类型, 所以对它们的属性名/方法名拼错一概不报. 那部分靠
 #   tools/qml_checks/ 下的 JS 检查脚本 (清单见同目录 README 与 doc/08-索引与概念/全代码索引.md §18.1)
-#   + 真机 stage0.log. 这 7 个脚本要 node, ut 容器里没有, 只能在 Windows 主机用 Qoder 自带
+#   + 真机 stage0.log. 那 15 个脚本要 node, 两个容器里都没有, 只能在 Windows 主机用 Qoder 自带
 #   的 Electron 当 node 跑 (§18.1 给了命令).
 set -uo pipefail
 

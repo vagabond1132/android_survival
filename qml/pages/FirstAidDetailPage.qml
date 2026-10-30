@@ -226,7 +226,7 @@ Page {
                     spacing: styles.spSm
                     Plate {
                         Layout.alignment: Qt.AlignVCenter
-                        code: "PLATE " + CommonOptions.plateCode("FA", entity.id || "")
+                        code: CommonOptions.plateCode("FA", entity.id || "")
                         tone: CommonOptions.colorInk3
                     }
                     Item { Layout.fillWidth: true }
@@ -277,10 +277,8 @@ Page {
                     spacing: styles.spSm
                     Text {
                         Layout.alignment: Qt.AlignVCenter
-                        text: "AID READOUT"
-                        font.family: styles.monoFont
+                        text: "急救读数"
                         font.pixelSize: styles.fsXs
-                        font.letterSpacing: 1.4
                         color: CommonOptions.colorInk3
                     }
                     Item { Layout.fillWidth: true }
@@ -297,10 +295,10 @@ Page {
                     spacing: 0
                     Repeater {
                         model: [
-                            { k: "ACTIONS", v: String(firstAidDetail._actions.length) },
-                            { k: "STEPS", v: String(firstAidDetail._steps.length) },
-                            { k: "DONTS", v: String(firstAidDetail._donts.length) },
-                            { k: "SPECIES", v: String(firstAidDetail._species.length) }
+                            { k: "处置", v: String(firstAidDetail._actions.length) },
+                            { k: "步骤", v: String(firstAidDetail._steps.length) },
+                            { k: "别做", v: String(firstAidDetail._donts.length) },
+                            { k: "物种", v: String(firstAidDetail._species.length) }
                         ]
                         delegate: RowLayout {
                             required property var modelData
@@ -320,9 +318,7 @@ Page {
                                 Text {
                                     Layout.fillWidth: true
                                     text: modelData.k
-                                    font.family: styles.monoFont
                                     font.pixelSize: styles.fsXs
-                                    font.letterSpacing: 1.2
                                     color: CommonOptions.colorInk3
                                     elide: Text.ElideRight
                                 }
@@ -363,6 +359,7 @@ Page {
         ScrollView {
             Layout.fillWidth: true
             Layout.fillHeight: true
+            Layout.bottomMargin: styles.bottomClearance   // A41: 末行给下面的吸底条让位
             Layout.topMargin: styles.spMd
             contentWidth: width
             clip: true
@@ -400,10 +397,8 @@ Page {
                     }
                     Text {
                         Layout.alignment: Qt.AlignVCenter
-                        text: firstAidDetail._actions.length + " ACTIONS"
-                        font.family: styles.monoFont
+                        text: firstAidDetail._actions.length + " 个动作"
                         font.pixelSize: styles.fsXs
-                        font.letterSpacing: 1.4
                         color: CommonOptions.colorInk3
                     }
                 }
@@ -451,10 +446,8 @@ Page {
                     }
                     Text {
                         Layout.alignment: Qt.AlignVCenter
-                        text: firstAidDetail._symptoms.length + " SIGNS"
-                        font.family: styles.monoFont
+                        text: firstAidDetail._symptoms.length + " 个体征"
                         font.pixelSize: styles.fsXs
-                        font.letterSpacing: 1.4
                         color: CommonOptions.colorInk3
                     }
                 }
@@ -498,10 +491,8 @@ Page {
                     }
                     Text {
                         Layout.alignment: Qt.AlignVCenter
-                        text: firstAidDetail._steps.length + " STEPS"
-                        font.family: styles.monoFont
+                        text: firstAidDetail._steps.length + " 个步骤"
                         font.pixelSize: styles.fsXs
-                        font.letterSpacing: 1.4
                         color: CommonOptions.colorInk3
                     }
                 }

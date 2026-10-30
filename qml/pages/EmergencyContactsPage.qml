@@ -10,7 +10,7 @@
  * 版式 (同 FieldGuidePage / EquipmentPage 的目录母版):
  *   标题条 54px: SOS RECIPIENTS 微标签 / 「紧急联系人」21px / 读数行 + 方角返回.
  *   读数带  3 格 (名册 N / 主联系人 / 关系已填), 数字全是数组计数.
- *   名册    一行一个人: 姓名 + 「主」方块 + 关系 / 等宽号码 / 两枚 32px 动作方块.
+ *   名册    一行一个人: 第一行 姓名 + 「主」方块, 第二行 等宽号码 + 关系 / 行尾两枚动作方块.
  *   底栏    1px 墨线 + colorSurfaceAlt: 常驻 note + 左「返回」88px, 右实心「添加」.
  *   弹层    添加/编辑共用一张表单 (dlgMode 决定走 addContact 还是 updateContact);
  *           删除单独一张确认 Dialog —— 三张 Dialog 的按钮文案都是中文.
@@ -26,6 +26,18 @@
  *      由底栏上方那一行显示 (与 EquipmentPage 同一口径); 因此本页不再引用 toast,
  *      也不再需要 ServiceListModel 的 notifier 注入 —— 名单自己 load(), 才能拿到
  *      Result 里的 error.message 原文.
+ *
+ * 2026-10-29 (用户问题5: 紧急联系人排版):
+ *   ① 名册行拆成两行 —— 姓名 + 「主」在上, 号码 (等宽) + 关系在下. 原来号码横插在
+ *      RowLayout 中间与姓名抢宽度: 窄屏上姓名一 elide 就剩一个字, 号码还把两枚动作格
+ *      顶向行外. 现在姓名 fillWidth + elide, 号码单独一行, 动作格永远钉在行尾.
+ *   ② 手搓 ActionCell (Rectangle + MouseArea) 换成共用 IconActionCell: 那颗 MouseArea
+ *      按下即独占抓握, 名单一长就在行里拖不动 (与 #105 目标列表同族, 见
+ *      [[qml-taphandler-exclusive-grab]]).
+ *   ③ 添加/编辑弹窗: 三个只有 placeholder 的输入框 (一敲字标签就没了) → 每格上方一行
+ *      小字标签 + focus 时描墨线的输入框, 与 EquipmentPage 的表单同一套. 号码格保持
+ *      数字键盘. 软键盘的让位不用自己做: manifest 是 adjustResize, 窗口变矮、居中弹窗
+ *      跟着上移; 给 Popup 写 x:/y: 位置绑定反而压过开合动画 (见 typed_member_check).
  */
 
 // delegate 里读 contactsPage 与 cell.enabled, qmlcachegen 静态编译下必须 Bound.
@@ -151,38 +163,6 @@ Page {
         contactsPage._report(emergencyService.deleteContact(idx), "移除失败 (" + nm + ")")
     }
 
-    // 行内动作方块: 32px 面 + 外扩 6px 热区 = 44 (戴手套). 内联组件看不到外层 styles
-    //   id, 自带一个 (与 EquipmentPage 的同名件同构).
-    component ActionCell: Rectangle {
-        id: cell
-        property string iconName: ""
-        property color tone: CommonOptions.colorText
-        signal clicked()
-
-        Styles { id: cellStyles; visible: false }
-
-        implicitWidth: 32
-        implicitHeight: 32
-        radius: cellStyles.rSm
-        color: CommonOptions.colorSurface
-        border.color: CommonOptions.colorRule
-        border.width: cellStyles.lineHair
-
-        IconLabel {
-            anchors.centerIn: parent
-            name: cell.iconName
-            size: cellStyles.icSm
-            tintColor: cell.tone
-        }
-        MouseArea {
-            anchors.fill: parent
-            anchors.margins: -6
-            enabled: cell.enabled
-            cursorShape: cell.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-            onClicked: cell.clicked()
-        }
-    }
-
     // === 版面 ==============================================================
     ColumnLayout {
         anchors.fill: parent
@@ -202,10 +182,8 @@ Page {
                 anchors.rightMargin: 40      // 给右上角方角让位
                 spacing: 3
                 Text {
-                    text: "SOS RECIPIENTS"
-                    font.family: styles.monoFont
+                    text: "求助收件人"
                     font.pixelSize: styles.fsXs
-                    font.letterSpacing: 1.8
                     color: CommonOptions.colorInk3
                 }
                 Text {
@@ -281,10 +259,8 @@ Page {
                     spacing: styles.spSm
                     Text {
                         Layout.alignment: Qt.AlignVCenter
-                        text: "ROSTER"
-                        font.family: styles.monoFont
+                        text: "名册"
                         font.pixelSize: styles.fsXs
-                        font.letterSpacing: 1.4
                         color: CommonOptions.colorInk3
                     }
                     Item { Layout.fillWidth: true }
@@ -302,9 +278,9 @@ Page {
                     spacing: 0
                     Repeater {
                         model: [
-                            { k: "N", label: "名册", v: String(contactsPage.contactCount) },
-                            { k: "PRIM", label: "主联系人", v: String(contactsPage.primaryCount) },
-                            { k: "REL", label: "关系已填", v: String(contactsPage.relationCount) }
+                            { label: "名册", v: String(contactsPage.contactCount) },
+                            { label: "主联系人", v: String(contactsPage.primaryCount) },
+                            { label: "关系已填", v: String(contactsPage.relationCount) }
                         ]
                         delegate: RowLayout {
                             required property var modelData
@@ -342,9 +318,13 @@ Page {
         }
 
         // --- 名册 ---
+        // 2026-10-22 巡检: 0 联系人时这个 Item 照样 fillHeight, 一小块 EmptyState 漂在
+        //   整页空白正中, 看着像页面坏了. 空态改为不占满: 列表有才 fillHeight,
+        //   空态贴着上边缘, 下方留给底栏的主按钮.
         Item {
             Layout.fillWidth: true
-            Layout.fillHeight: true
+            Layout.fillHeight: contactsPage.contactCount > 0
+            Layout.preferredHeight: emptyBox.implicitHeight
             Layout.topMargin: styles.spSm
 
             ListView {
@@ -352,6 +332,7 @@ Page {
                 anchors.fill: parent
                 anchors.leftMargin: styles.pageMargin
                 anchors.rightMargin: styles.pageMargin
+                anchors.bottomMargin: styles.bottomClearance   // A41: 末行给下面的吸底条让位
                 clip: true
                 boundsBehavior: Flickable.StopAtBounds
                 model: contactsPage.rows
@@ -370,11 +351,16 @@ Page {
 
                         ColumnLayout {
                             Layout.fillWidth: true
-                            spacing: 1
+                            Layout.alignment: Qt.AlignVCenter
+                            spacing: 2
+
+                            // 第一行: 姓名 + 「主」. 姓名 fillWidth + elide, 名字再长也只缩
+                            //   自己, 不会把行尾两枚动作格顶出去 (2026-10-29 问题5).
                             RowLayout {
                                 Layout.fillWidth: true
                                 spacing: styles.spXs
                                 Text {
+                                    Layout.fillWidth: true
                                     Layout.alignment: Qt.AlignVCenter
                                     text: modelData.name
                                     font.pixelSize: styles.fsMd
@@ -400,38 +386,47 @@ Page {
                                     }
                                 }
                             }
-                            Text {
+
+                            // 第二行: 号码 (等宽) + 关系. 号码从中间挪到单独一行之后不再
+                            //   和姓名抢宽度; 关系没填就直说, 不拿姓名凑一行.
+                            RowLayout {
                                 Layout.fillWidth: true
-                                // 关系没填就直说, 不拿姓名凑一行
-                                text: modelData.relation.length > 0
-                                      ? modelData.relation : "关系未填"
-                                font.pixelSize: styles.fsXs
-                                color: modelData.relation.length > 0
-                                       ? CommonOptions.colorInk3 : CommonOptions.colorTextDim
-                                elide: Text.ElideRight
+                                spacing: styles.spXs
+                                Text {
+                                    Layout.alignment: Qt.AlignVCenter
+                                    text: modelData.phone
+                                    font.family: styles.monoFont
+                                    font.pixelSize: styles.fsSm
+                                    color: CommonOptions.colorTextMuted
+                                }
+                                Text {
+                                    Layout.fillWidth: true
+                                    Layout.alignment: Qt.AlignVCenter
+                                    text: modelData.relation.length > 0
+                                          ? modelData.relation : "关系未填"
+                                    font.pixelSize: styles.fsXs
+                                    color: modelData.relation.length > 0
+                                           ? CommonOptions.colorInk3 : CommonOptions.colorTextDim
+                                    elide: Text.ElideRight
+                                }
                             }
                         }
 
-                        // 号码是本页唯一的等宽读数 (纯拉丁数字, 不混汉字)
-                        Text {
+                        // 共用 IconActionCell (2026-10-29): 原来是手搓 Rectangle + MouseArea,
+                        //   按下即独占抓握, 名单一长就在行里拖不动 (#105 同族).
+                        IconActionCell {
                             Layout.alignment: Qt.AlignVCenter
-                            text: modelData.phone
-                            font.family: styles.monoFont
-                            font.pixelSize: styles.fsMd
-                            color: CommonOptions.colorText
-                        }
-
-                        ActionCell {
-                            Layout.alignment: Qt.AlignVCenter
+                            cellSize: styles.icBoxSm
                             iconName: "edit"
                             tone: CommonOptions.colorText
-                            onClicked: contactsPage.openEdit(index)
+                            onTriggered: contactsPage.openEdit(index)
                         }
-                        ActionCell {
+                        IconActionCell {
                             Layout.alignment: Qt.AlignVCenter
+                            cellSize: styles.icBoxSm
                             iconName: "delete"
                             tone: CommonOptions.colorDanger
-                            onClicked: {
+                            onTriggered: {
                                 confirmDeleteDialog.delIndex = index
                                 confirmDeleteDialog.open()
                             }
@@ -450,15 +445,19 @@ Page {
             }
 
             EmptyState {
-                anchors.centerIn: parent
+                id: emptyBox
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
                 visible: contactsPage.contactCount === 0
                 iconName: "call"
                 text: "名单里还没有人"
                 hint: contactsPage.note.length > 0
                       ? contactsPage.note
                       : "添加之后, ⑤求助页长按触发 SOS 会给名单里每个人都发一条含位置的短信"
-                actionText: "添加联系人"
-                onActionTriggered: contactsPage.openAdd()
+                // 出口只有一个: 底栏那颗「添加联系人」主按钮.
+                // 原来这里也放了一颗同名按钮, 空态一个 + 底栏一个, 两个入口一件事.
+                actionText: ""
             }
         }
 
@@ -531,6 +530,9 @@ Page {
         id: addDialog
         title: contactsPage.dlgMode === "edit" ? "编辑联系人" : "添加联系人"
         modal: true
+        // 软键盘不会盖住它: AndroidManifest 里 windowSoftInputMode="adjustResize"
+        //   (android/AndroidManifest.xml:97), IME 弹起时窗口自己变矮, 居中弹窗跟着上移.
+        //   不要给 Popup 写 x:/y: 位置绑定 —— 会压过开合动画, 也是 typed_member_check 的门禁项.
         anchors.centerIn: parent
         width: Math.min(420, contactsPage.width - 2 * styles.pageMargin)
         padding: styles.spMd
@@ -539,37 +541,103 @@ Page {
         standardButtons: Dialog.NoButton
 
         contentItem: ColumnLayout {
-            spacing: styles.spMd
+            spacing: styles.spSm
 
-            TextField {
-                id: nameField
+            ColumnLayout {
                 Layout.fillWidth: true
-                Layout.preferredHeight: styles.fieldH
-                color: CommonOptions.colorText
-                placeholderText: "姓名"
-                placeholderTextColor: CommonOptions.colorTextDim
-                font.pixelSize: styles.fsMd
+                spacing: 2
+                Text {
+                    text: "姓名"
+                    color: CommonOptions.colorInk3
+                    font.pixelSize: styles.fsXs
+                }
+                TextField {
+                    id: nameField
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: styles.btnH
+                    color: CommonOptions.colorText
+                    placeholderText: "如: 张三"
+                    placeholderTextColor: CommonOptions.colorTextDim
+                    font.pixelSize: styles.fsMd
+                    leftPadding: styles.spSm
+                    rightPadding: styles.spSm
+                    topPadding: 0
+                    bottomPadding: 0
+                    background: Rectangle {
+                        color: nameField.activeFocus
+                               ? CommonOptions.colorSurface : CommonOptions.colorSurfaceDim
+                        border.color: nameField.activeFocus
+                                      ? CommonOptions.colorText : CommonOptions.colorRule
+                        border.width: styles.lineHair
+                        radius: styles.rSm
+                    }
+                }
             }
-            TextField {
-                id: phoneField
+
+            ColumnLayout {
                 Layout.fillWidth: true
-                Layout.preferredHeight: styles.fieldH
-                color: CommonOptions.colorText
-                placeholderText: "电话"
-                placeholderTextColor: CommonOptions.colorTextDim
-                // 只收可拨号字符; 这一页不拨号 (规则 ①), 号码写错要去⑤求助页才发现
-                inputMethodHints: Qt.ImhDialableCharactersOnly
-                font.pixelSize: styles.fsMd
+                spacing: 2
+                Text {
+                    text: "电话"
+                    color: CommonOptions.colorInk3
+                    font.pixelSize: styles.fsXs
+                }
+                TextField {
+                    id: phoneField
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: styles.btnH
+                    color: CommonOptions.colorText
+                    placeholderText: "如: 13800001111"
+                    placeholderTextColor: CommonOptions.colorTextDim
+                    // 只收可拨号字符; 这一页不拨号 (规则 ①), 号码写错要去⑤求助页才发现
+                    inputMethodHints: Qt.ImhDialableCharactersOnly
+                    font.pixelSize: styles.fsMd
+                    leftPadding: styles.spSm
+                    rightPadding: styles.spSm
+                    topPadding: 0
+                    bottomPadding: 0
+                    background: Rectangle {
+                        color: phoneField.activeFocus
+                               ? CommonOptions.colorSurface : CommonOptions.colorSurfaceDim
+                        border.color: phoneField.activeFocus
+                                      ? CommonOptions.colorText : CommonOptions.colorRule
+                        border.width: styles.lineHair
+                        radius: styles.rSm
+                    }
+                }
             }
-            TextField {
-                id: relationField
+
+            ColumnLayout {
                 Layout.fillWidth: true
-                Layout.preferredHeight: styles.fieldH
-                color: CommonOptions.colorText
-                placeholderText: "关系 (如: 家人 / 队友)"
-                placeholderTextColor: CommonOptions.colorTextDim
-                font.pixelSize: styles.fsMd
+                spacing: 2
+                Text {
+                    text: "关系"
+                    color: CommonOptions.colorInk3
+                    font.pixelSize: styles.fsXs
+                }
+                TextField {
+                    id: relationField
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: styles.btnH
+                    color: CommonOptions.colorText
+                    placeholderText: "如: 家人 / 队友"
+                    placeholderTextColor: CommonOptions.colorTextDim
+                    font.pixelSize: styles.fsMd
+                    leftPadding: styles.spSm
+                    rightPadding: styles.spSm
+                    topPadding: 0
+                    bottomPadding: 0
+                    background: Rectangle {
+                        color: relationField.activeFocus
+                               ? CommonOptions.colorSurface : CommonOptions.colorSurfaceDim
+                        border.color: relationField.activeFocus
+                                      ? CommonOptions.colorText : CommonOptions.colorRule
+                        border.width: styles.lineHair
+                        radius: styles.rSm
+                    }
+                }
             }
+
             CheckBox {
                 id: primaryCheck
                 text: "排在名单第一行"
@@ -585,28 +653,13 @@ Page {
             }
         }
 
-        footer: RowLayout {
-            spacing: styles.spSm
-            Item { Layout.fillWidth: true }
-            OutlineButton {
-                Layout.preferredWidth: 72
-                Layout.preferredHeight: styles.btnHSm
-                Layout.alignment: Qt.AlignVCenter
-                text: "算了"
-                tone: CommonOptions.colorTextMuted
-                textSize: styles.fsSm
-                onClicked: addDialog.close()
-            }
-            PrimaryButton {
-                Layout.preferredWidth: 88
-                Layout.preferredHeight: styles.btnHSm
-                Layout.alignment: Qt.AlignVCenter
-                text: contactsPage.dlgMode === "edit" ? "保存" : "写进名册"
-                iconName: "check"
-                tone: CommonOptions.colorAccent
-                textSize: styles.fsSm
-                onClicked: contactsPage.acceptDialog()
-            }
+        footer: DialogFooter {
+            kind: "primary"
+            cancelText: "算了"
+            confirmText: contactsPage.dlgMode === "edit" ? "保存" : "写进名册"
+            confirmIcon: "check"
+            onCancel: addDialog.close()
+            onConfirm: contactsPage.acceptDialog()
         }
 
         // 关窗清字段: 否则下次打开看到上一个人的号码 (2026-09-20 起就有这条)
@@ -639,27 +692,13 @@ Page {
             wrapMode: Text.WordWrap
         }
 
-        footer: RowLayout {
-            spacing: styles.spSm
-            Item { Layout.fillWidth: true }
-            OutlineButton {
-                Layout.preferredWidth: 72
-                Layout.preferredHeight: styles.btnHSm
-                Layout.alignment: Qt.AlignVCenter
-                text: "留着"
-                tone: CommonOptions.colorTextMuted
-                textSize: styles.fsSm
-                onClicked: confirmDeleteDialog.close()
-            }
-            OutlineButton {
-                Layout.preferredWidth: 88
-                Layout.preferredHeight: styles.btnHSm
-                Layout.alignment: Qt.AlignVCenter
-                text: "移出"
-                tone: CommonOptions.colorDanger
-                textSize: styles.fsSm
-                onClicked: contactsPage.removeContact()
-            }
+        footer: DialogFooter {
+            kind: "danger"
+            cancelText: "留着"
+            confirmText: "移出"
+            confirmCode: "不可撤"
+            onCancel: confirmDeleteDialog.close()
+            onConfirm: contactsPage.removeContact()
         }
     }
 

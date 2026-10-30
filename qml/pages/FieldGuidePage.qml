@@ -7,7 +7,13 @@
  *   类目环+chip 同一份数据的两个视图: 环看占比, chip 点选筛选 (环不可点)
  *   省份/月份   保留原筛选 (数据只有省份分布, 没有坐标)
  *   排序条      长按在"按距你排序"与"目录序"之间切 —— 丁的招牌就是这一条
- *   行          3px 类别条 + 50px 方位列 + 名称/学名/类目 chip + 右侧图鉴编号与距离
+ *   行          3px 类别条 + 方位列 (有读数 50 / 只剩类别图标 30) + 名称行 (名称 + 危险度)
+ *               + 学名 + 类目 chip 与生境月份同末行, 右侧图鉴编号与距离
+ *
+ * 2026-10-22 真机截图复盘 (行版式): 原来方位列一律 50px、危险度 chip 排在第三行 ——
+ *   ① 绝大多数物种没有坐标, 50px 灰柱里只有一个 16px 图标, 图标列比正文还抢眼;
+ *   ② "有毒/中度" 要读到第三行才看见, 与本页"离它远点先于它是哪一类"的图例规则相反。
+ *   现在列宽跟读数走, 危险度紧贴名称, 文字块与色条之间补 12px 左边距。
  *
  * 三条不能破的规则:
  *   ① 不编读数. 物种本体只有省份分布, 没有经纬度 —— 所以"距你 620 m / 112°"只能来自
@@ -35,7 +41,13 @@ Page {
     title: "动植物图鉴"
 
     // === 筛选状态 ===========================================================
-    property int currentKingdom: 0        // 0=植物 1=动物 2=昆虫 3=蘑菇
+    // 2026-10-28 问题1: 界门初值取自窗口级会话 (Main.qml 的 guideKingdom), 理由与
+    //   MapPage 的 mapBaseMapIndex 完全一样 —— 底栏切格 stackView.clear() 会重建本页,
+    //   页内的 0 每次都会把用户打回植物, 看着就像"资源里只有植物".
+    readonly property var _appWin: fieldGuidePage.ApplicationWindow.window
+    // `| 0`: 跑起来的 ApplicationWindow 若没有 guideKingdom (老构建的 Main.qml, #143 的
+    // 现场), 直接绑定 undefined 到 int 会让这条绑定每次求值都抛错. |0 兜成 0, 界门照常可切.
+    property int currentKingdom: _appWin ? (_appWin.guideKingdom | 0) : 0   // 0=植物 1=动物 2=昆虫 3=蘑菇
     // 2026-09-21: 默认必须是 0=全部月份. 之前默认当前月, 数据稀疏月份直接空列表.
     property int currentMonth: 0
     property string currentProvince: "全部"
@@ -269,10 +281,21 @@ Page {
         applyFilter()
     }
     onCurrentKingdomChanged: {
+        // #143 真机教训 (旧顺序的第一句就是这里原来的跨文件写回):
+        // 若跑着的 ApplicationWindow 没有 guideKingdom (老构建 Main.qml), 那句赋值当场抛
+        // 并中止 handler —— loadData() 永远走不到, chip 变色、currentKingdom 变了,
+        // 列表却停在植物, 症状就是"界门装了还是只有植物". 换界只许依赖本页状态:
+        // 重建链路排在最前, 会话写回降级成锦上添花, 放最后并用 try/catch 隔离.
         fieldGuidePage.currentProvince = "全部"
         fieldGuidePage.currentCategory = ""
         rebuildProvinces()
         loadData()
+        // 存回窗口级, 页面重建后还是这一界 (见上面 currentKingdom 的初值说明)
+        try {
+            if (fieldGuidePage._appWin) fieldGuidePage._appWin.guideKingdom = currentKingdom
+        } catch (e) {
+            console.log("[FieldGuide] kingdom session persist skipped: " + e)
+        }
     }
     onCurrentMonthChanged: loadData()
     onCurrentProvinceChanged: loadData()
@@ -303,10 +326,8 @@ Page {
                 anchors.rightMargin: 56
                 spacing: 3
                 Text {
-                    text: "RES"
-                    font.family: styles.monoFont
+                    text: "资源"
                     font.pixelSize: styles.fsXs
-                    font.letterSpacing: 1.6
                     color: CommonOptions.colorInk3
                 }
                 Text {
@@ -343,6 +364,34 @@ Page {
             Layout.topMargin: styles.spSm
             spacing: styles.spSm
 
+            // --- 界门 ---
+            // 2026-10-27 真机 (A20): 这一行以前不存在 —— currentKingdom 只有初值 0,
+            //   页面里没有任何写它的入口, 动物/昆虫/蘑菇三个界 (共 320 条) 在②资源里
+            //   根本到不了。下面的 onCurrentKingdomChanged 链路一直是通的, 缺的就是这个按钮。
+            // 2026-10-28 #143: chip 装了仍"只有植物" —— 断点不在这一行, 在 handler 首句的
+            //   跨文件写回抛错中止 (修法见 onCurrentKingdomChanged). 本行只加一件事:
+            //   某界真的 0 条时 chip 直说"暂无资料", 不写个 "0" 让用户以为筛选坏了.
+            Flow {
+                Layout.fillWidth: true
+                spacing: styles.spXs
+                Repeater {
+                    model: [0, 1, 2, 3]
+                    delegate: Chip {
+                        required property var modelData
+                        // 每界自己的行数 (service 缺失或 0 条时如实说"暂无资料")
+                        readonly property int kingdomCount: fieldGuidePage.kingdomService(modelData)
+                                                          ? fieldGuidePage.kingdomService(modelData).totalCount : 0
+                        text: fieldGuidePage.kingdomOptions[modelData] + " "
+                              + (kingdomCount > 0 ? kingdomCount : "暂无资料")
+                        // 每界沿用行左侧那条类别色, 切界与认色是同一套口径
+                        accent: fieldGuidePage.toneFor(modelData, 0)
+                        checked: fieldGuidePage.currentKingdom === modelData
+                        textSize: styles.fsSm
+                        onClicked: fieldGuidePage.currentKingdom = modelData
+                    }
+                }
+            }
+
             RowLayout {
                 Layout.fillWidth: true
                 spacing: styles.spMd
@@ -352,7 +401,7 @@ Page {
                     diameter: 64
                     hasSelection: fieldGuidePage.currentCategory !== ""
                     centerValue: String(fieldGuidePage.base.length)
-                    centerLabel: "TOTAL"
+                    centerLabel: "总计"
                     // 环的分段 = 当前筛选结果里的类目占比
                     segments: {
                         var out = []
@@ -558,18 +607,20 @@ Page {
                         color: modelData.tone
                     }
 
-                    // 50px 方位列: 下沉底, 与卡面分界
+                    // 方位列: 只有用户在地图上标过这个物种才有读数.
+                    // 没读数时不该占 50px 的灰柱 (真机: 图标列把标题挤没了).
                     Rectangle {
                         id: bearingStrip
                         anchors.left: parent.left
                         anchors.leftMargin: styles.lineAccent
                         anchors.top: parent.top
                         anchors.bottom: parent.bottom
-                        width: styles.bearingColW
+                        width: modelData.dist >= 0 ? styles.bearingColW : styles.bearingColWIcon
                         color: CommonOptions.colorSurfaceAlt
 
                         BearingCell {
                             anchors.centerIn: parent
+                            columnWidth: parent.width
                             icon: modelData.icon
                             tone: modelData.tone
                             // 没有标注位置就没有方位 —— 这一格整条关掉,
@@ -584,22 +635,36 @@ Page {
                         anchors.left: bearingStrip.right
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
+                        anchors.leftMargin: styles.spMd
                         anchors.rightMargin: styles.spMd
-                        spacing: styles.spSm
+                        spacing: styles.spMd
 
                         ColumnLayout {
                             Layout.fillWidth: true
                             spacing: styles.spXs
 
-                            Text {
+                            // 名称行: 危险度紧贴名称. 本文件的图例规则就是
+                            // "离它远点"要先于"它是哪一类"被读到, 不该排在第三行.
+                            RowLayout {
                                 Layout.fillWidth: true
-                                text: e.commonName || "未知"
-                                color: CommonOptions.colorText
-                                font.pixelSize: styles.fsLg
-                                font.bold: true
-                                elide: Text.ElideRight
+                                spacing: styles.spSm
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: e.commonName || "未知"
+                                    color: CommonOptions.colorText
+                                    font.pixelSize: styles.fsLg
+                                    font.bold: true
+                                    elide: Text.ElideRight
+                                    Layout.alignment: Qt.AlignVCenter
+                                }
+                                DangerChip {
+                                    visible: (Number(e.dangerLevel) || 0) > 0
+                                    level: Number(e.dangerLevel) || 0
+                                    compact: true
+                                    Layout.alignment: Qt.AlignVCenter
+                                }
                             }
-                            // 学名是拉丁, 可以进等宽族 (斜体仍属拉丁)
+                            // 学名是拉丁, 可以进等宽字族 (斜体仍属拉丁)
                             // 空的学名不许占一行: ColumnLayout 认 visible (Qt 6.7.2 实测
                             // 隐藏项 implicitHeight 与几何都不算, 见 [[qml-layout-visible-vs-row]]).
                             // 注意 Layout 附身属性里 **没有** visible —— 写 Layout.visible
@@ -613,22 +678,19 @@ Page {
                                 color: CommonOptions.colorTextDim
                                 elide: Text.ElideRight
                             }
-                            Flow {
+                            RowLayout {
                                 Layout.fillWidth: true
-                                spacing: styles.spXs
+                                spacing: styles.spSm
                                 Chip {
                                     visible: fieldGuidePage.currentCategory === ""
                                     text: CommonOptions.speciesCategoryLabel(e.category || "")
                                     accent: CommonOptions.colorTeal
                                     textSize: styles.fsXs
-                                }
-                                DangerChip {
-                                    visible: (Number(e.dangerLevel) || 0) > 0
-                                    level: Number(e.dangerLevel) || 0
-                                    compact: true
+                                    Layout.alignment: Qt.AlignVCenter
                                 }
                                 Text {
                                     // 生境 + 月份: 数据里有什么就写什么, 空就整条不占位
+                                    Layout.fillWidth: true
                                     visible: text.length > 0
                                     text: ((e.habitats && e.habitats.length > 0)
                                            ? e.habitats[0] : "")
@@ -636,13 +698,14 @@ Page {
                                              ? " · " + e.activeMonths.join("/") + " 月" : "")
                                     font.pixelSize: styles.fsXs
                                     color: CommonOptions.colorTextMuted
+                                    elide: Text.ElideRight
                                 }
                             }
                         }
 
                         ColumnLayout {
                             Layout.alignment: Qt.AlignVCenter
-                            spacing: 1
+                            spacing: styles.spXs
 
                             Plate {
                                 Layout.alignment: Qt.AlignRight
@@ -676,13 +739,21 @@ Page {
             }
 
             // 空态: 筛到 0 条不能只剩一片黑 (2026-10-19 真机).
+            // #143: 两类 0 条要分开说 —— 界门里这一界本身就 0 条 (base 空) 是"该界暂无资料",
+            // 不是筛选问题; 拿"换个省份试试"糊它, 用户会把 chip 当成坏掉的筛选器.
+            // 当前四界都有数据 (323/131/107/67), 这条是给未来某界清空时兜底的诚实口径.
             EmptyState {
                 anchors.centerIn: parent
                 visible: fieldGuidePage.rows.length === 0
-                iconName: "search"
-                text: "该筛选条件下没有物种"
-                hint: "换个省份、月份或类目试试, 部分物种只在特定季节出现"
-                actionText: "重置筛选"
+                readonly property bool kingdomEmpty: fieldGuidePage.base.length === 0
+                iconName: kingdomEmpty ? "list" : "search"
+                text: kingdomEmpty
+                      ? fieldGuidePage.kingdomOptions[fieldGuidePage.currentKingdom] + " · 该界暂无资料"
+                      : "该筛选条件下没有物种"
+                hint: kingdomEmpty
+                      ? "点上方其它界门试试"
+                      : "换个省份、月份或类目试试, 部分物种只在特定季节出现"
+                actionText: kingdomEmpty ? "" : "重置筛选"
                 onActionTriggered: {
                     fieldGuidePage.currentCategory = ""
                     fieldGuidePage.currentProvince = "全部"

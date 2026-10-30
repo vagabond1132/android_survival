@@ -92,6 +92,13 @@ Item {
     readonly property int titleHeight: 44     // 窗口顶部标题条 (菜单 / 标题 / 搜索)
     readonly property int chartH: 160         // 内嵌图表卡片 (海拔剖面 / 速度曲线)
     readonly property int bottomSheetPeek: 80 // 地图底栏折叠时露出高度
+    // 2026-10-28 #156: 地图工作台改成两档. 数字不是拍的 —— 用户给的 5 张两步路工作台
+    //   真机截图与本应用测试机同一台机器、同一 density 3.0, 用 pass4/lum_scan.js 逐行
+    //   扫白底边界量出来: 折叠条 389 raw = 130 逻辑, 展开面板 1227 raw = 409 逻辑.
+    //   原来这里只有"整高 480 常驻"一档, 于是地图只剩 44% 屏, 而面板中部还有一片死白
+    //   (pass9 ④) —— 480 比 409 还高 71, 死白不是高度不够, 是内容没铺满.
+    readonly property int sheetFoldH: 130     // 折叠态: 拖把 + 一排四个入口
+    readonly property int sheetExpH: 409      // 展开态: 面板头 + chips + 列表
     // sosSize(200) 已删: SOS 圆盘换成 HoldConfirmRow, 见上面字号那条评论.
 
     // === 控件尺寸 ===
@@ -105,6 +112,13 @@ Item {
     readonly property int chipH: 24       // 筛选 chip (原 28 在浅色底上显胖)
     readonly property int fieldH: 44      // 输入框
     readonly property int touchMin: 44    // 可点击元素最小热区
+    readonly property int searchPaneMax: 312  // 搜索对话框结果区上限 (= 6 行 rowH, 超出内部滚动; 对话框整体跟着内容走)
+    // 2026-10-28 A41: 滚动区与吸底条 / 导航条之间的"让位量".
+    //   pass6 真机 5 张同一形状 (a08 档位 chips 第二行 / a09 重置进度 / a11 排序条 /
+    //   b02 SOS 长按条 / b04 评分因子 chips): 滚动视口的折边正好压在吸底条的上描边上,
+    //   末行被切一半且看不出是"滚到边"还是"被条盖住". 折边与条之间留这一格,
+    //   滚到底时末行整条露出, 未滚到底时切痕也落在空白里而不是字上.
+    readonly property int bottomClearance: spLg + spXs   // 20
 
     // === 「地物图例」丁骨架专用 ===
     readonly property int navBandH: 48        // 底部 5 方位导航条 (BASE/RES/ROUTE/SOS/我)
@@ -115,6 +129,9 @@ Item {
     readonly property int dialPip: 6          // 盘上目标点 (小盘 6px, 只作发现不作点击热区)
     readonly property int dialPipLg: 9
     readonly property int bearingColW: 50     // 列表行左侧方位列 (图标 + 角度)
+    // 2026-10-22 真机: ②图鉴里绝大多数物种没有坐标, 这一列只剩一个 16px 图标,
+    // 50px 的灰柱把标题挤到右边、看起来像版式坏了。窄列只给"确实没有读数"的行。
+    readonly property int bearingColWIcon: 30 // 方位列只剩类别图标时的窄版
     readonly property int plateW: 46          // 图鉴编号角标宽度 ("SV-007" 等宽 8.5px)
     readonly property int readoutPad: 6       // 墨底仪表内边距 (①与⑤共用 PositionReadout)
     readonly property int readoutCellGap: 11  // 仪表四格读数间距

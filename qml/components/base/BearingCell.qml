@@ -3,7 +3,8 @@
  * @brief 方位列 — 列表行左侧 50px 的"离我多远 / 在哪个方位"列 (2026-10-20 丁骨架)
  *
  * 丁的②资源不是按字母或目录排, 是按"离你多远"排, 所以每行第一位读的是方位不是标题.
- * 这一列宽固定在 styles.bearingColW (50px): 再宽就吃掉标题, 再窄 3 位角度数会挤.
+ * 列宽由调用方给 (columnWidth): 带角度读数时用 styles.bearingColW (50px) —— 再宽就
+ * 吃掉标题, 再窄 3 位角度数会挤; 只剩一个类别图标时用 bearingColWIcon (30px).
  *
  * 色 = 类别 (绿植被 / 蓝水源 / 橙火 / 红危险 / 紫路线), 由调用方用 tone 传进来,
  * 列本身不自选色 —— 保持"颜色只承载含义"这一条.
@@ -29,8 +30,11 @@ Item {
     // 角度必须能整条关掉 —— 不能靠 bearing=0 骗过去: 0° 在野外是"正北",
     // 一个没有方位的物种顶上写 0° 就是把读数编出来了.
     property bool showBearing: true
+    // 列宽跟着"这一行到底有没有读数"走: 有角度用 50, 只剩图标用 30。
+    // 由调用方决定 (组件自己不知道数据侧有没有坐标)。
+    property int columnWidth: styles.bearingColW
 
-    implicitWidth: styles.bearingColW
+    implicitWidth: columnWidth
     implicitHeight: col.implicitHeight
     width: implicitWidth
 

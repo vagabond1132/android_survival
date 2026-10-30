@@ -14,7 +14,7 @@
  * 版式逐块对应已评审的 mock (review-v9-screens.html 「V9 · 3」):
  *   标题条   54px 三段 (GEAR / CHECKLIST 微标签 / 清单名 / 读数行) + 右上 26px 方角返回.
  *   chip 行  只有场景模板有: 四个场景的短名 + 条数.
- *   进度     5px 墨条 + 等宽 "16 / 23" + "PACKED / TOTAL ITEMS" 微标签.
+ *   进度     5px 墨条 + 等宽 "16 / 23" + "已收 / 总件数" 微标签.
  *   行       15px 方角勾选块 + 名称(带 ×数量) + 副行(备注 / 必备·类别) + 右侧等宽度数.
  *            行高 rowHSm=36 (比绳结目录矮一档: 清单动辄 40 行, 要的是密度不是可点大按钮).
  *   缺项卡   amber 描边 + 左侧 6px hazard 斜纹: 只说"还缺哪几件必备", 列名字.
@@ -28,8 +28,8 @@
  *   ② 颜色在这一页只承载一件事: hazard 红 = "必备但你还没勾上". 类别本身不上色 ——
  *      13 个打包类别 (急救/取火/求救/净水/工具/防护/食物/照明/水/通信/证件/卫生/生活)
  *      凑不出 13 个互不歧义的图例色, 硬分配就是把图例规则当装饰.
- *   ③ 汉字不进等宽 (见 [[qml-monofont-no-cjk]]). 只有 "N ITEMS"、"PACKED / TOTAL ITEMS"、
- *      宽度数、"16 / 23" 走 monoFont.
+ *   ③ 汉字不进等宽 (见 [[qml-monofont-no-cjk]]). 这一页只有宽度数与 "16 / 23" 走
+ *      monoFont; 计数后缀 ("3 项") 是汉字, 用默认字族.
  *
  * 2026-10-19 那版的 Hero + 三枚 StatTile + 四段 CategorySection + 两个 Dialog 全部撤掉:
  *   StatTile 的"完成度 87%"和进度条重复; CategorySection 用 CheckBox 与整行点击冲突;
@@ -198,7 +198,7 @@ Page {
         }
         meta = {
             name: c.name || "",
-            kicker: "GEAR / CHECKLIST",
+            kicker: "装备 / 应急清单",
             items: list.length,
             required: required,
             grams: Number(c.totalWeightG) || 0,
@@ -229,7 +229,7 @@ Page {
         }
         meta = {
             name: l.name || "装备清单",
-            kicker: "GEAR / EQUIPMENT",
+            kicker: "装备 / 携带清单",
             items: list.length,
             // 装备清单的"必备"= critical + important 两档
             required: list.filter(function (r) { return r.required }).length,
@@ -318,10 +318,9 @@ Page {
                 anchors.rightMargin: 40      // 给右上角方角让位
                 spacing: 3
                 Text {
-                    text: checklistPage.meta.kicker || "GEAR / CHECKLIST"
-                    font.family: styles.monoFont
+                    text: checklistPage.meta.kicker || "装备 / 应急清单"
+                    // kicker 现在是汉字 (原 "GEAR / CHECKLIST"), 不再走等宽
                     font.pixelSize: styles.fsXs
-                    font.letterSpacing: 1.8
                     color: CommonOptions.colorInk3
                 }
                 Text {
@@ -424,10 +423,8 @@ Page {
             Layout.leftMargin: styles.pageMargin
             Layout.rightMargin: styles.pageMargin
             visible: checklistPage.meta.items > 0
-            text: "PACKED / TOTAL ITEMS"
-            font.family: styles.monoFont
+            text: "已收 / 总件数"
             font.pixelSize: styles.fsXs
-            font.letterSpacing: 1.4
             color: CommonOptions.colorInk3
         }
 
@@ -436,6 +433,7 @@ Page {
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.topMargin: styles.spSm
+            Layout.bottomMargin: styles.bottomClearance   // A41: 末行给下面的吸底条让位
             Layout.leftMargin: styles.pageMargin
             Layout.rightMargin: styles.pageMargin
 
@@ -468,10 +466,8 @@ Page {
                         }
                         Text {
                             Layout.alignment: Qt.AlignVCenter
-                            text: modelData.count + " ITEMS"
-                            font.family: styles.monoFont
+                            text: modelData.count + " 项"
                             font.pixelSize: styles.fsXs
-                            font.letterSpacing: 1.4
                             color: CommonOptions.colorInk3
                         }
                     }

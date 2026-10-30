@@ -61,6 +61,12 @@ private:
     qreal m_heading = 0;
     bool m_valid = false;
     int m_calibration = -1;
+    // 诊断用: 2026-10-26 真机上报"右上方位数据未变化", 但现有日志只在"没有硬件"
+    //   和"start 失败"两种情况下说话 —— 硬件在、start 成功、reading 却一直不来
+    //   (或 azimuth 恒为 0) 时是完全静默的. 这三条把那条缝补上: 首帧、无效帧、
+    //   以及读数一直不变. release 包 logcat 为空, 这些都进 stage0.log.
+    bool m_loggedFirstReading = false;
+    int m_readingCount = 0;
 };
 
 } // namespace outdoor

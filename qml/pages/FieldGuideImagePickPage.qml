@@ -132,6 +132,12 @@ Page {
         }
         var info = ImageColorExtractor.extractFromFile(pickPage.currentImagePath, 8)
         if (!info || !info.ok) {
+            // 2026-10-23 #115 (A19): 这里给的是中文原因 (ImageColorExtractor::extractFromFile
+            //   的 error), 技术原文在 info.detail —— 路径 / QImageReader 的话只能进日志,
+            //   拼给用户看等于让人对着一串 /data/user/0/... 猜自己哪里做错了。
+            //   注意 .error 在这**是纯 QString**, 不加 .message (那是 ServiceError 的口径)。
+            console.warn("[ImagePick] 取色失败 detail="
+                         + ((info && info.detail) ? info.detail : "(接口没给)"))
             pickPage.note = "取色失败: " + ((info && info.error) ? info.error : "接口没给原因")
             return
         }
@@ -195,10 +201,8 @@ Page {
                 anchors.rightMargin: 40      // 给右上角方角让位
                 spacing: 3
                 Text {
-                    text: "IMAGE MATCH"
-                    font.family: styles.monoFont
+                    text: "图片比对"
                     font.pixelSize: styles.fsXs
-                    font.letterSpacing: 1.8
                     color: CommonOptions.colorInk3
                 }
                 Text {
@@ -439,10 +443,8 @@ Page {
 
             Text {
                 Layout.alignment: Qt.AlignVCenter
-                text: "CANDIDATES"
-                font.family: styles.monoFont
+                text: "候选结果"
                 font.pixelSize: styles.fsXs
-                font.letterSpacing: 1.6
                 color: CommonOptions.colorInk3
             }
             Text {

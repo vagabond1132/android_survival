@@ -77,6 +77,13 @@ Page {
     property bool _photoLoading: false
     // 这个物种在我地图上标过的点 (取不到 NOTIFY 的 service 方法 → 手动刷)
     property var _marks: []
+    // 2026-10-23 #113: 真机 46 条标注把整段拉成一屏半的墙. 默认只铺最近 5 条,
+    //   要看得更多点「展开全部」—— 方位条/清空仍然吃全量 _marks, 折叠只是显示层.
+    readonly property int _marksShownCount: detailPage._marksExpanded
+                                            ? detailPage._marks.length
+                                            : Math.min(5, detailPage._marks.length)
+    property bool _marksExpanded: false
+    property string _marksOwner: ""
     property bool _fav: false
     // entity 来自哪套数据: false = danger_species.json (没有图册检索词/代表色)
     property bool _fromGuide: true
@@ -87,6 +94,17 @@ Page {
     readonly property real curLat: emergencyService ? emergencyService.currentLatitude : 0
     readonly property real curLon: emergencyService ? emergencyService.currentLongitude : 0
     readonly property real altM: emergencyService ? emergencyService.currentAltitude : Number.NaN
+    // 2026-10-26「精度到 1 米」: 标注点要带上这一帧的 ± 精度, 存进 species_*.json.
+    //   NaN = 后端没给 HorizontalAccuracy; 不许写成 0 (JSON 里的 0 会被读成"精度 0 米").
+    readonly property real accM: emergencyService ? emergencyService.currentAccuracy : Number.NaN
+
+    // 缺字段一律翻成 NaN, 不用 `Number(x) || 0` —— 后者把"没有高程"写成"海拔 0 米",
+    //   把"没有精度"写成"精度 0 米", 两种假读数在列表里都看不出破绽.
+    function _numOrNaN(v) {
+        if (v === undefined || v === null || v === "") return Number.NaN
+        var n = Number(v)
+        return isFinite(n) ? n : Number.NaN
+    }
 
     // === 小工具 ============================================================
     // Result 信封判成功: 信封是对象, 直接 `if (res)` 恒真 (规则 ③)
@@ -224,6 +242,11 @@ Page {
     function _loadMarks() {
         var out = []
         if (!mapService || !entity.id) { detailPage._marks = out; return }
+        // 换物种时收起折叠: 上一个物种"展开全部到第 40 条"的状态不该跟过来
+        if (detailPage._marksOwner !== entity.id) {
+            detailPage._marksOwner = entity.id
+            detailPage._marksExpanded = false
+        }
         var raw = mapService.getSpeciesLocations()
         for (var i = 0; i < raw.length; ++i) {
             var m = raw[i]
@@ -231,12 +254,20 @@ Page {
             var la = Number(m.lat), lo = Number(m.lon)
             if (!isFinite(la) || !isFinite(lo)) continue
             out.push({
+                id: String(m.id || ""),
                 lat: la, lon: lo,
-                alt: Number(m.altitude) || 0,
+                // 2026-10-26: 这两个键在新数据里"未知就整条不写", 所以读回来是
+                //   undefined. 原来写 `Number(m.altitude) || 0` 把未知变成 0 ——
+                //   列表里 "0 m" 看着像"海平面", ±0 看着像"极准", 两个都是假读数.
+                alt: _numOrNaN(m.altitude),
+                accM: _numOrNaN(m.accuracy),
                 note: m.note || "",
                 takenAt: m.takenAt || ""
             })
         }
+        // 2026-10-23 #113: id 就是 addSpeciesLocation 的 epoch-ms, 文件名排序=时间升序,
+        //   于是"最近标的"排在 46 行的最底下. 详情页要的是最近几条, 倒过来.
+        out.sort(function (a, b) { return (b.id || "").localeCompare(a.id || "") })
         detailPage._marks = out
     }
 
@@ -338,9 +369,8 @@ Page {
                                           : entity.dangerLevel >= 1 ? "warning" : "check"
     // 档位文案只讲危险度. 0 档以前写"无害可食" —— 可食不是危险度的推论 (一只无毒的鸟
     // 不等于能吃), 能吃由下面的可食卡和类目 chip 说.
-    readonly property string _dangerLabel: entity.dangerLevel >= 4 ? "危险/致命"
-                                           : entity.dangerLevel >= 3 ? "中毒/有害"
-                                           : entity.dangerLevel >= 1 ? "慎用/微毒" : "基本无害"
+    // 2026-10-26: 这四段三元收进 CommonOptions.dangerLevelLabel(), 地图标注弹层也读它
+    readonly property string _dangerLabel: CommonOptions.dangerLevelLabel(entity.dangerLevel)
     readonly property color _dangerTone: entity.dangerLevel >= 4 ? CommonOptions.colorHazard
                                        : entity.dangerLevel >= 1 ? CommonOptions.colorWarn
                                                                  : CommonOptions.colorForest
@@ -365,6 +395,16 @@ Page {
                                  Math.round(Number(entity.representativeColor.s) || 0),
                                  Math.round(Number(entity.representativeColor.v) || 0))
         : CommonOptions.colorSurfaceDim
+
+    // 题注读数: 把数据里原始的 h/s/v 抄出来 (口径同数据侧: h 0-360、s/v 0-100,
+    // 正是 CommonOptions::hsvColor 的入参, 不做任何换算)
+    readonly property string _plateHsvText: {
+        var c = entity.representativeColor
+        if (!(c && typeof c === "object")) return ""
+        return "H" + Math.round(Number(c.h) || 0)
+               + " S" + Math.round(Number(c.s) || 0)
+               + " V" + Math.round(Number(c.v) || 0)
+    }
 
     // 海拔: 图鉴给 min/max, 危险物种库给拼好的 "0-2500m" 字符串
     readonly property string _elevText: {
@@ -465,7 +505,12 @@ Page {
     // 标注点的等宽读数行: 纯拉丁数字 (规则 ④)
     function markMonoText(m) {
         var s = m.lat.toFixed(5) + " / " + m.lon.toFixed(5)
-        if (m.alt > 0) s += " · " + Math.round(m.alt) + " m"
+        // 2026-10-26「精度到 1 m」: ± 说的是这一帧的水平精度, 老数据没这个键就不写
+        //   (写 ±0 会被读成"这个点极准").
+        if (isFinite(m.accM) && m.accM > 0) s += " · ±" + Math.round(m.accM) + "m"
+        // 高程: 原来 gate 是 `m.alt > 0`, 未知被上游写成 0 时恰好不显示; 现在未知是
+        //   NaN, 用 isFinite 判. 负高程 (吐鲁番盆地) 是真数, 要显示.
+        if (isFinite(m.alt)) s += " · " + Math.round(m.alt) + "m"
         var t = String(m.takenAt || "")
         if (t.length >= 10) s += " · " + t.slice(5, 10)
         return s
@@ -493,7 +538,8 @@ Page {
             detailPage._fav = res.value.favorite === true
             recordTip.show(_fav ? "已收藏 · 在「我 → 收藏」里" : "已取消收藏", true)
         } else {
-            recordTip.show("收藏失败: " + ((res && res.error) ? res.error : "未知错误"), false)
+            recordTip.show("收藏失败: " + ((res && res.error && res.error.message)
+                                          || "未知错误"), false)
         }
     }
 
@@ -502,17 +548,61 @@ Page {
         if (!entity.id) { recordTip.show("记录失败: 缺少实体 ID", false); return }
         // 规则 ②: 没定位不写库 (以前写死北京坐标, 野外标的点全落到首都)
         if (!hasFix) { recordTip.show("未定位 · GPS 就绪后才能记录位置", false); return }
-        var alt = (isFinite(altM) && altM > 0) ? altM : 0
+        // 2026-10-26「精度到 1 m」: 原来这里 `(isFinite(altM) && altM > 0) ? altM : 0`
+        //   —— 没有高程就写 0, 落盘读起来是"海平面 0 米". 现在高程未知就传 NaN,
+        //   C++ 那一键整条不写; 同时把这帧的 ± 精度一起存进去, 标注列表说得清准不准.
+        var alt = (isFinite(altM) && altM > -500 && altM < 9000) ? altM : Number.NaN
+        var acc = (isFinite(accM) && accM > 0) ? accM : Number.NaN
         var res = mapService.addSpeciesLocation(
             entity.id, entity.commonName || "", _kingdomName(),
-            curLat, curLon, alt, "图鉴详情手动记录")
+            curLat, curLon, alt, "图鉴详情手动记录", acc)
         if (_ok(res)) {
             detailPage._loadMarks()
             recordTip.show("已记录 " + curLat.toFixed(5) + " / " + curLon.toFixed(5)
+                           + (isFinite(acc) ? " · ±" + acc.toFixed(1) + " m"
+                                           : " · 该点没有精度读数")
                            + " · 地图与方位条同步", true)
         } else {
-            recordTip.show("记录失败: " + ((res && res.error) ? res.error : "未知错误"), false)
+            recordTip.show("记录失败: " + ((res && res.error && res.error.message)
+                                          || "未知错误"), false)
         }
+    }
+
+    // 2026-10-23 #113: 标注此前只能写不能删 —— 野外试标的一堆点会永远压在详情页.
+    //   走 MapService::deleteSpeciesLocation (按 species_<id>.json 文件名删).
+    function deleteMark(id) {
+        if (!mapService) { recordTip.show("删除失败: 地图服务不可用", false); return }
+        if (!id) { recordTip.show("删除失败: 这条标注没有 ID", false); return }
+        var res = mapService.deleteSpeciesLocation(String(id))
+        if (_ok(res)) {
+            detailPage._loadMarks()
+            recordTip.show("已删除 1 条标注 · 剩余 " + detailPage._marks.length + " 条", true)
+        } else {
+            // 全站口径: ServiceError 是 QmlResultBridge 塞进 res.error 的对象, 可读的是
+            //   res.error.message. 直接把 res.error 拼进字符串会得到对象名, 用户看不到原因.
+            recordTip.show("删除失败: " + ((res && res.error && res.error.message)
+                                          || "未知错误"), false)
+        }
+    }
+
+    // 清空 = 逐条删. 不另开一个 C++ 批量接口: 标注本来就是一条一个文件,
+    //   量级只有几十条, 少一处要维护的 SQL/目录扫描.
+    function clearMarks() {
+        if (!mapService) { recordTip.show("清空失败: 地图服务不可用", false); return }
+        var ids = []
+        for (var i = 0; i < detailPage._marks.length; ++i) {
+            var id = String(detailPage._marks[i].id || "")
+            if (id) ids.push(id)
+        }
+        if (ids.length === 0) { recordTip.show("这个物种没有可删的标注", false); return }
+        var failed = 0
+        for (var j = 0; j < ids.length; ++j) {
+            if (!_ok(mapService.deleteSpeciesLocation(ids[j]))) failed++
+        }
+        detailPage._loadMarks()
+        recordTip.show(failed === 0
+                       ? "已清空 " + ids.length + " 条标注"
+                       : "清空完成, 但有 " + failed + " 条没删掉", failed === 0)
     }
 
     function openInMap(lat, lon) {
@@ -547,24 +637,51 @@ Page {
             }
 
             // 代表色色块 (数据里的 representative_color, 不是装饰)
-            Rectangle {
-                id: plateSwatch
-                width: 46
-                height: 46
+            // 2026-10-22 #96(a): 光有 46×46 色块读不出它是数据 —— 旁边补两行题注,
+            //   上行汉字说是"代表色", 下行等宽把 h/s/v 三个原始数字抄出来. 色块一旦
+            //   带上读数, 就与图版编号 (SP-xxx) 同属"这条记录的字段", 而不是页面配色.
+            //   汉字与数字必须拆两个 Text: styles.monoFont 族没汉字字形 (真机出方框).
+            RowLayout {
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.top: parent.top
-                anchors.topMargin: 26
-                color: detailPage._plateColor
-                border.color: CommonOptions.colorText
-                border.width: styles.lineHair
-                IconLabel {
-                    anchors.centerIn: parent
-                    // 危险物种库没有代表色, 也只在真有对应字形时才补图标
-                    // (本字体无蘑菇/昆虫形, 硬凑就是"蛇画成垃圾桶")
-                    visible: !detailPage._plateColorValid && detailPage.kingdomIndex <= 1
-                    name: detailPage.kingdomIndex === 0 ? "plant" : "animal"
-                    size: styles.icMd
-                    tintColor: CommonOptions.colorInk3
+                anchors.topMargin: 22
+                spacing: styles.spSm
+
+                Rectangle {
+                    Layout.alignment: Qt.AlignVCenter
+                    Layout.preferredWidth: 46
+                    Layout.preferredHeight: 46
+                    color: detailPage._plateColor
+                    border.color: CommonOptions.colorText
+                    border.width: styles.lineHair
+                    IconLabel {
+                        anchors.centerIn: parent
+                        // 危险物种库没有代表色, 也只在真有对应字形时才补图标
+                        // (本字体无蘑菇/昆虫形, 硬凑就是"蛇画成垃圾桶")
+                        visible: !detailPage._plateColorValid && detailPage.kingdomIndex <= 1
+                        name: detailPage.kingdomIndex === 0 ? "plant" : "animal"
+                        size: styles.icMd
+                        tintColor: CommonOptions.colorInk3
+                    }
+                }
+
+                ColumnLayout {
+                    Layout.alignment: Qt.AlignVCenter
+                    visible: detailPage._plateColorValid
+                    spacing: 1
+                    Text {
+                        text: "代表色"
+                        font.pixelSize: styles.fsXs
+                        // 汉字微标签: 不加字距 (样式铁律), 且不进 mono 族
+                        font.letterSpacing: 0
+                        color: CommonOptions.colorTextDim
+                    }
+                    Text {
+                        text: detailPage._plateHsvText
+                        font.family: styles.monoFont
+                        font.pixelSize: styles.fsXs
+                        color: CommonOptions.colorTextMuted
+                    }
                 }
             }
 
@@ -705,10 +822,8 @@ Page {
                     spacing: styles.spSm
                     Text {
                         Layout.alignment: Qt.AlignVCenter
-                        text: "BEARING FROM YOU"
-                        font.family: styles.monoFont
+                        text: "相对你的方位"
                         font.pixelSize: styles.fsXs
-                        font.letterSpacing: 1.4
                         color: CommonOptions.colorInk3
                     }
                     Item { Layout.fillWidth: true }
@@ -732,6 +847,7 @@ Page {
         ScrollView {
             Layout.fillWidth: true
             Layout.fillHeight: true
+            Layout.bottomMargin: styles.bottomClearance   // A41: 末行给下面的吸底条让位
             contentWidth: width
             clip: true
 
@@ -1016,7 +1132,7 @@ Page {
                             icon: "photo"
                             text: "图册"
                             trailing: detailPage._photoLoading
-                                     ? ("LOADING " + photoModel.count) : String(photoModel.count)
+                                     ? ("加载中 " + photoModel.count) : String(photoModel.count)
                             iconColor: CommonOptions.colorText
                             pixelSize: styles.fsMd
                         }
@@ -1165,23 +1281,74 @@ Page {
                     Layout.rightMargin: styles.pageMargin
                     spacing: styles.spSm
 
-                    SectionTitle {
+                    RowLayout {
                         Layout.fillWidth: true
-                        icon: "pin_drop"
-                        text: "地图上的记录"
-                        trailing: detailPage._marks.length > 0
-                                 ? String(detailPage._marks.length) : "NONE"
-                        iconColor: CommonOptions.colorWater
-                        pixelSize: styles.fsMd
+                        spacing: styles.spSm
+
+                        SectionTitle {
+                            Layout.fillWidth: true
+                            icon: "pin_drop"
+                            text: "地图上的记录"
+                            trailing: detailPage._marks.length > 0
+                                     ? String(detailPage._marks.length) : "无记录"
+                            iconColor: CommonOptions.colorWater
+                            pixelSize: styles.fsMd
+                        }
+                        // 2026-10-23 #113: 标注此前只进不出, 野外试标的点会永久堆在这页.
+                        // 2026-10-26 真机反馈「样式还要改」: 原来这是一颗红描边 OutlineButton
+                        //   (32 高) 顶在栏头 —— ①它和下面每一行的删除方块是同一个动作的两
+                        //   半, 却画成两种东西; ②红描边按 token 规则只留给 SOS 与真危险,
+                        //   一屏第 3 处强调描边就把它贬值了; ③danger 红字压在 fsXs 上最糊.
+                        //   现在改成与行内删除方块同一套视觉 (surfaceDim 底 + divider 描边),
+                        //   带一个"清空"词避免只剩图标看不懂.
+                        Rectangle {
+                            visible: detailPage._marks.length > 0
+                            Layout.alignment: Qt.AlignVCenter
+                            Layout.preferredWidth: clearRow.implicitWidth + 2 * styles.spSm
+                            Layout.preferredHeight: styles.btnHSm
+                            radius: styles.rSm
+                            color: CommonOptions.colorSurfaceDim
+                            border.color: CommonOptions.colorDivider
+                            border.width: styles.lineHair
+
+                            RowLayout {
+                                id: clearRow
+                                anchors.centerIn: parent
+                                spacing: styles.spXs
+                                IconLabel {
+                                    Layout.alignment: Qt.AlignVCenter
+                                    name: "delete"
+                                    size: styles.icSm
+                                    tintColor: CommonOptions.colorTextMuted
+                                }
+                                Text {
+                                    Layout.alignment: Qt.AlignVCenter
+                                    text: "清空"
+                                    font.pixelSize: styles.fsXs
+                                    color: CommonOptions.colorTextMuted
+                                }
+                            }
+
+                            TapHandler {
+                                cursorShape: Qt.PointingHandCursor
+                                onTapped: markClearDialog.open()
+                            }
+                        }
                     }
 
                     Repeater {
-                        model: detailPage._marks
+                        model: detailPage._marks.slice(0, detailPage._marksShownCount)
                         delegate: Rectangle {
                             id: markRow
                             required property var modelData
                             Layout.fillWidth: true
-                            implicitHeight: markRowCol.implicitHeight + 2 * styles.cardPad
+                            // 2026-10-23 真机 (用户截图: 46 行压成一团黑字): 这行原来绑
+                            //   `markRowCol.implicitHeight` —— 全工程根本没有 markRowCol 这个
+                            //   id, 绑定求值即抛 ReferenceError (release 包 logcat 全空, 只在
+                            //   stage0.log 里), implicitHeight 停在 Rectangle 默认的 0 → 每行
+                            //   0 高, 行内容靠 anchors.fill 也是 0, 文字不裁剪就整块溢出叠住
+                            //   下一行. 现在绑这块 RowLayout 自己的隐式高度.
+                            implicitHeight: markRowInner.implicitHeight + 2 * styles.cardPad
                             color: CommonOptions.colorSurface
                             border.color: CommonOptions.colorRule
                             border.width: styles.lineHair
@@ -1195,6 +1362,7 @@ Page {
                             }
 
                             RowLayout {
+                                id: markRowInner
                                 anchors.fill: parent
                                 anchors.leftMargin: styles.lineAccent + styles.cardPad
                                 anchors.rightMargin: styles.cardPad
@@ -1222,28 +1390,62 @@ Page {
                                         color: CommonOptions.colorTextDim
                                         elide: Text.ElideRight
                                     }
+                                    Text {
+                                        visible: markRow.modelData.id === ""
+                                        Layout.fillWidth: true
+                                        // 老数据里没有 id 的行删不掉, 如实说, 不假装能删
+                                        text: "此条没有 ID · 无法删除"
+                                        font.pixelSize: styles.fsXs
+                                        color: CommonOptions.colorHazard
+                                        elide: Text.ElideRight
+                                    }
+                                    // 点这块文字 = 在高德里看这个点. 触点只盖文字列, 不盖删除
+                                    //   方块 —— 两个动作叠在同一个触点上, 一次点击会又跳高德
+                                    //   又弹删除确认. 用 TapHandler 不用整块 fill 的 MouseArea:
+                                    //   后者按下即独占抓握, 慢速拖动会变成点行, 页面滚不动
+                                    //   (同 #105 目标列表那次).
+                                    TapHandler {
+                                        cursorShape: Qt.PointingHandCursor
+                                        onTapped: detailPage.openInMap(markRow.modelData.lat,
+                                                                      markRow.modelData.lon)
+                                    }
                                 }
+
+                                // 只是提示"点左边这块文字会跳高德", 本身不是触点
                                 Text {
                                     Layout.alignment: Qt.AlignVCenter
                                     text: "高德"
                                     font.pixelSize: styles.fsXs
                                     color: CommonOptions.colorWater
                                 }
-                                IconLabel {
+
+                                // 删除走独立方块, 和"高德"不共用触点区, 免得一次点击两个动作
+                                // 2026-10-28 控件盘点: 与「轨迹」Tab 的分析格、已选清单的
+                                //   摘线格合成同一枚 IconActionCell (原来三处三份写法).
+                                IconActionCell {
                                     Layout.alignment: Qt.AlignVCenter
-                                    name: "chevron_right"
-                                    size: styles.icMd
-                                    tintColor: CommonOptions.colorInk3
+                                    cellSize: styles.btnHSm
+                                    iconName: "delete"
+                                    tone: CommonOptions.colorDanger
+                                    enabled: markRow.modelData.id !== ""
+                                    onTriggered: {
+                                        markDeleteDialog.pending = markRow.modelData
+                                        markDeleteDialog.open()
+                                    }
                                 }
                             }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: detailPage.openInMap(markRow.modelData.lat,
-                                                               markRow.modelData.lon)
-                            }
                         }
+                    }
+
+                    // 折叠只影响这一段的显示; 方位条和「清空」仍然吃全量 _marks
+                    OutlineButton {
+                        Layout.alignment: Qt.AlignHCenter
+                        visible: detailPage._marks.length > 5
+                        text: detailPage._marksExpanded
+                              ? "收起 · 只看最近 5 条"
+                              : "展开全部 " + detailPage._marks.length + " 条"
+                        textSize: styles.fsXs
+                        onClicked: detailPage._marksExpanded = !detailPage._marksExpanded
                     }
 
                     Text {
@@ -1350,6 +1552,72 @@ Page {
                     enabled: detailPage.hasFix && !!entity.id
                     onClicked: detailPage.recordHere()
                 }
+            }
+        }
+    }
+
+    // === 标注删除的两道确认 (2026-10-23 #113) =================================
+    //   删除是不可逆的, 而且这一步没有"撤销" —— 所以单条和清空都先问一句.
+    //   文案里带上坐标, 让用户确认的正是他要删的那一条.
+    Dialog {
+        id: markDeleteDialog
+        title: "删除这条标注?"
+        anchors.centerIn: parent
+        width: Math.min(360, detailPage.width - 2 * styles.pageMargin)
+        standardButtons: Dialog.NoButton
+        Material.background: CommonOptions.colorSurface
+        Material.foreground: CommonOptions.colorText
+        padding: styles.spMd
+        property var pending: null
+
+        Text {
+            text: markDeleteDialog.pending
+                  ? detailPage.markMonoText(markDeleteDialog.pending)
+                  : ""
+            color: CommonOptions.colorText
+            font.family: styles.monoFont
+            font.pixelSize: styles.fsSm
+            wrapMode: Text.WordWrap
+        }
+        footer: DialogFooter {
+            cancelText: "留着"
+            confirmText: "删除"
+            confirmCode: "不可撤"
+            onCancel: markDeleteDialog.close()
+            onConfirm: {
+                var m = markDeleteDialog.pending
+                markDeleteDialog.close()
+                if (m) detailPage.deleteMark(m.id)
+            }
+        }
+    }
+
+    Dialog {
+        id: markClearDialog
+        title: "清空这个物种的标注?"
+        anchors.centerIn: parent
+        width: Math.min(360, detailPage.width - 2 * styles.pageMargin)
+        standardButtons: Dialog.NoButton
+        Material.background: CommonOptions.colorSurface
+        Material.foreground: CommonOptions.colorText
+        padding: styles.spMd
+
+        Text {
+            text: "共 " + detailPage._marks.length
+                  + " 条 · 删掉后方位条和「带我过去」也会跟着没了"
+            color: CommonOptions.colorText
+            font.pixelSize: styles.fsMd
+            wrapMode: Text.WordWrap
+        }
+        footer: DialogFooter {
+            cancelText: "留着"
+            confirmText: "清空"
+            confirmCode: "不可撤"
+            confirmEnabled: detailPage._marks.length > 0
+            onCancel: markClearDialog.close()
+            onConfirm: {
+                markClearDialog.close()
+                detailPage.clearMarks()
             }
         }
     }

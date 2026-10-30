@@ -28,7 +28,7 @@ Item {
     // 有类目被选中时才把其余弧压淡; 没选中(全部)时整环都是实色
     property bool hasSelection: false
     property string centerValue: ""   // 等宽: 只装数字与拉丁
-    property string centerLabel: ""   // 等宽微标签: 同样只装拉丁 ("TOTAL" 这类)
+    property string centerLabel: ""   // 默认字族, 装汉字 ("总计")
     property real diameter: 64
     property color trackColor: CommonOptions.colorRuleSoft
 
@@ -117,10 +117,8 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             visible: ring.centerLabel.length > 0
             text: ring.centerLabel
-            // 字距只给拉丁: 汉字加 letterSpacing 是上一版最刺眼的假印刷感
-            font.family: styles.monoFont
+            // 中心名是汉字 (总计/条目), 走 monoFont 就是方框; 字距同理只给拉丁
             font.pixelSize: styles.fsXs
-            font.letterSpacing: 0.8
             color: CommonOptions.colorTextDim
         }
     }

@@ -40,11 +40,13 @@ public:
     static void clear();
 
     /**
-     * 一次性注册 14 个内置策略:
+     * 一次性注册 17 个内置策略:
      *   altitude / precipitation / season / wind_speed / days / difficulty
      *   diurnal_range / humidity / uv_level / wind_level
      *   is_rainy_season / is_plateau / is_desert / is_coastal
-     * (后 8 个 2026-09-23 补齐, 对齐 equipment_rules.json 实际使用的前缀)
+     *   temp_min / temp_avg / load
+     * (中 8 个 2026-09-23 补齐, 对齐 equipment_rules.json 实际使用的前缀;
+     *  后 3 个 2026-10-22 新增, 让保暖跟上温度、清单跟上背负方式)
      */
     static void initializeDefaults();
 };

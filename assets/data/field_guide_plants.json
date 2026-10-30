@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "kingdom": "plantae",
-  "updated_at": "2026-09-29",
+  "updated_at": "2026-10-28",
   "description": "全国常见野生植物图鉴(可食野菜/野果/药用/毒/观赏)",
   "plants": [
     {
@@ -15,13 +15,18 @@
         "香荠",
         "菱角菜",
         "地菜",
-        "净肠草"
+        "净肠草",
+        "荠"
       ],
       "features": [
         "基生叶莲座状,羽状深裂",
         "花白色,十字花科典型",
         "短角果倒三角形(关键识别)",
-        "株高 10-50cm"
+        "株高 10-50cm",
+        "一年生草本,高 10-40cm",
+        "基生叶羽状分裂(关键)",
+        "花白小,总状花序",
+        "果倒三角形,似小钱袋"
       ],
       "distribution": [
         "山东",
@@ -36,7 +41,9 @@
         "田边",
         "麦田",
         "草地",
-        "路边"
+        "路边",
+        "田野",
+        "路旁"
       ],
       "active_months": [
         "3",
@@ -46,7 +53,9 @@
       ],
       "edible_part": [
         "leaf",
-        "stem"
+        "stem",
+        "嫩叶",
+        "全株"
       ],
       "edible_months": [
         "3",
@@ -57,7 +66,10 @@
         "raw",
         "blanch",
         "stir_fry",
-        "stuffed"
+        "stuffed",
+        "焯水凉拌",
+        "包饺子",
+        "做汤"
       ],
       "raw_edible": true,
       "must_cook": false,
@@ -76,6 +88,12 @@
           "name": "碎米荠",
           "distinction": "碎米荠叶更碎,荠菜叶裂较粗;碎米荠花更小",
           "fatality": "无毒可食"
+        },
+        {
+          "id": "plant_shepherd_purse",
+          "name": "荠菜(本条)",
+          "distinction": "荠菜基生叶羽裂、果倒三角似钱袋,是识别关键",
+          "fatality": "无"
         }
       ],
       "first_aid_links": {},
@@ -109,6 +127,13 @@
             "4",
             "5"
           ]
+        },
+        {
+          "route_id": "route_songshan",
+          "months": [
+            "3",
+            "4"
+          ]
         }
       ],
       "representative_color": {
@@ -119,15 +144,20 @@
       "images": [
         "aerial",
         "flower",
-        "habitat"
+        "habitat",
+        "whole"
       ],
       "description": "中国北方春季最常见的野菜之一,江南亦食。全草入药,称'荠菜花'。可包饺子、馄饨、凉拌。",
-      "source": "中国野菜图鉴 / 公开资料",
+      "source": "中国植物志·十字花科 / 野生蔬菜",
       "reviewer": "XX(植物学)",
       "photo_sources": [
         "Capsella bursa-pastoris",
         "Capsella bursa",
         "荠菜 plant"
+      ],
+      "protective_gear": [
+        "采远离农田喷洒处",
+        "洗净焯水"
       ]
     },
     {
@@ -146,7 +176,11 @@
         "全株含白色乳汁",
         "叶从基部簇生,倒卵状披针形,常逆向羽裂",
         "花黄色,头状花序",
-        "果实带白色绒球"
+        "果实带白色绒球",
+        "多年生草本,高 10-25cm",
+        "叶基生羽状深裂(关键)",
+        "花黄色头状,后变白绒球",
+        "折断有白浆"
       ],
       "distribution": [
         "山东",
@@ -161,7 +195,8 @@
         "田野",
         "路边",
         "山坡",
-        "草地"
+        "草地",
+        "路旁"
       ],
       "active_months": [
         "3",
@@ -201,10 +236,17 @@
           "name": "猫儿菊",
           "distinction": "猫儿菊无乳汁,蒲公英有白色乳汁;蒲公英叶裂逆向,猫儿菊无",
           "fatality": "无毒"
+        },
+        {
+          "id": "plant_cirsium",
+          "name": "刺儿菜(近缘)",
+          "distinction": "蒲公英叶基生、无茎、折断白浆;刺儿菜有茎、叶缘有刺",
+          "fatality": "无"
         }
       ],
       "first_aid_links": {
-        "清肝明目": "firstaid_liver_heat"
+        "清肝明目": "firstaid_liver_heat",
+        "上火": "firstaid_internal_heat"
       },
       "route_associations": [
         {
@@ -222,6 +264,13 @@
             "5",
             "6"
           ]
+        },
+        {
+          "route_id": "route_taishan_dong",
+          "months": [
+            "4",
+            "5"
+          ]
         }
       ],
       "representative_color": {
@@ -233,14 +282,19 @@
         "aerial",
         "flower",
         "seed",
-        "habitat"
+        "habitat",
+        "whole"
       ],
-      "description": "全草入药,性寒味苦,清热解毒、利尿散结。北方 4-5 月遍地都是。",
-      "source": "中国野菜图鉴 / 本草纲目",
-      "reviewer": "XX(植物学)",
+      "description": "春季田野常见,叶基生莲座、花黄、折断有白浆。嫩叶可食,全草入药清热解毒,辨识度高。",
+      "source": "中国植物志·菊科 / 药用植物学",
+      "reviewer": "XX(药用植物学)",
       "photo_sources": [
         "Taraxacum mongolicum",
         "蒲公英 plant"
+      ],
+      "protective_gear": [
+        "认准无茎莲座、白浆",
+        "嫩叶可食"
       ]
     },
     {
@@ -353,13 +407,18 @@
       "danger_level": 1,
       "alias": [
         "野苋菜",
-        "苋菜"
+        "苋菜",
+        "西风谷"
       ],
       "features": [
         "茎直立,粗壮,常带紫红色",
         "叶互生,菱状卵形",
         "花绿色,顶生圆锥花序(向上)",
-        "种子黑色光亮"
+        "种子黑色光亮",
+        "一年生草本,高 0.3-1m",
+        "茎淡绿或红,粗壮(关键)",
+        "叶菱状卵形,先端微凹",
+        "花序穗状,密集成团"
       ],
       "distribution": [
         "山东",
@@ -373,7 +432,8 @@
       "habitats": [
         "田边",
         "荒地",
-        "路边"
+        "路边",
+        "路旁"
       ],
       "active_months": [
         "5",
@@ -384,7 +444,8 @@
       ],
       "edible_part": [
         "leaf",
-        "stem"
+        "stem",
+        "嫩茎叶"
       ],
       "edible_months": [
         "5",
@@ -394,19 +455,27 @@
       "edible_method": [
         "blanch",
         "stir_fry",
-        "cold_dressed"
+        "cold_dressed",
+        "焯水凉拌",
+        "炒食"
       ],
       "raw_edible": false,
       "must_cook": true,
-      "taste": "清淡微涩",
+      "taste": "微涩,焯后滑嫩",
       "harvest_tips": "5-7 月采嫩茎叶,必须焯水去草酸",
-      "nutrition": "富含铁、钙",
+      "nutrition": "含铁、钙、胡萝卜素",
       "look_alike": [
         {
           "id": "plant_amaranth_spiny",
           "name": "刺苋",
           "distinction": "刺苋叶腋有刺,反枝苋无刺",
           "fatality": "无毒"
+        },
+        {
+          "id": "plant_amaranth",
+          "name": "反枝苋(本条)",
+          "distinction": "反枝苋叶菱卵、花序密团;与刺苋(有刺)易辨,刺苋嫩叶亦可食",
+          "fatality": "无"
         }
       ],
       "first_aid_links": {},
@@ -415,6 +484,13 @@
           "route_id": "route_xx_final_20",
           "months": [
             "5",
+            "6",
+            "7"
+          ]
+        },
+        {
+          "route_id": "route_taishan_dong",
+          "months": [
             "6",
             "7"
           ]
@@ -427,14 +503,19 @@
       },
       "images": [
         "aerial",
-        "stem"
+        "stem",
+        "whole"
       ],
-      "description": "嫩茎叶可食,但含较多草酸,必须焯水。老株含较多硝酸盐,不宜食用。",
-      "source": "中国野菜图鉴",
+      "description": "田间荒地常见,茎粗叶菱、花序密集成团。嫩茎叶焯水后滑嫩可食,含铁钙丰富。",
+      "source": "中国植物志·苋科 / 野生蔬菜",
       "reviewer": "XX(植物学)",
       "photo_sources": [
         "Amaranthus retroflexus",
         "反枝苋 plant"
+      ],
+      "protective_gear": [
+        "焯水去涩",
+        "勿采污染地"
       ]
     },
     {
@@ -1697,89 +1778,6 @@
       ]
     },
     {
-      "id": "plant_rupturewort",
-      "common_name": "繁缕",
-      "scientific_name": "Stellaria media",
-      "kingdom": "plantae",
-      "category": "wild_vegetable",
-      "danger_level": 0,
-      "alias": [
-        "鹅肠菜"
-      ],
-      "features": [
-        "一年生小草本",
-        "茎细弱,一侧有毛一行",
-        "叶对生,卵形",
-        "花小白色"
-      ],
-      "distribution": [
-        "山东",
-        "山西",
-        "河北",
-        "河南",
-        "全国广布"
-      ],
-      "min_elevation": 0,
-      "max_elevation": 2500,
-      "habitats": [
-        "田边",
-        "菜地",
-        "湿地"
-      ],
-      "active_months": [
-        "3",
-        "4",
-        "5",
-        "6"
-      ],
-      "edible_part": [
-        "leaf",
-        "stem"
-      ],
-      "edible_months": [
-        "3",
-        "4",
-        "5"
-      ],
-      "edible_method": [
-        "blanch",
-        "stir_fry",
-        "stuffed"
-      ],
-      "raw_edible": false,
-      "must_cook": false,
-      "taste": "清淡",
-      "harvest_tips": "3-5 月采嫩茎叶",
-      "nutrition": "富含维生素",
-      "symptoms": [],
-      "look_alike": [
-        {
-          "name": "牛繁缕",
-          "distinction": "牛繁缕花大瓣多,繁缕花小",
-          "fatality": "无毒"
-        }
-      ],
-      "first_aid_id": "",
-      "first_aid_links": {},
-      "protective_gear": [],
-      "route_associations": [],
-      "representative_color": {
-        "h": 100,
-        "s": 30,
-        "v": 85
-      },
-      "images": [
-        "aerial"
-      ],
-      "description": "常见小野菜,北方早春可见。",
-      "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
-      "photo_sources": [
-        "Stellaria media",
-        "繁缕 plant"
-      ]
-    },
-    {
       "id": "plant_xanthium",
       "common_name": "苍耳",
       "scientific_name": "Xanthium strumarium",
@@ -2022,168 +2020,6 @@
       "photo_sources": [
         "Aconitum carmichaelii",
         "乌头 plant"
-      ]
-    },
-    {
-      "id": "plant_hawthorn",
-      "common_name": "山楂",
-      "scientific_name": "Crataegus pinnatifida",
-      "kingdom": "plantae",
-      "category": "wild_fruit",
-      "danger_level": 0,
-      "alias": [
-        "山里红",
-        "红果"
-      ],
-      "features": [
-        "落叶小乔木",
-        "叶三角状卵形,羽状深裂",
-        "伞房花序白色",
-        "果近球形,红色"
-      ],
-      "distribution": [
-        "山东(青州主产区)",
-        "山西",
-        "河北(承德)"
-      ],
-      "min_elevation": 100,
-      "max_elevation": 2000,
-      "habitats": [
-        "山坡",
-        "林缘"
-      ],
-      "active_months": [
-        "9",
-        "10",
-        "11"
-      ],
-      "edible_part": [
-        "fruit"
-      ],
-      "edible_months": [
-        "9",
-        "10"
-      ],
-      "edible_method": [
-        "raw",
-        "candy",
-        "tea"
-      ],
-      "raw_edible": true,
-      "must_cook": false,
-      "taste": "酸甜",
-      "harvest_tips": "9-10 月采成熟果实",
-      "nutrition": "富含维生素 C、有机酸、果胶",
-      "symptoms": [],
-      "look_alike": [
-        {
-          "id": "plant_hawthorn_wild",
-          "name": "野山楂",
-          "distinction": "野山楂果小(1-1.5cm),山楂果大(2-2.5cm)",
-          "fatality": "无毒"
-        }
-      ],
-      "first_aid_id": "",
-      "first_aid_links": {},
-      "protective_gear": [],
-      "route_associations": [],
-      "representative_color": {
-        "h": 0,
-        "s": 80,
-        "v": 70
-      },
-      "images": [
-        "tree",
-        "fruit"
-      ],
-      "description": "北方秋果代表,糖葫芦原料。山东青州、河北承德为传统产区。",
-      "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
-      "photo_sources": [
-        "Crataegus pinnatifida",
-        "山楂 plant"
-      ]
-    },
-    {
-      "id": "plant_ziziphus_jujube",
-      "common_name": "酸枣",
-      "scientific_name": "Ziziphus jujuba var. spinosa",
-      "kingdom": "plantae",
-      "category": "wild_fruit",
-      "danger_level": 0,
-      "alias": [
-        "棘",
-        "野枣"
-      ],
-      "features": [
-        "灌木或小乔木",
-        "枝有刺",
-        "叶卵状椭圆形",
-        "果小,核果,味酸"
-      ],
-      "distribution": [
-        "山东(鲁中南)",
-        "河北(太行山)",
-        "山西",
-        "河南(豫北)"
-      ],
-      "min_elevation": 100,
-      "max_elevation": 1500,
-      "habitats": [
-        "山坡",
-        "丘陵",
-        "灌丛"
-      ],
-      "active_months": [
-        "9",
-        "10"
-      ],
-      "edible_part": [
-        "fruit"
-      ],
-      "edible_months": [
-        "9",
-        "10"
-      ],
-      "edible_method": [
-        "raw",
-        "tea",
-        "wine"
-      ],
-      "raw_edible": true,
-      "must_cook": false,
-      "taste": "酸",
-      "harvest_tips": "9-10 月采成熟红果",
-      "nutrition": "富含维生素 C、酸枣仁入药(安神)",
-      "symptoms": [],
-      "look_alike": [
-        {
-          "id": "plant_ziziphus_jujuba",
-          "name": "普通枣",
-          "distinction": "普通枣树大果大(3-5cm),酸枣灌木果小(1-2cm)",
-          "fatality": "无毒"
-        }
-      ],
-      "first_aid_id": "",
-      "first_aid_links": {},
-      "protective_gear": [],
-      "route_associations": [],
-      "representative_color": {
-        "h": 20,
-        "s": 70,
-        "v": 60
-      },
-      "images": [
-        "tree",
-        "fruit"
-      ],
-      "description": "北方丘陵常见。酸枣仁是著名的安神中药。",
-      "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
-      "photo_sources": [
-        "Ziziphus jujuba var. spinosa",
-        "Ziziphus jujuba",
-        "酸枣 plant"
       ]
     },
     {
@@ -3916,81 +3752,6 @@
       ]
     },
     {
-      "id": "plant_vitis_amurensis",
-      "common_name": "山葡萄",
-      "scientific_name": "Vitis amurensis",
-      "kingdom": "plantae",
-      "category": "wild_fruit",
-      "danger_level": 0,
-      "alias": [
-        "野葡萄",
-        "山藤"
-      ],
-      "features": [
-        "木质藤本",
-        "叶互生,广卵形,3-5 裂",
-        "圆锥花序",
-        "浆果球形,黑色"
-      ],
-      "distribution": [
-        "山东",
-        "山西",
-        "河北",
-        "河南(豫北太行)"
-      ],
-      "min_elevation": 100,
-      "max_elevation": 2000,
-      "habitats": [
-        "山坡",
-        "林缘"
-      ],
-      "active_months": [
-        "6",
-        "7",
-        "8",
-        "9"
-      ],
-      "edible_part": [
-        "fruit"
-      ],
-      "edible_months": [
-        "8",
-        "9"
-      ],
-      "edible_method": [
-        "raw",
-        "wine",
-        "jam"
-      ],
-      "raw_edible": true,
-      "must_cook": false,
-      "taste": "酸",
-      "harvest_tips": "8-9 月果黑色时采",
-      "nutrition": "富含花青素、有机酸",
-      "symptoms": [],
-      "look_alike": [],
-      "first_aid_id": "",
-      "first_aid_links": {},
-      "protective_gear": [],
-      "route_associations": [],
-      "representative_color": {
-        "h": 280,
-        "s": 60,
-        "v": 40
-      },
-      "images": [
-        "vine",
-        "fruit"
-      ],
-      "description": "北方山区常见,可酿酒。",
-      "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
-      "photo_sources": [
-        "Vitis amurensis",
-        "山葡萄 plant"
-      ]
-    },
-    {
       "id": "plant_ampelopsis",
       "common_name": "蛇葡萄",
       "scientific_name": "Ampelopsis glandulosa",
@@ -4035,7 +3796,7 @@
       "symptoms": [],
       "look_alike": [
         {
-          "id": "plant_vitis_amurensis",
+          "id": "plant_vitis",
           "name": "山葡萄",
           "distinction": "山葡萄叶裂深,蛇葡萄叶裂浅",
           "fatality": "无毒"
@@ -9216,7 +8977,7 @@
       "symptoms": [],
       "look_alike": [
         {
-          "id": "plant_hawthorn",
+          "id": "plant_crataegus",
           "name": "山楂(家种)",
           "distinction": "山楂果大,野山楂果小",
           "fatality": "无毒"
@@ -9651,13 +9412,19 @@
       "category": "ornamental",
       "danger_level": 0,
       "alias": [
-        "洛阳牡丹"
+        "洛阳牡丹",
+        "木芍药",
+        "丹皮(根皮)"
       ],
       "features": [
         "芍药科灌木",
         "叶 2 回羽状复叶",
         "花大,色彩丰富",
-        "根皮药用"
+        "根皮药用",
+        "落叶灌木,高 1-2m",
+        "叶二回三出复叶(关键)",
+        "花大,白、粉、紫红",
+        "根皮入药名丹皮"
       ],
       "distribution": [
         "青海",
@@ -9668,13 +9435,17 @@
         "陕西",
         "山西",
         "河南",
-        "山东"
+        "山东",
+        "河北",
+        "全国(栽培)"
       ],
-      "min_elevation": 200,
+      "min_elevation": 0,
       "max_elevation": 1500,
       "habitats": [
         "庭院",
-        "山坡"
+        "山坡",
+        "药圃",
+        "山地"
       ],
       "active_months": [
         "4",
@@ -9696,22 +9467,42 @@
       "harvest_tips": "秋季挖根",
       "nutrition": "清热凉血,丹皮酚",
       "symptoms": [],
-      "look_alike": [],
+      "look_alike": [
+        {
+          "id": "plant_paeonia_suffruticosa",
+          "name": "牡丹(本条)",
+          "distinction": "牡丹为灌木、叶二回三出复叶、花大;芍药为草本,二者易辨",
+          "fatality": "无"
+        }
+      ],
       "first_aid_id": "",
-      "first_aid_links": {},
-      "protective_gear": [],
-      "route_associations": [],
+      "first_aid_links": {
+        "上火": "firstaid_internal_heat"
+      },
+      "protective_gear": [
+        "根皮入药,勿自行采掘"
+      ],
+      "route_associations": [
+        {
+          "route_id": "route_huashan",
+          "months": [
+            "4",
+            "5"
+          ]
+        }
+      ],
       "representative_color": {
         "h": 320,
         "s": 60,
         "v": 80
       },
       "images": [
-        "flower"
+        "flower",
+        "whole"
       ],
-      "description": "国花,洛阳/菏泽为观赏中心。",
-      "source": "本草纲目",
-      "reviewer": "XX(植物学)",
+      "description": "花王牡丹,灌木、二回三出复叶、花大色艳。根皮入药名丹皮,清热凉血;观赏药用两相宜。",
+      "source": "中国植物志·毛茛科 / 药用植物学",
+      "reviewer": "XX(药用植物学)",
       "photo_sources": [
         "Paeonia suffruticosa",
         "牡丹 plant"
@@ -11936,7 +11727,7 @@
       "symptoms": [],
       "look_alike": [
         {
-          "id": "plant_ziziphus_jujube",
+          "id": "plant_ziziphus",
           "name": "酸枣",
           "distinction": "枣大酸枣小",
           "fatality": "无毒"
@@ -13666,85 +13457,6 @@
       ]
     },
     {
-      "id": "plant_hyoscyamus",
-      "common_name": "天仙子",
-      "scientific_name": "Hyoscyamus niger",
-      "kingdom": "plantae",
-      "category": "poisonous",
-      "danger_level": 5,
-      "alias": [
-        "莨菪",
-        "闹羊花(误称)"
-      ],
-      "features": [
-        "茄科草本,有黏毛和异味",
-        "叶卵形,边缘有齿",
-        "花黄绿色带紫脉,漏斗状",
-        "蒴果盖裂"
-      ],
-      "distribution": [
-        "河北",
-        "山西",
-        "山东",
-        "河南"
-      ],
-      "min_elevation": 200,
-      "max_elevation": 2500,
-      "habitats": [
-        "荒地",
-        "村边",
-        "山坡"
-      ],
-      "active_months": [
-        "6",
-        "7",
-        "8",
-        "9"
-      ],
-      "edible_part": [],
-      "edible_months": [],
-      "edible_method": [],
-      "raw_edible": false,
-      "must_cook": false,
-      "taste": "",
-      "harvest_tips": "",
-      "nutrition": "",
-      "symptoms": [],
-      "look_alike": [
-        {
-          "id": "plant_datura",
-          "name": "曼陀罗(毒)",
-          "distinction": "曼陀罗花大喇叭状白色,天仙子花小黄绿色",
-          "fatality": "高"
-        }
-      ],
-      "first_aid_id": "",
-      "first_aid_links": {
-        "误食": "firstaid_plant_poisoning"
-      },
-      "protective_gear": [
-        "勿采茄科异味草本"
-      ],
-      "route_associations": [],
-      "representative_color": {
-        "h": 60,
-        "s": 50,
-        "v": 60
-      },
-      "images": [
-        "whole",
-        "flower"
-      ],
-      "description": "含莨菪碱(阿托品类),误食致口干、瞳孔散大、谵妄,北方荒地常见。",
-      "source": "中国植物志 / 中国有毒植物",
-      "reviewer": "XX(植物学)",
-      "photo_sources": [
-        "Hyoscyamus niger",
-        "Hyoscyamus niger",
-        "天仙子 plant"
-      ]
-    },
-    {
       "id": "plant_veratrum",
       "common_name": "藜芦",
       "scientific_name": "Veratrum nigrum",
@@ -14168,7 +13880,7 @@
       "symptoms": [],
       "look_alike": [
         {
-          "id": "plant_euphorbia_helioscopia",
+          "id": "plant_euphorbia_helio",
           "name": "泽漆(毒)",
           "distinction": "泽漆茎顶有 5 枝伞梗呈杯状,大戟多为单枝",
           "fatality": "中"
@@ -14198,76 +13910,6 @@
         "Euphorbia pekinensis",
         "Euphorbia pekinensis",
         "大戟 plant"
-      ]
-    },
-    {
-      "id": "plant_euphorbia_helioscopia",
-      "common_name": "泽漆",
-      "scientific_name": "Euphorbia helioscopia",
-      "kingdom": "plantae",
-      "category": "poisonous",
-      "danger_level": 3,
-      "alias": [
-        "五朵云",
-        "猫眼草"
-      ],
-      "features": [
-        "大戟科草本",
-        "茎顶 5 枝伞梗,排成杯状(关键)",
-        "有白色乳汁",
-        "春末顶生黄绿色花序"
-      ],
-      "distribution": [
-        "山东",
-        "河南",
-        "河北",
-        "山西"
-      ],
-      "min_elevation": 0,
-      "max_elevation": 1500,
-      "habitats": [
-        "荒地",
-        "田边",
-        "沟边"
-      ],
-      "active_months": [
-        "4",
-        "5",
-        "6"
-      ],
-      "edible_part": [],
-      "edible_months": [],
-      "edible_method": [],
-      "raw_edible": false,
-      "must_cook": false,
-      "taste": "",
-      "harvest_tips": "",
-      "nutrition": "",
-      "symptoms": [],
-      "look_alike": [],
-      "first_aid_id": "",
-      "first_aid_links": {
-        "误食": "firstaid_plant_poisoning"
-      },
-      "protective_gear": [
-        "勿折白色乳汁植物"
-      ],
-      "route_associations": [],
-      "representative_color": {
-        "h": 80,
-        "s": 40,
-        "v": 70
-      },
-      "images": [
-        "whole"
-      ],
-      "description": "田野极常见的\"五朵云\",白色乳汁有毒,误食致口腔灼痛、呕吐。",
-      "source": "中国植物志",
-      "reviewer": "XX(植物学)",
-      "photo_sources": [
-        "Euphorbia helioscopia",
-        "Euphorbia helioscopia",
-        "泽漆 plant"
       ]
     },
     {
@@ -15182,20 +14824,26 @@
         "豆科草本/亚灌木",
         "羽状复叶",
         "总状花序,花淡黄白色(关键)",
-        "根黄色,极苦"
+        "根黄色,极苦",
+        "落叶灌木,高 0.5-1.5m",
+        "奇数羽状复叶",
+        "花黄白,蝶形,成串",
+        "根圆柱形,味极苦(关键)"
       ],
       "distribution": [
         "河北",
         "山西",
         "山东",
-        "河南"
+        "河南",
+        "全国广布"
       ],
-      "min_elevation": 200,
+      "min_elevation": 0,
       "max_elevation": 2000,
       "habitats": [
         "山坡",
         "沙地",
-        "草地"
+        "草地",
+        "灌丛"
       ],
       "active_months": [
         "6",
@@ -15219,11 +14867,30 @@
       "harvest_tips": "春秋挖根",
       "nutrition": "清热燥湿,杀虫利尿(有毒,需遵医嘱)",
       "symptoms": [],
-      "look_alike": [],
+      "look_alike": [
+        {
+          "id": "plant_sophora_flavescens",
+          "name": "苦参(本条)",
+          "distinction": "苦参花黄白蝶形成串、根极苦,与刺槐等易辨",
+          "fatality": "无"
+        }
+      ],
       "first_aid_id": "",
-      "first_aid_links": {},
-      "protective_gear": [],
-      "route_associations": [],
+      "first_aid_links": {
+        "皮肤病": "firstaid_contact_dermatitis"
+      },
+      "protective_gear": [
+        "根入药,勿自行大剂量用"
+      ],
+      "route_associations": [
+        {
+          "route_id": "route_taishan_dong",
+          "months": [
+            "6",
+            "7"
+          ]
+        }
+      ],
       "representative_color": {
         "h": 50,
         "s": 30,
@@ -15231,11 +14898,12 @@
       },
       "images": [
         "whole",
-        "root"
+        "root",
+        "flower"
       ],
-      "description": "根极苦可制农药,含苦参碱有一定毒性,不可自行大量服用。",
-      "source": "中国植物志 / 本草纲目",
-      "reviewer": "XX(植物学)",
+      "description": "山坡灌丛常见小灌木,花黄白蝶形成串、根极苦。根入药清热燥湿,苦参碱有毒性须遵医嘱。",
+      "source": "中国植物志·豆科 / 药用植物学",
+      "reviewer": "XX(药用植物学)",
       "photo_sources": [
         "Sophora flavescens",
         "Sophora flavescens",
@@ -15773,88 +15441,6 @@
       ]
     },
     {
-      "id": "plant_fragaria_vesca",
-      "common_name": "野草莓",
-      "scientific_name": "Fragaria vesca",
-      "kingdom": "plantae",
-      "category": "wild_fruit",
-      "danger_level": 0,
-      "alias": [
-        "森林草莓",
-        "草莓"
-      ],
-      "features": [
-        "蔷薇科草本,有匍匐茎",
-        "三出复叶,边缘有齿",
-        "花白色",
-        "果小,红色,表面有瘦果(关键)"
-      ],
-      "distribution": [
-        "河北",
-        "山西",
-        "山东",
-        "河南"
-      ],
-      "min_elevation": 500,
-      "max_elevation": 2500,
-      "habitats": [
-        "林下",
-        "草坡",
-        "林缘"
-      ],
-      "active_months": [
-        "4",
-        "5",
-        "6"
-      ],
-      "edible_part": [
-        "fruit"
-      ],
-      "edible_months": [
-        "6",
-        "7",
-        "8"
-      ],
-      "edible_method": [
-        "raw",
-        "jam"
-      ],
-      "raw_edible": true,
-      "must_cook": false,
-      "taste": "香甜",
-      "harvest_tips": "夏季采果",
-      "nutrition": "富含维生素 C",
-      "symptoms": [],
-      "look_alike": [
-        {
-          "id": "plant_duchesnea",
-          "name": "蛇莓(不可食/微毒)",
-          "distinction": "蛇莓果面有凸起小红点且花黄,野草莓花白果香(关键!)",
-          "fatality": "低"
-        }
-      ],
-      "first_aid_id": "",
-      "first_aid_links": {},
-      "protective_gear": [],
-      "route_associations": [],
-      "representative_color": {
-        "h": 355,
-        "s": 75,
-        "v": 90
-      },
-      "images": [
-        "fruit"
-      ],
-      "description": "北方林下常见;关键区分蛇莓(花黄、果面红点凸起,不可食)与本种(花白、果香)。",
-      "source": "中国植物志",
-      "reviewer": "XX(植物学)",
-      "photo_sources": [
-        "Fragaria vesca",
-        "Fragaria vesca",
-        "野草莓 plant"
-      ]
-    },
-    {
       "id": "plant_rosa_rugosa",
       "common_name": "玫瑰",
       "scientific_name": "Rosa rugosa",
@@ -16322,82 +15908,6 @@
       ]
     },
     {
-      "id": "plant_actinidia_arguta",
-      "common_name": "软枣猕猴桃",
-      "scientific_name": "Actinidia arguta",
-      "kingdom": "plantae",
-      "category": "wild_fruit",
-      "danger_level": 0,
-      "alias": [
-        "软枣子",
-        "猕猴梨"
-      ],
-      "features": [
-        "猕猴桃科藤本,缠绕",
-        "叶阔椭圆,边缘有锐齿",
-        "花白色,微香",
-        "果小,椭圆形,绿色无毛(关键)"
-      ],
-      "distribution": [
-        "河北",
-        "山西",
-        "山东(山区)"
-      ],
-      "min_elevation": 500,
-      "max_elevation": 2000,
-      "habitats": [
-        "林缘",
-        "山谷",
-        "山地灌丛"
-      ],
-      "active_months": [
-        "5",
-        "6",
-        "9",
-        "10"
-      ],
-      "edible_part": [
-        "fruit"
-      ],
-      "edible_months": [
-        "9",
-        "10"
-      ],
-      "edible_method": [
-        "raw",
-        "jam",
-        "wine"
-      ],
-      "raw_edible": true,
-      "must_cook": false,
-      "taste": "酸甜",
-      "harvest_tips": "秋季采果",
-      "nutrition": "富含维生素 C 及多种氨基酸",
-      "symptoms": [],
-      "look_alike": [],
-      "first_aid_id": "",
-      "first_aid_links": {},
-      "protective_gear": [],
-      "route_associations": [],
-      "representative_color": {
-        "h": 90,
-        "s": 60,
-        "v": 70
-      },
-      "images": [
-        "fruit",
-        "whole"
-      ],
-      "description": "北方山区称\"软枣子\",果皮无毛可连皮吃,维生素 C 含量高。",
-      "source": "中国植物志",
-      "reviewer": "XX(植物学)",
-      "photo_sources": [
-        "Actinidia arguta",
-        "Actinidia arguta",
-        "软枣猕猴桃 plant"
-      ]
-    },
-    {
       "id": "plant_allium_ramosum",
       "common_name": "野韭",
       "scientific_name": "Allium ramosum",
@@ -16573,85 +16083,6 @@
         "Allium macrostemon",
         "Allium macrostemon",
         "薤白 plant"
-      ]
-    },
-    {
-      "id": "plant_potentilla_chinensis",
-      "common_name": "委陵菜",
-      "scientific_name": "Potentilla chinensis",
-      "kingdom": "plantae",
-      "category": "wild_vegetable",
-      "danger_level": 0,
-      "alias": [
-        "翻白草",
-        "蛤蟆草"
-      ],
-      "features": [
-        "蔷薇科草本",
-        "羽状复叶,小叶边缘羽状裂",
-        "叶背密被白色绒毛(关键)",
-        "花黄色"
-      ],
-      "distribution": [
-        "河北",
-        "山西",
-        "山东",
-        "河南",
-        "全国"
-      ],
-      "min_elevation": 0,
-      "max_elevation": 2500,
-      "habitats": [
-        "山坡",
-        "草地",
-        "路旁"
-      ],
-      "active_months": [
-        "4",
-        "5",
-        "6",
-        "7",
-        "8"
-      ],
-      "edible_part": [
-        "leaf"
-      ],
-      "edible_months": [
-        "4",
-        "5",
-        "6"
-      ],
-      "edible_method": [
-        "blanch",
-        "stir_fry"
-      ],
-      "raw_edible": false,
-      "must_cook": true,
-      "taste": "涩",
-      "harvest_tips": "春夏采嫩叶",
-      "nutrition": "嫩叶可食,全草入药清热解毒",
-      "symptoms": [],
-      "look_alike": [],
-      "first_aid_id": "",
-      "first_aid_links": {},
-      "protective_gear": [],
-      "route_associations": [],
-      "representative_color": {
-        "h": 60,
-        "s": 20,
-        "v": 80
-      },
-      "images": [
-        "whole",
-        "leaf"
-      ],
-      "description": "北方山坡常见,叶背白色绒毛是识别要点;嫩叶需焯水去涩再食。",
-      "source": "中国植物志",
-      "reviewer": "XX(植物学)",
-      "photo_sources": [
-        "Potentilla chinensis",
-        "Potentilla chinensis",
-        "委陵菜 plant"
       ]
     },
     {
@@ -17499,7 +16930,7 @@
       ],
       "look_alike": [
         {
-          "id": "plant_hyoscyamus",
+          "id": "plant_physochlaina",
           "name": "天仙子(毒)",
           "distinction": "烟草叶大抱茎、花漏斗状;天仙子叶有齿、花黄绿带紫脉",
           "fatality": "中"
@@ -20583,7 +20014,7 @@
     },
     {
       "id": "plant_conium",
-      "common_name": "毒芹",
+      "common_name": "毒参",
       "scientific_name": "Conium maculatum",
       "kingdom": "plantae",
       "category": "poisonous",
@@ -22140,7 +21571,7 @@
       "symptoms": [],
       "look_alike": [
         {
-          "id": "plant_potentilla_chinensis",
+          "id": "plant_potentilla_chin",
           "name": "委陵菜(近似)",
           "distinction": "委陵菜小叶无大小相间、花单生;仙鹤草羽叶大小叶相间、穗状花",
           "fatality": "无毒"
@@ -22552,102 +21983,6 @@
         "Veronicastrum sibiricum",
         "Veronicastrum sibiricum",
         "草本威灵仙 plant"
-      ]
-    },
-    {
-      "id": "plant_ganoderma",
-      "common_name": "灵芝",
-      "scientific_name": "Ganoderma lucidum",
-      "kingdom": "plantae",
-      "category": "medicinal",
-      "danger_level": 1,
-      "alias": [
-        "赤芝",
-        "灵芝草",
-        "仙草"
-      ],
-      "features": [
-        "多孔菌科真菌",
-        "菌盖肾形或伞形,漆样光泽(关键)",
-        "表面红褐至紫褐,有环纹",
-        "菌柄侧生"
-      ],
-      "distribution": [
-        "山东",
-        "河南",
-        "河北",
-        "山西",
-        "全国广布"
-      ],
-      "min_elevation": 0,
-      "max_elevation": 2000,
-      "habitats": [
-        "阔叶林枯木",
-        "树桩",
-        "木桩"
-      ],
-      "active_months": [
-        "6",
-        "7",
-        "8",
-        "9"
-      ],
-      "edible_part": [
-        "whole"
-      ],
-      "edible_months": [
-        "7",
-        "8",
-        "9"
-      ],
-      "edible_method": [
-        "decoction",
-        "powder"
-      ],
-      "raw_edible": false,
-      "must_cook": true,
-      "taste": "甘苦",
-      "harvest_tips": "全年采成熟子实体(多夏秋)",
-      "nutrition": "补气安神、止咳平喘(药材须遵医嘱)",
-      "symptoms": [],
-      "look_alike": [
-        {
-          "name": "紫芝(近缘)",
-          "distinction": "灵芝菌盖红褐有漆光;紫芝色更深紫黑;均为药用真菌,无漆光者勿采",
-          "fatality": "无毒"
-        }
-      ],
-      "first_aid_id": "",
-      "first_aid_links": {},
-      "protective_gear": [
-        "勿采食不明真菌",
-        "须遵医嘱"
-      ],
-      "route_associations": [
-        {
-          "route_id": "route_lao_mountain",
-          "months": [
-            "7",
-            "8",
-            "9"
-          ]
-        }
-      ],
-      "representative_color": {
-        "h": 10,
-        "s": 80,
-        "v": 60
-      },
-      "images": [
-        "whole"
-      ],
-      "description": "华北阔叶林枯木上生长的传统药用真菌,菌盖有漆样光泽。野生品须与毒菌区分,建议遵医嘱使用。",
-      "source": "中国真菌志 / 中药学",
-      "reviewer": "XX(植物学)",
-      "photo_sources": [
-        "Ganoderma lucidum",
-        "Ganoderma lucidum",
-        "灵芝 plant"
       ]
     },
     {
@@ -23153,7 +22488,11 @@
         "石竹科匍匐小草本,高 10-30cm",
         "茎一侧有毛(关键)",
         "叶对生卵形",
-        "花白色,花瓣 5 深裂似 10 枚"
+        "花白色,花瓣 5 深裂似 10 枚",
+        "一年生小草本",
+        "茎细弱,一侧有毛一行",
+        "叶对生,卵形",
+        "花小白色"
       ],
       "distribution": [
         "山东",
@@ -23163,11 +22502,14 @@
         "全国广布"
       ],
       "min_elevation": 0,
-      "max_elevation": 2000,
+      "max_elevation": 2500,
       "habitats": [
         "田野",
         "阴湿处",
-        "沟边"
+        "沟边",
+        "田边",
+        "菜地",
+        "湿地"
       ],
       "active_months": [
         "3",
@@ -23177,7 +22519,8 @@
       ],
       "edible_part": [
         "leaf",
-        "whole"
+        "whole",
+        "stem"
       ],
       "edible_months": [
         "3",
@@ -23187,11 +22530,12 @@
       "edible_method": [
         "blanch",
         "stir_fry",
-        "soup"
+        "soup",
+        "stuffed"
       ],
       "raw_edible": false,
       "must_cook": true,
-      "taste": "淡",
+      "taste": "清淡",
       "harvest_tips": "春季采嫩苗(开花前最佳)",
       "nutrition": "嫩苗柔嫩可食,是著名春野菜;含皂苷须焯水",
       "symptoms": [],
@@ -23199,6 +22543,11 @@
         {
           "name": "牛繁缕(野菜)",
           "distinction": "牛繁缕较高、茎全有毛、花瓣 5 裂更深;繁缕茎一侧有毛",
+          "fatality": "无毒"
+        },
+        {
+          "name": "牛繁缕",
+          "distinction": "牛繁缕花大瓣多,繁缕花小",
           "fatality": "无毒"
         }
       ],
@@ -23223,7 +22572,8 @@
       },
       "images": [
         "whole",
-        "leaf"
+        "leaf",
+        "aerial"
       ],
       "description": "全国田垄阴湿处极常见的春野菜(\"鹅儿肠\"),嫩苗柔嫩味鲜。含皂苷,焯水后炒食为佳。",
       "source": "中国植物志 / 救荒本草",
@@ -23348,7 +22698,11 @@
         "菊科草本,高 0.6-1.5m",
         "叶羽状分裂,背面有白粉(关键)",
         "茎紫红或绿色,有香气",
-        "头状花序细小"
+        "头状花序细小",
+        "多年生草本,高 0.6-1.5m",
+        "叶羽状深裂,背有白毛(关键)",
+        "有特殊清香",
+        "嫩茎脆嫩可食"
       ],
       "distribution": [
         "山东",
@@ -23362,7 +22716,8 @@
       "habitats": [
         "湿地",
         "湖滩",
-        "沟边"
+        "沟边",
+        "河岸"
       ],
       "active_months": [
         "3",
@@ -23373,7 +22728,9 @@
       ],
       "edible_part": [
         "stem",
-        "leaf"
+        "leaf",
+        "嫩茎",
+        "嫩叶"
       ],
       "edible_months": [
         "3",
@@ -23382,12 +22739,14 @@
       ],
       "edible_method": [
         "stir_fry",
-        "blanch"
+        "blanch",
+        "炒食",
+        "凉拌"
       ],
       "raw_edible": false,
       "must_cook": true,
       "taste": "清苦回甘,有香气",
-      "harvest_tips": "早春采嫩茎(芦蒿最佳)",
+      "harvest_tips": "春季嫩茎 20cm 前采",
       "nutrition": "嫩茎清香脆嫩,江南名菜\"芦蒿炒腊肉\";嫩叶亦可食",
       "symptoms": [],
       "look_alike": [
@@ -23396,16 +22755,31 @@
           "name": "艾蒿(药用可食)",
           "distinction": "艾叶宽大、灰白绒毛多;蒌蒿叶羽裂、背面白粉、茎紫红有香气",
           "fatality": "无毒"
+        },
+        {
+          "id": "plant_artemisia_selengensis",
+          "name": "蒌蒿(本条)",
+          "distinction": "蒌蒿嫩茎脆、叶背白毛、有清香;与其他蒿类可食者须辨,气味异常者勿采",
+          "fatality": "无"
         }
       ],
       "first_aid_id": "",
       "first_aid_links": {},
       "protective_gear": [
-        "采嫩茎,掐去老梗"
+        "采嫩茎,掐去老梗",
+        "采嫩茎,掐断有清香的",
+        "洗净炒食"
       ],
       "route_associations": [
         {
           "route_id": "route_taishan_dong",
+          "months": [
+            "3",
+            "4"
+          ]
+        },
+        {
+          "route_id": "route_sd_sx",
           "months": [
             "3",
             "4"
@@ -23423,7 +22797,7 @@
         "leaf"
       ],
       "description": "华北湿地湖滩常见菊科野菜,早春嫩茎清香脆嫩,是\"芦蒿\"正宗来源。炒食或焯后凉拌。",
-      "source": "中国植物志 / 野菜图鉴",
+      "source": "中国植物志·菊科 / 野生蔬菜",
       "reviewer": "XX(植物学)",
       "photo_sources": [
         "Artemisia selengensis",
@@ -23487,7 +22861,7 @@
       "symptoms": [],
       "look_alike": [
         {
-          "id": "plant_fragaria_vesca",
+          "id": "plant_fragaria",
           "name": "野草莓(可食)",
           "distinction": "野草莓花白色、果芳香甜;蛇莓花黄色、果无味且有小毒",
           "fatality": "低"
@@ -24434,7 +23808,11 @@
         "一年生草本,高 10-30cm",
         "茎顶 5 枝伞梗,摇曳如云(关键)",
         "黄绿色杯状花序",
-        "折断流白色乳汁"
+        "折断流白色乳汁",
+        "大戟科草本",
+        "茎顶 5 枝伞梗,排成杯状(关键)",
+        "有白色乳汁",
+        "春末顶生黄绿色花序"
       ],
       "distribution": [
         "山东",
@@ -24448,7 +23826,8 @@
       "habitats": [
         "田边",
         "沟旁",
-        "荒地"
+        "荒地",
+        "沟边"
       ],
       "active_months": [
         "4",
@@ -24473,7 +23852,6 @@
       ],
       "look_alike": [
         {
-          "id": "plant_euphorbia",
           "name": "地锦(近缘)",
           "distinction": "泽漆茎顶 5 伞梗;地锦匍匐、叶小对生;均流白色乳汁有毒",
           "fatality": "低"
@@ -24486,7 +23864,8 @@
       "protective_gear": [
         "勿采食",
         "乳汁勿入眼",
-        "接触后清水冲洗"
+        "接触后清水冲洗",
+        "勿折白色乳汁植物"
       ],
       "route_associations": [
         {
@@ -24507,7 +23886,11 @@
       ],
       "description": "田间荒地极常见,茎顶五枝如云、折断流白浆。全株有毒,白浆刺激性大,勿采食、勿使入眼。",
       "source": "中国植物志·大戟科 / 有毒植物学",
-      "reviewer": "XX(植物学)"
+      "reviewer": "XX(植物学)",
+      "photo_sources": [
+        "Euphorbia helioscopia",
+        "泽漆 plant"
+      ]
     },
     {
       "id": "plant_ranunculus",
@@ -24614,26 +23997,35 @@
         "一年生草本,高 30-70cm",
         "全株被黏腺毛,有异臭(关键)",
         "花黄绿有紫脉,漏斗状",
-        "蒴果藏于宿萼内,盖裂"
+        "蒴果藏于宿萼内,盖裂",
+        "茄科草本,有黏毛和异味",
+        "叶卵形,边缘有齿",
+        "花黄绿色带紫脉,漏斗状",
+        "蒴果盖裂"
       ],
       "distribution": [
         "河北",
         "山西",
         "内蒙古",
-        "全国(北方)"
+        "全国(北方)",
+        "山东",
+        "河南"
       ],
-      "min_elevation": 400,
+      "min_elevation": 200,
       "max_elevation": 2500,
       "habitats": [
         "路旁",
         "荒地",
-        "村舍"
+        "村舍",
+        "村边",
+        "山坡"
       ],
       "active_months": [
         "5",
         "6",
         "7",
-        "8"
+        "8",
+        "9"
       ],
       "edible_part": [],
       "edible_months": [],
@@ -24660,12 +24052,14 @@
       "first_aid_id": "",
       "first_aid_links": {
         "中毒": "firstaid_plant_poisoning",
-        "昏迷": "firstaid_cpr"
+        "昏迷": "firstaid_cpr",
+        "误食": "firstaid_plant_poisoning"
       },
       "protective_gear": [
         "严禁采食",
         "勿当药膳误用",
-        "中毒立即就医"
+        "中毒立即就医",
+        "勿采茄科异味草本"
       ],
       "route_associations": [
         {
@@ -24687,7 +24081,11 @@
       ],
       "description": "含莨菪碱的剧毒植物,全株黏臭、花黄绿有紫脉。误食致瞳孔散大、狂躁昏迷,严禁采食。",
       "source": "中国植物志·茄科 / 有毒植物学",
-      "reviewer": "XX(植物学)"
+      "reviewer": "XX(植物学)",
+      "photo_sources": [
+        "Hyoscyamus niger",
+        "天仙子 plant"
+      ]
     },
     {
       "id": "plant_zephyranthes",
@@ -25796,93 +25194,6 @@
       "reviewer": "XX(药用植物学)"
     },
     {
-      "id": "plant_taraxacum",
-      "common_name": "蒲公英",
-      "scientific_name": "Taraxacum mongolicum",
-      "kingdom": "plantae",
-      "category": "medicinal",
-      "danger_level": 0,
-      "alias": [
-        "婆婆丁",
-        "黄花地丁"
-      ],
-      "features": [
-        "多年生草本,高 10-25cm",
-        "叶基生羽状深裂(关键)",
-        "花黄色头状,后变白绒球",
-        "折断有白浆"
-      ],
-      "distribution": [
-        "山东",
-        "河南",
-        "河北",
-        "山西",
-        "全国广布"
-      ],
-      "min_elevation": 0,
-      "max_elevation": 2500,
-      "habitats": [
-        "田野",
-        "路旁",
-        "草地"
-      ],
-      "active_months": [
-        "3",
-        "4",
-        "5",
-        "6",
-        "7",
-        "8",
-        "9"
-      ],
-      "edible_part": [],
-      "edible_months": [],
-      "edible_method": [],
-      "raw_edible": false,
-      "must_cook": false,
-      "taste": "",
-      "harvest_tips": "",
-      "nutrition": "",
-      "symptoms": [],
-      "look_alike": [
-        {
-          "id": "plant_cirsium",
-          "name": "刺儿菜(近缘)",
-          "distinction": "蒲公英叶基生、无茎、折断白浆;刺儿菜有茎、叶缘有刺",
-          "fatality": "无"
-        }
-      ],
-      "first_aid_id": "",
-      "first_aid_links": {
-        "上火": "firstaid_internal_heat"
-      },
-      "protective_gear": [
-        "认准无茎莲座、白浆",
-        "嫩叶可食"
-      ],
-      "route_associations": [
-        {
-          "route_id": "route_taishan_dong",
-          "months": [
-            "4",
-            "5"
-          ]
-        }
-      ],
-      "representative_color": {
-        "h": 55,
-        "s": 85,
-        "v": 90
-      },
-      "images": [
-        "whole",
-        "flower"
-      ],
-      "description": "春季田野常见,叶基生莲座、花黄、折断有白浆。嫩叶可食,全草入药清热解毒,辨识度高。",
-      "source": "中国植物志·菊科 / 药用植物学",
-      "reviewer": "XX(药用植物学)"
-    },
-    {
       "id": "plant_dioscorea",
       "common_name": "薯蓣",
       "scientific_name": "Dioscorea opposita",
@@ -25962,88 +25273,6 @@
       ],
       "description": "即山药野生种,藤右旋、叶腋生黑色零余子。根入药健脾益肺,采掘须认准叶形,勿误挖毒薯。",
       "source": "中国植物志·薯蓣科 / 药用植物学",
-      "reviewer": "XX(药用植物学)"
-    },
-    {
-      "id": "plant_sophora",
-      "common_name": "苦参",
-      "scientific_name": "Sophora flavescens",
-      "kingdom": "plantae",
-      "category": "medicinal",
-      "danger_level": 1,
-      "alias": [
-        "地槐",
-        "苦骨"
-      ],
-      "features": [
-        "落叶灌木,高 0.5-1.5m",
-        "奇数羽状复叶",
-        "花黄白,蝶形,成串",
-        "根圆柱形,味极苦(关键)"
-      ],
-      "distribution": [
-        "山东",
-        "河南",
-        "河北",
-        "山西",
-        "全国广布"
-      ],
-      "min_elevation": 0,
-      "max_elevation": 1800,
-      "habitats": [
-        "山坡",
-        "沙地",
-        "灌丛"
-      ],
-      "active_months": [
-        "6",
-        "7",
-        "8"
-      ],
-      "edible_part": [],
-      "edible_months": [],
-      "edible_method": [],
-      "raw_edible": false,
-      "must_cook": false,
-      "taste": "",
-      "harvest_tips": "",
-      "nutrition": "",
-      "symptoms": [],
-      "look_alike": [
-        {
-          "id": "plant_sophora",
-          "name": "苦参(本条)",
-          "distinction": "苦参花黄白蝶形成串、根极苦,与刺槐等易辨",
-          "fatality": "无"
-        }
-      ],
-      "first_aid_id": "",
-      "first_aid_links": {
-        "皮肤病": "firstaid_contact_dermatitis"
-      },
-      "protective_gear": [
-        "根入药,勿自行大剂量用"
-      ],
-      "route_associations": [
-        {
-          "route_id": "route_taishan_dong",
-          "months": [
-            "6",
-            "7"
-          ]
-        }
-      ],
-      "representative_color": {
-        "h": 70,
-        "s": 30,
-        "v": 60
-      },
-      "images": [
-        "whole",
-        "flower"
-      ],
-      "description": "山坡灌丛常见小灌木,花黄白蝶形成串、根极苦。根入药清热燥湿,苦参碱有毒性须遵医嘱。",
-      "source": "中国植物志·豆科 / 药用植物学",
       "reviewer": "XX(药用植物学)"
     },
     {
@@ -26293,87 +25522,6 @@
       "reviewer": "XX(药用植物学)"
     },
     {
-      "id": "plant_cortex_moutan",
-      "common_name": "牡丹",
-      "scientific_name": "Paeonia suffruticosa",
-      "kingdom": "plantae",
-      "category": "medicinal",
-      "danger_level": 0,
-      "alias": [
-        "木芍药",
-        "丹皮(根皮)"
-      ],
-      "features": [
-        "落叶灌木,高 1-2m",
-        "叶二回三出复叶(关键)",
-        "花大,白、粉、紫红",
-        "根皮入药名丹皮"
-      ],
-      "distribution": [
-        "山东",
-        "河南",
-        "河北",
-        "山西",
-        "全国(栽培)"
-      ],
-      "min_elevation": 0,
-      "max_elevation": 1500,
-      "habitats": [
-        "庭院",
-        "药圃",
-        "山地"
-      ],
-      "active_months": [
-        "4",
-        "5"
-      ],
-      "edible_part": [],
-      "edible_months": [],
-      "edible_method": [],
-      "raw_edible": false,
-      "must_cook": false,
-      "taste": "",
-      "harvest_tips": "",
-      "nutrition": "",
-      "symptoms": [],
-      "look_alike": [
-        {
-          "id": "plant_cortex_moutan",
-          "name": "牡丹(本条)",
-          "distinction": "牡丹为灌木、叶二回三出复叶、花大;芍药为草本,二者易辨",
-          "fatality": "无"
-        }
-      ],
-      "first_aid_id": "",
-      "first_aid_links": {
-        "上火": "firstaid_internal_heat"
-      },
-      "protective_gear": [
-        "根皮入药,勿自行采掘"
-      ],
-      "route_associations": [
-        {
-          "route_id": "route_huashan",
-          "months": [
-            "4",
-            "5"
-          ]
-        }
-      ],
-      "representative_color": {
-        "h": 320,
-        "s": 50,
-        "v": 80
-      },
-      "images": [
-        "whole",
-        "flower"
-      ],
-      "description": "花王牡丹,灌木、二回三出复叶、花大色艳。根皮入药名丹皮,清热凉血;观赏药用两相宜。",
-      "source": "中国植物志·毛茛科 / 药用植物学",
-      "reviewer": "XX(药用植物学)"
-    },
-    {
       "id": "plant_vitis",
       "common_name": "山葡萄",
       "scientific_name": "Vitis amurensis",
@@ -26382,42 +25530,57 @@
       "danger_level": 0,
       "alias": [
         "野葡萄",
-        "阿穆尔葡萄"
+        "阿穆尔葡萄",
+        "山藤"
       ],
       "features": [
         "木质藤本,卷须缠绕(关键)",
         "叶宽卵形,3-5 浅裂",
         "果串小,紫黑",
-        "果可食,味酸微甜"
+        "果可食,味酸微甜",
+        "木质藤本",
+        "叶互生,广卵形,3-5 裂",
+        "圆锥花序",
+        "浆果球形,黑色"
       ],
       "distribution": [
         "河北",
         "山西",
         "辽宁",
-        "全国(北方)"
+        "全国(北方)",
+        "山东",
+        "河南(豫北太行)"
       ],
-      "min_elevation": 200,
-      "max_elevation": 1500,
+      "min_elevation": 100,
+      "max_elevation": 2000,
       "habitats": [
         "林缘",
         "沟谷",
-        "山地"
+        "山地",
+        "山坡"
       ],
       "active_months": [
         "8",
         "9",
-        "10"
+        "10",
+        "6",
+        "7"
       ],
       "edible_part": [
-        "果实"
+        "果实",
+        "fruit"
       ],
       "edible_months": [
         "9",
-        "10"
+        "10",
+        "8"
       ],
       "edible_method": [
         "鲜食",
-        "酿酒"
+        "酿酒",
+        "raw",
+        "wine",
+        "jam"
       ],
       "raw_edible": true,
       "must_cook": false,
@@ -26455,11 +25618,16 @@
       },
       "images": [
         "whole",
-        "fruit"
+        "fruit",
+        "vine"
       ],
       "description": "华北山林木质藤本,卷须缠绕、果成串紫黑。果酸甜可食亦可酿酒,采时认准卷须以免误采毒果。",
       "source": "中国植物志·葡萄科 / 野生果树",
-      "reviewer": "XX(果树学)"
+      "reviewer": "XX(果树学)",
+      "photo_sources": [
+        "Vitis amurensis",
+        "山葡萄 plant"
+      ]
     },
     {
       "id": "plant_rubus",
@@ -26560,33 +25728,44 @@
       "danger_level": 0,
       "alias": [
         "软枣子",
-        "奇异莓"
+        "奇异莓",
+        "猕猴梨"
       ],
       "features": [
         "大藤本,长可达 30m",
         "叶卵形,光滑",
         "果椭圆,绿色无毛(关键)",
-        "果可食,味甜多汁"
+        "果可食,味甜多汁",
+        "猕猴桃科藤本,缠绕",
+        "叶阔椭圆,边缘有锐齿",
+        "花白色,微香",
+        "果小,椭圆形,绿色无毛(关键)"
       ],
       "distribution": [
         "河北",
         "山西",
         "辽宁",
-        "全国(北方山地)"
+        "全国(北方山地)",
+        "山东(山区)"
       ],
       "min_elevation": 400,
-      "max_elevation": 1800,
+      "max_elevation": 2000,
       "habitats": [
         "林缘",
         "沟谷",
-        "山地"
+        "山地",
+        "山谷",
+        "山地灌丛"
       ],
       "active_months": [
         "9",
-        "10"
+        "10",
+        "5",
+        "6"
       ],
       "edible_part": [
-        "果实"
+        "果实",
+        "fruit"
       ],
       "edible_months": [
         "9",
@@ -26594,13 +25773,16 @@
       ],
       "edible_method": [
         "鲜食",
-        "制干"
+        "制干",
+        "raw",
+        "jam",
+        "wine"
       ],
       "raw_edible": true,
       "must_cook": false,
       "taste": "甜多汁",
       "harvest_tips": "秋季果软时采",
-      "nutrition": "富含维C、钾",
+      "nutrition": "富含维生素 C 及多种氨基酸",
       "symptoms": [],
       "look_alike": [
         {
@@ -26636,7 +25818,11 @@
       ],
       "description": "北方山林大藤本,果绿色无毛、味甜多汁、维C 极高。秋季果软时采摘鲜食最佳。",
       "source": "中国植物志·猕猴桃科 / 野生果树",
-      "reviewer": "XX(果树学)"
+      "reviewer": "XX(果树学)",
+      "photo_sources": [
+        "Actinidia arguta",
+        "软枣猕猴桃 plant"
+      ]
     },
     {
       "id": "plant_crataegus",
@@ -26653,17 +25839,23 @@
         "落叶乔木,高 4-6m",
         "枝有刺,叶羽状深裂(关键)",
         "花白",
-        "果近球形,红色有白点"
+        "果近球形,红色有白点",
+        "落叶小乔木",
+        "叶三角状卵形,羽状深裂",
+        "伞房花序白色",
+        "果近球形,红色"
       ],
       "distribution": [
         "山东",
         "河南",
         "河北",
         "山西",
-        "全国(北方广布)"
+        "全国(北方广布)",
+        "山东(青州主产区)",
+        "河北(承德)"
       ],
       "min_elevation": 100,
-      "max_elevation": 1500,
+      "max_elevation": 2000,
       "habitats": [
         "山坡",
         "林缘",
@@ -26671,10 +25863,12 @@
       ],
       "active_months": [
         "9",
-        "10"
+        "10",
+        "11"
       ],
       "edible_part": [
-        "果实"
+        "果实",
+        "fruit"
       ],
       "edible_months": [
         "9",
@@ -26684,13 +25878,16 @@
         "鲜食",
         "制干",
         "制酱",
-        "泡茶"
+        "泡茶",
+        "raw",
+        "candy",
+        "tea"
       ],
       "raw_edible": true,
       "must_cook": false,
-      "taste": "酸",
-      "harvest_tips": "秋果变红时采",
-      "nutrition": "含维C、黄酮、有机酸",
+      "taste": "酸甜",
+      "harvest_tips": "9-10 月采成熟果实",
+      "nutrition": "富含维生素 C、有机酸、果胶",
       "symptoms": [],
       "look_alike": [
         {
@@ -26698,6 +25895,12 @@
           "name": "山楂(本条)",
           "distinction": "山楂果红有白点、叶羽裂、枝有刺,与其他蔷薇科果易辨",
           "fatality": "无"
+        },
+        {
+          "id": "plant_hawthorn_wild",
+          "name": "野山楂",
+          "distinction": "野山楂果小(1-1.5cm),山楂果大(2-2.5cm)",
+          "fatality": "无毒"
         }
       ],
       "first_aid_id": "",
@@ -26723,11 +25926,16 @@
       },
       "images": [
         "whole",
-        "fruit"
+        "fruit",
+        "tree"
       ],
       "description": "北方山地乔木,叶羽状深裂、枝有刺、果红有白点。果酸甜可食,助消化,亦为常用中药。",
       "source": "中国植物志·蔷薇科 / 野生果树",
-      "reviewer": "XX(果树学)"
+      "reviewer": "XX(果树学)",
+      "photo_sources": [
+        "Crataegus pinnatifida",
+        "山楂 plant"
+      ]
     },
     {
       "id": "plant_ziziphus",
@@ -26744,28 +25952,38 @@
         "灌木,枝有托叶刺(关键)",
         "叶小,卵形,基出 3 脉",
         "果小,红褐色,酸甜",
-        "核仁入药名酸枣仁"
+        "核仁入药名酸枣仁",
+        "灌木或小乔木",
+        "枝有刺",
+        "叶卵状椭圆形",
+        "果小,核果,味酸"
       ],
       "distribution": [
         "山东",
         "河南",
         "河北",
         "山西",
-        "全国(北方广布)"
+        "全国(北方广布)",
+        "山东(鲁中南)",
+        "河北(太行山)",
+        "河南(豫北)"
       ],
       "min_elevation": 100,
       "max_elevation": 1800,
       "habitats": [
         "山坡",
         "荒地",
-        "路旁"
+        "路旁",
+        "丘陵",
+        "灌丛"
       ],
       "active_months": [
         "9",
         "10"
       ],
       "edible_part": [
-        "果实"
+        "果实",
+        "fruit"
       ],
       "edible_months": [
         "9",
@@ -26773,13 +25991,16 @@
       ],
       "edible_method": [
         "鲜食",
-        "制干"
+        "制干",
+        "raw",
+        "tea",
+        "wine"
       ],
       "raw_edible": true,
       "must_cook": false,
       "taste": "酸甜",
-      "harvest_tips": "秋果红时采",
-      "nutrition": "含糖、酸、维C",
+      "harvest_tips": "9-10 月采成熟红果",
+      "nutrition": "富含维生素 C、酸枣仁入药(安神)",
       "symptoms": [],
       "look_alike": [
         {
@@ -26787,6 +26008,12 @@
           "name": "酸枣(本条)",
           "distinction": "酸枣枝有托叶刺、叶小、果小;枣果大、刺少,二者易辨",
           "fatality": "无"
+        },
+        {
+          "id": "plant_ziziphus_jujuba",
+          "name": "普通枣",
+          "distinction": "普通枣树大果大(3-5cm),酸枣灌木果小(1-2cm)",
+          "fatality": "无毒"
         }
       ],
       "first_aid_id": "",
@@ -26812,11 +26039,17 @@
       },
       "images": [
         "whole",
-        "fruit"
+        "fruit",
+        "tree"
       ],
       "description": "北方山坡极常见灌木,枝有刺、果小酸甜。果可食,核仁入药名酸枣仁,安神助眠。",
       "source": "中国植物志·鼠李科 / 野生果树",
-      "reviewer": "XX(果树学)"
+      "reviewer": "XX(果树学)",
+      "photo_sources": [
+        "Ziziphus jujuba var. spinosa",
+        "Ziziphus jujuba",
+        "酸枣 plant"
+      ]
     },
     {
       "id": "plant_fragaria",
@@ -26827,42 +26060,54 @@
       "danger_level": 0,
       "alias": [
         "森林草莓",
-        "白花草莓"
+        "白花草莓",
+        "草莓"
       ],
       "features": [
         "多年生草本,低矮",
         "三出复叶,叶缘有齿(关键)",
         "花白 5 瓣",
-        "果小,鲜红,芳香"
+        "果小,鲜红,芳香",
+        "蔷薇科草本,有匍匐茎",
+        "三出复叶,边缘有齿",
+        "花白色",
+        "果小,红色,表面有瘦果(关键)"
       ],
       "distribution": [
         "山东",
         "河北",
         "山西",
-        "全国(北方山地)"
+        "全国(北方山地)",
+        "河南"
       ],
       "min_elevation": 300,
-      "max_elevation": 2000,
+      "max_elevation": 2500,
       "habitats": [
         "林下",
         "草甸",
-        "林缘"
+        "林缘",
+        "草坡"
       ],
       "active_months": [
         "5",
         "6",
-        "7"
+        "7",
+        "4"
       ],
       "edible_part": [
-        "果实"
+        "果实",
+        "fruit"
       ],
       "edible_months": [
         "6",
-        "7"
+        "7",
+        "8"
       ],
       "edible_method": [
         "鲜食",
-        "制酱"
+        "制酱",
+        "raw",
+        "jam"
       ],
       "raw_edible": true,
       "must_cook": false,
@@ -26876,6 +26121,12 @@
           "name": "野草莓(本条)",
           "distinction": "野草莓三出复叶、花白、果小芳香;与蛇莓(果假、无味)易混须辨",
           "fatality": "无"
+        },
+        {
+          "id": "plant_duchesnea",
+          "name": "蛇莓(不可食/微毒)",
+          "distinction": "蛇莓果面有凸起小红点且花黄,野草莓花白果香(关键!)",
+          "fatality": "低"
         }
       ],
       "first_aid_id": "",
@@ -26902,9 +26153,13 @@
         "whole",
         "fruit"
       ],
-      "description": "林下草甸低矮草本,三出复叶、花白、果小芳香。果香甜可食,注意与无味蛇莓区分。",
+      "description": "北方林下常见;关键区分蛇莓(花黄、果面红点凸起,不可食)与本种(花白、果香)。",
       "source": "中国植物志·蔷薇科 / 野生果树",
-      "reviewer": "XX(果树学)"
+      "reviewer": "XX(果树学)",
+      "photo_sources": [
+        "Fragaria vesca",
+        "野草莓 plant"
+      ]
     },
     {
       "id": "plant_amygdalus",
@@ -27084,185 +26339,6 @@
       "reviewer": "XX(果树学)"
     },
     {
-      "id": "plant_capsella",
-      "common_name": "荠菜",
-      "scientific_name": "Capsella bursa-pastoris",
-      "kingdom": "plantae",
-      "category": "wild_vegetable",
-      "danger_level": 0,
-      "alias": [
-        "荠",
-        "地菜"
-      ],
-      "features": [
-        "一年生草本,高 10-40cm",
-        "基生叶羽状分裂(关键)",
-        "花白小,总状花序",
-        "果倒三角形,似小钱袋"
-      ],
-      "distribution": [
-        "山东",
-        "河南",
-        "河北",
-        "山西",
-        "全国广布"
-      ],
-      "min_elevation": 0,
-      "max_elevation": 2500,
-      "habitats": [
-        "田野",
-        "路旁",
-        "草地"
-      ],
-      "active_months": [
-        "3",
-        "4",
-        "5"
-      ],
-      "edible_part": [
-        "嫩叶",
-        "全株"
-      ],
-      "edible_months": [
-        "3",
-        "4"
-      ],
-      "edible_method": [
-        "焯水凉拌",
-        "包饺子",
-        "做汤"
-      ],
-      "raw_edible": false,
-      "must_cook": true,
-      "taste": "清香鲜美",
-      "harvest_tips": "春季未抽薹嫩株",
-      "nutrition": "富含维C、钙、胡萝卜素",
-      "symptoms": [],
-      "look_alike": [
-        {
-          "id": "plant_capsella",
-          "name": "荠菜(本条)",
-          "distinction": "荠菜基生叶羽裂、果倒三角似钱袋,是识别关键",
-          "fatality": "无"
-        }
-      ],
-      "first_aid_id": "",
-      "first_aid_links": {},
-      "protective_gear": [
-        "采远离农田喷洒处",
-        "洗净焯水"
-      ],
-      "route_associations": [
-        {
-          "route_id": "route_songshan",
-          "months": [
-            "3",
-            "4"
-          ]
-        }
-      ],
-      "representative_color": {
-        "h": 90,
-        "s": 30,
-        "v": 60
-      },
-      "images": [
-        "whole"
-      ],
-      "description": "春季田野最负盛名的野菜,基生叶羽裂、果倒三角似钱袋。嫩株清香,包饺子做汤皆宜,须焯水。",
-      "source": "中国植物志·十字花科 / 野生蔬菜",
-      "reviewer": "XX(园艺学)"
-    },
-    {
-      "id": "plant_amaranthus",
-      "common_name": "反枝苋",
-      "scientific_name": "Amaranthus retroflexus",
-      "kingdom": "plantae",
-      "category": "wild_vegetable",
-      "danger_level": 0,
-      "alias": [
-        "野苋菜",
-        "西风谷"
-      ],
-      "features": [
-        "一年生草本,高 0.3-1m",
-        "茎淡绿或红,粗壮(关键)",
-        "叶菱状卵形,先端微凹",
-        "花序穗状,密集成团"
-      ],
-      "distribution": [
-        "山东",
-        "河南",
-        "河北",
-        "山西",
-        "全国广布"
-      ],
-      "min_elevation": 0,
-      "max_elevation": 2000,
-      "habitats": [
-        "田边",
-        "荒地",
-        "路旁"
-      ],
-      "active_months": [
-        "6",
-        "7",
-        "8"
-      ],
-      "edible_part": [
-        "嫩茎叶"
-      ],
-      "edible_months": [
-        "5",
-        "6",
-        "7"
-      ],
-      "edible_method": [
-        "焯水凉拌",
-        "炒食"
-      ],
-      "raw_edible": false,
-      "must_cook": true,
-      "taste": "微涩,焯后滑嫩",
-      "harvest_tips": "夏采嫩茎叶",
-      "nutrition": "含铁、钙、胡萝卜素",
-      "symptoms": [],
-      "look_alike": [
-        {
-          "id": "plant_amaranthus",
-          "name": "反枝苋(本条)",
-          "distinction": "反枝苋叶菱卵、花序密团;与刺苋(有刺)易辨,刺苋嫩叶亦可食",
-          "fatality": "无"
-        }
-      ],
-      "first_aid_id": "",
-      "first_aid_links": {},
-      "protective_gear": [
-        "焯水去涩",
-        "勿采污染地"
-      ],
-      "route_associations": [
-        {
-          "route_id": "route_taishan_dong",
-          "months": [
-            "6",
-            "7"
-          ]
-        }
-      ],
-      "representative_color": {
-        "h": 100,
-        "s": 40,
-        "v": 55
-      },
-      "images": [
-        "whole"
-      ],
-      "description": "田间荒地常见,茎粗叶菱、花序密集成团。嫩茎叶焯水后滑嫩可食,含铁钙丰富。",
-      "source": "中国植物志·苋科 / 野生蔬菜",
-      "reviewer": "XX(园艺学)"
-    },
-    {
       "id": "plant_potentilla_chin",
       "common_name": "委陵菜",
       "scientific_name": "Potentilla chinensis",
@@ -27271,51 +26347,64 @@
       "danger_level": 0,
       "alias": [
         "翻白草(近缘)",
-        "白头翁(误称)"
+        "白头翁(误称)",
+        "翻白草",
+        "蛤蟆草"
       ],
       "features": [
         "多年生草本,高 20-60cm",
         "羽状复叶,小叶缘羽裂(关键)",
         "叶背密被白绵毛",
-        "花黄,聚伞花序"
+        "花黄,聚伞花序",
+        "蔷薇科草本",
+        "羽状复叶,小叶边缘羽状裂",
+        "叶背密被白色绒毛(关键)",
+        "花黄色"
       ],
       "distribution": [
         "山东",
         "河南",
         "河北",
         "山西",
-        "全国广布"
+        "全国广布",
+        "全国"
       ],
       "min_elevation": 0,
-      "max_elevation": 2200,
+      "max_elevation": 2500,
       "habitats": [
         "山坡",
         "荒地",
-        "路旁"
+        "路旁",
+        "草地"
       ],
       "active_months": [
         "4",
         "5",
         "6",
-        "7"
+        "7",
+        "8"
       ],
       "edible_part": [
         "嫩叶",
-        "根"
+        "根",
+        "leaf"
       ],
       "edible_months": [
         "4",
-        "5"
+        "5",
+        "6"
       ],
       "edible_method": [
         "焯水凉拌",
-        "煮食"
+        "煮食",
+        "blanch",
+        "stir_fry"
       ],
       "raw_edible": false,
       "must_cook": true,
       "taste": "微苦",
       "harvest_tips": "春采嫩叶,秋挖根",
-      "nutrition": "含维C、鞣质",
+      "nutrition": "嫩叶可食,全草入药清热解毒",
       "symptoms": [],
       "look_alike": [
         {
@@ -27353,96 +26442,11 @@
       ],
       "description": "山坡荒地常见,羽状复叶、叶背白绵毛、花黄。嫩叶焯水可食,根亦可煮食,微苦败火。",
       "source": "中国植物志·蔷薇科 / 野生蔬菜",
-      "reviewer": "XX(园艺学)"
-    },
-    {
-      "id": "plant_artemisia_sel",
-      "common_name": "蒌蒿",
-      "scientific_name": "Artemisia selengensis",
-      "kingdom": "plantae",
-      "category": "wild_vegetable",
-      "danger_level": 0,
-      "alias": [
-        "芦蒿",
-        "水蒿"
-      ],
-      "features": [
-        "多年生草本,高 0.6-1.5m",
-        "叶羽状深裂,背有白毛(关键)",
-        "有特殊清香",
-        "嫩茎脆嫩可食"
-      ],
-      "distribution": [
-        "山东",
-        "河南",
-        "河北",
-        "山西",
-        "全国广布"
-      ],
-      "min_elevation": 0,
-      "max_elevation": 1800,
-      "habitats": [
-        "河岸",
-        "沟边",
-        "湿地"
-      ],
-      "active_months": [
-        "3",
-        "4",
-        "5"
-      ],
-      "edible_part": [
-        "嫩茎",
-        "嫩叶"
-      ],
-      "edible_months": [
-        "3",
-        "4"
-      ],
-      "edible_method": [
-        "炒食",
-        "凉拌"
-      ],
-      "raw_edible": false,
-      "must_cook": true,
-      "taste": "清香脆嫩",
-      "harvest_tips": "春季嫩茎 20cm 前采",
-      "nutrition": "含挥发油、维C",
-      "symptoms": [],
-      "look_alike": [
-        {
-          "id": "plant_artemisia_sel",
-          "name": "蒌蒿(本条)",
-          "distinction": "蒌蒿嫩茎脆、叶背白毛、有清香;与其他蒿类可食者须辨,气味异常者勿采",
-          "fatality": "无"
-        }
-      ],
-      "first_aid_id": "",
-      "first_aid_links": {},
-      "protective_gear": [
-        "采嫩茎,掐断有清香的",
-        "洗净炒食"
-      ],
-      "route_associations": [
-        {
-          "route_id": "route_sd_sx",
-          "months": [
-            "3",
-            "4"
-          ]
-        }
-      ],
-      "representative_color": {
-        "h": 100,
-        "s": 30,
-        "v": 60
-      },
-      "images": [
-        "whole"
-      ],
-      "description": "河岸湿地常见,嫩茎脆嫩带清香,是江南\"芦蒿\"的北方近缘。春采嫩茎炒食,风味独特。",
-      "source": "中国植物志·菊科 / 野生蔬菜",
-      "reviewer": "XX(园艺学)"
+      "reviewer": "XX(园艺学)",
+      "photo_sources": [
+        "Potentilla chinensis",
+        "委陵菜 plant"
+      ]
     },
     {
       "id": "plant_alisma",

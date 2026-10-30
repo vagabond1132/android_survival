@@ -1,10 +1,24 @@
 {
-  "version": "0.1.0",
-  "updated_at": "2026-08-24",
-  "description": "P0+P1 装备基础库 - 户外应急装备",
+  "version": "0.3.0",
+  "updated_at": "2026-10-22",
+  "description": "P0+P1+P2 装备基础库 - 轻装应急 + 重装过夜/高海拔",
+  "change_log": [
+    "v0.3.0: 补 28 件重装/过夜品类(背负/营地睡眠/炉具炊具/定量水粮/保暖小件/信号), 新增 carry / shelter / cook 三个分类; 给可定量装备加 unit 计件单位。此前库里只有应急小件, 轻装与重装生成的是同一份 49 件清单",
+    "v0.2.0: 补 6 件规则已引用但库里没有的装备 (防水外套/防水袋/大容量储水袋/护肤防裂霜/长袖防晒衣/备用袜)，此前 10 条规则因 id 找不到被 applyRules 静默跳过"
+  ],
   "categories": [
-    "rescue", "protection", "warmth", "altitude",
-    "water", "food", "light", "tools", "navigation"
+    "rescue",
+    "protection",
+    "warmth",
+    "altitude",
+    "water",
+    "food",
+    "light",
+    "tools",
+    "navigation",
+    "carry",
+    "shelter",
+    "cook"
   ],
   "items": [
     {
@@ -14,7 +28,9 @@
       "weight_g": 300,
       "description": "包含创可贴、消毒湿巾、绷带、纱布、医用胶带等",
       "is_critical": true,
-      "specs": {"min_items": 10}
+      "specs": {
+        "min_items": 10
+      }
     },
     {
       "id": "whistle",
@@ -23,7 +39,9 @@
       "weight_g": 10,
       "description": "高频哨子，可发出 100+ dB 声音",
       "is_critical": true,
-      "specs": {"min_db": 100}
+      "specs": {
+        "min_db": 100
+      }
     },
     {
       "id": "emergency_blanket",
@@ -50,7 +68,9 @@
       "weight_g": 80,
       "description": "LED 头灯，解放双手",
       "is_critical": true,
-      "specs": {"min_lumens": 200}
+      "specs": {
+        "min_lumens": 200
+      }
     },
     {
       "id": "spf50_sunscreen",
@@ -59,7 +79,9 @@
       "weight_g": 50,
       "description": "高倍防晒，UVA/UVB 双防",
       "is_critical": false,
-      "specs": {"min_spf": 50}
+      "specs": {
+        "min_spf": 50
+      }
     },
     {
       "id": "uv400_sunglasses",
@@ -68,7 +90,9 @@
       "weight_g": 30,
       "description": "100% 阻挡 UV，防止雪盲",
       "is_critical": false,
-      "specs": {"uv_rating": 400}
+      "specs": {
+        "uv_rating": 400
+      }
     },
     {
       "id": "sunhat",
@@ -86,7 +110,10 @@
       "weight_g": 10,
       "description": "防晒+滋润",
       "is_critical": false,
-      "specs": {"min_spf": 30}
+      "specs": {
+        "min_spf": 30
+      },
+      "unit": "支"
     },
     {
       "id": "face_mask",
@@ -94,6 +121,42 @@
       "category": "protection",
       "weight_g": 30,
       "description": "UPF50+ 防晒面罩",
+      "is_critical": false,
+      "specs": {}
+    },
+    {
+      "id": "rain_jacket",
+      "name": "防水外套",
+      "category": "protection",
+      "weight_g": 250,
+      "description": "压胶防水外壳，雨天/湿雪防风防泼水",
+      "is_critical": false,
+      "specs": {}
+    },
+    {
+      "id": "waterproof_bag",
+      "name": "防水袋",
+      "category": "protection",
+      "weight_g": 60,
+      "description": "卷口防水袋，装衣物电子设备隔水隔盐雾",
+      "is_critical": false,
+      "specs": {}
+    },
+    {
+      "id": "moisturizer",
+      "name": "护肤防裂霜",
+      "category": "protection",
+      "weight_g": 60,
+      "description": "干燥/大风环境防皮肤皲裂，与防晒唇膏分开用",
+      "is_critical": false,
+      "specs": {}
+    },
+    {
+      "id": "long_sleeve_sun_shirt",
+      "name": "长袖防晒衣",
+      "category": "protection",
+      "weight_g": 180,
+      "description": "UPF50+ 长袖，极强紫外线下遮躯干比补涂防晒霜可靠",
       "is_critical": false,
       "specs": {}
     },
@@ -122,7 +185,9 @@
       "weight_g": 250,
       "description": "650+ 蓬松度，轻便保暖",
       "is_critical": false,
-      "specs": {"min_fill_power": 600}
+      "specs": {
+        "min_fill_power": 600
+      }
     },
     {
       "id": "down_jacket",
@@ -131,7 +196,9 @@
       "weight_g": 600,
       "description": "800+ 蓬松度，冬季保暖",
       "is_critical": true,
-      "specs": {"min_fill_power": 700}
+      "specs": {
+        "min_fill_power": 700
+      }
     },
     {
       "id": "expedition_down",
@@ -140,7 +207,9 @@
       "weight_g": 1000,
       "description": "850+ 蓬松度，极寒环境",
       "is_critical": true,
-      "specs": {"min_fill_power": 800}
+      "specs": {
+        "min_fill_power": 800
+      }
     },
     {
       "id": "down_pants",
@@ -149,7 +218,9 @@
       "weight_g": 500,
       "description": "高蓬松度羽绒裤",
       "is_critical": false,
-      "specs": {"min_fill_power": 700}
+      "specs": {
+        "min_fill_power": 700
+      }
     },
     {
       "id": "base_layer",
@@ -161,13 +232,24 @@
       "specs": {}
     },
     {
+      "id": "extra_socks",
+      "name": "备用袜",
+      "category": "warmth",
+      "weight_g": 120,
+      "description": "湿袜换下来才保得住脚，多日与潮湿环境必备",
+      "is_critical": false,
+      "specs": {}
+    },
+    {
       "id": "rhodiola",
       "name": "红景天",
       "category": "altitude",
       "weight_g": 30,
       "description": "OTC 抗高反中成药",
       "is_critical": false,
-      "specs": {"type": "OTC"},
+      "specs": {
+        "type": "OTC"
+      },
       "otc": true
     },
     {
@@ -177,8 +259,11 @@
       "weight_g": 50,
       "description": "能量补充，快速吸收",
       "is_critical": false,
-      "specs": {"type": "OTC"},
-      "otc": true
+      "specs": {
+        "type": "OTC"
+      },
+      "otc": true,
+      "unit": "袋"
     },
     {
       "id": "ibuprofen",
@@ -187,7 +272,9 @@
       "weight_g": 20,
       "description": "OTC 止痛退烧",
       "is_critical": false,
-      "specs": {"type": "OTC"},
+      "specs": {
+        "type": "OTC"
+      },
       "otc": true
     },
     {
@@ -197,7 +284,9 @@
       "weight_g": 15,
       "description": "如氯雷他定，OTC",
       "is_critical": false,
-      "specs": {"type": "OTC"},
+      "specs": {
+        "type": "OTC"
+      },
       "otc": true
     },
     {
@@ -216,7 +305,8 @@
       "weight_g": 10,
       "description": "碘片或氯片，消毒",
       "is_critical": false,
-      "specs": {}
+      "specs": {},
+      "unit": "片"
     },
     {
       "id": "thermos",
@@ -225,7 +315,9 @@
       "weight_g": 400,
       "description": "1L 真空保温",
       "is_critical": false,
-      "specs": {"min_capacity_ml": 1000}
+      "specs": {
+        "min_capacity_ml": 1000
+      }
     },
     {
       "id": "pressure_kettle",
@@ -237,13 +329,27 @@
       "specs": {}
     },
     {
+      "id": "large_water_bag",
+      "name": "大容量储水袋",
+      "category": "water",
+      "weight_g": 120,
+      "description": "2L 软袋，两水点之间一次多带的水只能靠它",
+      "is_critical": false,
+      "specs": {
+        "min_capacity_ml": 2000
+      }
+    },
+    {
       "id": "energy_bar",
       "name": "能量棒",
       "category": "food",
       "weight_g": 50,
       "description": "高热量，200kcal/根",
       "is_critical": false,
-      "specs": {"min_kcal": 200}
+      "specs": {
+        "min_kcal": 200
+      },
+      "unit": "根"
     },
     {
       "id": "electrolyte",
@@ -252,7 +358,8 @@
       "weight_g": 20,
       "description": "补充电解质",
       "is_critical": false,
-      "specs": {}
+      "specs": {},
+      "unit": "袋"
     },
     {
       "id": "flashlight",
@@ -270,7 +377,8 @@
       "weight_g": 30,
       "description": "AAA/CR2032 备用",
       "is_critical": false,
-      "specs": {}
+      "specs": {},
+      "unit": "节"
     },
     {
       "id": "power_bank",
@@ -279,7 +387,9 @@
       "weight_g": 350,
       "description": "10000mAh 移动电源",
       "is_critical": false,
-      "specs": {"min_capacity_mah": 10000}
+      "specs": {
+        "min_capacity_mah": 10000
+      }
     },
     {
       "id": "large_power_bank",
@@ -288,7 +398,9 @@
       "weight_g": 500,
       "description": "20000mAh+",
       "is_critical": false,
-      "specs": {"min_capacity_mah": 20000}
+      "specs": {
+        "min_capacity_mah": 20000
+      }
     },
     {
       "id": "knife",
@@ -315,7 +427,10 @@
       "weight_g": 50,
       "description": "5m 伞绳，多用途",
       "is_critical": false,
-      "specs": {"min_length_m": 5}
+      "specs": {
+        "min_length_m": 5
+      },
+      "unit": "米"
     },
     {
       "id": "duct_tape",
@@ -396,6 +511,286 @@
       "weight_g": 200,
       "description": "卫星 SOS（如 Garmin inReach）",
       "is_critical": false,
+      "specs": {}
+    },
+    {
+      "id": "pack_28l",
+      "name": "日用背包 28L",
+      "category": "carry",
+      "weight_g": 900,
+      "description": "一日往返的背负容量, 装得下水、雨衣、保暖层和急救包",
+      "is_critical": false,
+      "unit": "个",
+      "specs": {}
+    },
+    {
+      "id": "pack_55l",
+      "name": "重装背包 55L",
+      "category": "carry",
+      "weight_g": 1800,
+      "description": "过夜以上要背帐篷睡袋炉具定量水粮, 60L 级带腰带分担重量",
+      "is_critical": true,
+      "unit": "个",
+      "specs": {}
+    },
+    {
+      "id": "pack_raincover",
+      "name": "背包防雨罩",
+      "category": "carry",
+      "weight_g": 120,
+      "description": "套在重装包外, 连续降雨时保住包内干燥",
+      "is_critical": false,
+      "unit": "个",
+      "specs": {}
+    },
+    {
+      "id": "trekking_poles",
+      "name": "登山杖",
+      "category": "carry",
+      "weight_g": 500,
+      "description": "下坡护膝、雪地探深、过夜还能撑天幕",
+      "is_critical": false,
+      "unit": "对",
+      "specs": {}
+    },
+    {
+      "id": "tent_3season",
+      "name": "三季双人帐篷",
+      "category": "shelter",
+      "weight_g": 2200,
+      "description": "内外帐结构, 防雨防虫, 春夏秋过夜主力",
+      "is_critical": true,
+      "unit": "顶",
+      "specs": {}
+    },
+    {
+      "id": "tent_4season",
+      "name": "四季高山帐篷",
+      "category": "shelter",
+      "weight_g": 3200,
+      "description": "加固杆架抗雪抗风, 雪线以上或大风营地",
+      "is_critical": false,
+      "unit": "顶",
+      "specs": {}
+    },
+    {
+      "id": "tarp",
+      "name": "轻量天幕",
+      "category": "shelter",
+      "weight_g": 400,
+      "description": "单点支撤, 只遮雨不保暖, 适合短途快速露营",
+      "is_critical": false,
+      "unit": "张",
+      "specs": {}
+    },
+    {
+      "id": "sleeping_bag_5c",
+      "name": "三季睡袋(舒适 5℃)",
+      "category": "shelter",
+      "weight_g": 900,
+      "description": "夏秋低海拔过夜",
+      "is_critical": true,
+      "unit": "条",
+      "specs": {}
+    },
+    {
+      "id": "sleeping_bag_m15c",
+      "name": "羽绒睡袋(-15℃)",
+      "category": "shelter",
+      "weight_g": 1300,
+      "description": "冬季或 4000m 以上过夜的保暖下限",
+      "is_critical": false,
+      "unit": "条",
+      "specs": {}
+    },
+    {
+      "id": "sleeping_bag_m30c",
+      "name": "极地睡袋(-30℃)",
+      "category": "shelter",
+      "weight_g": 1800,
+      "description": "5000m 以上高寒营地, 夜间可低至 -25℃",
+      "is_critical": false,
+      "unit": "条",
+      "specs": {}
+    },
+    {
+      "id": "pad_foam",
+      "name": "泡沫防潮垫",
+      "category": "shelter",
+      "weight_g": 250,
+      "description": "隔绝地面冷, R 值低但可靠不怕扎",
+      "is_critical": false,
+      "unit": "张",
+      "specs": {}
+    },
+    {
+      "id": "pad_inflatable",
+      "name": "充气睡垫",
+      "category": "shelter",
+      "weight_g": 450,
+      "description": "R 值高更舒适, 重装过夜首选, 需防刺破",
+      "is_critical": false,
+      "unit": "张",
+      "specs": {}
+    },
+    {
+      "id": "stove",
+      "name": "户外炉头",
+      "category": "cook",
+      "weight_g": 220,
+      "description": "化雪烧水做饭, 高海拔沸点低要配防风",
+      "is_critical": false,
+      "unit": "个",
+      "specs": {}
+    },
+    {
+      "id": "gas_canister",
+      "name": "扁气罐 230g",
+      "category": "cook",
+      "weight_g": 380,
+      "description": "燃料定量按天数与化雪量算, 低温用倒置罐",
+      "is_critical": false,
+      "unit": "罐",
+      "specs": {}
+    },
+    {
+      "id": "pot_set",
+      "name": "套锅",
+      "category": "cook",
+      "weight_g": 300,
+      "description": "烧水煮面, 收纳炉头和气罐",
+      "is_critical": false,
+      "unit": "套",
+      "specs": {}
+    },
+    {
+      "id": "spork",
+      "name": "餐具",
+      "category": "cook",
+      "weight_g": 30,
+      "description": "勺叉一体, 吃冻干饭必需",
+      "is_critical": false,
+      "unit": "份",
+      "specs": {}
+    },
+    {
+      "id": "water_bladder",
+      "name": "2L 水袋",
+      "category": "water",
+      "weight_g": 180,
+      "description": "行进中随时补水, 与硬质水壶搭配定水",
+      "is_critical": false,
+      "unit": "个",
+      "specs": {}
+    },
+    {
+      "id": "staple_food",
+      "name": "主食(冻干饭/面)",
+      "category": "food",
+      "weight_g": 500,
+      "description": "按人数×天数定量, 重装行程的热量大头",
+      "is_critical": false,
+      "unit": "份",
+      "specs": {}
+    },
+    {
+      "id": "energy_gel",
+      "name": "能量胶",
+      "category": "food",
+      "weight_g": 30,
+      "description": "高强度爬坡时快速补糖, 比能量棒更好下咽",
+      "is_critical": false,
+      "unit": "支",
+      "specs": {}
+    },
+    {
+      "id": "fleece_hat",
+      "name": "抓绒帽",
+      "category": "warmth",
+      "weight_g": 50,
+      "description": "头部散热占比大, 低温与高海拔必戴",
+      "is_critical": false,
+      "unit": "顶",
+      "specs": {}
+    },
+    {
+      "id": "warm_gloves",
+      "name": "防风保暖手套",
+      "category": "warmth",
+      "weight_g": 80,
+      "description": "0℃ 以下与高海拔操作装备的手部下限",
+      "is_critical": false,
+      "unit": "双",
+      "specs": {}
+    },
+    {
+      "id": "down_mittens",
+      "name": "羽绒手套",
+      "category": "warmth",
+      "weight_g": 150,
+      "description": "-10℃ 以下或雪线以上替代薄手套",
+      "is_critical": false,
+      "unit": "双",
+      "specs": {}
+    },
+    {
+      "id": "snow_gaiters",
+      "name": "雪套",
+      "category": "tools",
+      "weight_g": 400,
+      "description": "挡雪进靴、灌丛防刮, 与冰爪同用",
+      "is_critical": false,
+      "unit": "双",
+      "specs": {}
+    },
+    {
+      "id": "folding_shovel",
+      "name": "折叠工兵铲",
+      "category": "tools",
+      "weight_g": 700,
+      "description": "挖猫厕、修整营地、积雪压沙袋",
+      "is_critical": false,
+      "unit": "把",
+      "specs": {}
+    },
+    {
+      "id": "signal_flare",
+      "name": "手持信号棒",
+      "category": "rescue",
+      "weight_g": 60,
+      "description": "夜间求助可见数公里, 与口哨互补",
+      "is_critical": false,
+      "unit": "支",
+      "specs": {}
+    },
+    {
+      "id": "rain_pants",
+      "name": "防水裤",
+      "category": "protection",
+      "weight_g": 200,
+      "description": "连续降雨或雪地行进保住下半身干燥",
+      "is_critical": false,
+      "unit": "条",
+      "specs": {}
+    },
+    {
+      "id": "poncho",
+      "name": "急救雨衣",
+      "category": "protection",
+      "weight_g": 90,
+      "description": "轻装一日也能塞进包, 兼作临时遮蔽",
+      "is_critical": false,
+      "unit": "件",
+      "specs": {}
+    },
+    {
+      "id": "oxygen_canister",
+      "name": "便携氧气罐",
+      "category": "altitude",
+      "weight_g": 400,
+      "description": "5000m 以上应急补氧, 不替代下撤",
+      "is_critical": false,
+      "unit": "罐",
       "specs": {}
     }
   ]

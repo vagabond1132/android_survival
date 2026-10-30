@@ -30,6 +30,12 @@ struct Travel {
     double startLon = 0;
     double endLat = 0;
     double endLon = 0;
+    // 端点坐标可信度(2026-10-27 #131)。自驾库里 88/101 条的起点与终点是同一个
+    // 点 —— 那是城区中心点, 不是路口, coordSource="city_center" 就是用来让 UI
+    // 说清这件事的; 量化误差另见 coordPrecisionM(米, 0=未知)。
+    int coordPrecisionM = 0;
+    QString coordSource;
+    bool endCoordUnavailable = false;
     double distanceKm = 0;
     int days = 1;
     int driveHours = 0;         // 驾驶时长
@@ -60,6 +66,11 @@ public:
     Q_INVOKABLE QVariantMap getById(const QString& id);
     Q_INVOKABLE QVariantList getAll();
     Q_INVOKABLE QVariantList search(const QString& keyword);
+    // 2026-10-27 #132: 地点级检索, 与 RouteService::searchPlaces 同一口径 ——
+    // search() 回的是线路卡 (没有坐标), 地图要落点必须拿到起终点的 lat/lon.
+    // 注意 travel.json 的 startName/endName 101 条全部只到城市级, 所以这里搜出来的
+    // 是"成都/拉萨"这类城市点, 不是某个具体路口; 展示层要如实按城市点标注.
+    Q_INVOKABLE QVariantList searchPlaces(const QString& keyword, int limit = 60);
 
     // 筛选
     Q_INVOKABLE QVariantList getByProvince(const QString& province);

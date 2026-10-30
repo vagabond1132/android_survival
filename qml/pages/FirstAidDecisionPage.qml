@@ -177,10 +177,8 @@ Page {
 
                 Text {
                     Layout.fillWidth: true
-                    text: "DECISION WALK"
-                    font.family: styles.monoFont
+                    text: "决策走法"
                     font.pixelSize: styles.fsXs
-                    font.letterSpacing: 1.8
                     color: CommonOptions.colorInk3
                     elide: Text.ElideRight
                 }
@@ -215,6 +213,7 @@ Page {
         ScrollView {
             Layout.fillWidth: true
             Layout.fillHeight: true
+            Layout.bottomMargin: styles.bottomClearance   // A41: 末行给下面的吸底条让位
             contentWidth: width
             clip: true
             visible: decisionPage.hasTree
@@ -300,13 +299,12 @@ Page {
                         Text {
                             Layout.fillWidth: true
                             // Qt 的 QML JS 不保证有 padStart (ES2017), 两位补零自己写
-                            text: "Q" + ((decisionPage._path.length + 1) < 10
-                                         ? "0" + (decisionPage._path.length + 1)
-                                         : String(decisionPage._path.length + 1))
-                                 + " · " + (decisionPage.currentNode.id || "")
-                            font.family: styles.monoFont
+                            text: "第 " + ((decisionPage._path.length + 1) < 10
+                                           ? "0" + (decisionPage._path.length + 1)
+                                           : String(decisionPage._path.length + 1))
+                                  + " 问"
+                            // 内部节点 id 不再上界面 (10-22 巡检 H3); 汉字也不走等宽
                             font.pixelSize: styles.fsXs
-                            font.letterSpacing: 1.2
                             color: CommonOptions.colorInk3
                             elide: Text.ElideRight
                         }
@@ -401,7 +399,10 @@ Page {
                     Layout.rightMargin: styles.pageMargin
                     visible: decisionPage.reachedTerminal
                     Layout.preferredHeight: endCol.implicitHeight + 2 * styles.cardPad
-                    color: CommonOptions.colorText
+                    // 2026-10-26 A31: 实心块底必须配 colorTextOnAccent. 原来底是 colorText
+                    //   (夜晚翻近白) 而字是 colorOnInk (写死的浅色) → 夜晚档整张「结论」卡
+                    //   浅底浅字读不出. 底跟着改成同值的 colorAccent, 语义上才是"实心块".
+                    color: CommonOptions.colorAccent
 
                     ColumnLayout {
                         id: endCol
@@ -414,11 +415,9 @@ Page {
 
                         Text {
                             Layout.fillWidth: true
-                            text: "CONCLUSION · " + (decisionPage.currentNode.id || "")
-                            font.family: styles.monoFont
+                            text: "结论"
                             font.pixelSize: styles.fsXs
-                            font.letterSpacing: 1.2
-                            color: CommonOptions.colorOnInk
+                            color: CommonOptions.colorTextOnAccent
                             elide: Text.ElideRight
                         }
                         Text {
@@ -427,7 +426,7 @@ Page {
                                   ? decisionPage.terminalAction
                                   : "这个结论节点在库里没有写处理动作"
                             font.pixelSize: styles.fsMd
-                            color: CommonOptions.colorOnInk
+                            color: CommonOptions.colorTextOnAccent
                             wrapMode: Text.WordWrap
                         }
                     }

@@ -3,6 +3,7 @@
  * @brief 设计 token 中的分类/等级色 + 下拉选项 + 格式化函数实现
  */
 #include "CommonOptions.h"
+#include "../common/SettingsStore.h"
 #include <QHash>
 #include <QDesktopServices>
 #include <QUrl>
@@ -11,6 +12,16 @@
 
 // 构造函数在头文件内联定义. 字体就绪标记由 main.cpp 在 addApplicationFont 后写入.
 bool CommonOptions::s_iconFontReady = false;
+
+// === ⓪ 白天 / 夜晚 ===
+// 状态只有这一个住处: QML 侧写 CommonOptions.nightMode, 颜色属性靠 nightModeChanged
+// 重算, 值落 QSettings 由 main.cpp 启动时读回 (setGeometry 之前, 免得闪一下白天).
+void CommonOptions::setNightMode(bool on) {
+    if (m_night == on) return;
+    m_night = on;
+    outdoor::SettingsStore::setValue(QStringLiteral("ui/nightMode"), on);
+    emit nightModeChanged();
+}
 
 QVariantList CommonOptions::difficultyOptions() const {
     return QVariantList{
@@ -101,11 +112,27 @@ QString CommonOptions::routeNatureLabel(const QString& key) const {
     return key;
 }
 
+// 档位含义与 dangerColor() 一一对应: 4-5 红 / 3 橙 / 1-2 黄 / 0 绿.
+// 负数 = 调用方还没查到 (地图标注的危险等级缓存未就绪), 空串 = 不报读数.
+QString CommonOptions::dangerLevelLabel(int level) const {
+    if (level < 0 || level > 5) return QString();
+    if (level >= 4) return QStringLiteral("危险/致命");
+    if (level >= 3) return QStringLiteral("中毒/有害");
+    if (level >= 1) return QStringLiteral("慎用/微毒");
+    return QStringLiteral("基本无害");
+}
+
 // 2026-10-19: 图鉴 entity.category 存的是数据文件里的英文键 (assets/data/field_guide_*.json,
 //   共 38 个). 详情页"性质"卡以前直接打印它, 真机上就是一行 wild_vegetable.
 //   键表按四个 kingdom 的数据文件逐一核对过, 未知键原样返回便于发现漏配.
 QString CommonOptions::speciesCategoryLabel(const QString& key) const {
     static const QHash<QString, QString> labels {
+        // 粗类别: 地图「添加标注」对话框写进 speciesCategory 的就是这五个键
+        // (qml/pages/MapPage.qml 的 categoryKeys)。2026-10-28 真机: 「目标」Tab 的行
+        // 副标题显示成裸 "plant" —— 这张表只有图鉴的细类别, 查不到就原样回吐 key,
+        // 于是内部英文键直接印在野外页面上。
+        { "snake", "蛇类" }, { "mushroom", "蘑菇" }, { "insect", "昆虫" },
+        { "plant", "植物" }, { "animal", "动物" },
         // plantae
         { "medicinal", "药用植物" }, { "ornamental", "观赏植物" },
         { "poisonous", "有毒植物" }, { "wild_fruit", "野果" },
@@ -195,17 +222,25 @@ QString CommonOptions::venomTypeLabel(const QString& key) const {
 // DangerSpeciesPage / SpeciesDetailPage / MapPage 三处取的是不同颜色.
 // 收敛到此处后, 索引越界一律回落到首色, 不让页面自己写兜底色.
 
+// 2026-10-20 「地物图例」: 循环板换成 ISOM 信号色. 顺序按"先常见后生僻"排,
+// 相邻索引要能一眼分开, 所以橙/蓝/绿/紫交替而不是同族渐次.
+// 提到函数外是因为 categoryPaletteSize() 也要读它 —— 板子长度是调用方
+// "找下一个没被占用的色号"的边界, 不能再在别处抄第二遍数字.
+static const char* kCategoryPalette[] = {
+    "#1B6A43", "#0C6C9E", "#DE5B1C", "#752C6B",
+    "#B5850F", "#17704A", "#B4290E", "#4C5A53"
+};
+static const int kCategoryPaletteCount =
+    int(sizeof(kCategoryPalette) / sizeof(kCategoryPalette[0]));
+
 QColor CommonOptions::categoryColor(int index) const {
-    // 2026-10-20 「地物图例」: 循环板换成 ISOM 信号色. 顺序按"先常见后生僻"排,
-    // 相邻索引要能一眼分开, 所以橙/蓝/绿/紫交替而不是同族渐次.
-    static const char* kPalette[] = {
-        "#1B6A43", "#0C6C9E", "#DE5B1C", "#752C6B",
-        "#B5850F", "#17704A", "#B4290E", "#4C5A53"
-    };
-    const int n = int(sizeof(kPalette) / sizeof(kPalette[0]));
-    int i = index % n;
-    if (i < 0) i += n;
-    return QColor(QString::fromLatin1(kPalette[i]));
+    int i = index % kCategoryPaletteCount;
+    if (i < 0) i += kCategoryPaletteCount;
+    return QColor(QString::fromLatin1(kCategoryPalette[i]));
+}
+
+int CommonOptions::categoryPaletteSize() const {
+    return kCategoryPaletteCount;
 }
 
 QColor CommonOptions::dangerColor(int level) const {
@@ -318,6 +353,85 @@ QString CommonOptions::formatBearingDistance(double meters) const {
     return QString::number(meters / 1000.0, 'f', 1) + QStringLiteral(" km");
 }
 
+// ===== 地图视野 (任务 #82) =====
+namespace {
+constexpr double kEarthR = 6378137.0;                       // WGS84 长半轴 (m)
+constexpr double kMercMaxLat = 85.0511287798066;            // mercator Y 有界的纬度上限
+// z0 时整个 mercator 世界 (2πR) 画在 256 px 上 —— 与比例尺、Map 控件同一个口径.
+constexpr double kMPP0 = 2.0 * kEarthR * M_PI / 256.0;      // 156543.033928…
+
+// 投影坐标 (m), 与 QGeoCameraData 用的球面 mercator 一致
+double mercY(double latDeg) {
+    const double phi = qBound(-kMercMaxLat, latDeg, kMercMaxLat) * M_PI / 180.0;
+    return kEarthR * std::log(std::tan(M_PI / 4.0 + phi / 2.0));
+}
+double invMercY(double y) {
+    return (2.0 * std::atan(std::exp(y / kEarthR)) - M_PI / 2.0) * 180.0 / M_PI;
+}
+double mercX(double lonDeg) { return kEarthR * lonDeg * M_PI / 180.0; }
+} // namespace
+
+qreal CommonOptions::metersPerPixel(double latitude, double zoomLevel) const {
+    return kMPP0 * std::cos(latitude * M_PI / 180.0) / std::pow(2.0, zoomLevel);
+}
+
+QVariantMap CommonOptions::fitBounds(double minLat, double maxLat,
+                                     double minLon, double maxLon,
+                                     double mapWidthPx, double mapHeightPx,
+                                     double viewX, double viewY,
+                                     double viewW, double viewH,
+                                     double minZoom, double maxZoom) const {
+    QVariantMap out;
+    if (!std::isfinite(mapWidthPx) || !std::isfinite(mapHeightPx)
+        || mapWidthPx <= 0.0 || mapHeightPx <= 0.0)
+        return out;                                        // 还没布局出尺寸: 不动
+    if (!std::isfinite(minLat) || !std::isfinite(maxLat)
+        || !std::isfinite(minLon) || !std::isfinite(maxLon))
+        return out;
+
+    const double latLo = qMin(minLat, maxLat);
+    const double latHi = qMax(minLat, maxLat);
+    const double lonLo = qMin(minLon, maxLon);
+    const double lonHi = qMax(minLon, maxLon);
+
+    // 可视子矩形: 传进来的 <=0 当作"整块 Map"
+    const double w = viewW > 0.0 ? qMin(viewW, mapWidthPx) : mapWidthPx;
+    const double h = viewH > 0.0 ? qMin(viewH, mapHeightPx) : mapHeightPx;
+    const double vx = std::isfinite(viewX) ? qMax(0.0, viewX) : 0.0;
+    const double vy = std::isfinite(viewY) ? qMax(0.0, viewY) : 0.0;
+
+    // 跨度用**投影**米: z 档下"每投影米多少像素"是与纬度无关的 2^z/kMPP0.
+    //   若改用地面米 (×cos lat) 去反推, 得把 cos 也塞进分母 —— 那正是旧"经验公式"
+    //   漏掉的东西, 它只在纬度≈0 时近似成立, 而且系数还写错了.
+    const double dxPx = mercX(lonHi) - mercX(lonLo);
+    const double dyPx = mercY(latHi) - mercY(latLo);
+    double z;
+    if (dxPx <= 0.0 && dyPx <= 0.0) {
+        z = maxZoom;                                      // 单点/重合: 顶到上限
+    } else {
+        const double zx = dxPx > 0.0 ? std::log2(w * kMPP0 / dxPx) : maxZoom;
+        const double zy = dyPx > 0.0 ? std::log2(h * kMPP0 / dyPx) : maxZoom;
+        z = qMin(zx, zy);
+    }
+    if (minZoom > maxZoom) z = maxZoom;
+    else z = qBound(minZoom, z, maxZoom);
+
+    const double pxPerM = std::pow(2.0, z) / kMPP0;
+    // bbox 中心要落在可视子矩形中心, 而 Map 的 center 对应整块 Map 中心 (px 原点在左上,
+    //   y 向下, 投影 y 向上), 所以 x 加、y 减.
+    const double pxB = (mercX(lonLo) + mercX(lonHi)) / 2.0;
+    const double pyB = (mercY(latLo) + mercY(latHi)) / 2.0;
+    const double cX = pxB - (vx + w / 2.0 - mapWidthPx / 2.0) / pxPerM;
+    const double cY = pyB + (vy + h / 2.0 - mapHeightPx / 2.0) / pxPerM;
+
+    double lon = cX / (kEarthR * M_PI / 180.0);
+    lon = std::fmod(lon + 540.0, 360.0) - 180.0;          // 归一到 [-180,180)
+    out.insert(QStringLiteral("zoom"), z);
+    out.insert(QStringLiteral("centerLat"), qBound(-kMercMaxLat, invMercY(cY), kMercMaxLat));
+    out.insert(QStringLiteral("centerLon"), lon);
+    return out;
+}
+
 QString CommonOptions::plateCode(const QString &prefix, const QString &id, int width) const {
     // 编号是"目录卡片号", 不是数据库主键: 只要求同一前缀下稳定且短到能进角标.
     QString num;
@@ -347,6 +461,16 @@ QString CommonOptions::stripEntryMarker(const QString &text) const {
         // 星平面 emoji: 高代理必须紧跟低代理, 两个一起丢
         if (QChar::isHighSurrogate(c)) {
             if (t.size() > 1 && QChar::isLowSurrogate(t.at(1).unicode())) { t.remove(0, 2); continue; }
+            t.remove(0, 1); continue;
+        }
+        // 项目符号: - * · • – — (10-22 巡检 H4: 急救步骤原文是 "-立即到就近医院",
+        // 这里不剥就渲染成 "03 -立即…"). 后面紧跟数字/小数点时是负号不是 bullet,
+        // 例: "-18℃ 以下才算冷冻" 整句要留着.
+        if (c == 0x002D || c == 0x002A || c == 0x00B7 || c == 0x2022
+            || c == 0x2013 || c == 0x2014) {
+            const bool numericNext = t.size() > 1
+                    && (t.at(1).isDigit() || t.at(1) == QLatin1Char('.'));
+            if (numericNext) break;
             t.remove(0, 1); continue;
         }
         // BMP 符号段:Misc Symbols 2600-27BF (⚠ ✅ ❗ ✓ ✗ ➕) / Dingbats /
@@ -380,9 +504,12 @@ QString CommonOptions::stripEntryMarker(const QString &text) const {
 // routes.json 749 条里 68 条把山名拼了两遍 ("华山华山山门" / "武功山武功山山门"),
 // 另有 189 条起点名与终点名逐字相同. 方向区分靠调用方加 "起点:" / "终点:" 前缀,
 // 这里只修重复拼接.
-// 放在展示层而不是直接改 JSON: RouteService::insertRoute 对已存在的 id 直接
-// return (src/routes/RouteService.cpp:262), 真机数据库早就灌过旧数据, 改
-// assets/data/routes.json 不会重新入库.
+// 2026-10-27: 这 68 条已在数据侧落盘 (scripts/audit_poi.py --apply, 改动 136 个地名),
+// 所以本函数现在是纯防御 —— 防的是以后新灌的数据把同一串拼接又带回来.
+// 之前这里写的理由是错的 ("改 routes.json 不会重新入库, 真机库里是旧数据"):
+// RouteService::loadInitialData 每次启动都跑 loadFromJson, 而 routeExists 查的是
+// 内存表 m_routes (src/routes/RouteService.cpp:404), 进程刚起时是空的, 于是
+// INSERT OR REPLACE 每条都会执行一遍 —— 库跟着 JSON 走, 改 JSON 是有效的.
 QString CommonOptions::poiName(const QString& mountain, const QString& rawName) const {
     QString name = rawName.trimmed();
     if (name.isEmpty()) return QString();
@@ -390,6 +517,28 @@ QString CommonOptions::poiName(const QString& mountain, const QString& rawName) 
     if (m.length() >= 2 && name.startsWith(m + m))
         name = m + name.mid(2 * m.length());
     return name;
+}
+
+// === 坐标可信度读数 (2026-10-27 #131) ==========================================
+// 数据侧每条记录都带 coord_precision_m (端点坐标字面量的量化误差, 米) 与
+// coord_source (这个点是从哪来的)。地图已选清单行、路线详情、自驾详情三处要读
+// 同一口径, 所以格式化收在这里, 不在 QML 里各抄一份。
+// 读数上限: ±56 公里 —— 那是"知道在哪个县, 不知道在山的哪一面"的量级。
+QString CommonOptions::coordPrecisionLabel(int meters) const {
+    if (meters <= 0) return QString();          // 没标 = 不说, 不编「±0 米」
+    if (meters < 1000) return QStringLiteral("±%1 米").arg(meters);
+    if (meters < 10000) return QStringLiteral("±%1 公里").arg(meters / 1000.0, 0, 'f', 1);
+    return QStringLiteral("±%1 公里").arg(qRound(meters / 1000.0));
+}
+
+QString CommonOptions::coordSourceLabel(const QString& key) const {
+    if (key == QLatin1String("city_center"))
+        return QStringLiteral("城区中心点");
+    if (key == QLatin1String("gps_track_2bulu"))
+        return QStringLiteral("GPS 实测轨迹");
+    if (key == QLatin1String("editorial_estimate"))
+        return QStringLiteral("编者估计位置");
+    return QString();                            // 未知来源不贴标签
 }
 
 // === 外部地图导航 ==============================================================

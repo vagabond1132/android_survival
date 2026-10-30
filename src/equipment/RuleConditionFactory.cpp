@@ -1,6 +1,6 @@
 /**
  * @file RuleConditionFactory.cpp
- * @brief 工厂实现 - 注册表 + 14 个内置策略
+ * @brief 工厂实现 - 注册表 + 17 个内置策略
  */
 #include "RuleConditionFactory.h"
 
@@ -76,6 +76,13 @@ void RuleConditionFactory::initializeDefaults() {
     registerStrategy(QStringLiteral("is_plateau"),      [] { return std::make_unique<PlateauCondition>();     });
     registerStrategy(QStringLiteral("is_desert"),       [] { return std::make_unique<DesertCondition>();      });
     registerStrategy(QStringLiteral("is_coastal"),      [] { return std::make_unique<CoastalCondition>();     });
+
+    // 2026-10-22 补注册: 温度与背负方式两个维度。
+    //   temp_min / temp_avg —— 之前 42 条规则里 0 条看温度, 保暖档位跟冷暖无关;
+    //   load —— 轻装/重装以前不区分, 两条行程清单完全一致。
+    registerStrategy(QStringLiteral("temp_min"),       [] { return std::make_unique<TempMinCondition>();       });
+    registerStrategy(QStringLiteral("temp_avg"),       [] { return std::make_unique<TempAvgCondition>();       });
+    registerStrategy(QStringLiteral("load"),           [] { return std::make_unique<LoadCondition>();           });
 
     g_defaultsInitialized = true;
 }

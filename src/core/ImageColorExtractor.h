@@ -25,7 +25,9 @@ public:
      * @brief 从图片文件提取主色 HSV
      * @param filePath 本地文件路径 (如 /sdcard/Pictures/xxx.jpg)
      * @return {h: 0-359, s: 0-100, v: 0-100, r: 0-255, g: 0-255, b: 0-255, ok: bool, error: ""}
-     *         失败时 ok=false, error 含原因.
+     *         失败时 ok=false。2026-10-23 #115 (A19): `error` 是**给用户看的中文原因**
+     *         (QML 直接拼进页面 note), 技术原文 (本地路径 / QImageReader::errorString)
+     *         另放 `detail`, 只准进 console.warn —— 不要把两者拼在一起显示给用户。
      */
     Q_INVOKABLE QVariantMap extractFromFile(const QString& filePath, int gridSize = 8);
 

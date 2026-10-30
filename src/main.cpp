@@ -23,6 +23,7 @@
 #include "core/ServiceRegistry.h"  // 2026-09-10: main.cpp 调 theApp.services()->registerToQmlContext
                                     // 需要 ServiceRegistry 完整定义. App.h 只 forward decl.
 #include "core/CommonOptions.h"    // 2026-09-11: C++ 单例, 替换 QML pragma Singleton
+#include "common/SettingsStore.h"  // 2026-10-22: 启动时读回 夜晚/白天 档 (ui/nightMode)
                                     // (QML pragma Singleton + qmlcachegen 静态编译下
                                     // 目录式 import "components/CommonOptions.qml"
                                     // 报 "no such directory", 改用 C++ 单例 + qmlRegisterSingletonInstance)
@@ -231,6 +232,10 @@ int main(int argc, char* argv[]) {
     // 单点注册, 避免 ServiceRegistry 14+ 个 qmlRegisterSingletonInstance 一起注册
     // 触发 "ReferenceError is not defined" 的 Qt 内部 bug.
     static CommonOptions g_commonOptions;
+    // 2026-10-22: 夜晚/白天档在注册给 QML 之前就恢复, 免得窗口先闪一帧白天底色.
+    // 存的位置见 CommonOptions::setNightMode (QSettings: ui/nightMode).
+    g_commonOptions.setNightMode(
+        outdoor::SettingsStore::getBool(QStringLiteral("ui/nightMode"), false));
     qmlRegisterSingletonInstance("OutdoorSurvival", 1, 0, "CommonOptions", &g_commonOptions);
     logToFile("=== STAGE 0: CommonOptions singleton registered to QML ===");
 

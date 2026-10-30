@@ -10,9 +10,10 @@
  *
  * 四条规则:
  *   ① 只有卡片自己吃点击. 根节点是纯 Item, 没有任何 full-size MouseArea —— 地图的
- *      拖动/双击 (#43 手动移动) 必须照常工作, 浮层盖着的地方也能拖.
- *   ② 盘上只画"发现", 不画假读数. 没罗盘朝向 (compassSensor.valid=false) 时盘心
- *      写 "--", Dial 自己不画指针; 微标签行宁可不显示也不给一个 0° 的方向.
+ *      拖动/捏合 (手写手势见 MapPage 末尾, #78) 必须照常工作, 浮层盖着的地方也能拖.
+ *   ② 盘上只画"发现", 不画假读数. 没有任何朝向来源 (罗盘不 valid 且 GPS 航向
+ *      也是 NaN) 时盘心写 "--", Dial 自己不画指针; 微标签行宁可不显示也不给一个
+ *      0° 的方向; 精度读数拿不到就不出现, 不写 "±0 m".
  *   ③ 等宽字体只装拉丁与数字 (见 [[qml-monofont-no-cjk]]). 所以这一层的 mono 节点
  *      只有 "ZOOM 13" / "500 m" / "N-UP · CAL 72%" / "3s", 汉字一律走默认字体.
  *   ④ 求助仍然是长按 3 秒才动. 短按不跳页 —— 戴手套/口袋里误触不能把用户推进 SOS 流程.
@@ -31,9 +32,11 @@ Item {
     Styles { id: styles; visible: false }
 
     // === 入参 ==============================================================
-    property real heading: 0            // 设备朝向 (compassSensor.heading), 无罗盘时忽略
+    property real heading: 0            // 朝向 (罗盘优先, 无罗盘时是 GPS 航向), 无来源时忽略
     property bool hasHeading: false
     property int calibrationPct: -1     // <0 = 拿不到校准度, 不写进微标签
+    property string headingNote: ""     // 指针来源那句话, 空串 = 整行不显示
+    property string accText: ""         // "位置精度 ±2.8 m", 空串 = 拿不到精度
     property var targets: []            // [{bearing, tone}] 盘上的点
     property int zoomLevel: 11
     property string scaleText: ""       // "500 m" / "1.2 km"
@@ -41,6 +44,10 @@ Item {
     property int markCount: 0           // 物种标注数 (顶栏那枚小计数)
     property int selectedCount: 0       // 已选路线+轨迹数
     property bool locateReady: false    // 有定位才允许"回中到我的位置"
+    // 底部工作台当前占的屏高 (宿主绑 bottomSheet 的实时高度; 0 = 本页没有底栏).
+    //   selChip 浮在底栏之上要用**当下**的占高: 折叠 130 / 展开最多 409,
+    //   写死 styles.bottomSheetPeek(80) 在两档制下永远错一档 (2026-10-28).
+    property real sheetHeight: 0
 
     // === 出参 ==============================================================
     signal searchClicked()
@@ -49,7 +56,6 @@ Item {
     signal zoomInClicked()
     signal zoomOutClicked()
     signal selectedClicked()
-    signal selectedClearClicked()
     signal sosConfirmed()
 
     z: 1000   // 压在 Map 的所有 MapQuickItem 之上 (原来那几块浮层也是 1000)
@@ -69,6 +75,8 @@ Item {
             Layout.preferredHeight: styles.btnHSm
             radius: styles.rSm
             color: CommonOptions.withAlpha(CommonOptions.colorSurface, 0.92)
+            // 2026-10-23 真机 (A7): 描边保持 colorText —— 它和右侧图层钮、定位钮是同一族
+            //   "键帽"描边, 单独把这一格改浅会破坏丁骨架的一致性. 只处理读数贴边.
             border.color: CommonOptions.colorText
             border.width: styles.lineHair
 
@@ -89,10 +97,22 @@ Item {
                     font.pixelSize: styles.fsSm
                     elide: Text.ElideRight
                 }
-                // 标注数放这里: 原来占着顶栏一枚独立按钮, 现在收成行内读数
+                // 标注数放这里: 原来占着顶栏一枚独立按钮, 现在收成行内读数.
+                // 2026-10-23 (A7): 加一根发丝分隔线 + 左侧留位, 让它读起来是"框内右端
+                //   的计数", 不是被挤在描边边的占位文字.
+                Rectangle {
+                    visible: ov.markCount > 0
+                    Layout.preferredWidth: styles.lineHair
+                    Layout.fillHeight: true
+                    Layout.margins: styles.spXs
+                    color: CommonOptions.colorDivider
+                }
                 Text {
                     visible: ov.markCount > 0
-                    text: ov.markCount + " 点"
+                    // 2026-10-28 真机: 顶栏这里写「31 点」,「目标」Tab 的表头写「盘上目标
+                    //   41 项」, 两个数差 10 —— 因为口径不同 (一个是本机标注点总数, 一个是
+                    //   标注点 + 附近路线的行数)。观感却像同一件事读错了数。顶栏改口径名。
+                    text: ov.markCount + " 个标注"
                     color: CommonOptions.colorTextDim
                     font.pixelSize: styles.fsXs
                 }
@@ -189,8 +209,7 @@ Item {
                 anchors.centerIn: parent
                 spacing: 2
                 Text {
-                    text: "ZOOM " + ov.zoomLevel
-                    font.family: styles.monoFont
+                    text: "缩放 " + ov.zoomLevel
                     font.pixelSize: styles.fsXs
                     color: CommonOptions.colorTextMuted
                 }
@@ -266,49 +285,88 @@ Item {
             hasFix: ov.hasHeading
             targets: ov.targets
             hubValue: ov.hasHeading ? Math.round(ov.heading) + "°" : "--"
-            hubLabel: "HDG"
+            hubLabel: "方位"
         }
 
-        // 微标签: 只写拉丁. 没有罗盘时整行不出现, 免得 "--" 旁边再补一串假信息.
+        // 微标签: 这句说的是"上面那个指针是哪来的", 文案由宿主算好传进来 ——
+        //   本组件读不到 mapPage 这个 id (跨文件 id 不可见), 也不许在这里查 service.
+        //   2026-10-26: 原来写死"北朝上", 但这台机上罗盘整轮不出数、指针其实是
+        //   GPS 航向撑起来的, 那句话是假的. 现在罗盘给"北朝上 · 校准 x%",
+        //   航向给"按行进方向 · 走动时才准", 两者都没有就不显示这一行 (规则②).
         Text {
-            visible: ov.hasHeading
+            visible: ov.headingNote.length > 0
             anchors.horizontalCenter: parent.horizontalCenter
-            text: "N-UP" + (ov.calibrationPct >= 0 ? " · CAL " + ov.calibrationPct + "%" : "")
-            font.family: styles.monoFont
+            text: ov.headingNote
             font.pixelSize: styles.fsXs
             color: CommonOptions.colorTextDim
         }
 
-        Rectangle {
-            width: styles.btnHSm
+        // 2026-10-26「精度到 1 米」: 盘下再说一句这个点有多准. 拿不到精度读数时
+        //   整行不出现 —— 写"±0 m"会被读成"极准", 那是假读数.
+        Text {
+            visible: ov.accText.length > 0
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: ov.accText
+            // 这行有汉字, 不许走 styles.monoFont (见 [[qml-monofont-no-cjk]] 真机方框)
+            font.pixelSize: styles.fsXs
+            color: CommonOptions.colorTextDim
+        }
+
+        // 2026-10-28 真机 (「定位小方块被工作台挡住了」): 这枚方块原来直接是 dialCol
+        //   (Column) 的子项, 没给 width 就贴左摆 —— 而底部工作台是通栏的, 左下那一格
+        //   正好被面板吃掉. 修法 = 包一行与盘等宽 (styles.dialSize, 不许读 dialCol.width,
+        //   Column 的子项读父宽是绑定环) 的 Item, 方块 anchors.right 右对齐.
+        //   两条坑: 不给 Column 子项写 x: (positioner 会静默覆盖), 不读 dialCol.width.
+        Item {
+            width: styles.dialSize
             height: styles.btnHSm
-            radius: styles.rSm
-            // 没定位时灰底 + 不可点: 按下去只会把地图甩到写死的默认坐标
-            enabled: ov.locateReady
-            opacity: ov.locateReady ? 1.0 : 0.45
-            color: locateTap.pressed ? CommonOptions.colorSurfaceDim
-                                     : CommonOptions.withAlpha(CommonOptions.colorSurface, 0.92)
-            border.color: ov.locateReady ? CommonOptions.colorText : CommonOptions.colorRule
-            border.width: styles.lineHair
-            IconLabel {
-                anchors.centerIn: parent
-                name: "my_location"
-                size: styles.icMd
-                tintColor: ov.locateReady ? CommonOptions.colorText : CommonOptions.colorTextDim
+
+            Rectangle {
+                id: locateBox
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                width: styles.btnHSm
+                height: styles.btnHSm
+                radius: styles.rSm
+                // 没定位时灰底 + 不可点: 按下去只会把地图甩到写死的默认坐标
+                enabled: ov.locateReady
+                opacity: ov.locateReady ? 1.0 : 0.45
+                color: locateTap.pressed ? CommonOptions.colorSurfaceDim
+                                         : CommonOptions.withAlpha(CommonOptions.colorSurface, 0.92)
+                border.color: ov.locateReady ? CommonOptions.colorText : CommonOptions.colorRule
+                border.width: styles.lineHair
+                IconLabel {
+                    anchors.centerIn: parent
+                    name: "my_location"
+                    size: styles.icMd
+                    tintColor: ov.locateReady ? CommonOptions.colorText : CommonOptions.colorTextDim
+                }
+                TapHandler { id: locateTap; onTapped: ov.locateClicked() }
             }
-            TapHandler { id: locateTap; onTapped: ov.locateClicked() }
         }
     }
 
     // === 左下: 已选目标 chip ================================================
-    // 只在选了东西时出现; 单击看清单, 双击清空 (沿用改版前的行为)
+    // 只在选了东西时出现; 单击打开清单, 清空在那张清单里 (要走确认, 不在这里直接清).
+    //   以前这颗 chip 想接"双击清空", 但那条 selectedClearClicked 信号从来没人发,
+    //   onDoubleClicked 抄成了和单击同一个 —— 2026-10-23 #82 复盘删掉, 少一个死口子.
     Rectangle {
         id: selChip
         visible: ov.selectedCount > 0
-        anchors.left: parent.left
-        anchors.leftMargin: styles.pageMargin
+        // 2026-10-28 真机 (pass8 m01_map): 原来靠左下 —— 那一格正是 QtLocation 画
+        //   「© OpenStreetMap contributors …」的地方, 版权行整条贴着地图底边横贯全宽,
+        //   一选路线, 「已选 N」胶囊就压在版权字上 (a02 同一处叠字)。版权文本是 OSM
+        //   使用条款要求保留的署名, 不能缩、不能遮, 所以动胶囊: 收到右下角, 与
+        //   bottomSheetPeek 同一条底线上, 右边那一块在这一屏是空的。
+        anchors.right: parent.right
+        anchors.rightMargin: styles.pageMargin
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: styles.bottomSheetPeek
+        // 2026-10-28 两档工作台: 原来贴 styles.bottomSheetPeek (常量 80) —— 折叠态
+        //   条高 130、展开最多 409, 常量在这一屏永远慢一档, 胶囊被面板压住半截.
+        //   改吃宿主绑进来的 sheetHeight: >0 就抬到"面板顶 + spSm", =0 (本页没有
+        //   底栏) 退回 bottomClearance 的通用净空.
+        anchors.bottomMargin: ov.sheetHeight > 0 ? ov.sheetHeight + styles.spSm
+                                                 : styles.bottomClearance
         width: selChipRow.implicitWidth + 2 * styles.spSm
         height: styles.chipH
         radius: styles.rPill
@@ -330,7 +388,6 @@ Item {
         MouseArea {
             anchors.fill: parent
             onClicked: ov.selectedClicked()
-            onDoubleClicked: ov.selectedClicked()
         }
     }
 }

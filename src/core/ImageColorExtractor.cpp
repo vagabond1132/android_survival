@@ -11,13 +11,20 @@
 
 ImageColorExtractor::ImageColorExtractor(QObject* parent) : QObject(parent) {}
 
+// 2026-10-23 #115 (A19): `error` 是**给用户看的一句中文** —— FieldGuideImagePickPage
+//   把它直接拼进页面上的 note, 原来这里是 "file not found: <绝对路径>" /
+//   "image decode failed: <Qt 原文>", 用户在自己手机上看到的是一串英文加一串
+//   /data/user/0/..., 只会以为是自己拍的照片坏了. 技术原文改放 `detail`, 只进
+//   console.warn → release 包的真日志 (app 沙盒 stage0.log), 那里才是排查用的地方.
+//   同一个包里的两条通道: error=中文原因(可见), detail=原文(只在日志).
 QVariantMap ImageColorExtractor::extractFromFile(const QString& filePath, int gridSize) {
     QVariantMap result;
     result["ok"] = false;
     result["error"] = "";
 
     if (filePath.isEmpty()) {
-        result["error"] = "empty path";
+        result["error"] = QStringLiteral("还没有可选的图片");
+        result["detail"] = QStringLiteral("empty path");
         return result;
     }
 
@@ -28,7 +35,10 @@ QVariantMap ImageColorExtractor::extractFromFile(const QString& filePath, int gr
     }
 
     if (!QFile::exists(localPath)) {
-        result["error"] = "file not found: " + localPath;
+        // 最常见的一支: Android 11+ 的 content:// URI 没先复制进沙盒就当本地路径用.
+        //   这句中文只说"读不到", 具体是 URI 还是路径丢了, 看 detail.
+        result["error"] = QStringLiteral("这张图片读不到, 换一张试试");
+        result["detail"] = QStringLiteral("file not found: ") + localPath;
         return result;
     }
 
@@ -37,7 +47,8 @@ QVariantMap ImageColorExtractor::extractFromFile(const QString& filePath, int gr
     reader.setAutoTransform(true);  // 尊重 EXIF 旋转
     QImage img = reader.read();
     if (img.isNull()) {
-        result["error"] = "image decode failed: " + reader.errorString();
+        result["error"] = QStringLiteral("这张图片打不开 (格式不支持或已损坏)");
+        result["detail"] = QStringLiteral("image decode failed: ") + reader.errorString();
         return result;
     }
 
@@ -50,7 +61,8 @@ QVariantMap ImageColorExtractor::extractFromImage(const QImage& image, int gridS
     result["error"] = "";
 
     if (image.isNull()) {
-        result["error"] = "null image";
+        result["error"] = QStringLiteral("图片是空的");
+        result["detail"] = QStringLiteral("null image");
         return result;
     }
 
@@ -60,7 +72,8 @@ QVariantMap ImageColorExtractor::extractFromImage(const QImage& image, int gridS
     int w = image.width();
     int h = image.height();
     if (w == 0 || h == 0) {
-        result["error"] = "zero-size image";
+        result["error"] = QStringLiteral("这张图片尺寸为 0, 读不出颜色");
+        result["detail"] = QStringLiteral("zero-size image");
         return result;
     }
 
@@ -139,7 +152,8 @@ QVariantMap ImageColorExtractor::extractRegionsFromFile(const QString& filePath,
     result["error"] = "";
 
     if (filePath.isEmpty()) {
-        result["error"] = "empty path";
+        result["error"] = QStringLiteral("还没有可选的图片");
+        result["detail"] = QStringLiteral("empty path");
         return result;
     }
 
@@ -148,7 +162,8 @@ QVariantMap ImageColorExtractor::extractRegionsFromFile(const QString& filePath,
         localPath = localPath.mid(7);
     }
     if (!QFile::exists(localPath)) {
-        result["error"] = "file not found: " + localPath;
+        result["error"] = QStringLiteral("这张图片读不到, 换一张试试");
+        result["detail"] = QStringLiteral("file not found: ") + localPath;
         return result;
     }
 
@@ -156,7 +171,8 @@ QVariantMap ImageColorExtractor::extractRegionsFromFile(const QString& filePath,
     reader.setAutoTransform(true);
     QImage img = reader.read();
     if (img.isNull()) {
-        result["error"] = "image decode failed: " + reader.errorString();
+        result["error"] = QStringLiteral("这张图片打不开 (格式不支持或已损坏)");
+        result["detail"] = QStringLiteral("image decode failed: ") + reader.errorString();
         return result;
     }
 
@@ -166,7 +182,8 @@ QVariantMap ImageColorExtractor::extractRegionsFromFile(const QString& filePath,
     int w = img.width();
     int h = img.height();
     if (w == 0 || h == 0) {
-        result["error"] = "zero-size image";
+        result["error"] = QStringLiteral("这张图片尺寸为 0, 读不出颜色");
+        result["detail"] = QStringLiteral("zero-size image");
         return result;
     }
 

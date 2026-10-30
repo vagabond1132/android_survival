@@ -22,7 +22,7 @@
  *      读数带右上角把这句话写出来. 早期版本这里画的是 8 字结专用图, 换成别的结
  *      就是假读数. 也不放"观看视频"按钮.
  *   ③ 汉字不进等宽 (见 [[qml-monofont-no-cjk]]). 只有 KN 编号、四格读数、两位步骤
- *      序号、"N STEPS" 这类拉丁/数字走 monoFont; "下一步 02" 这种混排走默认字体.
+ *      序号、"N 步" 这类拉丁/数字走 monoFont; "下一步 02" 这种混排走默认字体.
  *   ④ 写操作返回 Result 信封 {ok,value,error}, 直接 `if (res)` 恒真 → 走 _ok(res).
  *      另外 KnotService 只有 markLearned/resetProgress, 没有"取消已学会" —— 所以
  *      已学过的条目这颗按钮是禁用态的"已学会", 不做假 toggle.
@@ -255,7 +255,11 @@ Page {
                 }
             }
 
-            // 左上: 类目 + 难度 (难度写成 1/3 而不是 ★★★, 与读数带同一格式)
+            // 左上: 类目 chip.
+            // 2026-10-22 #96(d): 原来这里写的是「类目 · 难度 N / 3」, 而难度在别处是
+            //   档位梯 —— 同一个数值两种配色, 用户问过一次"哪个才是难度". 现在 chip
+            //   只说类目 (它确实是类目色), 难度收进下方读数带那一格: 数字 + 梯并排、
+            //   同取 difficultyColor, 一眼看得出是同一件事.
             Chip {
                 anchors.left: parent.left
                 anchors.top: parent.top
@@ -263,7 +267,7 @@ Page {
                 anchors.topMargin: styles.spSm
                 checked: true
                 accent: knotDetail._tone
-                text: (entity.category || "绳结") + " · 难度 " + knotDetail._difficultyReadout
+                text: entity.category || "绳结"
                 textSize: styles.fsSm
             }
 
@@ -307,7 +311,7 @@ Page {
                     spacing: styles.spSm
                     Plate {
                         Layout.alignment: Qt.AlignVCenter
-                        code: "PLATE " + CommonOptions.plateCode("KN", entity.id || "")
+                        code: CommonOptions.plateCode("KN", entity.id || "")
                         tone: CommonOptions.colorInk3
                     }
                     Item { Layout.fillWidth: true }
@@ -374,10 +378,8 @@ Page {
                     spacing: styles.spSm
                     Text {
                         Layout.alignment: Qt.AlignVCenter
-                        text: "KNOT READOUT"
-                        font.family: styles.monoFont
+                        text: "绳结读数"
                         font.pixelSize: styles.fsXs
-                        font.letterSpacing: 1.4
                         color: CommonOptions.colorInk3
                     }
                     Item { Layout.fillWidth: true }
@@ -394,16 +396,24 @@ Page {
                     Layout.fillWidth: true
                     spacing: 0
                     Repeater {
+                        // 四格同形状 (都有 ladder), 只在难度格给非 0 值: delegate 是
+                        // 一份, 隐藏分支的绑定照样求值, 缺字段就是 undefined 参与比较
                         model: [
-                            { k: "DIFFICULTY", v: knotDetail._difficultyReadout },
-                            { k: "STEPS", v: String(knotDetail._steps.length) },
-                            { k: "RELATED", v: String(knotDetail._related.length) },
-                            { k: "MISTAKES", v: String(knotDetail._mistakes.length) }
+                            { k: "难度", v: knotDetail._difficultyReadout,
+                              ladder: entity.difficulty || 0 },
+                            { k: "步骤", v: String(knotDetail._steps.length), ladder: 0 },
+                            { k: "相关", v: String(knotDetail._related.length), ladder: 0 },
+                            { k: "易错", v: String(knotDetail._mistakes.length), ladder: 0 }
                         ]
                         delegate: RowLayout {
                             required property var modelData
                             required property int index
                             Layout.fillWidth: true
+                            // 四格必须等宽. 难度格多了个档位梯, implicitWidth 比另三格大
+                            // 约 36px, RowLayout 按隐式尺寸分剩余空间 → 实测 228/48/48/48
+                            // (2026-10-22 host offscreen 量出来的). 锁一个公共 preferredWidth,
+                            // 四格就回到 93/93/93/93.
+                            Layout.preferredWidth: 60
                             spacing: 0
                             // 1px 竖线只在格之间画, 首格前不留
                             Rectangle {
@@ -418,18 +428,29 @@ Page {
                                 Text {
                                     Layout.fillWidth: true
                                     text: modelData.k
-                                    font.family: styles.monoFont
                                     font.pixelSize: styles.fsXs
-                                    font.letterSpacing: 1.2
                                     color: CommonOptions.colorInk3
                                     elide: Text.ElideRight
                                 }
-                                Text {
+                                // 数字 + 档位梯同一色来源 (difficultyColor), 读作一件事:
+                                // "2 / 3" 是这条记录的字段, 三格实心是它的图形化 (2026-10-22 #96(d))
+                                RowLayout {
                                     Layout.fillWidth: true
-                                    text: modelData.v
-                                    font.family: styles.monoFont
-                                    font.pixelSize: styles.fsSm
-                                    color: CommonOptions.colorText
+                                    spacing: styles.spXs
+                                    Text {
+                                        text: modelData.v
+                                        font.family: styles.monoFont
+                                        font.pixelSize: styles.fsSm
+                                        color: modelData.ladder > 0
+                                               ? CommonOptions.difficultyColor(modelData.ladder)
+                                               : CommonOptions.colorText
+                                    }
+                                    Ladder {
+                                        visible: modelData.ladder > 0
+                                        cells: 3
+                                        value: modelData.ladder
+                                        tone: CommonOptions.difficultyColor(modelData.ladder)
+                                    }
                                 }
                             }
                         }
@@ -442,6 +463,7 @@ Page {
         ScrollView {
             Layout.fillWidth: true
             Layout.fillHeight: true
+            Layout.bottomMargin: styles.bottomClearance   // A41: 末行给下面的吸底条让位
             contentWidth: width
             clip: true
             visible: (entity.id || "").length > 0
@@ -478,10 +500,8 @@ Page {
                     }
                     Text {
                         Layout.alignment: Qt.AlignVCenter
-                        text: knotDetail._steps.length + " STEPS"
-                        font.family: styles.monoFont
+                        text: knotDetail._steps.length + " 个步骤"
                         font.pixelSize: styles.fsXs
-                        font.letterSpacing: 1.4
                         color: CommonOptions.colorInk3
                     }
                 }

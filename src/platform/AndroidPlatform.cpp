@@ -4,6 +4,7 @@
 
 #include "AndroidPlatform.h"
 #include "../core/Logger.h"
+#include "FileScanner.h"
 
 #include <QCoreApplication>
 #include <QMutex>
@@ -44,6 +45,69 @@ QJniObject getActivity() {
         "activity",
         "()Landroid/app/Activity;"
     );
+}
+
+// Build.VERSION.SDK_INT. 拿不到时返回 -1 而不是 0 —— 调用方要能把"查不到"
+// 和"这是个老系统"分开处理, 不然会拿着错的档位去走错的授权路径.
+int sdkIntOrUnknown() {
+    QJniEnvironment env;
+    jclass cls = env->FindClass("android/os/Build$VERSION");
+    if (!cls) {
+        env->ExceptionClear();
+        return -1;
+    }
+    jfieldID fid = env->GetStaticFieldID(cls, "SDK_INT", "I");
+    if (!fid) {
+        env->ExceptionClear();
+        return -1;
+    }
+    const jint value = env->GetStaticIntField(cls, fid);
+    return static_cast<int>(value);
+}
+
+// content:// 的真文件名只能问 provider。DocumentsUI 回 primary%3ADownload%2F…kml
+// 这类 URI 时尾巴还带得上后缀, MediaStore 型 (content://media/external/downloads/123)
+// 整串里没有扩展名 —— 按扩展名分发格式的调用方就会把 KML 判成"不支持的格式"
+// (2026-10-28 pass8 真机: 导入微信收到的两步路 KML, 弹窗回 imported_xxx.jpg)。
+QString queryDisplayName(const QJniObject& resolver, const QJniObject& uri) {
+    QJniEnvironment env;
+    jclass stringCls = env->FindClass("java/lang/String");
+    if (!stringCls) {
+        env->ExceptionClear();
+        return QString();
+    }
+    QJniObject column = QJniObject::fromString(QStringLiteral("_display_name"));
+    jobjectArray projection = env->NewObjectArray(1, stringCls, column.object<jstring>());
+    env->DeleteLocalRef(stringCls);
+    if (!projection) {
+        env->ExceptionClear();
+        return QString();
+    }
+    // ContentResolver.query **没有** (Uri, String[]) 两参重载 —— 只认 5 参 / 6 参 /
+    //   Bundle 那三个 (javap android-34 实测)。写两参描述符不会编译报错, 是运行期
+    //   NoSuchMethodError, 与同文件 2026-10-19 那支 InputStream.readAll() 同一类事故。
+    QJniObject cursor = resolver.callObjectMethod(
+        "query",
+        "(Landroid/net/Uri;[Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;"
+        "Ljava/lang/String;)Landroid/database/Cursor;",
+        uri.object(), projection, nullptr, nullptr, nullptr);
+    env->DeleteLocalRef(projection);
+    if (!cursor.isValid()) {
+        env->ExceptionClear();
+        Logger::info("queryDisplayName: provider 不答 _display_name");
+        return QString();
+    }
+    const jint idx = cursor.callMethod<jint>("getColumnIndex", "(Ljava/lang/String;)I",
+                                             column.object());
+    const bool noColumn = env->ExceptionCheck() || idx < 0;
+    env->ExceptionClear();
+    QString name;
+    if (!noColumn && cursor.callMethod<jboolean>("moveToFirst")) {
+        QJniObject value = cursor.callObjectMethod("getString", "(I)Ljava/lang/String;", idx);
+        if (value.isValid()) name = value.toString();
+    }
+    cursor.callMethod<void>("close");
+    return name;
 }
 #endif
 }  // anonymous namespace
@@ -216,9 +280,19 @@ bool AndroidPlatform::makePhoneCall(const QString& number) {
         return false;
     }
 
+    // PackageManager.resolveActivity(Intent) 单参那支在 API 21 就废了、android-34 的
+    //   jar 里查无此描述符 (javap: 只剩 (Intent,int) 与 (Intent,ResolveInfoFlags))。
+    //   JNI 的描述符是运行期才解析的字符串, 写错不报编译错, 真机上抛 NoSuchMethodError
+    //   → 返回 null → handled 永远 false → SOS 页那颗拨号键按了没反应、日志零 error。
+    //   与同文件 2026-10-19 那支 InputStream.readAll() 同一类事故, 与 importImage 里
+    //   ContentResolver.query 的 5 参修正是同一次审计查出来的。
+    // PackageManager.MATCH_DEFAULT —— 单参 resolveActivity 当年的默认行为就是只匹配
+    //   带 CATEGORY_DEFAULT 的处理者, 显式传才等价。
+    constexpr jint kMatchDefault = 0x00020000;
     QJniObject resolveActivity = packageManager.callObjectMethod(
-        "resolveActivity", "(Landroid/content/Intent;)Landroid/content/pm/ResolveInfo;",
-        intent.object()
+        "resolveActivity",
+        "(Landroid/content/Intent;I)Landroid/content/pm/ResolveInfo;",
+        intent.object(), kMatchDefault
     );
 
     bool handled = resolveActivity.isValid();
@@ -579,36 +653,6 @@ void AndroidPlatform::keepScreenOn(bool on) {
 #endif
 }
 
-void AndroidPlatform::setBrightness(double value) {
-#ifdef Q_OS_ANDROID
-    if (value < 0.0 || value > 1.0) {
-        Logger::warn("brightness must be 0.0-1.0");
-        return;
-    }
-    QJniObject activity = getActivity();
-    if (!activity.isValid()) return;
-    // Window.LayoutParams.screenBrightness(0.0-1.0, -1 = 系统默认)
-    QJniObject window = activity.callObjectMethod(
-        "getWindow", "()Landroid/view/Window;"
-    );
-    if (!window.isValid()) return;
-    QJniObject params = window.callObjectMethod(
-        "getAttributes", "()Landroid/view/WindowManager$LayoutParams;"
-    );
-    if (!params.isValid()) return;
-    params.callMethod<void>(
-        "setScreenBrightness", "(F)V",
-        static_cast<jfloat>(value)
-    );
-    window.callMethod<void>("setAttributes",
-        "(Landroid/view/WindowManager$LayoutParams;)V",
-        params.object());
-    Logger::debug(QString("Brightness set to %1").arg(value, 0, 'f', 2));
-#else
-    Q_UNUSED(value);
-#endif
-}
-
 void AndroidPlatform::acquireWakeLock() {
 #ifdef Q_OS_ANDROID
     if (m_wakeLock) {
@@ -943,8 +987,31 @@ QString AndroidPlatform::importImage(const QString& srcUri) {
     if (cacheDir.isEmpty()) cacheDir = "/data/data/com.outdoor.survival/cache";
     QDir().mkpath(cacheDir);
 
-    QString outPath = cacheDir + QString("/imported_%1.jpg")
-                          .arg(QDateTime::currentMSecsSinceEpoch());
+    // 2026-10-27 #134: 文件名后缀要跟着源 URI 走。地图页的"导入轨迹"复用的就是
+    //   这条 content:// → 沙盒通道 (SAF 选出来的两步路 KML 一定是 content://, QFile
+    //   打不开它), 但写死 .jpg 会把后缀丢掉 —— 调用方按扩展名分发 GPX/KML/CSV,
+    //   拿到 imported_xxx.jpg 就只能全送进同一个分支。图片那条链路行为不变。
+    // 2026-10-28 #149: URI 尾巴取不到后缀时 (MediaStore 型 URI) 再问一次 DISPLAY_NAME。
+    auto trackSuffix = [](const QString& name) {
+        const int dot = name.lastIndexOf('.');
+        if (dot <= 0) return QString();
+        const QString cand = name.mid(dot).toLower();
+        if (cand == QLatin1String(".kml") || cand == QLatin1String(".gpx")
+            || cand == QLatin1String(".csv"))
+            return cand;
+        return QString();
+    };
+    QString suffix = trackSuffix(path.section('/', -1).section('?', 0, 0).section('#', 0, 0));
+    if (suffix.isEmpty()) {
+        const QString display = queryDisplayName(resolver, contentUri);
+        suffix = trackSuffix(display);
+        if (!suffix.isEmpty()) {
+            Logger::info("importImage: 后缀取自 DISPLAY_NAME " + display);
+        }
+    }
+    if (suffix.isEmpty()) suffix = QStringLiteral(".jpg");
+    QString outPath = cacheDir + QString("/imported_%1%2")
+                          .arg(QDateTime::currentMSecsSinceEpoch()).arg(suffix);
     QFile outFile(outPath);
     if (!outFile.open(QIODevice::WriteOnly)) {
         Logger::warn("importImage: cannot write " + outPath);
@@ -1036,6 +1103,136 @@ QString AndroidPlatform::importImage(const QString& srcUri) {
     outFile.close();
     Logger::info(QString("importImage: copied %1 bytes to %2").arg(len).arg(outPath));
     return outPath;
+#endif
+}
+
+// ---------------------------------------------------------------------------
+// 2026-10-28 (#148): 本机轨迹文件搜索
+// ---------------------------------------------------------------------------
+
+QVariantList AndroidPlatform::searchTrackFiles(const QString& keyword) {
+    const QStringList roots = FileScanner::defaultAndroidRoots();
+    QVariantList diagnostics;
+    const qint64 t0 = QDateTime::currentMSecsSinceEpoch();
+    const QVariantList hits = FileScanner::search(roots, keyword.trimmed(),
+                                                  FileScanner::trackSuffixes(),
+                                                  &diagnostics);
+    // 逐根落日志: 真机上"搜不到"分三种 (没这个目录 / 目录在但读不到 / 读了没匹配),
+    // 只有把这行拉出来才分得清, 不然后面每一轮都在猜。
+    Logger::info(QString("[filescan] kw=%1 roots=%2 hits=%3 ms=%4")
+                     .arg(keyword.trimmed()).arg(roots.size()).arg(hits.size())
+                     .arg(QDateTime::currentMSecsSinceEpoch() - t0));
+    for (const QVariant& raw : diagnostics) {
+        const QVariantMap m = raw.toMap();
+        Logger::info(QString("[filescan]   root=%1 exists=%2 dir=%3 readable=%4 scanned=%5 hits=%6 ms=%7")
+                         .arg(m.value(QStringLiteral("root")).toString())
+                         .arg(m.value(QStringLiteral("exists")).toBool() ? 1 : 0)
+                         .arg(m.value(QStringLiteral("isDir")).toBool() ? 1 : 0)
+                         .arg(m.value(QStringLiteral("readable")).toBool() ? 1 : 0)
+                         .arg(m.value(QStringLiteral("scanned")).toInt())
+                         .arg(m.value(QStringLiteral("hits")).toInt())
+                         .arg(m.value(QStringLiteral("elapsedMs")).toLongLong()));
+    }
+    return hits;
+}
+
+bool AndroidPlatform::canReadAllFiles() {
+#ifndef Q_OS_ANDROID
+    return true;
+#else
+    const int api = sdkIntOrUnknown();
+    if (api < 0) {
+        Logger::warn("canReadAllFiles: SDK_INT unavailable -> report as not granted");
+        return false;
+    }
+    if (api < 30) {
+        // Android 10 及以下没有"所有文件访问"这一档, 有 READ_EXTERNAL_STORAGE 就能读共享存储.
+        return checkPermission(QStringLiteral("android.permission.READ_EXTERNAL_STORAGE"));
+    }
+    const jboolean manager = QJniObject::callStaticMethod<jboolean>(
+        "android/os/Environment", "isExternalStorageManager", "()Z");
+    QJniEnvironment env;
+    if (env->ExceptionCheck()) {
+        env->ExceptionClear();
+        Logger::warn("canReadAllFiles: isExternalStorageManager JNI exception");
+        return false;
+    }
+    return static_cast<bool>(manager);
+#endif
+}
+
+void AndroidPlatform::openAllFilesAccessSettings() {
+#ifndef Q_OS_ANDROID
+    return;
+#else
+    const int api = sdkIntOrUnknown();
+    if (api >= 0 && api < 30) {
+        // Android 10 及以下: 走普通运行时权限申请就够了.
+        requestPermission(QStringLiteral("android.permission.READ_EXTERNAL_STORAGE"), nullptr);
+        return;
+    }
+
+    QJniObject activity = getActivity();
+    if (!activity.isValid()) {
+        Logger::warn("openAllFilesAccessSettings: activity invalid");
+        return;
+    }
+    const QString pkg = activity.callObjectMethod("getPackageName",
+                                                  "()Ljava/lang/String;").toString();
+    QJniObject intent("android/content/Intent", "()V");
+    QJniObject action = QJniObject::fromString(
+        "android.settings.MANAGE_ALL_FILES_ACCESS_PERMISSION");
+    intent.callObjectMethod("setAction", "(Ljava/lang/String;)Landroid/content/Intent;",
+                            action.object());
+    QJniObject data = QJniObject::callStaticObjectMethod(
+        "android/net/Uri", "parse", "(Ljava/lang/String;)Landroid/net/Uri;",
+        QJniObject::fromString(QStringLiteral("package:") + pkg).object());
+    intent.callObjectMethod("setData", "(Landroid/net/Uri;)Landroid/content/Intent;",
+                            data.object());
+    intent.callObjectMethod("addFlags", "(I)Landroid/content/Intent;", 0x10000000);
+
+    activity.callMethod<void>("startActivity", "(Landroid/content/Intent;)V",
+                              intent.object());
+    QJniEnvironment env;
+    if (env->ExceptionCheck()) {
+        // 部分 ROM 没有这一档设置页 (ActivityNotFoundException) → 退回应用详情页,
+        // 至少把用户送到能操作的地方, 不要点了没反应.
+        env->ExceptionClear();
+        Logger::warn("openAllFilesAccessSettings: settings page missing, fallback to app settings");
+        openAppSettings();
+    } else {
+        Logger::info("openAllFilesAccessSettings: all-files-access settings opened");
+    }
+#endif
+}
+
+bool AndroidPlatform::moveTaskToBack() {
+#ifndef Q_OS_ANDROID
+    // 桌面端没有"任务栈"概念, 也不存在被 ActivityManager 拆 Activity 的竞态.
+    return false;
+#else
+    QJniObject activity = getActivity();
+    if (!activity.isValid()) {
+        Logger::warn("moveTaskToBack: activity invalid");
+        return false;
+    }
+    // Activity.moveTaskToBack(boolean nonRoot) —— 传 true 表示"只有本 Activity 是
+    //   栈根时才搬到后台", 与我们"根页返回键 = 回桌面"的语义一致; 若此时上面压着
+    //   别的 Activity (如系统设置页) 则返回 false, 由调用方决定怎么处理.
+    const jboolean moved = activity.callMethod<jboolean>(
+        "moveTaskToBack", "(Z)Z", static_cast<jboolean>(true));
+    QJniEnvironment env;
+    if (env->ExceptionCheck()) {
+        env->ExceptionClear();
+        Logger::warn("moveTaskToBack: JNI exception");
+        return false;
+    }
+    if (moved) {
+        Logger::info("moveTaskToBack: app moved to background");
+    } else {
+        Logger::warn("moveTaskToBack: rejected by system (not task root?)");
+    }
+    return static_cast<bool>(moved);
 #endif
 }
 

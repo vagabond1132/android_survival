@@ -73,13 +73,32 @@ enum class Season {
     Winter
 };
 
-// 降水等级
+// 降水等级 (2026-10-21: 补冬季降雪四档)
+// 注意 5..8 是雪, 1..4 是雨 —— 规则条件里 precipitation in [heavy, storm] 只认雨,
+// 雪要写 snow_heavy / snow_storm, 两者不会互相误触发。
 enum class Precipitation {
     None,
     Light,
     Moderate,
     Heavy,
-    Storm
+    Storm,
+    SnowLight,
+    SnowModerate,
+    SnowHeavy,
+    SnowStorm
+};
+
+// 背负方式 (2026-10-22 新增, 用户报"未区分轻装和重装")
+// 规则里写 `load >= overnight` 这类条件; 档位序数即枚举序数, 越大背得越多.
+// DayHike  轻装一日: 不过夜, 背当天要用的 (20-30L)
+// FastPack 单日高强度: 不过夜但长距离/高难度, 要备用保暖与定量水粮
+// Overnight 过夜重装: 露营一晚, 帐篷/睡袋/防潮垫/炉具进必带
+// Expedition 多日重装: 2 晚以上或 5000m+ 无补给, 再加修理/备份/氧气
+enum class LoadStyle {
+    DayHike = 0,
+    FastPack = 1,
+    Overnight = 2,
+    Expedition = 3
 };
 
 // 行程参数（输入）
@@ -96,6 +115,7 @@ struct TripParameters {
     float windSpeed = 0.0f;           // 风速 m/s
     Precipitation precipitation = Precipitation::None;
     float uvIndex = 5.0f;             // UV 指数
+    LoadStyle load = LoadStyle::DayHike;   // 背负方式 (2026-10-22)
 
     // 地区气候维度（新增）
     int diurnalRange = 10;            // 昼夜温差（°C）
@@ -118,6 +138,7 @@ struct EquipmentItem {
     QString description;
     bool isCritical = false;
     bool isOTC = false;
+    QString unit = QStringLiteral("件");   // 计件单位 (件/根/克/片/L), 配合 qty
     QJsonObject specs;
 };
 
@@ -127,6 +148,12 @@ struct RecommendedItem {
     Priority priority = Priority::Optional;
     QStringList reasons;        // 推荐理由
     QString sourceRule;          // 来源规则
+    // 2026-10-22: 定量. 规则 JSON 里可选 "qty": {"energy_bar": 8} —— 同一 item 被多条
+    //   规则命中时取**最大** qty (所以按 days 分档的三条阈值规则天然叠加:
+    //   days>=2 给 8 根, days>=4 给 18 根, days>=7 给 30 根, 7 天的行程拿到 30).
+    //   重量按 weightG * qty 算, 单件重仍显示 unit weight.
+    int qty = 1;
+    int weightTotalG() const { return item.weightG * (qty > 0 ? qty : 1); }
 };
 
 // 装备清单
@@ -182,6 +209,55 @@ public:
     Q_INVOKABLE static EquipmentAltitudeLevel getAltitudeLevel(int altitudeM);
     Q_INVOKABLE static QString getAltitudeLevelName(EquipmentAltitudeLevel level);
     Q_INVOKABLE static QJsonObject getAltitudeSegment(EquipmentAltitudeLevel level);
+
+    // 背负方式中文名 (2026-10-22)。参数用 int 而不是 LoadStyle: 这个枚举没注册 Q_ENUM,
+    //   QML 传 JS number 给枚举形参转换不过去。
+    Q_INVOKABLE static QString getLoadStyleName(int load);
+
+    // === 往年天气 (省 × 月 气候常态表) =====================================
+    // 2026-10-22: 用户报"清单不看路线地点往年天气"。这里给的是 generateList
+    //   能直接吃的参数片段 (海拔已按 -6.5℃/1000m 修正到路线高度), 页面拿到之后
+    //   合并进表单即可, 不要在 QML 里重算修正量。
+    // province 支持 "四川/西藏" 这种跨省路线: 逐个查出来取平均。
+    // 查不到 (省份不在表里 / month 不在 1..12) 返回空 map —— 不返回一份假天气。
+    Q_INVOKABLE QVariantMap climateFor(const QString& province, int month, int altitudeM) const;
+    Q_INVOKABLE QStringList climateProvinceNames() const;
+    Q_INVOKABLE int climateTotalProvinces() const { return m_climate.size(); }
+
+    /**
+     * 代表站坐标 (2026-10-28 #154): 在线预报要按经纬度请求, 而 QML 只认省名。
+     * 返回 {lat, lon, refAltitudeM}; 省名不在表里返回空 map (不编一个坐标出去)。
+     */
+    Q_INVOKABLE QVariantMap climateStation(const QString& province) const;
+
+    /// 海拔修正系数, 来自 climate_normals.json (2026-10-28 #154: 在线预报服务共用同一份, 不再各存一遍)
+    double lapseRateCPer1000m() const { return m_climateLapseCPerKm; }
+    double uvRatePer1000m() const { return m_climateUvPerKm; }
+
+    // === 数值 → 档位 (阈值只在这里抄一份, QML 与在线预报服务都走这四个) ======
+    /**
+     * 2026-09-23: QML 表单只给数值风速/UV 指数, 没有等级下拉框时按标准换算成
+     * WindLevel / UVLevel, 否则 wind_level / uv_level 规则永远不触发.
+     * 风速按蒲福风级: <0.3 静风 / <3.4 微风 / <8.0 中等 / <10.8 大风 / >=10.8 强风
+     * UV 按 WHO 指数: <3 弱 / <6 中等 / <8 强 / <11 很强 / >=11 极强
+     */
+    static WindLevel windLevelFromSpeed(float speedMs);
+    static UVLevel uvLevelFromIndex(float index);
+
+    /**
+     * 降水档。**月档与日档阈值不同, 不能共用一套数**:
+     * 月表存的是整月累计 (5/30/90/180 mm), 日预报存的是当天累计 (0~几十 mm),
+     * 把日量喂进月阈值会把所有雨天都判成 None。tempMinC <= -1 时换雪档
+     * (装备引擎里 snow_* 才走冰爪/雪镜/雪套规则)。
+     */
+    static int precipitationBandMonthly(double precipMm, double tempMinC);
+    static int precipitationBandDaily(double precipMm, double tempMinC);
+    /// 湿度档: 月表没有实测相对湿度, 只能拿月降水当"这个月大概多湿"的代理 (<25/100)
+    static int humidityBandMonthly(double precipMm);
+    /// 湿度档: 日预报有实测相对湿度 %, 直接按 % 分档 (<40/75), 不必绕道降水
+    static int humidityBandFromRh(double rhPercent);
+    /// 季节按气象月划: 3-5 春 / 6-8 夏 / 9-11 秋 / 12-2 冬
+    static int seasonFromMonth(int month);
 
     // 装备查询
     Q_INVOKABLE QVariantList getAllItems();
@@ -259,6 +335,7 @@ signals:
 private:
     bool loadItems();
     bool loadRules();
+    bool loadClimateNormals();
     QList<RecommendedItem> applyRules(const TripParameters& params,
                                        const QHash<QString, EquipmentItem>& items);
     QList<RecommendedItem> applyPreferences(
@@ -276,15 +353,6 @@ private:
     bool preferenceMatchesParams(const QString& conditionJson,
                                  const TripParameters& params) const;
 
-    /**
-     * 2026-09-23: QML 表单只给数值风速/UV 指数, 没有等级下拉框时按标准换算成
-     * WindLevel / UVLevel, 否则 wind_level / uv_level 规则永远不触发.
-     * 风速按蒲福风级: <0.3 静风 / <3.4 微风 / <8.0 中等 / <10.8 大风 / >=10.8 强风
-     * UV 按 WHO 指数: <3 弱 / <6 中等 / <8 强 / <11 很强 / >=11 极强
-     */
-    static WindLevel windLevelFromSpeed(float speedMs);
-    static UVLevel uvLevelFromIndex(float index);
-
     /** sync + 成功时 emit dataChanged, 失败透传 (供 addUserItem/deleteUserItem/updateUserItem 复用) */
     QVariantMap saveUserItemsAndEmit(const QString& ctx);
 
@@ -292,6 +360,10 @@ private:
     QJsonArray m_rules;
     QList<UserPreference> m_preferences;
     QString m_storagePath;
+    // 省名 -> 该省 12 个月的数组块 (原样存 JSON, 查询时再换算, 不再造一套 struct)
+    QHash<QString, QJsonObject> m_climate;
+    double m_climateLapseCPerKm = -6.5;   // 气温直减率, 来自 climate_normals.json
+    double m_climateUvPerKm = 0.12;       // 每 1000m 紫外线增量 (比例)
 };
 
 } // namespace outdoor

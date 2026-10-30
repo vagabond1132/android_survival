@@ -9,7 +9,7 @@
  *   图版头 150px: colorSurfaceDim 底 + 1px 墨线压底; 左上参数 chip, 右上 26px 方角返回,
  *           中间总重量大字 + 难度梯, 底下 编号 + 状态句 + 清单名 (21px 800).
  *   读数带  4 格 (必带 / 强必带 / 推荐 / 可选), 数字全是四档数组的长度.
- *   进度    5px 墨条 + 等宽 "n / N" + "PACKED / TOTAL ITEMS".
+ *   进度    5px 墨条 + 等宽 "n / N" + "已收 / 总件数".
  *   正文    四档分组 × 行 (方角勾选块 + 名称/理由 + 等宽度数, 一列扫下来能当秤读).
  *   底栏    1px 墨线 + colorSurfaceAlt 底; 左 96px 空心「导出 TXT」, 右实心「出门前清点」.
  *
@@ -57,10 +57,10 @@ Page {
     // 四档 = getList 的四个字段. 颜色只用"类别"色里的三档 + 三级墨,
     // hazard 留给真正缺装备的信号 (见规则 ② 下的缺项文字).
     readonly property var buckets: [
-        { key: "critical",    label: "必带（绝对关键）", short: "CRITICAL",  tone: CommonOptions.colorHazard },
-        { key: "important",   label: "强必带",           short: "IMPORTANT", tone: CommonOptions.colorWarn },
-        { key: "recommended", label: "推荐",             short: "RECOMMEND", tone: CommonOptions.colorLegendAmber },
-        { key: "optional",    label: "可选",             short: "OPTIONAL",  tone: CommonOptions.colorInk3 }
+        { key: "critical",    label: "必带（绝对关键）", tone: CommonOptions.colorHazard },
+        { key: "important",   label: "强必带",           tone: CommonOptions.colorWarn },
+        { key: "recommended", label: "推荐",             tone: CommonOptions.colorLegendAmber },
+        { key: "optional",    label: "可选",             tone: CommonOptions.colorInk3 }
     ]
 
     function navigateTo(page, props) {
@@ -93,17 +93,24 @@ Page {
             if (arr.length === 0) continue
             out.push({
                 kind: "head", label: bk.label, tone: bk.tone, count: arr.length,
-                itemId: "", name: "", sub: "", grams: 0, required: false, checked: false
+                itemId: "", name: "", sub: "", grams: 0, qty: 0,
+                required: false, checked: false
             })
             for (var i = 0; i < arr.length; ++i) {
                 var it = arr[i]
                 var why = detailPage._toArr(it.reasons)
+                // 定量 (#83): 规则可以要求 N 份 (能量棒 ×6 / 主食 ×2 / 水 2 L).
+                // 行宽必须显示**总重**, 否则这一列从上往下加不等于页头的"背负合计"
+                // (那条取的是引擎 totalWeightG, 早就是按 qty 乘过的).
+                var q = Math.max(1, Math.round(Number(it.qty) || 1))
+                var unitG = Number(it.weightG) || 0
                 out.push({
                     kind: "item",
                     itemId: String(it.id || ""),
                     name: String(it.name || "未命名装备"),
                     sub: String(why.length > 0 ? why[0] : ""),
-                    grams: Number(it.weightG) || 0,
+                    grams: Number(it.weightTotalG) || unitG * q,
+                    qty: q,
                     tone: bk.tone,
                     required: b < 2,
                     checked: it.checked === true,
@@ -150,11 +157,13 @@ Page {
         ? Math.min(checkedItems, totalItems) / totalItems : 0
 
     // 顶部状态句: 每件数字都能回溯到 getList 的字段
+    // 2026-10-22 #96(d): 句尾原来还带一段「· 难度 3 星」, 与正下方"难度梯 + 档位名"
+    //   是同一数值的第三种写法 (星 / 数字 / 格). 全站难度只有一种语言: Ladder +
+    //   difficultyLabel, 这里删掉, 不再用"星"这个字.
     readonly property string statusLine: {
         if (!detailPage.hasList) return ""
         var s = detailPage.totalItems + " 件 · 必备 " + detailPage.requiredItems
         if (detailPage.lackRequired > 0) s += " · 还缺 " + detailPage.lackRequired
-        s += " · 难度 " + detailPage.difficulty + " 星"
         s += entity.isCompleted === true ? " · 已清点" : " · 未清点"
         return s
     }
@@ -319,10 +328,8 @@ Page {
                     Text {
                         Layout.alignment: Qt.AlignVCenter
                         visible: detailPage.hasList
-                        text: "PACKING LIST"
-                        font.family: styles.monoFont
+                        text: "装箱清单"
                         font.pixelSize: styles.fsXs
-                        font.letterSpacing: 1.8
                         color: CommonOptions.colorInk3
                     }
                 }
@@ -374,10 +381,8 @@ Page {
                     spacing: styles.spSm
                     Text {
                         Layout.alignment: Qt.AlignVCenter
-                        text: "BUCKET COUNTS"
-                        font.family: styles.monoFont
+                        text: "分档件数"
                         font.pixelSize: styles.fsXs
-                        font.letterSpacing: 1.4
                         color: CommonOptions.colorInk3
                     }
                     Item { Layout.fillWidth: true }
@@ -397,13 +402,13 @@ Page {
                     spacing: 0
                     Repeater {
                         model: [
-                            { k: "CRITICAL",  v: String(detailPage.criticalItems),
+                            { k: "关键",  v: String(detailPage.criticalItems),
                               t: CommonOptions.colorHazard },
-                            { k: "IMPORTANT", v: String(detailPage.importantItems),
+                            { k: "重要", v: String(detailPage.importantItems),
                               t: CommonOptions.colorWarn },
-                            { k: "RECOMMEND", v: String(detailPage.recommendedItems),
+                            { k: "建议", v: String(detailPage.recommendedItems),
                               t: CommonOptions.colorLegendAmber },
-                            { k: "OPTIONAL",  v: String(detailPage.optionalItems),
+                            { k: "可选",  v: String(detailPage.optionalItems),
                               t: CommonOptions.colorInk3 }
                         ]
                         delegate: RowLayout {
@@ -424,9 +429,7 @@ Page {
                                 Text {
                                     Layout.fillWidth: true
                                     text: modelData.k
-                                    font.family: styles.monoFont
                                     font.pixelSize: styles.fsXs
-                                    font.letterSpacing: 1.2
                                     color: CommonOptions.colorInk3
                                     elide: Text.ElideRight
                                 }
@@ -479,10 +482,8 @@ Page {
                 }
             }
             Text {
-                text: "PACKED / TOTAL ITEMS"
-                font.family: styles.monoFont
+                text: "已收 / 总件数"
                 font.pixelSize: styles.fsXs
-                font.letterSpacing: 1.4
                 color: CommonOptions.colorInk3
             }
         }
@@ -498,6 +499,7 @@ Page {
                 anchors.fill: parent
                 anchors.leftMargin: styles.pageMargin
                 anchors.rightMargin: styles.pageMargin
+                anchors.bottomMargin: styles.bottomClearance   // A41: 末行给下面的吸底条让位
                 clip: true
                 boundsBehavior: Flickable.StopAtBounds
                 model: detailPage.rows
@@ -529,10 +531,8 @@ Page {
                         }
                         Text {
                             Layout.alignment: Qt.AlignVCenter
-                            text: modelData.count + " ITEMS"
-                            font.family: styles.monoFont
+                            text: modelData.count + " 项"
                             font.pixelSize: styles.fsXs
-                            font.letterSpacing: 1.4
                             color: CommonOptions.colorInk3
                         }
                     }
@@ -572,6 +572,16 @@ Page {
                                 color: CommonOptions.colorInk3
                                 elide: Text.ElideRight
                             }
+                        }
+                        // 定量角标: 只有一件时不占位. "×" 是 U+00D7, 等宽体没这个字形,
+                        // 所以这一枚走正文字体 (见 [[qml-monofont-no-cjk]] 同一条).
+                        Text {
+                            Layout.alignment: Qt.AlignVCenter
+                            visible: modelData.qty > 1
+                            text: "×" + modelData.qty
+                            font.pixelSize: styles.fsSm
+                            font.bold: true
+                            color: CommonOptions.colorTextMuted
                         }
                         // 宽度数: 等宽右对齐, 一列扫下来能当秤读
                         Text {
@@ -731,26 +741,14 @@ Page {
             wrapMode: Text.WordWrap
         }
 
-        footer: RowLayout {
-            spacing: styles.spSm
-            Item { Layout.fillWidth: true }
-            OutlineButton {
-                Layout.preferredWidth: 88
-                Layout.preferredHeight: styles.btnHSm
-                Layout.alignment: Qt.AlignVCenter
-                text: "留着"
-                tone: CommonOptions.colorTextMuted
-                textSize: styles.fsSm
-                onClicked: confirmDeleteDialog.close()
-            }
-            OutlineButton {
-                Layout.preferredWidth: 88
-                Layout.preferredHeight: styles.btnHSm
-                Layout.alignment: Qt.AlignVCenter
-                text: "删除"
-                tone: CommonOptions.colorDanger
-                textSize: styles.fsSm
-                onClicked: detailPage.removeList()
+        footer: DialogFooter {
+            cancelText: "留着"
+            confirmText: "删除"
+            confirmCode: "不可撤"
+            onCancel: confirmDeleteDialog.close()
+            onConfirm: {
+                confirmDeleteDialog.close()
+                detailPage.removeList()
             }
         }
     }

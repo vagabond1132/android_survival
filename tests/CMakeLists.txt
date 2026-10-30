@@ -4,7 +4,10 @@
 #       cmake --build <build> -j && ctest --test-dir <build> --output-on-failure
 
 cmake_minimum_required(VERSION 3.22)
-project(OutdoorSurvivalTests VERSION 0.0.1 LANGUAGES CXX)
+project(OutdoorSurvivalTests VERSION 0.0.2 LANGUAGES CXX)
+# 这个 VERSION 要与 ../CMakeLists.txt 的 project(... VERSION) 同值 —— 版本号在仓库里
+# 有四份副本 (app CMakeLists / android/app/build.gradle / AndroidManifest.xml / 这里),
+# 没有工具自动对齐, 每次发版手工过一遍 (见 doc/07-部署与发布/Docker构建APK手册.md)。
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -39,6 +42,8 @@ set(COMMON_SRC
     ${APP_ROOT}/src/core/CommonOptions.cpp
     ${APP_ROOT}/src/common/DbHelper.cpp
     ${APP_ROOT}/src/common/SettingsStore.cpp
+    # 2026-10-29 (#168 A44): 轨迹统计唯一定口径, test_track_metrics 直接链它
+    ${APP_ROOT}/src/common/TrackMetrics.cpp
     # header-only 的 Q_OBJECT 类必须列进源文件列表, AUTOMOC 才会生成 moc_ServiceBase.cpp;
     # 否则链接报 "undefined reference to vtable for outdoor::ServiceBase"
     # (主 CMakeLists.txt:228 同样列了它)
@@ -67,6 +72,11 @@ set(COMMON_SRC
     ${APP_ROOT}/src/map/MapService_species.cpp
     ${APP_ROOT}/src/platform/PlatformInterface.cpp
     ${APP_ROOT}/src/platform/AndroidPlatform.cpp
+    # 2026-10-28 (#148): 轨迹文件扫描 (纯 Qt, 桌面直编直测, 不经过 JNI)
+    ${APP_ROOT}/src/platform/FileScanner.cpp
+    # 2026-10-28 (#154): 天气预报解析/换算 (parseDailyJson 是纯函数, 单测喂 fixture, 不发网络).
+    #   不列这条, test_weather_forecast 链接期就找不到 WeatherForecastService 的实现。
+    ${APP_ROOT}/src/core/WeatherForecastService.cpp
     # 2026-10-20: 罗盘 (丁骨架朝向来源). ServiceRegistry 没进这份列表, 但这个类
     # 要在这里过一遍类型检查 —— 否则只有 38 分钟的 arm64 构建能发现它编不过.
     ${APP_ROOT}/src/core/CompassSensor.cpp
@@ -83,7 +93,10 @@ target_include_directories(outdoor_test_objs PUBLIC
 target_link_libraries(outdoor_test_objs PUBLIC
     Qt6::Core Qt6::Gui Qt6::Sql Qt6::Network Qt6::Positioning Qt6::Sensors Qt6::Xml Qt6::Qml
 )
-target_compile_definitions(outdoor_test_objs PUBLIC APP_VERSION="0.0.1")
+target_compile_definitions(outdoor_test_objs PUBLIC APP_VERSION="${PROJECT_VERSION}")
+# 以前这里写死 APP_VERSION="0.0.1", 与被测代码里的版本号无关: MapService 导出 GPX 的
+# creator 字段一旦被单测断言, 测的是这个硬编码值而不是主构建注入的值 → 版本升级时
+# 单测照样绿。改从本 project 的 VERSION 取, 至少要跟着上一行一起动。
 
 function(add_unit_test name)
     qt_add_executable(${name}_test
@@ -126,3 +139,9 @@ add_unit_test(test_travel_service    ${TESTS_DIR}/test_travel_service.cpp)
 add_unit_test(test_checklist_service ${TESTS_DIR}/test_checklist_service.cpp)
 add_unit_test(test_equipment_service ${TESTS_DIR}/test_equipment_service.cpp)
 add_unit_test(test_map_service       ${TESTS_DIR}/test_map_service.cpp)
+# 2026-10-28 (#148): 轨迹导入的本机文件搜索 —— 扫描器不带 JNI, 桌面就能证伪
+add_unit_test(test_file_scanner      ${TESTS_DIR}/test_file_scanner.cpp)
+# 2026-10-28 (#154): 天气预报日预报 → 装备天气键 (fixture 内嵌, 全程不联网)
+add_unit_test(test_weather_forecast  ${TESTS_DIR}/test_weather_forecast.cpp)
+# 2026-10-29 (#168 A44): 轨迹统计口径 (升降按距离滑窗 / 最快按 >=30s 窗口)
+add_unit_test(test_track_metrics     ${TESTS_DIR}/test_track_metrics.cpp)

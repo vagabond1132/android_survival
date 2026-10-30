@@ -209,8 +209,4 @@ QString MapService::generateId() const {
     return QUuid::createUuid().toString(QUuid::WithoutBraces);
 }
 
-void MapService::recomputeTrackStats(Track& track) {
-    Q_UNUSED(track);  // 已在 stopTrack 中实现, 此函数保留为虚函数占位/未来扩展
-}
-
 } // namespace outdoor

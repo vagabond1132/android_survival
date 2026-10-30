@@ -57,6 +57,17 @@ Page {
     readonly property bool hasHeading: compassSensor ? compassSensor.valid : false
     readonly property real headingDeg: hasHeading ? compassSensor.heading : 0
     readonly property int calibPct: compassSensor ? compassSensor.calibrationPercent : -1
+    // 2026-10-26 真机 (用户"方位数据未变化"): 这台机 QCompass 一整轮没给有效读数,
+    //   ①营地与④地图的盘因此恒为空盘. 第二来源 = GPS 行进方向
+    //   (EmergencyService.currentCourse / Android getBearing()), 只有真在走的时候
+    //   有数. 优先级 罗盘 > 航向; 两者都无 → 空盘, 不给 0° 的假方向.
+    //   本页与 MapPage 必须同一套口径 (两页读数不一致比没有读数更糟).
+    readonly property real courseDeg: emergencyService
+        ? emergencyService.currentCourse : Number.NaN
+    readonly property bool hasCourse: isFinite(courseDeg)
+    readonly property real effHeadingDeg: hasHeading ? headingDeg
+                                                     : (hasCourse ? courseDeg : 0)
+    readonly property bool hasEffHeading: hasHeading || hasCourse
 
     // 最后一次定位读取时间 (只在 locationUpdated 里刷新, 所以是"读取"而不是"现在")
     property string fixTime: "--:--"
@@ -78,15 +89,23 @@ Page {
     readonly property string coordText: hasFix
         ? curLat.toFixed(5) + (curLat >= 0 ? " N" : " S") + " / "
           + curLon.toFixed(5) + (curLon >= 0 ? " E" : " W")
-        : "NO FIX"
+        : "--"
 
     // 海拔: 定位没带 Elevation 属性时是 NaN, 显示 "--" 而不是 0
     readonly property string altText: (hasFix && isFinite(altM))
         ? CommonOptions.formatElevation(altM) : "--"
-    readonly property string accText: (hasFix && accM >= 0)
+    // 精度: 2026-10-22 #98 起未知是 NaN (以前是 0, 会画成 "±0 m" 这种假数)
+    readonly property string accText: (hasFix && isFinite(accM) && accM > 0)
         ? "\u00b1" + Math.round(accM) + " m" : "--"
-    readonly property string headingText: hasHeading
-        ? Math.round(headingDeg) + "\u00b0" : "--"
+    readonly property string headingText: hasEffHeading
+        ? Math.round(effHeadingDeg) + "\u00b0" : "--"
+
+    // 读数为什么空着 —— C++ 侧把 Qt 的定位错误码翻成中文 (EmergencyService::onSourceError).
+    // 这行字画在墨底仪表下面 (走默认字族, 允许汉字), "--" 自己不说话.
+    readonly property string fixDiag: emergencyService ? emergencyService.locationDiag : ""
+    readonly property string readoutHint:
+        (hasFix && !isFinite(altM))
+            ? "本次定位不带高程（网络定位常见），海拔读不出" : fixDiag
 
     // 盘上点 + 扇区 (只画前 12 / 前 6, 再多就糊成一圈)
     readonly property var dialTargets: nearby.slice(0, 12).map(function (t) {
@@ -109,14 +128,14 @@ Page {
     // === 换算 ===============================================================
     // 相对朝向: 正数=偏右, 负数=偏左, 范围 -180..180
     function _relAngle(brg) {
-        var d = ((brg - headingDeg) % 360 + 360) % 360
+        var d = ((brg - effHeadingDeg) % 360 + 360) % 360
         if (d > 180) d -= 360
         return d
     }
     function relativeWord(brg) {
         var d = _relAngle(brg)
         var a = Math.abs(d)
-        if (!hasHeading) return CommonOptions.compassLabel(brg)   // 没朝向时退回绝对 8 方位
+        if (!hasEffHeading) return CommonOptions.compassLabel(brg)   // 没朝向时退回绝对 8 方位
         if (a <= 22.5)  return "正前方"
         if (a <= 67.5)  return d < 0 ? "左前方" : "右前方"
         if (a <= 112.5) return d < 0 ? "正左" : "正右"
@@ -269,10 +288,8 @@ Page {
                     anchors.rightMargin: 56
                     spacing: 3
                     Text {
-                        text: "BASE"
-                        font.family: styles.monoFont
+                        text: "营地"
                         font.pixelSize: styles.fsXs
-                        font.letterSpacing: 1.6
                         color: CommonOptions.colorInk3
                     }
                     Text {
@@ -285,13 +302,18 @@ Page {
                     }
                     Text {
                         width: parent.width
-                        // 朝向没校准时明说, 别让用户以为盘上的方位是真的
+                        // 朝向没校准时明说, 别让用户以为盘上的方位是真的.
+                        //   2026-10-26: 罗盘之外还有 GPS 行进方向这一路, 那句话要分开说
+                        //   —— "按行进方向"只在走动时成立, 写成"朝向"会以为站着转手机也算.
                         text: homePage.hasFix
                               ? (homePage.hasHeading
                                  ? "定位就绪 · 朝向 " + homePage.headingText
                                    + (homePage.calibPct >= 0 && homePage.calibPct < 40
                                       ? " · 罗盘需校准" : "")
-                                 : "定位就绪 · 无罗盘朝向, 按正北读")
+                                 : (homePage.hasCourse
+                                    ? "定位就绪 · 按行进方向 " + homePage.headingText
+                                      + " (走动时才准)"
+                                    : "定位就绪 · 无朝向来源, 按正北读"))
                               : "尚未定位 · GPS 未就绪, 盘停在空盘"
                         font.pixelSize: styles.fsSm
                         color: CommonOptions.colorTextMuted
@@ -316,11 +338,15 @@ Page {
                     Layout.preferredWidth: styles.dialSize
                     Layout.preferredHeight: styles.dialSize
                     Layout.alignment: Qt.AlignVCenter
-                    heading: homePage.headingDeg
-                    hasFix: homePage.hasFix
-                    hubLabel: "HEADING"
+                    heading: homePage.effHeadingDeg
+                    // hasFix 在这里的含义是"指针可画": Dial 只要它 true 就按 heading
+                    //   画针, 哪怕 heading 是 0. 原来传的是"有定位" —— 站着不动、
+                    //   罗盘又不出数时, 那是一根指向正北的假针. 改成"有朝向来源".
+                    hasFix: homePage.hasEffHeading
+                    hubLabel: "航向"
                     hubValue: homePage.headingText
-                    hubSub: homePage.hasHeading ? CommonOptions.compassLabel(homePage.headingDeg) : ""
+                    hubSub: homePage.hasEffHeading
+                            ? CommonOptions.compassLabel(homePage.effHeadingDeg) : ""
                     hubSubColor: CommonOptions.colorTextMuted
                     targets: homePage.dialTargets
                     sectors: homePage.dialSectors
@@ -390,9 +416,10 @@ Page {
                 Layout.fillWidth: true
                 Layout.leftMargin: styles.pageMargin
                 Layout.rightMargin: styles.pageMargin
-                label: "LIVE POSITION"
-                trailing: homePage.fixTime
+                label: "实时位置"
+                trailing: homePage.hasFix ? homePage.fixTime : "未定位"
                 coordText: homePage.coordText
+                hint: homePage.readoutHint
                 cells: [
                     { v: homePage.altText,     k: "海拔" },
                     { v: homePage.accText,     k: "精度" },
@@ -408,7 +435,7 @@ Page {
                 Layout.rightMargin: styles.pageMargin
                 Layout.topMargin: 2
                 text: "你面前有什么"
-                trailing: "BY BEARING"
+                trailing: "按方位"
             }
 
             ColumnLayout {
@@ -510,7 +537,7 @@ Page {
                 Layout.rightMargin: styles.pageMargin
                 Layout.topMargin: 2
                 text: "我的记录"
-                trailing: "LOG"
+                trailing: "日志"
             }
 
             RowLayout {

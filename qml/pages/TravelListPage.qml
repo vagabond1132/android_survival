@@ -8,7 +8,7 @@
  * 版式逐块对应已评审的 mock (F1 目录母版, 与徒步路线目录同一套骨架):
  *   标题条  54px 三行 (拉丁微标签 / 页名 / 读数行) + 右上 26px 方角返回 (热区外扩 9px).
  *   筛选卡  两行各 5 枚 chip (天数区间 / 里程区间) + 省份下拉 + 月份下拉.
- *   目录    ListView 混排 head/item: head = 3px 中性条 + 分组名 + "N ROUTES";
+ *   目录    ListView 混排 head/item: head = 3px 中性条 + 分组名 + "N 条路线";
  *           item = 3px 紫条 + 编号 + 名称/副行 + 最高海拔 + chevron, 只有 item 有 1px 组线.
  *
  * 这一版换掉的东西与原因:
@@ -115,7 +115,8 @@ Page {
     }
 
     function formatKm(km) {
-        if (km <= 0) return "0"
+        // undefined 过不了 `km <= 0`, 但会一路走到 toFixed 抛 TypeError
+        if (!(km > 0)) return "0"
         return (km === Math.round(km)) ? String(Math.round(km)) : km.toFixed(1)
     }
 
@@ -166,7 +167,10 @@ Page {
                 fromTo: [sName, eName]
                         .filter(function (s) { return !!(s && String(s).length) })
                         .join(" → ") || "起终点未标注",
-                plate: CommonOptions.plateCode("TV", String(t.id || ""))
+                plate: CommonOptions.plateCode("TV", String(t.id || "")),
+                // head 那一支的字段: delegate 一个 Item 里两个 RowLayout,
+                // `visible: false` 不阻止绑定求值, 缺了就报 Unable to assign [undefined].
+                label: "", count: 0
             })
             shown++
         }
@@ -178,7 +182,11 @@ Page {
             var members = bucket[key]
             // 组内按编号排, 目录序才稳定 (服务层遍历 QHash, 原始序每次启动都可能变)
             members.sort(function (a, b) { return a.plate < b.plate ? -1 : (a.plate > b.plate ? 1 : 0) })
-            out.push({ kind: "head", label: key, count: members.length })
+            out.push({
+                kind: "head", label: key, count: members.length,
+                id: "", name: "", plate: "", km: 0, days: 0, alt: 0, road: "",
+                loop: false, loopAt: "", fromTo: ""
+            })
             for (var m = 0; m < members.length; ++m) out.push(members[m])
         }
         shownCount = shown
@@ -198,7 +206,8 @@ Page {
         var filtering = (daysBucket > 0 || kmBucket > 0 || province !== "" || month > 0)
         var t = filtering ? ("现 " + shownCount + " / " + libCount + " 条")
                           : (libCount + " 条")
-        t += " · " + provinceTotal + " 组 · 里程 " + kmLo + "~" + kmHi + " km"
+        t += " · " + provinceTotal + " 组 · 里程 "
+          + (kmLo === kmHi ? kmHi : kmLo + "~" + kmHi) + " km"
         if (province !== "") t += " · " + province
         if (daysBucket > 0) t += " · " + daysBucketLabel(daysBucket)
         if (kmBucket > 0) t += " · " + kmBucketLabel(kmBucket)
@@ -256,10 +265,8 @@ Page {
                 anchors.rightMargin: 40
                 spacing: 3
                 Text {
-                    text: "DRIVE ROUTE INDEX"
-                    font.family: styles.monoFont
+                    text: "自驾路线索引"
                     font.pixelSize: styles.fsXs
-                    font.letterSpacing: 1.8
                     color: CommonOptions.colorInk3
                 }
                 Text {
@@ -443,12 +450,9 @@ Page {
                             font.bold: true
                             elide: Text.ElideRight
                         }
-                        // 拉丁微标签才加字距, 中文不加 (样式铁律)
                         Text {
-                            text: modelData.count + " ROUTES"
-                            font.family: styles.monoFont
+                            text: modelData.count + " 条路线"
                             font.pixelSize: styles.fsXs
-                            font.letterSpacing: 1.4
                             color: CommonOptions.colorInk3
                         }
                     }

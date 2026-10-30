@@ -63,7 +63,7 @@ Page {
 
     function _toArr(v) { return (v && v.length !== undefined && typeof v !== "string") ? v : [] }
 
-    // 五个短项块共用一套版式 (标题 + "N ITEMS" + Flow 胶囊), 所以收成一张表.
+    // 五个短项块共用一套版式 (标题 + "N 项" + Flow 胶囊), 所以收成一张表.
     // 值都在页面属性里算好, delegate 里只做渲染.
     readonly property var _groups: [
         { t: "路面类型", a: _roadList },
@@ -120,6 +120,11 @@ Page {
                                     && _points[0].lat === _points[1].lat
                                     && _points[0].lon === _points[1].lon
     readonly property bool _bothUsable: _points[0].ok === true && _points[1].ok === true
+    // 端点坐标可信度 (#131): 量化误差与来源都是数据侧字段 (coordPrecisionM /
+    // coordSource), 格式化与地图读数条、路线详情走 CommonOptions 同一个口径。
+    readonly property int _coordPrecisionM: Number(entity.coordPrecisionM) || 0
+    readonly property string _coordPrecisionText: CommonOptions.coordPrecisionLabel(_coordPrecisionM)
+    readonly property string _coordSourceText: CommonOptions.coordSourceLabel(entity.coordSource || "")
 
     function _mkPoint(tag, code, rawName, city, lat, lon) {
         var la = Number(lat) || 0
@@ -270,13 +275,18 @@ Page {
                     spacing: styles.spSm
                     Plate {
                         Layout.alignment: Qt.AlignVCenter
-                        code: "PLATE " + CommonOptions.plateCode("TV", entity.id || travelId)
+                        code: CommonOptions.plateCode("TV", entity.id || travelId)
                         tone: CommonOptions.colorInk3
                     }
                     Item { Layout.fillWidth: true }
                     Text {
                         Layout.alignment: Qt.AlignVCenter
-                        text: travelDetail._isLoop ? "环线 · 回到起点" : "往返异点"
+                        // 两端同坐标有两回事: 真环线 (走过一圈回来) 与库里只给到
+                        // 城区中心点 (88/101 条, coordSource=city_center)。后者不是
+                        // 环线 —— 写「环线 · 回到起点」是给一条根本没测过的线编性质。
+                        text: entity.coordSource === "city_center"
+                              ? "两端同城 (非实测环线)"
+                              : (travelDetail._isLoop ? "环线 · 回到起点" : "往返异点")
                         font.pixelSize: styles.fsXs
                         color: CommonOptions.colorInk3
                     }
@@ -320,10 +330,8 @@ Page {
                     spacing: styles.spSm
                     Text {
                         Layout.alignment: Qt.AlignVCenter
-                        text: "DRIVE READOUT"
-                        font.family: styles.monoFont
+                        text: "自驾读数"
                         font.pixelSize: styles.fsXs
-                        font.letterSpacing: 1.4
                         color: CommonOptions.colorInk3
                     }
                     Item { Layout.fillWidth: true }
@@ -340,10 +348,10 @@ Page {
                     spacing: 0
                     Repeater {
                         model: [
-                            { k: "DAYS", v: String(travelDetail._days) },
-                            { k: "DRIVE H", v: String(travelDetail._driveHours) },
-                            { k: "ALT MAX", v: String(travelDetail._maxAlt) },
-                            { k: "FUEL CNY", v: String(travelDetail._fuel) }
+                            { k: "天数", v: String(travelDetail._days) },
+                            { k: "驾驶时长", v: String(travelDetail._driveHours) },
+                            { k: "最高海拔", v: String(travelDetail._maxAlt) },
+                            { k: "油费", v: String(travelDetail._fuel) }
                         ]
                         delegate: RowLayout {
                             required property var modelData
@@ -362,9 +370,7 @@ Page {
                                 Text {
                                     Layout.fillWidth: true
                                     text: modelData.k
-                                    font.family: styles.monoFont
                                     font.pixelSize: styles.fsXs
-                                    font.letterSpacing: 1.2
                                     color: CommonOptions.colorInk3
                                     elide: Text.ElideRight
                                 }
@@ -395,6 +401,7 @@ Page {
         ScrollView {
             Layout.fillWidth: true
             Layout.fillHeight: true
+            Layout.bottomMargin: styles.bottomClearance   // A41: 末行给下面的吸底条让位
             contentWidth: width
             clip: true
             visible: travelDetail.hasEntity
@@ -516,13 +523,16 @@ Page {
                     }
                 }
 
-                // 规则 ③: 环线 (起终点同坐标) 不给全程导航按钮
+                // 规则 ③: 起终点同坐标不给全程导航按钮
                 Text {
                     Layout.fillWidth: true
                     Layout.leftMargin: styles.pageMargin
                     Layout.rightMargin: styles.pageMargin
                     visible: travelDetail._isLoop
-                    text: "起终点是同一个位置 (环线) —— 全程规划只会得到一条 0 米的线, "
+                    text: (entity.coordSource === "city_center"
+                           ? "两端坐标是同一个城区中心点 (库里这条只给到城)"
+                           : "起终点是同一个位置 (环线)")
+                          + " —— 全程规划只会得到一条 0 米的线, "
                           + "所以这里只给逐点导航; 要整条线的走向用下面的「在地图查看」。"
                     font.pixelSize: styles.fsXs
                     color: CommonOptions.colorTextMuted
@@ -539,13 +549,23 @@ Page {
                     onClicked: travelDetail._navWhole()
                 }
 
-                // 规则 ②: 地名粒度只到城市级, 说清楚而不是留个看似精确的落点
+                // 规则 ②: 端点的粒度与量化误差如实报 (#131), 而不是留一个看似精确的落点。
+                // 原先这句是写死的 "自驾库里的起终点只到城市" —— 对 88/101 条成立,
+                // 剩下 13 条两端是不同地名, 套同一句话就成了替数据编造来历。
                 Text {
                     Layout.fillWidth: true
                     Layout.leftMargin: styles.pageMargin
                     Layout.rightMargin: styles.pageMargin
-                    text: "注意: 自驾库里的起终点只到城市 (如「成都」), 坐标是那个市的点 —— "
-                          + "导航能到城里, 到不了具体路口。"
+                    visible: travelDetail._coordSourceText.length > 0
+                    text: {
+                        var p = travelDetail._coordPrecisionText
+                        var err = p.length > 0 ? "坐标量化误差 " + p + "。" : ""
+                        if (entity.coordSource === "city_center")
+                            return "注意: 这一条的起终点是同一个城区中心点 (如「成都」) —— "
+                                   + err + "它指的是城, 不是路口: 导航能到城里, 到不了具体入口。"
+                        return "注意: 这一条的端点是 " + travelDetail._coordSourceText + " —— "
+                               + err + "落点不是实测, 导航只当参考。"
+                    }
                     font.pixelSize: styles.fsXs
                     color: CommonOptions.colorInk3
                     wrapMode: Text.WordWrap
@@ -585,10 +605,8 @@ Page {
                             }
                             Text {
                                 Layout.alignment: Qt.AlignVCenter
-                                text: modelData.a.length + " ITEMS"
-                                font.family: styles.monoFont
+                                text: modelData.a.length + " 项"
                                 font.pixelSize: styles.fsXs
-                                font.letterSpacing: 1.4
                                 color: CommonOptions.colorInk3
                             }
                         }

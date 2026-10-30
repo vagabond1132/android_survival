@@ -30,6 +30,7 @@
 #include "../equipment/EquipmentService.h"
 #include "../map/MapService.h"
 #include "ImageFetcherService.h"  // 2026-09-19
+#include "WeatherForecastService.h"  // 2026-10-28 (#154)
 #include "CompassSensor.h"        // 2026-10-20: 丁骨架朝向来源
 
 namespace outdoor {
@@ -75,10 +76,16 @@ bool ServiceRegistry::initializeAll() {
     // 2026-09-19: 运行时图册 (无 db 依赖)
     m_imageFetcher = std::make_unique<ImageFetcherService>();
 
+    // 2026-10-28 (#154): 当前天气预报。必须在 m_equipment 之后构造并立刻喂基线 ——
+    //   直减率/紫外线增量的真身在 climate_normals.json, 由装备侧解析, 预报服务不抄常量。
+    //   基线没接上时预报只做"格点原样读数", 不做海拔修正 (宁可少修, 不可瞎修)。
+    m_weather = std::make_unique<WeatherForecastService>();
+    m_weather->setClimateBaseline(m_equipment.get());
+
     // 2026-10-20: 罗盘 (丁骨架 ①营地/⑤求助 的朝向来源). parent = this, 随本对象析构.
     m_compass = new CompassSensor(this);
 
-    Logger::info("ServiceRegistry: 16 services + 1 compass constructed");
+    Logger::info("ServiceRegistry: 17 services + 1 compass constructed");
     return true;
 }
 
@@ -135,11 +142,13 @@ void ServiceRegistry::registerToQmlContext(QQmlContext* ctx) {
     ctx->setContextProperty("mapService",           static_cast<QObject*>(m_map.get()));
     // 2026-09-19: 图册获取 (QML 端用 imageFetcher.fetchImages / cachedImages)
     ctx->setContextProperty("imageFetcher",         static_cast<QObject*>(m_imageFetcher.get()));
+    // 2026-10-28 (#154): 当前天气预报 (QML 端用 weatherService.refresh / forecastFor)
+    ctx->setContextProperty("weatherService",       static_cast<QObject*>(m_weather.get()));
     // 2026-09-11: 注册 androidPlatform, 让 QML 端能调 takePhoto (P1 地图改版 3.26).
     ctx->setContextProperty("androidPlatform",      static_cast<QObject*>(m_platform));
     // 2026-10-20: 罗盘. ①营地方位盘 / ⑤求助读数 / 地图方向指针读同一个 heading.
     ctx->setContextProperty("compassSensor",        static_cast<QObject*>(m_compass));
-    Logger::info("ServiceRegistry: 16 services + 1 platform + 1 compass registered to QML context");
+    Logger::info("ServiceRegistry: 17 services + 1 platform + 1 compass registered to QML context");
 }
 
 } // namespace outdoor

@@ -3,9 +3,10 @@
  * @brief RuleConditionStrategy + Factory 单元测试 (5 阶段架构重构 Phase 3)
  *
  * 覆盖:
- *   - 14 个内置策略各 1-2 case (匹配成功 + 失败)
+ *   - 17 个内置策略各 1-2 case (匹配成功 + 失败)
  *   - Factory 注册 / 创建 / clear / 默认初始化
  *   - 2026-09-23 回归: altitude `cond.mid(12,1)` 下标错位 → 全灭; `in [...]` 语法
+ *   - 2026-10-22: 温度 (temp_min / temp_avg) 与背负 (load) 三个新前缀
  */
 #include <QtTest>
 
@@ -36,6 +37,11 @@ private:
         p.isCoastal = true;
         p.isDesert = false;
         p.isPlateau = false;
+
+        // 2026-10-22: 温度与背负维度 (temp_* / load 三个新策略依赖)
+        p.tempMin = -5.0f;
+        p.tempAvg = 8.0f;
+        p.load = LoadStyle::Overnight;
         return p;
     }
 
@@ -90,7 +96,45 @@ private slots:
         QVERIFY(s.matches("wind_speed >= 3.0", p));   // 5 >= 3 ✓
         QVERIFY(s.matches("wind_speed >= 5.0", p));   // 5 >= 5 ✓
         QVERIFY(!s.matches("wind_speed >= 10.0", p)); // 5 < 10 ✗
-        QVERIFY(!s.matches("wind_speed <= 3.0", p)); // 用了 <=,不支持
+        // 2026-10-22: <= 从"语法不支持"变成"按数值判定" (5 <= 3 假, 5 <= 10 真)
+        QVERIFY(!s.matches("wind_speed <= 3.0", p));
+        QVERIFY(s.matches("wind_speed <= 10.0", p));
+    }
+
+    // ===== 2026-10-22 新增策略: 温度 =====
+    void test_temp_min_match() {
+        TempMinCondition s;
+        QCOMPARE(s.prefix(), QString("temp_min"));
+        auto p = makeParams();   // tempMin = -5
+        QVERIFY(s.matches("temp_min <= -10", p) == false);  // -5 比 -10 暖, 不触发重保暖
+        QVERIFY(s.matches("temp_min <= -5", p));            // 边界含等号
+        QVERIFY(s.matches("temp_min <= 0", p));
+        QVERIFY(s.matches("temp_min < 0", p));
+        QVERIFY(!s.matches("temp_min > 0", p));
+        QVERIFY(!s.matches("temp_min abc", p));             // 非数值
+    }
+
+    void test_temp_avg_match() {
+        TempAvgCondition s;
+        QCOMPARE(s.prefix(), QString("temp_avg"));
+        auto p = makeParams();   // tempAvg = 8
+        QVERIFY(s.matches("temp_avg >= 0", p));
+        QVERIFY(!s.matches("temp_avg >= 25", p));
+        QVERIFY(s.matches("temp_avg <= 25", p));            // 防暑规则用 >=, 防寒用 <=
+    }
+
+    // ===== 2026-10-22 新增策略: 背负方式 =====
+    void test_load_match() {
+        LoadCondition s;
+        QCOMPARE(s.prefix(), QString("load"));
+        auto p = makeParams();   // Overnight (=2)
+        QVERIFY(s.matches("load >= day_hike", p));
+        QVERIFY(s.matches("load >= overnight", p));         // 过夜重装: 帐篷睡袋进清单
+        QVERIFY(!s.matches("load >= expedition", p));       // 多日重装才要的东西不提前给
+        QVERIFY(s.matches("load in [overnight, expedition]", p));
+        QVERIFY(!s.matches("load in [day_hike, fast_pack]", p));
+        QVERIFY(s.matches("load == 'overnight'", p));
+        QVERIFY(!s.matches("load >= bogus", p));            // 认不出的 token 不命中
     }
 
     // ===== Days =====
@@ -216,6 +260,21 @@ private slots:
         QVERIFY(season.matches("season in [summer, winter]", q));
     }
 
+    // ===== 2026-10-21: 降雪四档 (snow_*) 与雨档互不误触发 =====
+    void test_precipitation_snow_tokens() {
+        PrecipitationCondition s;
+        auto p = makeParams();
+        p.precipitation = Precipitation::SnowHeavy;
+        QVERIFY(s.matches("precipitation in [snow_light, snow_moderate, snow_heavy, snow_storm]", p));
+        QVERIFY(s.matches("precipitation == 'snow_heavy'", p));
+        // 大雪不能被"强降雨需防水"这类雨档规则命中
+        QVERIFY(!s.matches("precipitation in [heavy, storm]", p));
+        // 反向: 大雨也不该命中雪档
+        auto r = makeParams();
+        r.precipitation = Precipitation::Heavy;
+        QVERIFY(!s.matches("precipitation in [snow_heavy, snow_storm]", r));
+    }
+
     // ===== Factory =====
     void test_factory_create_known() {
         auto s = RuleConditionFactory::create("altitude");
@@ -245,7 +304,11 @@ private slots:
         QVERIFY(prefixes.contains("is_plateau"));
         QVERIFY(prefixes.contains("is_desert"));
         QVERIFY(prefixes.contains("is_coastal"));
-        QCOMPARE(prefixes.size(), 14);
+        // 2026-10-22 新增 3 个: 温度 + 背负
+        QVERIFY(prefixes.contains("temp_min"));
+        QVERIFY(prefixes.contains("temp_avg"));
+        QVERIFY(prefixes.contains("load"));
+        QCOMPARE(prefixes.size(), 17);
     }
 
     void test_factory_clear() {
@@ -253,7 +316,7 @@ private slots:
         QCOMPARE(RuleConditionFactory::registeredPrefixes().size(), 0);
         // 但 initializeDefaults 仍可重复调
         RuleConditionFactory::initializeDefaults();
-        QCOMPARE(RuleConditionFactory::registeredPrefixes().size(), 14);
+        QCOMPARE(RuleConditionFactory::registeredPrefixes().size(), 17);
     }
 
     void test_factory_idempotent_init() {
@@ -261,7 +324,7 @@ private slots:
         RuleConditionFactory::initializeDefaults();
         RuleConditionFactory::initializeDefaults();
         RuleConditionFactory::initializeDefaults();
-        QCOMPARE(RuleConditionFactory::registeredPrefixes().size(), 14);
+        QCOMPARE(RuleConditionFactory::registeredPrefixes().size(), 17);
     }
 
     void test_end_to_end_via_factory() {
@@ -271,13 +334,15 @@ private slots:
         QVERIFY(s->matches("altitude >= L3", p));
     }
 
-    // 2026-09-23: 回归 - json 里 39 条规则的前缀必须全部可创建, 否则 matchCondition
+    // 2026-09-23: 回归 - json 里每条规则的前缀必须全部可创建, 否则 matchCondition
     // 打 "unknown prefix" 后返回 false → 规则永久失效. 这里枚举 json 实际前缀。
+    // 2026-10-22: temp_min / temp_avg / load 加入 —— 规则重写 (#85) 会用到它们。
     void test_all_json_prefixes_have_strategy() {
         const QStringList jsonPrefixes = {
             "altitude", "uv_level", "humidity", "diurnal_range", "wind_level",
             "is_rainy_season", "is_plateau", "is_desert", "is_coastal",
             "precipitation", "season", "wind_speed", "days", "difficulty",
+            "temp_min", "temp_avg", "load",
         };
         for (const QString& pfx : jsonPrefixes) {
             auto s = RuleConditionFactory::create(pfx);

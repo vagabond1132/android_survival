@@ -38,7 +38,7 @@ Item {
     property bool onInk: false
     // 盘心三行: 大字读数 / 拉丁微标签 / 状态
     property string hubValue: "--"
-    property string hubLabel: "HEADING"
+    property string hubLabel: "航向"
     property string hubSub: ""
     property color hubSubColor: CommonOptions.colorBlaze
     // [{ bearing: 112, tone: "#0C6C9E" }, ...]
@@ -167,7 +167,15 @@ Item {
 
             // === 5. 目标点: 只作发现, 不作点击 (见文件头 ①) ===
             const rPip = rOut - 30 * dial.k
-            const pipR = (dial.width >= 180 ? styles.dialPipLg / 2 : styles.dialPip / 2) * dial.k
+            // 2026-10-23 真机: 14 个标注在盘上"一个点都看不见". 原式
+            //   (styles.dialPip / 2) * dial.k
+            // 把这个点**缩了两次**: dialPip/dialPipLg 是绝对尺寸 (Styles.qml:116
+            // 的注释自己写着"小盘 6px"), 不是 200×200 归一坐标里的半径, 而 k 已经
+            // 是把归一坐标换算到实际像素的那一层. 多乘一个 k → 130dp 盘上直径只有
+            // 3.9dp ≈ 11 原始像素, 再摊上 dangerColor(0/-1) 的三级墨 #8B978F 压在
+            // 浅纸底上, 等于看不见. 大盘 (200dp, k=1) 恰好没被缩, 所以这个 bug 只在
+            // ①营地与地图叠层的迷你/小盘上出现 —— 也就是真机那两张截图.
+            const pipR = (dial.width >= 180 ? styles.dialPipLg : styles.dialPip) / 2
             for (let t = 0; t < dial.targets.length; ++t) {
                 const tg = dial.targets[t]
                 const p = pt(tg.bearing, rPip)
@@ -240,9 +248,7 @@ Item {
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: dial.hubLabel
-                font.family: styles.monoFont
                 font.pixelSize: (dial.width >= 180 ? 7.5 : (dial.onInk ? 7 : 5.5))
-                font.letterSpacing: (dial.width >= 180 ? 1.5 : 0.8)
                 color: dial.onInk ? CommonOptions.colorOnInkDim : CommonOptions.colorTextDim
             }
             Text {

@@ -38,7 +38,6 @@ public:
     int getBatteryLevel() override;
 
     void keepScreenOn(bool on) override;
-    void setBrightness(double value) override;
 
     void acquireWakeLock() override;
     void releaseWakeLock() override;
@@ -56,6 +55,14 @@ public:
     // 2026-10-20: ⑤求助页两个读数动作 (见 PlatformInterface 注释)
     bool copyToClipboard(const QString& text) override;
     bool openSmsDraft(const QString& number, const QString& body) override;
+
+    // 2026-10-28 (#148): 轨迹导入的本机文件搜索 (见 PlatformInterface 注释)
+    QVariantList searchTrackFiles(const QString& keyword) override;
+    bool canReadAllFiles() override;
+    void openAllFilesAccessSettings() override;
+
+    // 2026-10-29: Activity.moveTaskToBack(true) (见 PlatformInterface 注释)
+    bool moveTaskToBack() override;
 
 private:
     bool m_flashlightOn = false;

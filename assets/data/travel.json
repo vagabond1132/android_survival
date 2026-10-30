@@ -30,7 +30,9 @@
       "supply": "新都桥/稻城/色达有加油站+住宿",
       "fuelCostCNY": 1800,
       "description": "成都-雅安-康定-新都桥-稻城亚丁-理塘-色达-丹巴-四姑娘山-成都 8 日经典环线。",
-      "tag": "川西/大环线/高原"
+      "tag": "川西/大环线/高原",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_chuanxi_318",
@@ -59,7 +61,9 @@
       "supply": "康定/巴塘/左贡/然乌/波密/林芝/拉萨",
       "fuelCostCNY": 1600,
       "description": "成都-雅安-康定-理塘-巴塘-芒康-左贡-然乌-波密-林芝-拉萨,人生必驾 318。",
-      "tag": "川藏/318/国道路线"
+      "tag": "川藏/318/国道路线",
+      "coordPrecisionM": 560,
+      "coordSource": "editorial_estimate"
     },
     {
       "id": "travel_chuanzang_north",
@@ -88,7 +92,9 @@
       "supply": "色达/德格/江达/那曲",
       "fuelCostCNY": 1750,
       "description": "川藏北线 317,穿越色达佛学院+德格印经院+雀儿山垭口。",
-      "tag": "川藏/317/深度"
+      "tag": "川藏/317/深度",
+      "coordPrecisionM": 560,
+      "coordSource": "editorial_estimate"
     },
     {
       "id": "travel_gannan_loop",
@@ -118,7 +124,9 @@
       "supply": "合作/碌曲/迭部/郎木寺",
       "fuelCostCNY": 1000,
       "description": "兰州-临夏-夏河-合作-碌曲-扎尕那-郎木寺-玛曲-夏河-兰州 5 日。",
-      "tag": "甘南/大环线/草原"
+      "tag": "甘南/大环线/草原",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_qinghai_tibet",
@@ -149,7 +157,9 @@
       "supply": "青海湖/格尔木/五道梁/那曲",
       "fuelCostCNY": 1400,
       "description": "西宁-青海湖-茶卡-格尔木-可可西里-唐古拉山-那曲-拉萨 6 日。",
-      "tag": "青藏/109/天路"
+      "tag": "青藏/109/天路",
+      "coordPrecisionM": 560,
+      "coordSource": "editorial_estimate"
     },
     {
       "id": "travel_north_xinjiang",
@@ -179,7 +189,9 @@
       "supply": "布尔津/贾登峪/禾木/富蕴",
       "fuelCostCNY": 1500,
       "description": "乌鲁木齐-富蕴-可可托海-布尔津-喀纳斯-禾木-五彩滩-魔鬼城-乌鲁木齐 8 日。",
-      "tag": "新疆/北疆/喀纳斯"
+      "tag": "新疆/北疆/喀纳斯",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_south_xinjiang",
@@ -209,7 +221,9 @@
       "supply": "库车/阿克苏/喀什/塔县/和田",
       "fuelCostCNY": 2200,
       "description": "乌鲁木齐-库尔勒-库车-阿克苏-喀什-塔县-和田-民丰-轮台-乌鲁木齐 12 日。",
-      "tag": "新疆/南疆/丝路"
+      "tag": "新疆/南疆/丝路",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_dukou_218",
@@ -238,7 +252,9 @@
       "supply": "乔尔玛/那拉提/巴音布鲁克/特克斯",
       "fuelCostCNY": 700,
       "description": "独山子-乔尔玛-那拉提-巴音布鲁克-特克斯-伊宁,2 条最美公路 4 日。",
-      "tag": "新疆/独库/伊昭"
+      "tag": "新疆/独库/伊昭",
+      "coordPrecisionM": 56,
+      "coordSource": "editorial_estimate"
     },
     {
       "id": "travel_gansu_silk",
@@ -268,7 +284,9 @@
       "supply": "青海湖/德令哈/大柴旦/敦煌/嘉峪关/张掖",
       "fuelCostCNY": 1800,
       "description": "兰州-青海湖-茶卡-德令哈-大柴旦-敦煌-嘉峪关-张掖-兰州 10 日经典大环线。",
-      "tag": "甘青/大环线/丝路"
+      "tag": "甘青/大环线/丝路",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_yading_turn",
@@ -297,7 +315,9 @@
       "supply": "康定/新都桥/稻城",
       "fuelCostCNY": 1100,
       "description": "成都-雅安-康定-新都桥-稻城亚丁 5 日蓝色星球。",
-      "tag": "川西/亚丁/新都桥"
+      "tag": "川西/亚丁/新都桥",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_nuoerda",
@@ -326,7 +346,9 @@
       "supply": "松潘/若尔盖/唐克",
       "fuelCostCNY": 900,
       "description": "成都-松潘-诺尔盖-花湖-黄河九曲-若尔盖-成都 4 日。",
-      "tag": "川西/草原/诺尔盖"
+      "tag": "川西/草原/诺尔盖",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_danba_loop",
@@ -356,7 +378,9 @@
       "supply": "丹巴/党岭",
       "fuelCostCNY": 700,
       "description": "成都-丹巴-党岭-莫斯卡-丹巴-成都 3 日秘境环线。",
-      "tag": "川西/丹巴/党岭"
+      "tag": "川西/丹巴/党岭",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_siguniang",
@@ -386,7 +410,9 @@
       "supply": "日隆/四姑娘山镇",
       "fuelCostCNY": 500,
       "description": "成都-卧龙-四姑娘山-双桥沟-长坪沟-成都 3 日。",
-      "tag": "川西/四姑娘山"
+      "tag": "川西/四姑娘山",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_litang_loop",
@@ -415,7 +441,9 @@
       "supply": "新都桥/理塘/稻城",
       "fuelCostCNY": 800,
       "description": "成都-康定-新都桥-理塘-稻城-亚丁-理塘-新都桥-成都 4 日。",
-      "tag": "川西/理塘/亚丁"
+      "tag": "川西/理塘/亚丁",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_ali_big",
@@ -445,7 +473,9 @@
       "supply": "当雄/班戈/尼玛/改则/狮泉河",
       "fuelCostCNY": 1200,
       "description": "拉萨-纳木错-班戈-尼玛-改则-狮泉河,阿里大北线 8 日。",
-      "tag": "西藏/阿里/大北线"
+      "tag": "西藏/阿里/大北线",
+      "coordPrecisionM": 5600,
+      "coordSource": "editorial_estimate"
     },
     {
       "id": "travel_motuo",
@@ -475,7 +505,9 @@
       "supply": "林芝/波密/墨脱",
       "fuelCostCNY": 1100,
       "description": "拉萨-林芝-波密-墨脱-波密-林芝-拉萨 6 日。",
-      "tag": "西藏/墨脱/秘境"
+      "tag": "西藏/墨脱/秘境",
+      "coordPrecisionM": 560,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_himalaya",
@@ -504,7 +536,9 @@
       "supply": "曲水/浪卡子/江孜/日喀则/定日",
       "fuelCostCNY": 600,
       "description": "拉萨-羊湖-卡若拉-日喀则-珠峰大本营-拉萨 4 日。",
-      "tag": "西藏/珠峰/喜马拉雅"
+      "tag": "西藏/珠峰/喜马拉雅",
+      "coordPrecisionM": 560,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_yili",
@@ -534,7 +568,9 @@
       "supply": "精河/赛里木湖/新源/那拉提/特克斯",
       "fuelCostCNY": 1400,
       "description": "乌鲁木齐-赛里木湖-霍尔果斯-伊宁-特克斯-那拉提-巴音布鲁克-乌鲁木齐 7 日。",
-      "tag": "新疆/伊犁/河谷"
+      "tag": "新疆/伊犁/河谷",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_zhunbei",
@@ -564,7 +600,9 @@
       "supply": "富蕴/可可托海/布尔津/喀纳斯",
       "fuelCostCNY": 1200,
       "description": "乌鲁木齐-富蕴-可可托海-布尔津-喀纳斯-禾木-五彩湾-乌鲁木齐 6 日。",
-      "tag": "新疆/准噶尔/喀纳斯"
+      "tag": "新疆/准噶尔/喀纳斯",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_changdu",
@@ -593,7 +631,9 @@
       "supply": "类乌齐/丁青",
       "fuelCostCNY": 600,
       "description": "昌都-类乌齐-丁青-孜珠寺-昌都 3 日。",
-      "tag": "西藏/昌都/小众"
+      "tag": "西藏/昌都/小众",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_gyantse",
@@ -622,7 +662,9 @@
       "supply": "浪卡子/江孜/日喀则",
       "fuelCostCNY": 500,
       "description": "拉萨-羊湖-卡若拉-江孜-日喀则-拉孜 3 日。",
-      "tag": "西藏/中线/小众"
+      "tag": "西藏/中线/小众",
+      "coordPrecisionM": 560,
+      "coordSource": "editorial_estimate"
     },
     {
       "id": "travel_silk_classic",
@@ -653,7 +695,9 @@
       "supply": "天水/兰州/武威/张掖/嘉峪关/敦煌",
       "fuelCostCNY": 1300,
       "description": "西安-天水-兰州-武威-张掖-嘉峪关-敦煌 7 日经典丝路。",
-      "tag": "丝路/经典/世界遗产"
+      "tag": "丝路/经典/世界遗产",
+      "coordPrecisionM": 6,
+      "coordSource": "editorial_estimate"
     },
     {
       "id": "travel_zhangye_danxia",
@@ -684,7 +728,9 @@
       "supply": "张掖/阿拉善右旗",
       "fuelCostCNY": 600,
       "description": "张掖-巴丹吉林沙漠-居延海-张掖 4 日。",
-      "tag": "甘肃/丹霞/沙漠"
+      "tag": "甘肃/丹霞/沙漠",
+      "coordPrecisionM": 560,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_shaanxi_qinling",
@@ -715,7 +761,9 @@
       "supply": "广货街/朱雀",
       "fuelCostCNY": 300,
       "description": "西安-秦岭分水岭-朱雀-汉中 2 日短线。",
-      "tag": "陕西/秦岭/短线"
+      "tag": "陕西/秦岭/短线",
+      "coordPrecisionM": 56,
+      "coordSource": "editorial_estimate"
     },
     {
       "id": "travel_xifeng",
@@ -746,7 +794,9 @@
       "supply": "合水/正宁",
       "fuelCostCNY": 400,
       "description": "西峰-合水-子午岭-秦直道-西峰 2 日。",
-      "tag": "甘肃/庆阳/子午岭"
+      "tag": "甘肃/庆阳/子午岭",
+      "coordPrecisionM": 560,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_yunnan_loop",
@@ -777,7 +827,9 @@
       "supply": "大理/丽江/香格里拉",
       "fuelCostCNY": 1100,
       "description": "昆明-大理-丽江-香格里拉-泸沽湖-丽江-昆明 8 日。",
-      "tag": "云南/大环线/经典"
+      "tag": "云南/大环线/经典",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_dali_baoshan",
@@ -808,7 +860,9 @@
       "supply": "保山/腾冲/瑞丽",
       "fuelCostCNY": 500,
       "description": "大理-保山-腾冲-和顺-瑞丽 4 日。",
-      "tag": "云南/腾冲/边境"
+      "tag": "云南/腾冲/边境",
+      "coordPrecisionM": 6,
+      "coordSource": "editorial_estimate"
     },
     {
       "id": "travel_diqing_grand",
@@ -839,7 +893,9 @@
       "supply": "香格里拉/德钦/维西",
       "fuelCostCNY": 800,
       "description": "丽江-香格里拉-梅里-明永冰川-维西-丽江 5 日。",
-      "tag": "云南/迪庆/梅里"
+      "tag": "云南/迪庆/梅里",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_xishuangbanna",
@@ -870,7 +926,9 @@
       "supply": "景洪/勐海/勐腊",
       "fuelCostCNY": 400,
       "description": "景洪-野象谷-勐海-勐腊-望天树-景洪 3 日。",
-      "tag": "云南/西双版纳/热带"
+      "tag": "云南/西双版纳/热带",
+      "coordPrecisionM": 11,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_guizhou_loop",
@@ -901,7 +959,9 @@
       "supply": "黄果树/荔波/西江",
       "fuelCostCNY": 700,
       "description": "贵阳-黄果树-荔波-西江千户-贵阳 5 日。",
-      "tag": "贵州/大环线/经典"
+      "tag": "贵州/大环线/经典",
+      "coordPrecisionM": 56,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_qianxinan",
@@ -932,7 +992,9 @@
       "supply": "兴义/万峰林",
       "fuelCostCNY": 500,
       "description": "贵阳-兴义-万峰林-马岭河-二十四道拐-贵阳 3 日。",
-      "tag": "贵州/万峰林"
+      "tag": "贵州/万峰林",
+      "coordPrecisionM": 56,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_hz_putuoshan",
@@ -964,7 +1026,9 @@
       "supply": "舟山/普陀山",
       "fuelCostCNY": 400,
       "description": "宁波-舟山-普陀山-朱家尖-宁波 2 日。",
-      "tag": "浙江/普陀山/海岛"
+      "tag": "浙江/普陀山/海岛",
+      "coordPrecisionM": 30,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_jiangxi_lushan",
@@ -999,7 +1063,9 @@
       "supply": "庐山/景德镇/鄱阳湖",
       "fuelCostCNY": 500,
       "description": "南昌-庐山-景德镇-鄱阳湖-南昌 2 日。",
-      "tag": "江西/庐山/鄱阳湖"
+      "tag": "江西/庐山/鄱阳湖",
+      "coordPrecisionM": 56,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_heilongjiang_north",
@@ -1032,7 +1098,9 @@
       "supply": "加格达奇/塔河/漠河",
       "fuelCostCNY": 1300,
       "description": "哈尔滨-加格达奇-塔河-漠河-北极村 5 日中国最北。",
-      "tag": "黑龙江/漠河/极北"
+      "tag": "黑龙江/漠河/极北",
+      "coordPrecisionM": 560,
+      "coordSource": "editorial_estimate"
     },
     {
       "id": "travel_liaoning_dandong",
@@ -1065,7 +1133,9 @@
       "supply": "本溪/桓仁/丹东",
       "fuelCostCNY": 700,
       "description": "沈阳-本溪-水洞-丹东-鸭绿江-桓仁-沈阳 3 日。",
-      "tag": "辽宁/丹东/边境"
+      "tag": "辽宁/丹东/边境",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_ejina",
@@ -1093,7 +1163,9 @@
       "supply": "额济纳旗",
       "fuelCostCNY": 1200,
       "description": "呼和浩特-额济纳-胡杨-怪树林-居延海-黑城-呼和浩特 4 日。",
-      "tag": "内蒙古/额济纳/胡杨"
+      "tag": "内蒙古/额济纳/胡杨",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_alashan",
@@ -1123,7 +1195,9 @@
       "supply": "左旗/右旗/额济纳",
       "fuelCostCNY": 1500,
       "description": "银川-腾格里-巴丹吉林-额济纳-胡杨-银川 7 日。",
-      "tag": "内蒙古/阿拉善/沙漠"
+      "tag": "内蒙古/阿拉善/沙漠",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_zhalan",
@@ -1154,7 +1228,9 @@
       "supply": "扎兰屯/柴河/阿尔山",
       "fuelCostCNY": 1600,
       "description": "呼和浩特-扎兰屯-柴河-阿尔山-呼和浩特 5 日。",
-      "tag": "内蒙古/扎兰屯/阿尔山"
+      "tag": "内蒙古/扎兰屯/阿尔山",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_aksu_kucha",
@@ -1185,7 +1261,9 @@
       "supply": "库车/阿克苏",
       "fuelCostCNY": 500,
       "description": "库车-天山大峡谷-阿克苏-塔克拉玛干 2 日。",
-      "tag": "新疆/库车/阿克苏"
+      "tag": "新疆/库车/阿克苏",
+      "coordPrecisionM": 6,
+      "coordSource": "editorial_estimate"
     },
     {
       "id": "travel_tarbagatai",
@@ -1216,7 +1294,9 @@
       "supply": "塔城/裕民",
       "fuelCostCNY": 1300,
       "description": "乌鲁木齐-塔城-裕民-小白杨-乌鲁木齐 4 日。",
-      "tag": "新疆/塔城/小白杨"
+      "tag": "新疆/塔城/小白杨",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_beituan",
@@ -1248,7 +1328,9 @@
       "supply": "石河子/北屯/福海",
       "fuelCostCNY": 1000,
       "description": "乌鲁木齐-石河子-北屯-福海-乌鲁木齐 3 日。",
-      "tag": "新疆/兵团/北屯"
+      "tag": "新疆/兵团/北屯",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_hainan_loop",
@@ -1279,7 +1361,9 @@
       "supply": "海口/三亚/万宁/文昌",
       "fuelCostCNY": 600,
       "description": "海口-文昌-琼海-万宁-陵水-三亚-乐东-东方-儋州-海口 5 日环岛。",
-      "tag": "海南/环岛/热带"
+      "tag": "海南/环岛/热带",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_shantou_raoping",
@@ -1316,7 +1400,9 @@
       "supply": "南澳/潮州/揭阳",
       "fuelCostCNY": 400,
       "description": "汕头-南澳岛-潮州-揭阳 3 日。",
-      "tag": "广东/粤东/海岛"
+      "tag": "广东/粤东/海岛",
+      "coordPrecisionM": 25,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_jiangnan_grand",
@@ -1353,7 +1439,9 @@
       "supply": "苏州/无锡/南京/扬州",
       "fuelCostCNY": 500,
       "description": "苏州-无锡-常州-镇江-扬州-南京 4 日江南。",
-      "tag": "江苏/江南/水乡"
+      "tag": "江苏/江南/水乡",
+      "coordPrecisionM": 6,
+      "coordSource": "editorial_estimate"
     },
     {
       "id": "travel_hegang",
@@ -1388,7 +1476,9 @@
       "supply": "鹤岗/萝北",
       "fuelCostCNY": 900,
       "description": "哈尔滨-鹤岗-萝北-名山口-哈尔滨 3 日中俄边境。",
-      "tag": "黑龙江/中俄边境"
+      "tag": "黑龙江/中俄边境",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_tahe_xx",
@@ -1421,7 +1511,9 @@
       "supply": "塔河/漠河",
       "fuelCostCNY": 1500,
       "description": "哈尔滨-塔河-漠河-北极村-哈尔滨 5 日。",
-      "tag": "黑龙江/大兴安岭/极北"
+      "tag": "黑龙江/大兴安岭/极北",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_bj_2",
@@ -1453,7 +1545,9 @@
       "supply": "密云/古北水镇",
       "fuelCostCNY": 300,
       "description": "北京-古北水镇-雾灵山-北京 2 日。",
-      "tag": "北京/古镇/雾灵山"
+      "tag": "北京/古镇/雾灵山",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_sh_1",
@@ -1485,7 +1579,9 @@
       "supply": "苏州/杭州/千岛湖",
       "fuelCostCNY": 600,
       "description": "上海-苏州-杭州-千岛湖-上海 4 日。",
-      "tag": "上海/江南/千岛湖"
+      "tag": "上海/江南/千岛湖",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_gz_1",
@@ -1518,7 +1614,9 @@
       "supply": "清远/连州/阳山",
       "fuelCostCNY": 500,
       "description": "广州-清远-连州-阳山-广东第一峰-广州 3 日。",
-      "tag": "广东/粤北/高峰"
+      "tag": "广东/粤北/高峰",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_cd_2",
@@ -1551,7 +1649,9 @@
       "supply": "乐山/峨眉/雅安",
       "fuelCostCNY": 500,
       "description": "成都-乐山-峨眉-雅安-成都 3 日。",
-      "tag": "四川/乐山/峨眉"
+      "tag": "四川/乐山/峨眉",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_fz_1",
@@ -1586,7 +1686,9 @@
       "supply": "福州/泉州/漳州/厦门",
       "fuelCostCNY": 400,
       "description": "福州-泉州-漳州-厦门 3 日闽南。",
-      "tag": "福建/闽南/文化"
+      "tag": "福建/闽南/文化",
+      "coordPrecisionM": 6,
+      "coordSource": "editorial_estimate"
     },
     {
       "id": "travel_hz_2",
@@ -1618,7 +1720,9 @@
       "supply": "千岛湖/黄山/宏村",
       "fuelCostCNY": 700,
       "description": "杭州-千岛湖-黄山-宏村-杭州 4 日。",
-      "tag": "浙江/安徽/山水"
+      "tag": "浙江/安徽/山水",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_cs_1",
@@ -1651,7 +1755,9 @@
       "supply": "张家界/凤凰/吉首",
       "fuelCostCNY": 800,
       "description": "长沙-张家界-凤凰-矮寨-长沙 4 日。",
-      "tag": "湖南/张家界/凤凰"
+      "tag": "湖南/张家界/凤凰",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_nc_1",
@@ -1683,7 +1789,9 @@
       "supply": "庐山/景德镇/婺源",
       "fuelCostCNY": 600,
       "description": "南昌-庐山-景德镇-婺源-南昌 3 日。",
-      "tag": "江西/庐山/婺源"
+      "tag": "江西/庐山/婺源",
+      "coordPrecisionM": 56,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_xa_1",
@@ -1718,7 +1826,9 @@
       "supply": "华山/潼关",
       "fuelCostCNY": 400,
       "description": "西安-华山-潼关-风陵渡-西安 2 日。",
-      "tag": "陕西/华山/黄河"
+      "tag": "陕西/华山/黄河",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_nj_1",
@@ -1753,7 +1863,9 @@
       "supply": "南京/扬州/镇江/南通",
       "fuelCostCNY": 500,
       "description": "南京-扬州-镇江-南通-南京 3 日。",
-      "tag": "江苏/江北/水乡"
+      "tag": "江苏/江北/水乡",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_wh_1",
@@ -1788,7 +1900,9 @@
       "supply": "咸宁/赤壁/九宫山",
       "fuelCostCNY": 400,
       "description": "武汉-咸宁-赤壁-九宫山-武汉 2 日。",
-      "tag": "湖北/九宫山/赤壁"
+      "tag": "湖北/九宫山/赤壁",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_zz_1",
@@ -1819,7 +1933,9 @@
       "supply": "洛阳/三门峡/运城",
       "fuelCostCNY": 400,
       "description": "郑州-洛阳-三门峡-运城-郑州 2 日。",
-      "tag": "河南/山西/黄河"
+      "tag": "河南/山西/黄河",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_ty_1",
@@ -1850,7 +1966,9 @@
       "supply": "太原/平遥/介休/临汾",
       "fuelCostCNY": 500,
       "description": "太原-平遥-介休-临汾-太原 3 日。",
-      "tag": "山西/平遥/黄河"
+      "tag": "山西/平遥/黄河",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_hn_2",
@@ -1881,7 +1999,9 @@
       "supply": "陵水/万宁/琼海",
       "fuelCostCNY": 300,
       "description": "三亚-陵水-万宁-琼海-三亚 2 日。",
-      "tag": "海南/海岸/热带"
+      "tag": "海南/海岸/热带",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_gy_1",
@@ -1913,7 +2033,9 @@
       "supply": "遵义/赤水",
       "fuelCostCNY": 600,
       "description": "贵阳-遵义-茅台-赤水-贵阳 3 日。",
-      "tag": "贵州/红色/赤水"
+      "tag": "贵州/红色/赤水",
+      "coordPrecisionM": 56,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_xj_xiyu",
@@ -1944,7 +2066,9 @@
       "supply": "赛里木湖/霍尔果斯",
       "fuelCostCNY": 800,
       "description": "乌鲁木齐-赛里木湖-果子沟-霍尔果斯-伊宁-乌鲁木齐 4 日。",
-      "tag": "新疆/赛里木/伊犁"
+      "tag": "新疆/赛里木/伊犁",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_xj_tianshan",
@@ -1976,7 +2100,9 @@
       "supply": "阜康/天池",
       "fuelCostCNY": 300,
       "description": "乌鲁木齐-天山大峡谷-天池-博格达-乌鲁木齐 2 日。",
-      "tag": "新疆/天山大峡谷/天山"
+      "tag": "新疆/天山大峡谷/天山",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_yn_lvliang",
@@ -2007,7 +2133,9 @@
       "supply": "绿春/红河",
       "fuelCostCNY": 600,
       "description": "昆明-绿春-黄连山-红河-昆明 3 日。",
-      "tag": "云南/绿春/红河"
+      "tag": "云南/绿春/红河",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_gz_qiannan",
@@ -2038,7 +2166,9 @@
       "supply": "荔波/茂兰",
       "fuelCostCNY": 500,
       "description": "贵阳-荔波-茂兰-小七孔-贵阳 3 日。",
-      "tag": "贵州/荔波/世遗"
+      "tag": "贵州/荔波/世遗",
+      "coordPrecisionM": 56,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_gx_longsheng",
@@ -2071,7 +2201,9 @@
       "supply": "龙脊/平安/大寨",
       "fuelCostCNY": 300,
       "description": "桂林-龙脊-平安-金坑-大寨-桂林 2 日。",
-      "tag": "广西/龙脊/梯田"
+      "tag": "广西/龙脊/梯田",
+      "coordPrecisionM": 200,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_nm_hulun",
@@ -2101,7 +2233,9 @@
       "supply": "海拉尔/额尔古纳/室韦",
       "fuelCostCNY": 800,
       "description": "海拉尔-额尔古纳-室韦-中俄边境-海拉尔 5 日。",
-      "tag": "内蒙古/呼伦贝尔/草原"
+      "tag": "内蒙古/呼伦贝尔/草原",
+      "coordPrecisionM": 56,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_yn_jingdong",
@@ -2136,7 +2270,9 @@
       "supply": "罗平/普者黑/坝美/建水",
       "fuelCostCNY": 700,
       "description": "昆明-罗平-普者黑-坝美-建水-昆明 4 日。",
-      "tag": "云南/滇东/世遗"
+      "tag": "云南/滇东/世遗",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_gx_debao_dx",
@@ -2168,7 +2304,9 @@
       "supply": "崇左/硕龙/德天",
       "fuelCostCNY": 500,
       "description": "南宁-德天瀑布-明仕田园-南宁 2 日。",
-      "tag": "广西/中越/瀑布"
+      "tag": "广西/中越/瀑布",
+      "coordPrecisionM": 56,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_tj_xx",
@@ -2201,7 +2339,9 @@
       "supply": "蓟州",
       "fuelCostCNY": 200,
       "description": "天津-盘山-黄崖关-独乐寺 1 日短线。",
-      "tag": "天津/盘山/短线"
+      "tag": "天津/盘山/短线",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_sh_xx",
@@ -2232,7 +2372,9 @@
       "supply": "崇明/东平",
       "fuelCostCNY": 200,
       "description": "上海-崇明岛-东平国家森林公园 2 日。",
-      "tag": "上海/崇明/海岛"
+      "tag": "上海/崇明/海岛",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_jl_changbaishan_2",
@@ -2266,7 +2408,9 @@
       "supply": "松江河/长白",
       "fuelCostCNY": 900,
       "description": "长春-松江河-长白山西坡-南坡-中朝边境-长春 3 日。",
-      "tag": "吉林/长白山/世遗"
+      "tag": "吉林/长白山/世遗",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_hlj_wudalianchi",
@@ -2298,7 +2442,9 @@
       "supply": "五大连池/黑河",
       "fuelCostCNY": 700,
       "description": "哈尔滨-五大连池-黑河-瑷珲-哈尔滨 3 日。",
-      "tag": "黑龙江/五大连池/中俄边境"
+      "tag": "黑龙江/五大连池/中俄边境",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_ln_benxi_dandong_2",
@@ -2331,7 +2477,9 @@
       "supply": "本溪/丹东",
       "fuelCostCNY": 500,
       "description": "沈阳-本溪-丹东-鸭绿江-虎山-沈阳 3 日。",
-      "tag": "辽宁/丹东/边境"
+      "tag": "辽宁/丹东/边境",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_jl_jan_xx",
@@ -2363,7 +2511,9 @@
       "supply": "集安/五女峰",
       "fuelCostCNY": 400,
       "description": "通化-集安-五女峰-云峰湖-通化 2 日。",
-      "tag": "吉林/集安/边境"
+      "tag": "吉林/集安/边境",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_sd_taishan_xx",
@@ -2396,7 +2546,9 @@
       "supply": "泰安/曲阜/邹城/台儿庄",
       "fuelCostCNY": 500,
       "description": "济南-泰山-曲阜-邹城-台儿庄-济南 3 日。",
-      "tag": "山东/泰山/文化"
+      "tag": "山东/泰山/文化",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_sh_lg_xx",
@@ -2430,7 +2582,9 @@
       "supply": "临港/滴水湖",
       "fuelCostCNY": 150,
       "description": "上海-临港-滴水湖-东海 1 日短线。",
-      "tag": "上海/海堤/短线"
+      "tag": "上海/海堤/短线",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_fj_xiamen_xx",
@@ -2467,7 +2621,9 @@
       "supply": "厦门/鼓浪屿/集美",
       "fuelCostCNY": 100,
       "description": "厦门-鼓浪屿-南普陀-集美 1 日短线。",
-      "tag": "福建/厦门/短线"
+      "tag": "福建/厦门/短线",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_gz_sz_gz_2",
@@ -2501,7 +2657,9 @@
       "supply": "广州/深圳/惠州/双月湾",
       "fuelCostCNY": 600,
       "description": "广州-深圳-惠州-双月湾-广州 3 日。",
-      "tag": "广东/粤港澳/海岸"
+      "tag": "广东/粤港澳/海岸",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_hn_changzhu",
@@ -2532,7 +2690,9 @@
       "supply": "长沙/张家界/凤凰/怀化",
       "fuelCostCNY": 800,
       "description": "长沙-张家界-湘西-怀化-长沙 4 日。",
-      "tag": "湖南/全景/世遗"
+      "tag": "湖南/全景/世遗",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_hubei_shennongjia_2",
@@ -2564,7 +2724,9 @@
       "supply": "神农架/巴东/恩施",
       "fuelCostCNY": 900,
       "description": "武汉-神农架-巴东-恩施-武汉 4 日。",
-      "tag": "湖北/神农架/世遗"
+      "tag": "湖北/神农架/世遗",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_sx_yuncheng_xx",
@@ -2595,7 +2757,9 @@
       "supply": "运城/永济",
       "fuelCostCNY": 300,
       "description": "运城-永济-风陵渡-黄河-运城 2 日。",
-      "tag": "山西/运城/黄河"
+      "tag": "山西/运城/黄河",
+      "coordPrecisionM": 20,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_nm_keerqin_xx",
@@ -2626,7 +2790,9 @@
       "supply": "科尔沁左翼后旗",
       "fuelCostCNY": 400,
       "description": "通辽-科尔沁-大青沟-塔敏查干-通辽 2 日。",
-      "tag": "内蒙古/科尔沁/沙漠"
+      "tag": "内蒙古/科尔沁/沙漠",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_qh_qinghaihu_2",
@@ -2658,7 +2824,9 @@
       "supply": "青海湖/茶卡/德令哈",
       "fuelCostCNY": 600,
       "description": "西宁-青海湖-茶卡-德令哈-可鲁克湖-西宁 3 日。",
-      "tag": "青海/青海湖/茶卡"
+      "tag": "青海/青海湖/茶卡",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_yn_yuanyang_2",
@@ -2689,7 +2857,9 @@
       "supply": "元阳/红河/建水/蒙自",
       "fuelCostCNY": 500,
       "description": "昆明-元阳-红河-建水-蒙自-昆明 3 日。",
-      "tag": "云南/元阳/世遗"
+      "tag": "云南/元阳/世遗",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_gd_kaiping_xx",
@@ -2723,7 +2893,9 @@
       "supply": "开平/赤坎/自力村",
       "fuelCostCNY": 300,
       "description": "广州-开平碉楼-赤坎-自力村-广州 2 日。",
-      "tag": "广东/开平/世遗"
+      "tag": "广东/开平/世遗",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_zj_xx_xx",
@@ -2756,7 +2928,9 @@
       "supply": "新昌/天台山/仙居",
       "fuelCostCNY": 500,
       "description": "杭州-新昌-天台山-神仙居-杭州 3 日。",
-      "tag": "浙江/新昌/仙居"
+      "tag": "浙江/新昌/仙居",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_hubei_wujun_2",
@@ -2793,7 +2967,9 @@
       "supply": "九宫山/通山",
       "fuelCostCNY": 300,
       "description": "武汉-九宫山-隐水洞-通山-武汉 2 日。",
-      "tag": "湖北/九宫山/溶洞"
+      "tag": "湖北/九宫山/溶洞",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_sx_yan_an_xx",
@@ -2824,7 +3000,9 @@
       "supply": "延安/壶口/黄帝陵",
       "fuelCostCNY": 500,
       "description": "西安-延安-壶口-南泥湾-黄帝陵-西安 3 日红色之旅。",
-      "tag": "陕西/红色/黄河"
+      "tag": "陕西/红色/黄河",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_xj_yanqi_xx",
@@ -2855,7 +3033,9 @@
       "supply": "库尔勒/巴音布鲁克",
       "fuelCostCNY": 800,
       "description": "乌鲁木齐-库尔勒-博斯腾-巴音布鲁克-乌鲁木齐 3 日。",
-      "tag": "新疆/巴音布鲁克/草原"
+      "tag": "新疆/巴音布鲁克/草原",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_hn_taihang_xx",
@@ -2886,7 +3066,9 @@
       "supply": "林州/红旗渠",
       "fuelCostCNY": 500,
       "description": "郑州-林州-红旗渠-太行平湖-郑州 3 日。",
-      "tag": "河南/太行/红色"
+      "tag": "河南/太行/红色",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_nm_zhang_xx",
@@ -2916,7 +3098,9 @@
       "supply": "张家口/崇礼/沽源",
       "fuelCostCNY": 500,
       "description": "张家口-崇礼-沽源-闪电湖-张家口 3 日。",
-      "tag": "河北/草原/崇礼"
+      "tag": "河北/草原/崇礼",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_yn_baoshan_xx",
@@ -2946,7 +3130,9 @@
       "supply": "腾冲/和顺",
       "fuelCostCNY": 200,
       "description": "腾冲-和顺-银杏村-热海 2 日。",
-      "tag": "云南/腾冲/银杏"
+      "tag": "云南/腾冲/银杏",
+      "coordPrecisionM": 56,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_gd_huizhou_xx",
@@ -2980,7 +3166,9 @@
       "supply": "惠州/南昆山/巽寮湾",
       "fuelCostCNY": 500,
       "description": "广州-惠州-南昆山-巽寮湾-双月湾-广州 3 日。",
-      "tag": "广东/惠州/海岸"
+      "tag": "广东/惠州/海岸",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_fj_putuoshan_xx",
@@ -3013,7 +3201,9 @@
       "supply": "宁波/普陀山/朱家尖",
       "fuelCostCNY": 300,
       "description": "宁波-普陀山-朱家尖-桃花岛 2 日海岛。",
-      "tag": "浙江/普陀山/海岛"
+      "tag": "浙江/普陀山/海岛",
+      "coordPrecisionM": 30,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_jl_yanbian_xx",
@@ -3044,7 +3234,9 @@
       "supply": "延吉/珲春/图们",
       "fuelCostCNY": 800,
       "description": "长春-延边-珲春-防川-图们-长春 3 日中朝边境。",
-      "tag": "吉林/延边/边境"
+      "tag": "吉林/延边/边境",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_xj_hami_xx",
@@ -3076,7 +3268,9 @@
       "supply": "哈密/巴里坤/伊吾",
       "fuelCostCNY": 1000,
       "description": "乌鲁木齐-哈密-巴里坤-伊吾-乌鲁木齐 3 日东天山。",
-      "tag": "新疆/哈密/东天山"
+      "tag": "新疆/哈密/东天山",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_sd_yimeng_xx",
@@ -3109,7 +3303,9 @@
       "supply": "沂水",
       "fuelCostCNY": 400,
       "description": "济南-沂水-地下大峡谷-萤火虫水洞-济南 2 日。",
-      "tag": "山东/溶洞/地下"
+      "tag": "山东/溶洞/地下",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_gx_beihai_xx",
@@ -3146,7 +3342,9 @@
       "supply": "北海/涠洲岛",
       "fuelCostCNY": 600,
       "description": "南宁-北海-银滩-涠洲岛-斜阳岛-南宁 3 日海岛。",
-      "tag": "广西/北海/海岛"
+      "tag": "广西/北海/海岛",
+      "coordPrecisionM": 56,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_yn_yulong_xx",
@@ -3178,7 +3376,9 @@
       "supply": "丽江/玉龙雪山",
       "fuelCostCNY": 200,
       "description": "丽江-玉龙雪山-蓝月谷-玉湖村 1 日。",
-      "tag": "云南/丽江/雪山"
+      "tag": "云南/丽江/雪山",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     },
     {
       "id": "travel_nm_daqing",
@@ -3209,7 +3409,9 @@
       "supply": "新城区/土左旗",
       "fuelCostCNY": 200,
       "description": "自驾至大青山+饮牛渠入口,徒步穿越(详见徒步路线)。",
-      "tag": "内蒙古/大青山/饮牛渠/自驾起点"
+      "tag": "内蒙古/大青山/饮牛渠/自驾起点",
+      "coordPrecisionM": 6,
+      "coordSource": "city_center"
     }
   ]
 }

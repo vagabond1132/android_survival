@@ -48,6 +48,20 @@ static bool isRecommended(const Route& r) {
     return true;
 }
 
+// routes.json 的端点对象 → QGeoCoordinate。
+// (0,0) 与显式 coord_unavailable 都算「坐标不可用」—— 全站就是这个约定(MapPage
+// _validCoord、CommonOptions::isValidWgs84、searchPlaces), 端点被判定不可信时
+// 数据侧只删 lat/lon、保留名称与地址, 读到这里必须还原成 invalid coordinate,
+// 不能造一个 QGeoCoordinate(0.0, 0.0)(那是合法的几内亚湾坐标)。
+static QGeoCoordinate readEndpoint(const QJsonObject& ep, bool* unavailable) {
+    const bool off = ep.value("coord_unavailable").toBool(false);
+    const double lat = ep.value("lat").toDouble(0.0);
+    const double lon = ep.value("lon").toDouble(0.0);
+    const bool usable = !off && !(lat == 0.0 && lon == 0.0);
+    if (unavailable) *unavailable = !usable;
+    return usable ? QGeoCoordinate(lat, lon) : QGeoCoordinate();
+}
+
 RouteService::RouteService(Database* db, QObject* parent)
     
     : ServiceBase(db, "RouteService", parent) {
@@ -108,6 +122,8 @@ bool RouteService::ensureSchema() {
             trailhead_lon REAL,
             trailend_lat REAL,
             trailend_lon REAL,
+            coord_precision_m INTEGER DEFAULT 0,
+            coord_source TEXT,
             tags TEXT,
             author TEXT,
             visit_count INTEGER DEFAULT 0,
@@ -120,19 +136,28 @@ bool RouteService::ensureSchema() {
 
     // 兼容旧库:补列 (CREATE/ALTER 都走 DbHelper)
     // 2026-09-24: 仅当缺列时才 ALTER, 否则每次启动必撞 "duplicate column name"
+    // 2026-10-27 #131: 同一套「查列→缺则 ALTER」写到第三遍了(associated_species +
+    // 两个坐标可信度列), 改成一次 PRAGMA 收齐列名再按缺项补。空列名集同时是
+    // "PRAGMA 没跑成" 的哨兵 —— 那时跳过 ALTER, 而不是把缺列判断建立在空集上。
     {
-        bool hasAssocCol = false;
+        QSet<QString> cols;
         QSqlQuery info(db);
         if (info.exec("PRAGMA table_info(routes)")) {
-            while (info.next()) {
-                if (info.value(1).toString() == QLatin1String("associated_species")) {
-                    hasAssocCol = true;
-                    break;
+            while (info.next()) cols.insert(info.value(1).toString());
+        }
+        if (cols.isEmpty()) {
+            Logger::warn("RouteService::ensureSchema: PRAGMA table_info(routes) 无结果, 跳过补列");
+        } else {
+            struct { const char* name; const char* ddl; } addCols[] = {
+                {"associated_species",  "ALTER TABLE routes ADD COLUMN associated_species TEXT"},
+                {"coord_precision_m",   "ALTER TABLE routes ADD COLUMN coord_precision_m INTEGER DEFAULT 0"},
+                {"coord_source",        "ALTER TABLE routes ADD COLUMN coord_source TEXT"},
+            };
+            for (const auto& c : addCols) {
+                if (!cols.contains(QLatin1String(c.name))) {
+                    DbHelper::execDdl(q, QString::fromLatin1(c.ddl), tag);
                 }
             }
-        }
-        if (!hasAssocCol) {
-            DbHelper::execDdl(q, "ALTER TABLE routes ADD COLUMN associated_species TEXT", tag);
         }
     }
 
@@ -226,14 +251,16 @@ bool RouteService::loadFromJson() {
         r.notRecommendedReason = o["not_recommended_reason"].toString();
 
         QJsonObject th = o["trailhead"].toObject();
-        r.trailhead = QGeoCoordinate(th["lat"].toDouble(), th["lon"].toDouble());
+        r.trailhead = readEndpoint(th, &r.trailheadCoordUnavailable);
         r.trailheadName = th["name"].toString();
         r.trailheadAddress = th["address"].toString();
 
         QJsonObject te = o["trailend"].toObject();
-        r.trailend = QGeoCoordinate(te["lat"].toDouble(), te["lon"].toDouble());
+        r.trailend = readEndpoint(te, &r.trailendCoordUnavailable);
         r.trailendName = te["name"].toString();
         r.trailendAddress = te["address"].toString();
+        r.coordPrecisionM = o["coord_precision_m"].toInt(0);
+        r.coordSource = o["coord_source"].toString();
 
         for (const auto& s : o["alias"].toArray()) r.alias << s.toString();
         for (const auto& s : o["best_season"].toArray()) r.bestSeason << s.toString();
@@ -258,14 +285,70 @@ bool RouteService::loadFromJson() {
         }
 
         // 2026-09-24: 先入库再入内存. 之前先写 m_routes 会导致 insertRoute 内
-        // routeExists() (查内存) 提前 return, 34 绑定的 INSERT 从不执行.
+        // routeExists() (查内存) 提前 return, 那条 INSERT 从不执行.
         if (insertRoute(r)) count++;
+        // 实测轨迹(2026-10-27 #131): waypoints 表此前只建不写 —— getWaypoints() 是
+        // 全工程唯一的 polyline 通道, 于是 749 条路线一律退化成 MapPage 里
+        // approx:true 的起终点直线. 现在 routes.json 带 "waypoints" 数组的条目
+        // 在装载时灌进去, 顺序按数组下标(sequence), 读取侧 getWaypoints 不动.
+        const QJsonArray wps = o["waypoints"].toArray();
+        if (!wps.isEmpty()) seedWaypoints(r.id, wps);
         m_routes[r.id] = r;
     }
 
     Logger::info(QString("RouteService loaded: %1 routes").arg(count));
     emit dataChanged();
     return count > 0;
+}
+
+int RouteService::seedWaypoints(const QString& routeId, const QJsonArray& points) {
+    if (!m_db || !m_db->isOpen(Database::Name::Routes)) return 0;
+
+    QSqlDatabase db = m_db->get(Database::Name::Routes);
+    if (!db.transaction()) {
+        Logger::warn(QString("RouteService::seedWaypoints: 开事务失败 (%1)").arg(db.lastError().text()));
+        return 0;
+    }
+
+    int written = 0;
+    QSqlQuery q(db);
+    // 整批替换: 库里可能有这批路线的旧行(改点/改名后的残留), 先按 route_id 清空.
+    if (DbHelper::execDmlPositional(q, "DELETE FROM waypoints WHERE route_id = ?",
+                                     {routeId}, "RouteService::seedWaypoints.clear")
+        != DmlResult::Ok) {
+        db.rollback();
+        return 0;
+    }
+    QSqlQuery ins(db);
+    for (int i = 0; i < points.size(); ++i) {
+        const QJsonObject p = points[i].toObject();
+        const double lat = p["lat"].toDouble();
+        const double lon = p["lon"].toDouble();
+        if (lat == 0.0 && lon == 0.0) continue;  // (0,0) 不是路径点, 不入库
+        ins.prepare("INSERT INTO waypoints (route_id, name, type, lat, lon, elevation, sequence, description)"
+                    " VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        ins.bindValue(0, routeId);
+        ins.bindValue(1, p["name"].toString());
+        ins.bindValue(2, p["type"].toString());
+        ins.bindValue(3, lat);
+        ins.bindValue(4, lon);
+        ins.bindValue(5, p["elevation"].toInt());
+        ins.bindValue(6, i);
+        ins.bindValue(7, p["description"].toString());
+        if (!ins.exec()) {
+            Logger::warn(QString("RouteService::seedWaypoints %1 #%2: %3")
+                             .arg(routeId).arg(i).arg(ins.lastError().text()));
+            db.rollback();
+            return 0;
+        }
+        ++written;
+    }
+    if (!db.commit()) {
+        Logger::warn(QString("RouteService::seedWaypoints %1: 提交失败 (%2)").arg(routeId).arg(db.lastError().text()));
+        db.rollback();
+        return 0;
+    }
+    return written;
 }
 
 bool RouteService::insertRoute(const Route& route) {
@@ -295,6 +378,7 @@ bool RouteService::insertRoute(const Route& route) {
             best_season, terrain, highlights, description, source,
             permit_required, permit_info, rescue_phone,
             trailhead_lat, trailhead_lon, trailend_lat, trailend_lon,
+            coord_precision_m, coord_source,
             tags, author, associated_species, created_at, updated_at
         ) VALUES (
             ?, ?, ?, ?, ?, ?, ?, ?,
@@ -303,6 +387,7 @@ bool RouteService::insertRoute(const Route& route) {
             ?, ?, ?, ?, ?,
             ?, ?, ?,
             ?, ?, ?, ?,
+            ?, ?,
             ?, ?, ?, ?, ?
         )
     )",
@@ -317,6 +402,7 @@ bool RouteService::insertRoute(const Route& route) {
          route.trailhead.isValid() ? route.trailhead.longitude() : 0.0,
          route.trailend.isValid() ? route.trailend.latitude() : 0.0,
          route.trailend.isValid() ? route.trailend.longitude() : 0.0,
+         route.coordPrecisionM, route.coordSource,
          tagsJson, route.author, assocJson,
          QDateTime::currentDateTime().toString(Qt::ISODate),
          QDateTime::currentDateTime().toString(Qt::ISODate)},
@@ -453,7 +539,31 @@ QVariantMap RouteService::getById(const QString& id) {
     result["trailendAddress"] = r.trailendAddress;
     result["trailendLat"] = r.trailend.isValid() ? r.trailend.latitude() : 0.0;
     result["trailendLon"] = r.trailend.isValid() ? r.trailend.longitude() : 0.0;
+    // 端点坐标可信度(2026-10-27 #131): UI 据此决定能不能把端点当导航目标,
+    // 以及读数要写成「±10 米」还是「±56 公里 / 城区中心点」。
+    // unavailable 为真时上面四个 lat/lon 恒为 0.0(哨兵), 名称与地址仍然给全 ——
+    // 「不知道在哪」要说得出地名, 但绝不能画出一个假点。
+    result["trailheadCoordUnavailable"] = r.trailheadCoordUnavailable;
+    result["trailendCoordUnavailable"] = r.trailendCoordUnavailable;
+    result["coordPrecisionM"] = r.coordPrecisionM;
+    result["coordSource"] = r.coordSource;
+    result["waypointCount"] = waypointCount(r.id);
     return result;
+}
+
+int RouteService::waypointCount(const QString& routeId) {
+    if (!m_db || !m_db->isOpen(Database::Name::Routes)) return 0;
+
+    QSqlQuery q(m_db->get(Database::Name::Routes));
+    QVariantMap row = DbHelper::selectOne(q,
+            "SELECT COUNT(*) AS n FROM waypoints WHERE route_id = ?",
+            {routeId}, "RouteService::waypointCount",
+            [](const QSqlQuery& q) -> QVariantMap {
+                QVariantMap m;
+                m["n"] = q.value(0).toInt();
+                return m;
+            });
+    return row.value("n").toInt();
 }
 
 QVariantList RouteService::getAll() {
@@ -845,6 +955,100 @@ QVariantList RouteService::search(const QString& keyword) {
             m["distanceKm"] = r.distanceKm;
             list.append(m);
         }
+    }
+    return list;
+}
+
+// === 地点级检索 ================================================================
+namespace {
+
+// 起终点摊平出来的一个 POI 候选.
+struct PlaceHit {
+    int score = 0;
+    QString name;
+    QString routeId;
+    QString routeName;
+    QString side;        // "起点" | "终点"
+    QString address;
+    QStringList region;  // 省 / 市 / 山 (展示时按非空拼接)
+    double lat = 0;
+    double lon = 0;
+};
+
+// 命中强度: POI 名直接命中 > 路线名或别名命中 > 山/区域/市/省命中.
+// 给分而不是布尔, 是为了让"武功山"这种既像 POI 又像山的词把山门排前面.
+int placeScore(const QString& kw, const QString& poiName,
+               const QStringList& routeNames, const Route& r) {
+    if (poiName.contains(kw, Qt::CaseInsensitive)) return 3;
+    for (const auto& e : routeNames)
+        if (e.contains(kw, Qt::CaseInsensitive)) return 2;
+    if (r.mountain.contains(kw, Qt::CaseInsensitive) ||
+        r.area.contains(kw, Qt::CaseInsensitive) ||
+        r.city.contains(kw, Qt::CaseInsensitive) ||
+        r.province.contains(kw, Qt::CaseInsensitive))
+        return 1;
+    return 0;
+}
+
+} // namespace
+
+QVariantList RouteService::searchPlaces(const QString& keyword, int limit) {
+    QVariantList list;
+    const QString kw = keyword.trimmed();
+    if (kw.isEmpty() || limit <= 0) return list;
+
+    QList<PlaceHit> hits;
+    for (const auto& r : m_routes) {
+        // 不按 isRecommended 过滤: 那是"别去爬这座 6000m+"的产品建议,
+        // 不是"这个地方不存在" —— 搜地点时被过滤掉等于地名凭空消失.
+        QStringList routeNames;
+        routeNames << r.name << r.alias;
+        for (int side = 0; side < 2; ++side) {
+            const bool isStart = (side == 0);
+            const QGeoCoordinate& c = isStart ? r.trailhead : r.trailend;
+            const QString& poi = isStart ? r.trailheadName : r.trailendName;
+            if (poi.isEmpty()) continue;
+            // 没有坐标的端点摊不成 POI。此前用 (0,0) 哨兵判, 现在装载层把
+            // "缺坐标/坐标不可信" 一律还原成 invalid coordinate(读出来是
+            // 91.0/181.0 而不是 0), 所以按 isValid() 判 —— 两种来源一起覆盖。
+            if (!c.isValid()) continue;
+            const int score = placeScore(kw, poi, routeNames, r);
+            if (score == 0) continue;
+            PlaceHit h;
+            h.score = score;
+            h.name = poi;
+            h.routeId = r.id;
+            h.routeName = r.name;
+            h.side = isStart ? QStringLiteral("起点") : QStringLiteral("终点");
+            h.address = isStart ? r.trailheadAddress : r.trailendAddress;
+            h.region << r.province << r.city << r.mountain;
+            h.lat = c.latitude();
+            h.lon = c.longitude();
+            hits.append(h);
+        }
+    }
+
+    std::stable_sort(hits.begin(), hits.end(),
+                     [](const PlaceHit& a, const PlaceHit& b) { return a.score > b.score; });
+
+    const int n = std::min(limit, static_cast<int>(hits.size()));
+    for (int i = 0; i < n; ++i) {
+        const PlaceHit& h = hits.at(i);
+        QVariantMap m;
+        m["id"] = h.routeId + (h.side == QStringLiteral("起点") ? "#start" : "#end");
+        m["name"] = h.name;
+        m["routeId"] = h.routeId;
+        m["routeName"] = h.routeName;
+        m["side"] = h.side;
+        m["lat"] = h.lat;
+        m["lon"] = h.lon;
+        m["address"] = h.address;
+        // 同名 POI 在数据里成批出现 (749 条里 189 条起终点同名), 归属路线是唯一的区分线索
+        QStringList region;
+        for (const QString& s : h.region)
+            if (!s.trimmed().isEmpty() && !region.contains(s)) region << s;
+        m["region"] = region.join(QStringLiteral(" · "));
+        list.append(m);
     }
     return list;
 }

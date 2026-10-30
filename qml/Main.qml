@@ -61,7 +61,10 @@ ApplicationWindow {
     // 上一版是 Material.Dark + accent 蓝, 而自绘组件走 CommonOptions, 同一屏两套
     // 主色 —— 那是被否的直接原因. 现在 theme=Light, accent/primary 都是墨色,
     // Switch / Slider / 焦点框和卡片描边读同一个颜色.
-    Material.theme: Material.Light
+    // 2026-10-22: theme 不再写死, 跟 CommonOptions.nightMode (「我」页的日夜开关).
+    // 自绘组件读的是同一批 token, 所以只有 Material 这一层需要显式对齐,
+    // 否则夜里标准件 (Switch / 焦点框) 还是浅底, 一屏两 world.
+    Material.theme: CommonOptions.nightMode ? Material.Dark : Material.Light
     Material.accent: CommonOptions.colorAccent
     Material.primary: CommonOptions.colorAccent
     Material.background: CommonOptions.colorBg
@@ -75,6 +78,10 @@ ApplicationWindow {
     //   或被别的宿主嵌进去就静默变 undefined. 页面侧统一写
     //   `readonly property var toast: ApplicationWindow.window.toastBox`, 调用点不变.
     readonly property alias toastBox: toast
+    // 搜索对话框同样给一个窗口级 alias: Popup 挂在窗口私有 overlay 上, 从组件外面
+    // 既走不到它的 id 也走不到 children —— host qml 探针 (tools/qml_load_check.sh 那套)
+    // 没法把它打开量尺寸. 页面侧不需要用它, 只有顶栏按钮和验证脚本用.
+    readonly property alias searchBox: searchDialog
     Toast {
         id: toast
         // 铺满整个 Window,Toast 内部 anchors 到底部显示
@@ -90,10 +97,28 @@ ApplicationWindow {
 
     // 2026-09-11: 拦截 Android 手机返回键 (onClosing 由 Qt 6.7 QtActivityBase
     // 把 back key 翻译成 close 事件). 行为:
+    //   - 窗口级浮层开着 (抽屉 / 搜索): 先关浮层, 不退出
     //   - stackView.depth > 1 (在子页): 先 pop, 不退出
     //   - 在别的格的根页 (非 BASE): 回到营地格, 不退出 —— 5 格应用的常规返回语义
-    //   - 已在 BASE 根页: 允许退出
+    //   - 已在 BASE 根页: 退到后台, 不 finish Activity (2026-10-29 改)
+    //
+    // 2026-10-29: 根页从"允许退出"改成"moveTaskToBack"。真机 crash buffer 里
+    //   10-22 起反复出现 hwuiTask0/1 上 FORTIFY: pthread_mutex_lock called on a
+    //   destroyed mutex → SIGABRT, 触发点都落在返回/冷退这条路上; 不 finish
+    //   Activity 就不进那次 surface 拆除竞态. 这是规避而非证明过的根因修复,
+    //   从最近任务里划掉进程仍会走系统拆除 (详见 PlatformInterface::moveTaskToBack 注释).
+    //   拿不到后台 (桌面端 stub / 系统拒绝) 时保持默认 close.accepted=true, 窗口要能关.
     onClosing: function(close) {
+        if (drawer.opened) {
+            close.accepted = false
+            drawer.close()
+            return
+        }
+        if (searchDialog.opened) {
+            close.accepted = false
+            searchDialog.close()
+            return
+        }
         if (stackView.depth > 1) {
             close.accepted = false
             stackView.pop()
@@ -102,8 +127,11 @@ ApplicationWindow {
         if (navBands.current !== "base") {
             close.accepted = false
             openBand("base")
+            return
         }
-        // 已在 BASE 时 close.accepted 保持 true, 允许退出
+        if (androidPlatform.moveTaskToBack()) {
+            close.accepted = false
+        }
     }
 
     // 状态栏
@@ -238,21 +266,21 @@ ApplicationWindow {
                         //    用户是从别的格进来的, 高亮和栈会不同步)
                         window.openBand("base")
                         break
-                    case "firstaid":   window.navBus.navigateTo("FirstAidPage", {}); break
-                    case "warning":    window.navBus.navigateTo("DangerSpeciesPage", {}); break
+                    case "firstaid":   window.openCatalog("FirstAidPage"); break
+                    case "warning":    window.openCatalog("DangerSpeciesPage"); break
                     // 动植物图鉴 = RES 格的根页, 走高德那套切格而不是压栈
                     case "fieldguide": window.openBand("res"); break
                     case "sos":        window.openBand("sos"); break
-                    case "map":        window.openBand("route"); break
-                    case "photo":      window.navBus.navigateTo("FieldGuideImagePickPage", {}); break
-                    case "route":      window.navBus.navigateTo("RouteListPage", {}); break
-                    case "car":        window.navBus.navigateTo("TravelListPage", {}); break
+                    case "map":        window.openBand("map"); break
+                    case "photo":      window.openCatalog("FieldGuideImagePickPage"); break
+                    case "route":      window.openCatalog("RouteListPage"); break
+                    case "car":        window.openCatalog("TravelListPage"); break
                     // 装备/绳结/生存/清单: 装备是「我」格的内容, 绳结与清单是手册条目,
                     // 都作为子页压在栈上 (它们不是一级格)
-                    case "pack":       window.navBus.navigateTo("EquipmentPage", {}); break
-                    case "knot":       window.navBus.navigateTo("KnotPage", {}); break
-                    case "shelter":    window.navBus.navigateTo("SurvivalPage", {}); break
-                    case "build":      window.navBus.navigateTo("ChecklistPage", {}); break
+                    case "pack":       window.openCatalog("EquipmentPage"); break
+                    case "knot":       window.openCatalog("KnotPage"); break
+                    case "shelter":    window.openCatalog("SurvivalPage"); break
+                    case "build":      window.openCatalog("ChecklistPage"); break
                     }
                 }
             }
@@ -260,7 +288,7 @@ ApplicationWindow {
     }
 
     // === 底部 5 方位带 (2026-10-20 丁骨架) ===
-    // BASE 营地 / RES 资源 / ROUTE 路线 / SOS 求助 / 我.
+    // BASE 营地 / RES 资源 / MAP 地图 / SOS 求助 / 我.
     // 上面 12 项抽屉保留 (顶栏菜单开), 它是"全部入口"的逃生口, 也是 #26 那个
     // 抽屉高度塌陷 bug 的唯一现场 —— 一级导航换成这一条之后, 抽屉坏了不再等于
     // 全站导航全废 (改版前 绳结/生存/清单 就是这么找不到的).
@@ -274,7 +302,7 @@ ApplicationWindow {
     readonly property var bandPage: ({
         base:  "HomePage",
         res:   "FieldGuidePage",
-        route: "MapPage",
+        map:   "MapPage",
         sos:   "SOSPage",
         me:    "MePage"
     })
@@ -282,14 +310,39 @@ ApplicationWindow {
     // 切根页: 清掉子页栈, 换成该格的根页.
     // objectName 用来判断"已经在这一格了", 避免重复点把页面重建一次
     // (MapPage 重建会重新拉瓦片与定位, 代价不小).
+    //
+    // bandCleared: 抽屉是「全部入口」, 它推进来的目录页 (急救/绳结/装备/清单…)
+    // 不属于任何一格. 10-22 巡检 (e) 的毛病就是进去之后底栏仍亮 BASE —— 那是假信息,
+    // 看着像"徒步路线目录属于营地格". 所以这类跳转把高亮清空, 回退到格根页时再自动恢复.
+    property bool bandCleared: false
+
     function openBand(key) {
         var page = bandPage[key]
         if (!page) return
+        bandCleared = false
         navBands.current = key
         var cur = stackView.currentItem
         if (stackView.depth === 1 && cur && cur.objectName === "band:" + key) return
         stackView.clear(StackView.Immediate)
         stackView.push(pageUrl(page), { objectName: "band:" + key }, StackView.Immediate)
+    }
+
+    // 抽屉/搜索用的通用压栈入口: 压页 + 声明"这一屏不属于任何格"
+    function openCatalog(page) {
+        bandCleared = true
+        navBus.navigateTo(page, {})
+    }
+
+    // 底栏高亮的唯一真相来源 = 栈根的 objectName ("band:<key>")
+    function syncBand() {
+        var cur = stackView.currentItem
+        var name = cur ? String(cur.objectName || "") : ""
+        if (name.indexOf("band:") === 0) {
+            bandCleared = false
+            navBands.current = name.substring(5)
+            return
+        }
+        if (bandCleared) navBands.current = ""
     }
 
     function pageUrl(page) {
@@ -309,6 +362,22 @@ ApplicationWindow {
     property real mapViewLat: Number.NaN
     property real mapViewLon: Number.NaN
     property real mapViewZoom: Number.NaN
+
+    // 2026-10-29 (问题2): 地图页的「已选」是内存态 (routeOverlays / trackOverlays 里
+    //   存着坐标数组), 而底栏切格 (openBand 的 stackView.clear) 与换底图都会重建
+    //   MapPage —— 重建后轨迹线与路线线全丢, 物种标注却从盘上重读, 真机上读起来就是
+    //   "有标注没有线". 三个 id 列表放在窗口上, 重建后按 id 从库里复原.
+    //   路线与自驾共用一个选中集 (MapPage 里 routeOverlays 用 kind 区分), 复原时
+    //   得分两条路走, 所以这里也分两列.
+    property var mapSelRouteIds: []
+    property var mapSelTravelIds: []
+    property var mapSelTrackIds: []
+
+    // 2026-10-28 问题1: ②资源选中界门同样存在窗口级. 底栏切格走 stackView.clear() →
+    //   FieldGuidePage 整页重建, 页内 `property int currentKingdom: 0` 每次都被打回
+    //   植物 —— 用户切到动物看完地图再回来, 界门又只剩植物, 看起来就像"只有植物".
+    //   与 mapBaseMapIndex 同一个理由: 活不过页面重建的状态放窗口.
+    property int guideKingdom: 0
 
     // 强制重建某一格的根页. openBand() 对「已经在这一格」直接 return (那是为了
     // 不重复拉瓦片), 换底图要的恰恰是重建, 所以单独开一个口子.
@@ -331,6 +400,7 @@ ApplicationWindow {
     StackView {
         id: stackView
         anchors.fill: parent
+        onCurrentItemChanged: window.syncBand()
         // 2026-09-15: 改回 HomePage 作为 initialItem
         // (之前 MapPage 作主页时, 因地图插件/瓦片未就绪 + QML6 signal handler 语法
         //  导致 Component not ready + SIGSEGV, 用户回退方案)
@@ -345,9 +415,15 @@ ApplicationWindow {
                              ? page
                              : "qrc:/qt/qml/OutdoorSurvival/qml/pages/" + page + ".qml"
                 stackView.push(Qt.resolvedUrl(qmlUrl), props || {})
-                // 目标正好是某一格的根页时把高亮跟过去, 否则底栏会指着别的格
+                // 目标正好是某一格的根页时把高亮跟过去; 抽屉推进来的跨格目录
+                // (bandCleared) 则清空高亮 —— 底栏不指着没在看的格 (巡检 (e)).
                 var bk = window.bandKeyOf(page)
-                if (bk) navBands.current = bk
+                if (bk) {
+                    window.bandCleared = false
+                    navBands.current = bk
+                } else if (window.bandCleared) {
+                    navBands.current = ""
+                }
             }
             function onBack() {
                 if (stackView.depth > 1) stackView.pop()
@@ -386,15 +462,47 @@ ApplicationWindow {
     // SOSButton { ... } 删除.
 
     // 搜索对话框
+    // 2026-10-22 巡检批次 H5 三条一起收:
+    //   ① 原来 height 固定 parent.height*0.6 —— 没搜 / 没匹配时结果区 fillHeight
+    //      塌成一整块空白, 看不出是哪种状态; 改成跟着内容走, 结果区上限 searchPaneMax.
+    //   ② 只有一个「搜索」按钮, 没有出口 (只能点背景关), 且每次都要再点一下输入框
+    //      才能打字 → 补 取消 + onOpened 聚焦.
+    //   ③ performSearch 只覆盖 8 个库里的 2 个 (急救 + 危险物种), 绳结 / 避险技能 /
+    //      徒步 / 自驾全查不到 → 表格驱动扩到 6 库, 并给每行标出处.
     Dialog {
         id: searchDialog
         title: "搜索"
         modal: true
         anchors.centerIn: parent
-        width: parent.width * 0.9
-        height: parent.height * 0.6
+        width: parent.width * 0.92
+        // 跟着内容走, 只在上限内截断 —— 不能再写 parent.height * 0.6 (见 ①).
+        height: Math.min(implicitHeight, parent.height * 0.86)
         Material.background: CommonOptions.colorSurface
         Material.foreground: CommonOptions.colorText
+        onOpened: searchField.forceActiveFocus()
+
+        // 搜过了但零命中, 与"还没搜"要分成两句话, 否则空态永远像坏了.
+        property bool searched: false
+        // 单库最多列这么多, 超出的条数用一行"另有 N 条"交代掉, 不静默丢.
+        readonly property int perSourceCap: 10
+
+        // prop / page / titleKey 三样必须跟 C++ search() 返回的 map 键名和详情页
+        // 入口属性名逐一对齐 —— 2026-10-20 就是"All results 都传 entryId"导致
+        // 从搜索点进物种是一张空页.
+        readonly property var searchSources: [
+            { key: "firstaid", icon: "firstaid", label: "急救处置",
+              titleKey: "title", prop: "entryId", page: "FirstAidDetailPage", danger: false },
+            { key: "species", icon: "warning", label: "危险物种",
+              titleKey: "commonName", prop: "speciesId", page: "FieldGuideDetailPage", danger: true },
+            { key: "knot", icon: "knot", label: "绳结",
+              titleKey: "nameCn", prop: "knotId", page: "KnotDetailPage", danger: false },
+            { key: "survival", icon: "shelter", label: "避险技能",
+              titleKey: "name", prop: "itemId", page: "SurvivalDetailPage", danger: false },
+            { key: "route", icon: "route", label: "徒步路线",
+              titleKey: "name", prop: "routeId", page: "RouteDetailPage", danger: false },
+            { key: "travel", icon: "car", label: "自驾游",
+              titleKey: "name", prop: "travelId", page: "TravelDetailPage", danger: false }
+        ]
 
         contentItem: ColumnLayout {
             spacing: winStyles.spMd
@@ -402,111 +510,153 @@ ApplicationWindow {
                 id: searchField
                 Layout.fillWidth: true
                 Layout.preferredHeight: winStyles.fieldH
-                placeholderText: "搜索急救、动植物、避险..."
+                placeholderText: "搜索急救、危险物种、绳结、避险、路线、自驾"
                 color: CommonOptions.colorText
                 placeholderTextColor: CommonOptions.colorTextDim
                 font.pixelSize: winStyles.fsMd
                 onAccepted: searchDialog.performSearch()
             }
-            Item {
+            ListView {
+                id: resultList
                 Layout.fillWidth: true
-                Layout.fillHeight: true
-                // 2026-10-19 真机: 结果区 fillHeight, 未搜索/无命中时是一整块空白
-                //   (对话框高度固定 60%), 看不出是"还没搜"还是"搜了没有" → 叠一行提示.
-                // 2026-10-20: 提示原来写在 ListView 的 foreground 里 —— ListView 没有
-                //   这个属性. 声明式赋一个不存在的属性是加载期硬错误 (Cannot assign to
-                //   non-existent property), 而 Main.qml 是根组件, 一处写坏 = 整个 app
-                //   起不来. 改成 Item 里叠一层 Text, 不进 content、不影响滚动.
-                ListView {
-                    anchors.fill: parent
-                    model: searchResults
-                    delegate: ItemDelegate {
-                        required property var model
-                        width: ListView.view.width
-                        height: winStyles.rowH
-                        contentItem: RowLayout {
-                            spacing: winStyles.spMd
-                            IconLabel {
-                                name: model.icon
-                                size: winStyles.icMd
-                                tintColor: CommonOptions.colorTextMuted
-                            }
-                            Text {
-                                text: model.title
-                                color: CommonOptions.colorText
-                                font.pixelSize: winStyles.fsMd
-                                Layout.fillWidth: true
-                                elide: Text.ElideRight
-                                verticalAlignment: Text.AlignVCenter
-                            }
+                // 高度 = min(条数 × rowH, 上限). 零条时整块不占位, 由下面的提示句顶上.
+                Layout.preferredHeight: Math.min(searchResults.count * winStyles.rowH,
+                                                 winStyles.searchPaneMax)
+                visible: searchResults.count > 0
+                clip: true
+                boundsBehavior: Flickable.StopAtBounds
+                model: searchResults
+                delegate: ItemDelegate {
+                    required property var model
+                    width: resultList.width
+                    height: winStyles.rowH
+                    // "另有 N 条" 那种说明行不是入口
+                    enabled: !model.note
+                    contentItem: RowLayout {
+                        spacing: winStyles.spMd
+                        IconLabel {
+                            name: model.icon
+                            size: winStyles.icMd
+                            tintColor: CommonOptions.colorTextMuted
                         }
-                        onClicked: {
-                            searchDialog.close()
-                            if (model.page && model.id !== undefined) {
-                                // 2026-10-20: 原来所有结果都传 {entryId}, 但物种详情读的是
-                                //   speciesId → 从搜索点进物种是一张空页. 入参名跟着结果走.
-                                var props = {}
-                                props[model.prop] = model.id
-                                if (model.danger)
-                                    props.preferDanger = true
-                                window.navBus.navigateTo(model.page, props)
-                            }
+                        Text {
+                            text: model.title
+                            color: model.note ? CommonOptions.colorTextDim : CommonOptions.colorText
+                            font.pixelSize: winStyles.fsMd
+                            Layout.fillWidth: true
+                            elide: Text.ElideRight
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        // 出处: 六库混排后不标来源就分不清"梅岭古道"是路线还是自驾线.
+                        // 汉字走默认字族 —— monoFont 无汉字, 加字距就是假印刷感.
+                        Text {
+                            text: model.source
+                            color: CommonOptions.colorTextDim
+                            font.pixelSize: winStyles.fsXs
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                    }
+                    onClicked: {
+                        searchDialog.close()
+                        if (model.page && model.id !== undefined) {
+                            var props = {}
+                            props[model.prop] = model.id
+                            if (model.danger)
+                                props.preferDanger = true
+                            window.navBus.navigateTo(model.page, props)
                         }
                     }
                 }
-                Text {
-                    anchors.centerIn: parent
-                    visible: searchResults.count === 0
-                    text: "输入关键词后点「搜索」，可查急救处置与动植物物种"
-                    color: CommonOptions.colorTextMuted
-                    font.pixelSize: winStyles.fsSm
-                }
             }
-            Button {
-                text: "搜索"
+            Text {
                 Layout.fillWidth: true
-                Layout.preferredHeight: winStyles.btnH
-                // 2026-10-19 真机 stage0.log: 原来直接写 performSearch(), 报
-                //   "ReferenceError: performSearch is not defined" —— Dialog 体内
-                //   声明的 function 是 Dialog 实例的属性, 不在 contentItem 子对象的
-                //   组件作用域里, 必须用 id 限定. 全局搜索因此一次都没跑过.
-                onClicked: searchDialog.performSearch()
+                visible: searchResults.count === 0
+                wrapMode: Text.WordWrap
+                horizontalAlignment: Text.AlignHCenter
+                text: searchDialog.searched
+                      ? "「" + searchField.text + "」没有匹配条目 · 换个更短的词试试"
+                      : "输入关键词查急救处置、危险物种、绳结、避险技能、徒步路线与自驾游"
+                color: CommonOptions.colorTextMuted
+                font.pixelSize: winStyles.fsSm
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: winStyles.spMd
+
+                // 左侧弹簧 (2026-10-28 用户定的按钮排规则③): 两颗都按内容宽、一起贴右,
+                // 不再"取消 88 固定 + 搜索 fillWidth"拉成两条通栏横块.
+                Item { Layout.fillWidth: true }
+
+                ActionButton {
+                    // 2026-10-19 真机 stage0.log: 原来直接写 performSearch(), 报
+                    //   "ReferenceError: performSearch is not defined" —— Dialog 体内
+                    //   声明的 function 是 Dialog 实例的属性, 不在 contentItem 子对象的
+                    //   组件作用域里, 必须用 id 限定. 全局搜索因此一次都没跑过.
+                    // 同理: 出口按钮也必须走 id.
+                    // 2026-10-28 #128 收口: 这两颗原来是裸 Button (Material 默认按钮 =
+                    //   全站按钮母版之外的第二种形态), 换成 ActionButton 后按钮体系只剩一套.
+                    text: "取消"
+                    tone: CommonOptions.colorTextMuted
+                    onClicked: searchDialog.close()
+                }
+                ActionButton {
+                    text: "搜索"
+                    filled: true
+                    onClicked: searchDialog.performSearch()
+                }
             }
         }
 
         ListModel { id: searchResults }
 
+        function serviceFor(key) {
+            switch (key) {
+            case "firstaid": return firstAidService
+            case "species":  return speciesService
+            case "knot":     return knotService
+            case "survival": return survivalService
+            case "route":    return routeService
+            case "travel":   return travelService
+            }
+            return null
+        }
+
         function performSearch() {
             searchResults.clear()
-            var kw = searchField.text
-            if (kw.length < 1) return
-
-            // 搜急救
-            var firstAid = firstAidService.search(kw)
-            for (var i = 0; i < firstAid.length; i++) {
-                searchResults.append({
-                    "icon": "firstaid",
-                    "title": firstAid[i].title,
-                    "id": firstAid[i].id,
-                    "prop": "entryId",
-                    "page": "FirstAidDetailPage",
-                    "danger": false
-                })
+            var kw = searchField.text.trim()
+            if (kw.length < 1) {
+                // 清空关键词不算"搜过一次没结果", 提示句要退回引导语.
+                searchDialog.searched = false
+                return
             }
-
-            // 搜物种
-            var species = speciesService.search(kw)
-            for (var j = 0; j < species.length; j++) {
-                searchResults.append({
-                    "icon": "warning",
-                    "title": species[j].commonName,
-                    "id": species[j].id,
-                    "prop": "speciesId",
-                    "page": "FieldGuideDetailPage",
-                    // 结果来自 danger_species (33 条), 同一 id 在 659 条图鉴里也有
-                    //   一份时, 搜索点进来的内容要跟危险页一致.
-                    "danger": true
-                })
+            searchDialog.searched = true
+            var srcs = searchDialog.searchSources
+            for (var s = 0; s < srcs.length; ++s) {
+                var svc = searchDialog.serviceFor(srcs[s].key)
+                if (!svc) continue
+                var hits = svc.search(kw)
+                var n = Math.min(hits.length, searchDialog.perSourceCap)
+                for (var i = 0; i < n; ++i) {
+                    var e = hits[i]
+                    searchResults.append({
+                        "icon": srcs[s].icon,
+                        "title": String(e[srcs[s].titleKey] || "未命名"),
+                        "source": srcs[s].label,
+                        "id": String(e.id || ""),
+                        "prop": srcs[s].prop,
+                        "page": srcs[s].page,
+                        "danger": srcs[s].danger === true,
+                        "note": false
+                    })
+                }
+                if (hits.length > n) {
+                    searchResults.append({
+                        "icon": srcs[s].icon,
+                        "title": "另有 " + (hits.length - n) + " 条 · 把关键词收窄",
+                        "source": srcs[s].label,
+                        "id": "", "prop": "", "page": "", "danger": false, "note": true
+                    })
+                }
             }
         }
     }

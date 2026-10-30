@@ -164,10 +164,16 @@ Page {
             var c = topicOrder[i]
             if (topicCounts[c]) t += " · " + topicLabel(c) + " " + topicCounts[c]
         }
-        return diffMax > 0 ? t + " · 难度 " + diffMin + "~" + diffMax : t
+        return diffMax > 0
+               ? t + " · 难度 " + (diffMin === diffMax ? diffMin : diffMin + "~" + diffMax)
+               : t
     }
 
+    // rows 是 reload() 里命令式算的, 不是绑定 —— 改筛选必须自己触发重建 (A36)。
+    // callLater: reload() 重写 topicCounts, 而 chip 行 model 读着它, 就地重建会把
+    //   正在发 clicked 的 delegate 删在信号栈上。
     Component.onCompleted: reload()
+    onCurrentTopicChanged: Qt.callLater(survivalPage.reload)
     Connections {
         target: survivalService
         function onDataChanged() { survivalPage.reload() }
@@ -193,10 +199,8 @@ Page {
                 anchors.rightMargin: 40
                 spacing: 3
                 Text {
-                    text: "MANUAL / FIELD CRAFT"
-                    font.family: styles.monoFont
+                    text: "手册 · 野外生活"
                     font.pixelSize: styles.fsXs
-                    font.letterSpacing: 1.8
                     color: CommonOptions.colorInk3
                 }
                 Text {
@@ -309,12 +313,9 @@ Page {
                             font.bold: true
                             elide: Text.ElideRight
                         }
-                        // 拉丁微标签才加字距, 中文不加 (样式铁律)
                         Text {
-                            text: modelData.count + " SKILLS"
-                            font.family: styles.monoFont
+                            text: modelData.count + " 项技能"
                             font.pixelSize: styles.fsXs
-                            font.letterSpacing: 1.4
                             color: CommonOptions.colorInk3
                         }
                     }

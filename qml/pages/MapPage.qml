@@ -3,7 +3,8 @@
  * @brief ④地图 (2026-10-20 丁骨架: 满幅底图 + 仪表叠层 + 目标驱动的底部抽屉)
  *
  * 布局:
- *   - 满幅 Map (osm 瓦片, 北朝上), 可手动拖动/双击缩放 (#43)
+ *   - 满幅 Map (北朝上), 手动拖动 + 双指捏合缩放. 手势引擎在本文件末尾手写
+ *     (DragHandler/PinchHandler, #78; 更早 #43 解的是 center/zoomLevel 绑定锁死)
  *   - 叠层: MapInstrumentOverlay —— 顶部 搜索/图层/求助 三张浮卡, 左上 比例尺 + 缩放,
  *           右上 迷你盘 (HDG 盘心 + N-UP 微标签) + 回中方块, 左下 已选 chip
  *   - 底部: MapBottomSheet (4 Tab: 目标 / 记录 / 轨迹 / 查找) + 「标注这里」主按钮
@@ -49,10 +50,20 @@ Page {
     property real pendingFocusLat: Number.NaN
     property real pendingFocusLon: Number.NaN
 
-    property real currentLat: 39.9087
-    property real currentLon: 116.3975
-    property real currentHeading: 0
-    property bool hasFix: false
+    // 2026-10-22 #98: 位置来源换成 EmergencyService. 本页原来自己挂一个 PositionSource,
+    // 和 service 订的是同一个后端 → 两处各存一份读数, 蓝点却只按本页那份画. 现在位置
+    // 只有一个来源, 精度/海拔也走同一组数 (真机拿不到读数的根因在插件的 Java 侧,
+    // 修法见 android/src/com/outdoor/survival/OutdoorSurvivalApp.java 的 initQtPositioning).
+    // 没定位时保持原来的北京初值: 无定位就写 0,0 会把地图甩到几内亚湾.
+    property real currentLat: (emergencyService && emergencyService.hasLocation)
+        ? emergencyService.currentLatitude : 39.9087
+    property real currentLon: (emergencyService && emergencyService.hasLocation)
+        ? emergencyService.currentLongitude : 116.3975
+    property bool hasFix: emergencyService ? emergencyService.hasLocation : false
+    // 2026-10-26「轨迹/标注点精度到 1 m」: 本页也要能说出"这个点准不准".
+    //   NaN = 后端没给 HorizontalAccuracy (整行读数据此不显示, 不写 ±0 米).
+    readonly property real accM: emergencyService ? emergencyService.currentAccuracy : Number.NaN
+    readonly property real altM: emergencyService ? emergencyService.currentAltitude : Number.NaN
     // 底图索引, 见 _baseMaps (可达源在前). 初值取自窗口级「底图会话」(Main.qml):
     //   Map.plugin 是 write-once, 换源只能重建本页 (见 _rebuildForBaseMap),
     //   重建后得记住用户挑的是哪个源, 页内属性活不过重建.
@@ -73,7 +84,8 @@ Page {
     //   currentLat/currentLon. Qt Location 的拖拽是 C++ 侧 setCenter, 不会解除 QML
     //   绑定, 下一次 re-polish 就把中心拉回绑定值 → 地图拖不动 (+/- 按钮生效只是
     //   因为 QML 里的赋值会解绑). 现在初值改成命令式设置, 反向由 onCenterChanged
-    //   回写; 定位更新不再自动抢中心 (见 PositionSource), 用户看哪儿地图就停哪儿.
+    //   回写; 定位更新不再自动抢中心 (位置只画蓝点, 见 EmergencyService 那组属性绑定),
+    //   用户看哪儿地图就停哪儿.
     // 可视范围 (中心/缩放), 由 Map 拖拽与缩放回写. 「目标」半径查询与"标注这里"用它们,
     // 而不是 currentLat/Lon (那两个是 GPS 位置, 画蓝点用的).
     property real viewLat: mapPage._restoredView[0]
@@ -82,12 +94,17 @@ Page {
     // 换底图重建本页后要落回原来看的这块视野 (写进窗口级会话, 见 Main.qml).
     //   [0]=lat [1]=lon [2]=zoom; NaN/-1 = 没有可恢复的视野 → 用 GPS 位置与默认缩放.
     //   只做初值: Map 的 center/zoomLevel 没有声明式绑定 (见上 #43), 这里给一次命令式.
+    // 2026-10-23 真机 (用户"地图比例尺默认为200"): 默认档原来是 11, 济南纬度下比例尺
+    //   读「2 km」—— 野外看这张图要的是 200 m 一格的近景. 真机实测档位对应关系:
+    //   11→2 km / 13→500 m / 14→200 m / 18→20 m, 所以默认取 14.
+    readonly property int _defaultZoom: 14
     readonly property var _restoredView: {
         var w = mapPage._appWin
         if (w && isFinite(w.mapViewLat) && isFinite(w.mapViewLon))
             return [w.mapViewLat, w.mapViewLon,
-                    (isFinite(w.mapViewZoom) && w.mapViewZoom > 0) ? w.mapViewZoom : 11]
-        return [currentLat, currentLon, 11]
+                    (isFinite(w.mapViewZoom) && w.mapViewZoom > 0) ? w.mapViewZoom
+                                                                   : mapPage._defaultZoom]
+        return [currentLat, currentLon, mapPage._defaultZoom]
     }
 
     // === ④地图 丁仪表 (2026-10-20 #61) =====================================
@@ -95,13 +112,36 @@ Page {
     readonly property bool hasHeading: compassSensor ? compassSensor.valid : false
     readonly property real headingDeg: hasHeading ? compassSensor.heading : 0
     readonly property int calibPct: compassSensor ? compassSensor.calibrationPercent : -1
+    // 2026-10-26 真机 (用户"个人位置原点无方向指示 / 右上方方位数据未变化"):
+    //   这台机上 QCompass 一整轮没给过有效读数 (valid 恒 false), 所以盘和蓝点
+    //   都停在"无朝向"状态. 第二个朝向来源 = GPS 的 course-over-ground
+    //   (EmergencyService.currentCourse, 来自 Android getBearing()). 它只在真
+    //   在走的时候有数, 站着不动是 NaN —— 所以优先级 罗盘 > GPS 航向, 两者都
+    //   没有时宁可不画指针 (规则②: 不给一个 0° 的假方向).
+    readonly property real courseDeg: emergencyService
+        ? emergencyService.currentCourse : Number.NaN
+    readonly property bool hasCourse: isFinite(courseDeg)
+    readonly property real effHeadingDeg: hasHeading ? headingDeg
+                                                     : (hasCourse ? courseDeg : 0)
+    readonly property bool hasEffHeading: hasHeading || hasCourse
+    // 读数旁边那句"这个方向是哪来的"必须说清楚: 行进方向和"手机朝哪"是两件事,
+    //   混成一个"北朝上"会让人以为站着不动转手机也能指方向. 无朝向时给空串,
+    //   叠层那行宁可不显示 (原来那行写死"北朝上", 罗盘不出数时是个假承诺).
+    readonly property string headingNote: hasHeading
+        ? ("北朝上" + (calibPct >= 0 ? " · 校准 " + calibPct + "%" : ""))
+        : (hasCourse ? "按行进方向 · 走动时才准" : "")
+    // 精度读数: 拿不到就整行不出现, 不写"±0 米" (那读起来像"极准").
+    readonly property string accText: (isFinite(accM) && accM > 0)
+        ? ("位置精度 ±" + accM.toFixed(1) + " m") : ""
 
-    // 比例尺: 标准 web-mercator 反推 (156543.03·cos(lat)/2^z = 赤道每像素米数),
-    //   不依赖 Map 的私有 API. 先按 62px 期望宽度取出档位, 再回算尺子真正的像素宽,
+    // 比例尺: 标准 web-mercator 反推, 口径收口到 CommonOptions.metersPerPixel
+    //   (156543.03392·cos(lat)/2^z). 2026-10-22 #82: 原来这条公式抄在本文件里,
+    //   而 fitBoundsToRoutes 用的是另一套"经验公式", 两者差约 7 档 —— 同一个页面
+    //   里两块各算一次比例, 正是"跳 200km"能长期没人发现的原因. 现在两处共用.
+    //   先按 62px 期望宽度取出档位, 再回算尺子真正的像素宽,
     //   这样 "500 m" 那句话和上面那条线永远是对齐的 —— 写死 62px 会谎报比例.
     readonly property int mapZoomInt: Math.round(viewZoom)
-    readonly property real _metersPerPixel: 156543.03392
-        * Math.cos(viewLat * Math.PI / 180) / Math.pow(2, mapZoomInt)
+    readonly property real _metersPerPixel: CommonOptions.metersPerPixel(viewLat, mapZoomInt)
     readonly property var _scaleSteps: [20, 50, 100, 200, 500, 1000, 2000, 5000,
                                         10000, 20000, 50000, 100000, 200000]
     readonly property real _scaleMeters: {
@@ -127,7 +167,7 @@ Page {
             if (!isFinite(la) || !isFinite(lo)) continue
             out.push({
                 bearing: CommonOptions.bearingDegrees(viewLat, viewLon, la, lo),
-                tone: CommonOptions.dangerColor(Number(m.dangerLevel) || 0)
+                tone: CommonOptions.dangerColor(mapPage.dangerLevelOf(m))
             })
         }
         return out
@@ -140,12 +180,22 @@ Page {
             var m = speciesLocations[k]
             var la = Number(m.lat), lo = Number(m.lon)
             if (!isFinite(la) || !isFinite(lo)) continue
-            var lvl = Number(m.dangerLevel) || 0
+            var lvl = mapPage.dangerLevelOf(m)
             rows.push({
                 id: m.id || "",
                 speciesId: m.speciesId || "",
-                title: m.speciesName || CommonOptions.speciesCategoryLabel(m.speciesCategory || ""),
+                // 2026-10-28 两档工作台: 类别标签 ("植物"/"动物") 不是名字 —— 拿它兜底
+                //   会让一条没起名的标注读成一个命名物种, 是假读数. 改字面量占位,
+                //   类别本来就显示在下面 sub 行.
+                title: m.speciesName || "未命名标注",
                 sub: CommonOptions.speciesCategoryLabel(m.speciesCategory || ""),
+                // 2026-10-29 (问题1): 「目标」Tab 只拿得到类别, 危险度/记录时刻都留在
+                //   本文件里没往下传 —— 行上排不了"哪条更该先看", 也认不出是哪次记的.
+                //   这三个字段就是给 Tab 的排序与副标题用的 (不在这里拼文案).
+                category: m.speciesCategory || "",
+                danger: lvl,
+                dangerLabel: lvl >= 0 ? CommonOptions.dangerLevelLabel(lvl) : "",
+                time: m.takenAt || "",
                 dist: CommonOptions.distanceMeters(viewLat, viewLon, la, lo),
                 bearing: CommonOptions.bearingDegrees(viewLat, viewLon, la, lo),
                 tone: CommonOptions.dangerColor(lvl),
@@ -164,9 +214,48 @@ Page {
     property var markerDetailCoord: null
     property string markerDetailNote: ""
     property string markerDetailSource: ""
+    // 2026-10-26 真机 (A27 的另一半): 弹层原来只有 kind/title/sub/note/source, 于是点
+    //   开一个物种标注, 屏上只有"物种标注 + 经纬度"两行 —— 名称/类别/危险档数据里都有,
+    //   就是没往弹层里传. 补这三个通道, 由 marker 的 click 填.
+    property string markerDetailSpeciesId: ""
+    property string markerDetailCategory: ""      // 图鉴英文键, 显示时过 speciesCategoryLabel
+    property int markerDetailDanger: -1           // -1 = 危险档还没查到, 整行不显示
+    property string markerDetailTime: ""          // 记录时刻 (takenAt), 空则整行不出现
+    // 2026-10-29 (问题6): 标注文件 id (species_<id>.json 里的 id). 只有它是"这一条
+    //   记录"的句柄 —— speciesId 指向图鉴条目, 同一个物种可能被标过几十次, 用它删不掉.
+    //   空串 = 不是物种标注 (路线端点/危险点) 或老数据没带 id, 删除入口整行不出现.
+    property string markerDetailLocationId: ""
 
     // 2026-09-15: 危险物种缓存 {speciesId: dangerLevel} - 一次性查全, 给 marker 颜色用
     property var _speciesCache: null
+
+    // 2026-10-23 #82①: 危险等级反查 (盘上的点 / 「目标」Tab 的行 / 地图圆点三处共用).
+    //   为什么要反查: mapService.addSpeciesLocation() 把 dangerLevel **写死 0**
+    //   (src/map/MapService_species.cpp:51 那行注释自己说了"MapPage 端用 speciesId 反查"),
+    //   而这条反查原来只接在地图圆点上, 盘与目标列表照读 m.dangerLevel → 恒 0 →
+    //   毒蛇和可食植物在盘上是同一个点. 现在三处都走这里.
+    //   返回 -1 = 缓存还没就绪; `CommonOptions.dangerColor()` 把 -1 和 0 都画成三级墨,
+    //   圆点那边的图标 (more_horiz / place) 才区分"未知"与"确实不危险".
+    function dangerLevelOf(m) {
+        if (mapPage._speciesCache === null) return -1
+        var spId = m.speciesId
+        if (spId && mapPage._speciesCache[spId] !== undefined)
+            return mapPage._speciesCache[spId]
+        // 库里查不到 (比如只写了坐标的 manual 标注) 就按类别 + 名称关键词估
+        var cat = (m.speciesCategory || "").toLowerCase()
+        var name = (m.speciesName || "") + " " + (m.note || "")
+        if (cat === "snake") return 5
+        if (cat === "mushroom") return 4
+        if (cat === "insect") {
+            if (name.indexOf("蜂") >= 0 || name.indexOf("蝎") >= 0) return 5
+            if (name.indexOf("蚂蚁") >= 0) return 3
+            return 2
+        }
+        if (name.indexOf("毒") >= 0) return 5
+        if (name.indexOf("危险") >= 0) return 4
+        return 0
+    }
+
     // 2026-10-09: 物种标注列表 (NOTIFY-able). 旧写法 Repeater.model =
     //   mapService.getSpeciesLocations() 是一次性绑定, dataChanged 后永不刷新;
     //   改用该属性 + MapItemView (视口虚拟化, 只为可见元素建 delegate).
@@ -179,25 +268,72 @@ Page {
     property string lastCapturedPhoto: ""
 
     // 2026-09-15: 多选叠加的路线/轨迹数据
-    // - routeOverlays: [{id, name, color, path: [coord,...]}]
+    // - routeOverlays: [{id, name, colorIdx, color, path: [coord,...], kind, approx}]
     // - routeMarkers: [{routeId, coord, label, color}] 起点 S / 终点 E
     // - waypointMarkers: [{routeId, coord, name, type}] 路径点 (营地/垭口等)
     // - dangerMarkers: [{routeId, coord, name}] 危险点
-    // - trackOverlays: [{id, name, color, path}]
+    // - trackOverlays: [{id, name, colorIdx, color, path, pointCount, thinned}]
+    //   path 是"画出来的顶点"(长轨迹抽稀后比原始点少), pointCount 才是本机存的真实
+    //   点数 —— 列表行报数用它, 别让抽稀冒充原始轨迹。
+    // colorIdx 是这条线在 8 色板里占的号 (_freeColorIdx 分配, 删线时跟着行一起消失)
     property var routeOverlays: []
     property var routeMarkers: []
     property var waypointMarkers: []
     property var dangerMarkers: []
     property var trackOverlays: []
+    // 2026-10-29 (问题2): 只有 1 个可用点的轨迹. MapPolyline 少于 2 点什么都不画,
+    //   所以"点已经加载了但屏上没东西"在单点轨迹上是必然结果 —— 用一个小圆点把它
+    //   画出来, 用户至少知道这条轨迹在哪.
+    property var trackMarkers: []
     // 已选 id 集合 (避免重复)
     property var selectedRouteIds: []
     property var selectedTrackIds: []
+    // 2026-10-29 (问题2): 复原窗口级选中集之前不要回写会话 —— 复原过程中的每一次
+    //   concat 都会触发 onXxxOverlaysChanged, 若不拦住, 先复原的那一项会把窗口里的
+    //   完整列表覆盖成只剩它自己.
+    property bool _selectionRestored: false
     // 2026-09-15: 路线种类的颜色: 自驾/徒步 颜色不同, 便于视觉区分
     // 2026-10-16 改版: 删掉本地 8 色 _routePalette (它和 CommonOptions.categoryColor
     //   的 8 色板是同一份东西抄了两遍, 只是顺序不同 → 文档 B2 "颜色重复定义").
-    //   统一走 categoryColor, 索引按选择顺序取模, 颜色顺序与全站分类色一致.
+    //   统一走 categoryColor, 颜色顺序与全站分类色一致.
     function _colorForIndex(idx) {
         return CommonOptions.categoryColor(idx)
+    }
+
+    // 2026-10-27 #134: 叠线取色从"按各自序号"改成"按占用分配".
+    //   原来路线拿 selectedRouteIds.length、轨迹拿 selectedRouteIds.length +
+    //   trackOverlays.length 当色号 —— 两条序列各数各的. 于是"先勾一条轨迹 (拿到色 0),
+    //   再勾一条路线 (也拿到色 0)": 两条线在图上一个颜色, 已选清单左边的色块也同色,
+    //   用户分不清哪块色标对应哪条线. 删掉中间一项后长度还会塌回去, 新勾的又会和
+    //   剩下的重色. 现在在"路线 + 轨迹"这一个集合里找第一个没被占用的色号,
+    //   色号跟着 overlay 一起存 (colorIdx), 移除时颜色自然跟着走.
+    function _freeColorIdx() {
+        var n = CommonOptions.categoryPaletteSize()
+        if (!isFinite(n) || n <= 0) return 0
+        var used = []
+        var lists = [mapPage.routeOverlays, mapPage.trackOverlays]
+        for (var l = 0; l < lists.length; l++) {
+            for (var i = 0; i < lists[l].length; i++) {
+                var ci = lists[l][i].colorIdx
+                if (ci !== undefined && used.indexOf(ci) < 0) used.push(ci)
+            }
+        }
+        for (var k = 0; k < n; k++) {
+            if (used.indexOf(k) < 0) return k
+        }
+        // 色板被占满 (同时叠 8 条以上) 时无法不重色, 按总数取模保证顺序稳定
+        return (mapPage.routeOverlays.length + mapPage.trackOverlays.length) % n
+    }
+
+    // 2026-10-27 #134: 导入分发用的后缀识别. 单列出来是因为文件现在要先经
+    //   "复制进沙盒"才有本地路径, 而复制件的后缀来自源 URI 末段 —— 万一源 URI
+    //   末段没带扩展名, 调用方还要能回看原始 URI, 所以两处用同一个判据.
+    function _trackFileKind(s) {
+        var t = String(s || "").toLowerCase()
+        if (t.endsWith(".gpx")) return "gpx"
+        if (t.endsWith(".kml")) return "kml"
+        if (t.endsWith(".csv")) return "csv"
+        return ""
     }
 
     // 2026-09-15: 查 routeId 对应的路线/自驾名, 用于 marker 详情
@@ -214,13 +350,42 @@ Page {
     // 2026-10-09: 坐标判空统一 helper. 旧写法用 truthy (`if (lat && lon)`) 会丢
     //   纬/经度为 0 的合法坐标 (赤道/本初子午线附近), 且与另一处 Math.abs(..)>0.01
     //   判据不一致. 统一为 isFinite + 合法区间.
+    // 2026-10-27 #134: 但 (0,0) 这一对是"没填"的哨兵, 不是赤道坐标 —— 库里的路线
+    //   缺坐标时就是这么落盘 (见 nav-endpoint-data-quality). 让它过门会画出一条到
+    //   几内亚湾的线, 并把 fitBounds 拉到一个空屏幕上. 与 C++ 侧 importGpx/importKml
+    //   的坐标门同一判据: 单轴为 0 仍然放行, 只有成对为 0 才拒.
     function _validCoord(la, lo) {
-        return isFinite(la) && isFinite(lo) &&
-               Math.abs(la) <= 90 && Math.abs(lo) <= 180
+        if (!isFinite(la) || !isFinite(lo)) return false
+        if (Math.abs(la) > 90 || Math.abs(lo) > 180) return false
+        return !(la === 0 && lo === 0)
+    }
+
+    // 2026-10-27 #131: 端点坐标可信度读数。precisionM 是数据侧算好的量化误差
+    // (coord_precision_m, 单位米, 0=未知), coordSource 说明这个点是从哪来的。
+    // 格式化在 CommonOptions 里 (与两张详情页同一个口径), 这里只决定"这一行说哪些":
+    // 读数条是小抽屉里的 11px 单行, 只放精度 + 城区中心点那一条 —— 因为 ±6 米
+    // 看着像能直接导航, 必须当场说清那个点指的是"城"而不是路口。
+    // 精度未知就整段不写, 不编「±0 米」这种读数。
+    function _precisionNote(precisionM, coordSource) {
+        var parts = []
+        var p = CommonOptions.coordPrecisionLabel(Number(precisionM) || 0)
+        if (p.length > 0) parts.push(p)
+        if (coordSource === "city_center") parts.push(CommonOptions.coordSourceLabel(coordSource))
+        return parts.length ? "  ·  " + parts.join("  ·  ") : ""
+    }
+
+    // 这条"线"到底是什么。库里没有路径点时只有起终点, 画出来是示意直线, 把它
+    // 写成「2 个点」会被当成一条测过的轨迹 —— 违反「不给假读数」。
+    // 只剩一个端点可用时(终点坐标被数据侧判为不可信, 或库里就没填)连线都画不出,
+    // 只有 S 标记, 读数要说的是这件事。
+    function _pathNote(o) {
+        if (o.path.length < 2) return "  ·  仅起点有坐标"
+        if (o.approx === true) return "  ·  起终点直线示意"
+        return "  ·  GPS 实测轨迹 " + o.path.length + " 点"
     }
 
     // 2026-09-19: 启动时申请关键权限 (位置 + 相机). MapPage 是主页,
-    //   PositionSource 需要 ACCESS_FINE_LOCATION 才能拿到 GPS,
+    //   EmergencyService 的定位读数需要 ACCESS_FINE_LOCATION 才能拿到 GPS,
     //   拍照按钮需要 CAMERA. Android 6+ 必须在运行时申请, Manifest 声明不够.
     //   走 androidPlatform.checkPermission / requestPermission (C++ 端真 JNI,
     //   不再是 stub). 已授权直接 callback(true), 未授权弹系统框, 异步回调.
@@ -257,6 +422,9 @@ Page {
         //   的 onDestruction 先跑、本页 onCompleted 后跑, 这个先后顺序保证 active 不会被
         //   后一页关掉后又不打开. 与 ①营地 / ⑤求助 同一套写法.
         if (compassSensor) compassSensor.active = true
+        // 2026-10-22 #98: 位置流改由 EmergencyService 提供 (本页的 PositionSource 已删),
+        // 所以进页要自己起流 —— 与 ①营地 / ②图鉴 / ⑤求助 同一句写法.
+        if (emergencyService) emergencyService.requestLocationUpdate()
         // 处理入口 props
         if (pendingRouteId) {
             Qt.callLater(function() {
@@ -273,8 +441,12 @@ Page {
                 }
             })
         }
+        // 2026-10-29 (问题2): 复原上次的选中集 (路线/自驾/轨迹). 排在入口 props 之后:
+        //   pendingRouteId 那一条要先落进 selectedRouteIds, 复原循环才会跳过它而不是把它
+        //   当成"没选过"再 toggle 一次 (toggle 会把它取消掉).
+        Qt.callLater(mapPage._restoreSelection)
         // 2026-09-19: 申请运行时权限 (ACCESS_FINE_LOCATION + CAMERA)
-        // Qt.callLater 等 PositionSource 完成 active 切换再调, 避免启动期 Qt 主线程忙
+        // Qt.callLater 把申请推到本页渲染完成之后, 免得启动期 Qt 主线程忙时弹窗排队
         Qt.callLater(mapPage._ensurePermissions)
 
         // 2026-09-20: 物种危险等级缓存初始化. 之前在 marker delegate 的 _lvl binding
@@ -304,15 +476,17 @@ Page {
         map.zoomLevel = Math.max(map.zoomLevel, 13)
     }
 
-    // 「目标」Tab 里点一行 → 把地图挪到那个点, 抽屉收起来让罗盘重新对上.
+    // 「目标」Tab 里点一行 → 把地图挪到那个点, 面板**收到入口条** (两档工作台, 2026-10-28).
     //   只挪中心不改缩放档位太多: 用户可能已经在看全局, 跳到 z16 反而丢上下文.
+    //   原来这里 close() 是把整个抽屉关掉 —— 两档制下 close() 意味着"工作台没了,
+    //   得重新点把手才回得来"; 收一档 (fold) 保留四格入口, 地图也立刻露出来.
     function focusTarget(t) {
         if (!t) return
         var la = Number(t.lat), lo = Number(t.lon)
         if (!mapPage._validCoord(la, lo)) return
         map.center = QtPositioning.coordinate(la, lo)
         map.zoomLevel = Math.max(map.zoomLevel, 14)
-        bottomSheet.close()
+        bottomSheet.fold()
     }
 
     // 2026-10-09: 重载物种标注 (MapItemView.model = speciesLocations 绑定).
@@ -325,22 +499,109 @@ Page {
         }
     }
 
-    function annotateHere() {
-        // 在地图中心插一个物种标注 (默认类别 photo, 物种 id 留空).
-        // 2026-10-19: 改用 viewLat/viewLon —— 这是"标注这里"的按钮, 用户先把地图拖
-        //   到目标位置再点, 原来取的是 GPS 位置 (无权限时恒为默认北京), 标的永远
-        //   不是看的那个点.
-        // 2026-10-20 #61 修参数: addSpeciesLocation 的签名是
-        //   (speciesId, speciesName, category, lat, lon, altitude, note), 原来只传 5 个
-        //   位置参数 → viewLat 落进 category, viewLon 落进 lat, "manual" 落进 lon 被转成
-        //   0. 写出去的标注全在 (lon≈0) 大西洋上, ①营地 方位条因此指错方向.
-        // 返回值也是 Result 信封 {ok,value}, 不是 bool —— 旧 `if (ok)` 恒真.
-        var res = mapService.addSpeciesLocation("", "", "", viewLat, viewLon, 0, "manual")
-        if (res && res.ok) {
-            console.log("annotateHere: ok at", viewLat, viewLon)
-        } else {
-            console.warn("annotateHere failed:", res && res.error ? res.error.message : res)
+    // 2026-10-29 (问题2): 选中集回写窗口会话 (见 Main.qml 的 mapSel*) . 底栏切格与
+    //   换底图都会重建本页, 页内的坐标数组活不过重建 —— 不写出去, 重建后地图上就只剩
+    //   从盘上重读的物种标注, 用户读作"有标注没有线".
+    function _persistSelection() {
+        if (!mapPage._selectionRestored) return
+        var w = mapPage._appWin
+        if (!w) return
+        var routes = [], travels = []
+        for (var i = 0; i < mapPage.routeOverlays.length; ++i) {
+            var o = mapPage.routeOverlays[i]
+            // 自驾借用了路线那一套 overlay, 复原时要走 travelService, 所以分开记
+            if (o.kind === "travel") travels.push(o.id)
+            else routes.push(o.id)
         }
+        var tracks = []
+        for (var k = 0; k < mapPage.trackOverlays.length; ++k)
+            tracks.push(mapPage.trackOverlays[k].id)
+        w.mapSelRouteIds = routes
+        w.mapSelTravelIds = travels
+        w.mapSelTrackIds = tracks
+    }
+    // 只挂这两条: 所有加/删线最终都落在两个 overlay 数组上 (selectedXxxIds 是它们的影子).
+    onRouteOverlaysChanged: mapPage._persistSelection()
+    onTrackOverlaysChanged: mapPage._persistSelection()
+
+    // 2026-10-29 (问题2): 进页时按 id 复原上一次的选中集. 查不到的 (已删) 只打日志:
+    //   进页先弹三条"复原失败"比丢线更烦人. 轨迹走 silent 一档, 同理.
+    function _restoreSelection() {
+        var w = mapPage._appWin
+        var rids = (w && w.mapSelRouteIds) ? w.mapSelRouteIds : []
+        var vids = (w && w.mapSelTravelIds) ? w.mapSelTravelIds : []
+        var kids = (w && w.mapSelTrackIds) ? w.mapSelTrackIds : []
+        var i
+        for (i = 0; i < rids.length; ++i) {
+            if (mapPage.selectedRouteIds.indexOf(rids[i]) >= 0) continue
+            var r = routeService.getById(rids[i])
+            if (r && r.id) mapPage.addOrToggleRoute(r)
+            else console.warn("[map] 复原路线失败: " + rids[i])
+        }
+        for (i = 0; i < vids.length; ++i) {
+            if (mapPage.selectedRouteIds.indexOf(vids[i]) >= 0) continue
+            var t = travelService.getById(vids[i])
+            if (t && t.id) mapPage.addOrToggleTravel(t)
+            else console.warn("[map] 复原自驾失败: " + vids[i])
+        }
+        for (i = 0; i < kids.length; ++i) {
+            if (mapPage.selectedTrackIds.indexOf(kids[i]) >= 0) continue
+            mapPage.addOrToggleTrack(kids[i], null, true)
+        }
+        mapPage._selectionRestored = true
+        // 入口 props (pendingRouteId 等) 带进来的那一条不在窗口列表里, 复原完再回写一次,
+        // 否则下一次重建又会把它弄丢.
+        mapPage._persistSelection()
+        if (mapPage.routeOverlays.length + mapPage.trackOverlays.length > 0)
+            mapPage.fitBoundsToRoutes()
+    }
+
+    // 2026-10-29 (问题6): 删掉一条"在哪儿见过"的标注. 数据侧只删 species_<id>.json,
+    //   物种本身在图鉴里不受影响; 删完 C++ 会 emit dataChanged, 上面的 Connections 负责
+    //   把盘上标记与列表刷掉, 这里不重复 reload.
+    function deleteMarkedSpecies(locId) {
+        if (!locId) {
+            // 老数据 (旧「标注这里」写进来的那批) 的文件名里没有这条 id, 删不了
+            toast.warn("这条标注没有文件 id, 删不掉")
+            return
+        }
+        var res = mapService.deleteSpeciesLocation(locId)
+        if (res && res.ok) {
+            // 详情弹层正指着这条标注, 留着它就是在展示一条已经不存在的数据
+            markerDetailDialog.close()
+            toast.success("已删除这条标注")
+        } else {
+            console.warn("deleteSpeciesLocation failed:",
+                         res && res.error ? res.error.message : res)
+            toast.error("删除失败: "
+                        + ((res && res.error && res.error.message) || "接口没给原因"))
+        }
+    }
+
+    // 2026-10-26「精度到 1 m」: 标注弹层里说清这一点准不准. 老数据没有 accuracy /
+    //   altitude 键 (新写路径"未知就不写那一键"), 这时整段不出现 —— 补个 "±0 m"
+    //   会被读成"这个点极准", 那是假读数.
+    function markPrecision(m) {
+        var out = ""
+        var acc = Number(m.accuracy)
+        if (isFinite(acc) && acc > 0) out += " · ±" + Math.round(acc) + " m"
+        var alt = (m.altitude === undefined || m.altitude === null)
+                    ? Number.NaN : Number(m.altitude)
+        if (isFinite(alt)) out += " · 高程 " + Math.round(alt) + " m"
+        if (out === "") out = " · 该点没有精度/高程读数"
+        return out
+    }
+
+    function annotateHere() {
+        // 2026-10-26 A27 真机: 这颗按钮原来直接落盘一条 speciesId / name / category
+        //   三个全空的标注, 后果是点开弹层只剩"物种标注 + 经纬度", ①营地方位条里堆
+        //   一串「未命名标注」(机上 28 条全是这么来的) —— 用户按了等于没拿到任何可读
+        //   信息. 它和长按选点本来就是同一件事, 所以改成把当前视野中心交给同一个
+        //   「添加标注」对话框, 由对话框选类别/物种后再写 (那条路径实测是好的).
+        // 坐标取 viewLat/viewLon: 这是"标注这里", 用户先把地图拖到目标再点, 所以不能用
+        //   GPS 位置 (无权限时恒为写死的北京默认值). 两者由 viewportCommitTimer 同步.
+        mapPage.pendingAnnotateCoord = map.center
+        addAnnotateDialog.open()
     }
 
     function onPhotoTaken(uri) {
@@ -349,13 +610,16 @@ Page {
             // 提取 EXIF GPS + 加到 mapService
             var exif = mapService.extractExif(uri.replace("file://", ""))
             if (exif && exif.lat && exif.lon) {
-                mapService.addSpeciesLocation("", "", "", exif.lat, exif.lon, 0,
-                                              "field_guide")
+                // 照片 EXIF 里只有经纬度, 没有 ± 精度也没有可信高程 —— 传 NaN,
+                // 那一键整条不写 (2026-10-26「精度到 1 m」; 原来这里写死 0)
+                mapService.addSpeciesLocation("", "", "", exif.lat, exif.lon,
+                                              Number.NaN, "field_guide", Number.NaN)
             } else if (mapPage.hasFix) {
                 // 没 EXIF 就用自己的定位; 两者都没有就不写 —— currentLat/Lon 在无授权时
                 // 是写死的北京默认值, 标上去等于给用户攒一批假点 (同 ③ 详情页规则②).
-                mapService.addSpeciesLocation("", "", "", currentLat, currentLon, 0,
-                                              "field_guide")
+                // 这条走的是 GPS, 高程与 ± 精度都是实测值, 原样带给 C++.
+                mapService.addSpeciesLocation("", "", "", currentLat, currentLon,
+                                              mapPage.altM, "field_guide", mapPage.accM)
             } else {
                 console.warn("onPhotoTaken: 无 EXIF 且无定位, 不写标注")
             }
@@ -369,34 +633,8 @@ Page {
         z: -1
     }
 
-    // 2026-09-19: 启动系统定位, 把实时经纬度/航向写回 mapPage 字段
-    // 之前 currentLat/currentLon/currentHeading 只是默认值 (北京), 从未更新,
-    // 所以 hasFix 永远 false, 中心点 marker 一直停在默认位置. 加 PositionSource
-    // 后有 GPS 时自动 updatePosition, 没 GPS 时保持默认值 + 提示用户.
-    PositionSource {
-        id: positionSource
-        active: true
-        preferredPositioningMethods: PositionSource.AllPositioningMethods
-        updateInterval: 2000
-        onPositionChanged: {
-            if (position.coordinate && position.coordinate.isValid) {
-                mapPage.currentLat = position.coordinate.latitude
-                mapPage.currentLon = position.coordinate.longitude
-                if (position.direction >= 0) {
-                    mapPage.currentHeading = position.direction
-                }
-                mapPage.hasFix = true
-                // 2026-10-19: 这里不再自动把 map.center 拉过来. center 原来绑
-                //   currentLat/Lon, 定位每 2s 写一次就把用户刚拖完的地图拽回原位.
-                //   现在定位只更新蓝点 (currentLat/Lon), 要看自己位置就点"我的位置".
-            }
-        }
-        onSourceErrorChanged: {
-            if (sourceError !== PositionSource.NoError) {
-                console.log("MapPage PositionSource error:", sourceError)
-            }
-        }
-    }
+    // 2026-10-22 #98: 本页自己的 PositionSource 已删, 位置只从 emergencyService 读
+    // (见文件头那组属性绑定). 起流在 Component.onCompleted 里调 requestLocationUpdate().
 
     // 2026-10-09: 底图「真多源切换」. Qt6 OSM plugin 只在 Map.plugin 赋值瞬间
     //   读取 PluginParameter, 运行期改 .value 无效; 且 OSM plugin 通常只有 1 个
@@ -492,7 +730,7 @@ Page {
         w.mapViewZoom = map.zoomLevel
         // 不能在本页自己的点击回调里同步销毁自己: stackView.clear(Immediate) 会
         //   当场 delete 掉此刻还在 JS 调用栈上的这个 Page → callLater 等本轮返回.
-        Qt.callLater(function () { w.restartBand("route") })
+        Qt.callLater(function () { w.restartBand("map") })
     }
 
     // 2026-10-16: 底图可达性探测 (真正的白底兜底).
@@ -661,6 +899,9 @@ Page {
                          ? QtPositioning.coordinate(mapPage.pendingFocusLat, mapPage.pendingFocusLon)
                          : QtPositioning.coordinate(mapPage.viewLat, mapPage.viewLon)
             map.zoomLevel = mapPage.currentZoom
+            // 2026-10-23 #103: 首档区间要预热 (上面 zoomLevel 若与初值相同不会发 changed,
+            // 就轮不到 onZoomLevelChanged 里那次 reset). 官方同理, MapView.qml:52.
+            map.resetPinchMinMax()
         }
         // 2026-10-16: supportedMapTypes 在 plugin 赋值后异步重建 → 每次刷新都兜底
         //   把激活类型切到 Custom URL Map (覆盖 callLater 时序未命中的情况).
@@ -691,12 +932,40 @@ Page {
         // onCenterChanged / onZoomLevelChanged.
         minimumZoomLevel: 3
         maximumZoomLevel: 18
-        bearing: mapPage.hasFix ? mapPage.currentHeading : 0
+        // 2026-10-22 #98: 原来这里写 hasFix ? currentHeading : 0, 而 currentHeading 只由
+        // 本页那个从没出过数的 PositionSource 提供 → 真机上恒为 0, 地图一直是正北朝上.
+        // 删掉 PositionSource 之后保持这个观感 (用户评审的截图就是正北朝上): 让地图跟着
+        // 罗盘转是另一件事, 要改得先出稿看过再定, 不在这一轮顺手改.
+        bearing: 0
 
         // 可视范围 → mapPage.viewLat/viewLon/viewZoom. 用定时器合并一次连续拖动/捏合,
         // 只在一阵操作停下来之后提交一次, 避免「目标」Tab 每帧重查.
         onCenterChanged: viewportCommitTimer.restart()
-        onZoomLevelChanged: viewportCommitTimer.restart()
+        onZoomLevelChanged: {
+            viewportCommitTimer.restart()
+            // 2026-10-23 #103: 档位一变就重算捏合的倍率区间 (官方 MapView.qml:67 同一件事).
+            // 捏合轴是"相对当前 zoom 的倍率", 不重算的话下一次捏合还拿着上一档的区间.
+            // pinchAdjustingZoom 用来跳过"捏合自己改 zoom"的那一帧 —— 否则手势进行中
+            // 每帧被 resetPinchMinMax 把 persistentScale 打回 1, 地图会在两指下一跳一停.
+            if (!map.pinchAdjustingZoom) map.resetPinchMinMax()
+        }
+
+        // 2026-10-23 #103 真机 ("可以手动移动, 但不能双指缩放"): 搬 MapView 的时候只搬了
+        //   两个处理器, 没搬它这套区间初始化 —— 原来只在 onActiveChanged 里算
+        //   scaleAxis.minimum/maximum, 而捏合轴在**手势开始前**就要有合法区间
+        //   (官方是 Component.onCompleted + onZoomLevelChanged 两处算, MapView.qml:52/67).
+        //   区间没预热时, 处理器算不出可用的 scale 变化, 表现正是"两指按下地图不动".
+        property bool pinchAdjustingZoom: false
+
+        function resetPinchMinMax() {
+            mapZoomHandler.persistentScale = 1
+            // 与官方的唯一差别: 官方在指数上加了 ±1 的余量 (MapView.qml:74~75).
+            // 这里不加 —— 倍率轴的 1.0 是"两指没动"的中性值, 地图已经顶到档位边界时
+            // (zoom == minimumZoomLevel) 带余量的 minimum 会变成 2, 轴把中性值夹到 2 上,
+            // 手指刚按下还没捏就白跳一档. 越界由 onScaleChanged 里的显式夹取兜住.
+            mapZoomHandler.scaleAxis.minimum = Math.pow(2, map.minimumZoomLevel - map.zoomLevel)
+            mapZoomHandler.scaleAxis.maximum = Math.pow(2, map.maximumZoomLevel - map.zoomLevel)
+        }
 
         // 2026-09-21: 地图错误提示条. 之前白底时用户看不到任何反馈.
         // 2026-10-19 改版 (3.jpg): 原来底部通栏实心红 + 200 字诊断串, 既压住右下
@@ -793,16 +1062,102 @@ Page {
         //   同一屏两个罗盘互相抢读法, 而中心环跟着平移缩放走, 低 zoom 下字号糊.
         //   朝向读数只保留 MapInstrumentOverlay 里那一个 Dial.
 
-        // 当前点
+        // 当前位置 (2026-10-26 真机: "个人位置原点无方向指示 / 移动不能实时变化"):
+        //   原来这颗点是一颗 14px 实心 Rectangle —— 既没有朝向, 也不说"这个点有多准".
+        //   现在三层: 精度圈 (±acc 按当前比例尺换算成像素) + 方向楔 (罗盘优先, 罗盘
+        //   不出数时用 GPS 航向) + 蓝点本体. 两个附加层只在真有这个数时才画: 没精度
+        //   读数不画圈, 罗盘与航向都没有就不画楔 (规则: 不给一个 0° 的假方向).
         MapQuickItem {
+            id: meMarker
             coordinate: QtPositioning.coordinate(mapPage.currentLat, mapPage.currentLon)
-            sourceItem: Rectangle {
-                width: 14
-                height: 14
-                radius: 7
-                color: CommonOptions.colorAccent
-                border.color: CommonOptions.colorTextOnAccent
-                border.width: 2
+            anchorPoint.x: meItem.width / 2
+            anchorPoint.y: meItem.height / 2
+            sourceItem: Item {
+                id: meItem
+
+                // ±acc (米) → 屏幕像素. 中心点纬度算的比例尺, 点位与中心差几屏宽度
+                //   以内误差不到 1%, 不值得为此再引一层投影.
+                readonly property real ringPx: {
+                    if (!isFinite(mapPage.accM) || mapPage.accM <= 0) return 0
+                    if (!isFinite(mapPage._metersPerPixel) || mapPage._metersPerPixel <= 0) return 0
+                    return Math.min(400, mapPage.accM / mapPage._metersPerPixel)
+                }
+                readonly property bool showRing: ringPx >= 4
+                readonly property real dirDeg: mapPage.effHeadingDeg
+                readonly property bool showDir: mapPage.hasEffHeading
+
+                // 56 = 装下 26px 长的方向楔; Canvas 会把超出自身边界的绘制裁掉,
+                //   所以Item 要在"只画楔不画圈"时也大过那颗 14px 的点.
+                width: Math.max(14, showDir ? 56 : 0, 2 * ringPx)
+                height: width
+
+                Canvas {
+                    id: meCanvas
+                    anchors.fill: parent
+                    antialiasing: true
+
+                    // Canvas 只因为它"自己的"属性变化而重画. dirDeg/ringPx 挂在
+                    //   meItem 上, 必须在本地引一份再各自 requestPaint —— 直接 onPaint
+                    //   里读 meItem 会画一次就再也不刷 (同 Dial.qml 的 Connections 那条坑).
+                    property real dir: meItem.dirDeg
+                    property real ring: meItem.ringPx
+                    property bool hasRing: meItem.showRing
+                    property bool hasDir: meItem.showDir
+                    onDirChanged: requestPaint()
+                    onRingChanged: requestPaint()
+                    onHasRingChanged: requestPaint()
+                    onHasDirChanged: requestPaint()
+                    onWidthChanged: requestPaint()
+                    onHeightChanged: requestPaint()
+                    Component.onCompleted: requestPaint()
+
+                    function pt(deg, r) {
+                        // 屏幕 y 向下, "北=上"要减 90° (与方位盘同一套换算)
+                        var a = (deg - 90) * Math.PI / 180
+                        return [width / 2 + r * Math.cos(a), height / 2 + r * Math.sin(a)]
+                    }
+
+                    onPaint: {
+                        var ctx = getContext("2d")
+                        ctx.reset()
+                        var cx0 = width / 2
+                        var cy0 = height / 2
+
+                        // 1. 精度圈
+                        if (hasRing && ring > 0) {
+                            ctx.beginPath()
+                            ctx.arc(cx0, cy0, ring, 0, 2 * Math.PI)
+                            ctx.fillStyle = CommonOptions.css(CommonOptions.colorAccent, 0.14)
+                            ctx.fill()
+                            ctx.lineWidth = 1
+                            ctx.strokeStyle = CommonOptions.css(CommonOptions.colorAccent, 0.55)
+                            ctx.stroke()
+                        }
+
+                        // 2. 方向楔: 信号橙, 与盘上的指针同色 —— 同一个"朝向"语义
+                        if (hasDir) {
+                            var tip = pt(dir, 26)
+                            var left = pt(dir - 34, 7)
+                            var right = pt(dir + 34, 7)
+                            ctx.beginPath()
+                            ctx.moveTo(tip[0], tip[1])
+                            ctx.lineTo(left[0], left[1])
+                            ctx.lineTo(right[0], right[1])
+                            ctx.closePath()
+                            ctx.fillStyle = CommonOptions.css(CommonOptions.colorBlaze)
+                            ctx.fill()
+                        }
+
+                        // 3. 点本体 (2px 描边保证压在浅色底图上还看得清)
+                        ctx.beginPath()
+                        ctx.arc(cx0, cy0, 7, 0, 2 * Math.PI)
+                        ctx.fillStyle = CommonOptions.css(CommonOptions.colorAccent)
+                        ctx.fill()
+                        ctx.lineWidth = 2
+                        ctx.strokeStyle = CommonOptions.css(CommonOptions.colorTextOnAccent)
+                        ctx.stroke()
+                    }
+                }
             }
         }
 
@@ -825,26 +1180,10 @@ Page {
                     // (species_locations 没存 dangerLevel, 这里查 speciesService 反推)
                     // 2026-09-20 修: 缓存初始化放到 mapPage.onCompleted, _dangerLevel
                     //   不再写 mapPage 属性, 避免 binding loop
-                    readonly property int _lvl: {
-                        if (mapPage._speciesCache === null) return -1  // 缓存未就绪
-                        var spId = modelData.speciesId
-                        if (spId && mapPage._speciesCache[spId] !== undefined) {
-                            return mapPage._speciesCache[spId]
-                        }
-                        // 按类别 + 名称关键词估算
-                        var cat = (modelData.speciesCategory || "").toLowerCase()
-                        var name = (modelData.speciesName || "") + " " + (modelData.note || "")
-                        if (cat === "snake") return 5
-                        if (cat === "mushroom") return 4
-                        if (cat === "insect") {
-                            if (name.indexOf("蜂") >= 0 || name.indexOf("蝎") >= 0) return 5
-                            if (name.indexOf("蚂蚁") >= 0) return 3
-                            return 2
-                        }
-                        if (name.indexOf("毒") >= 0) return 5
-                        if (name.indexOf("危险") >= 0) return 4
-                        return 0
-                    }
+                    // 2026-10-23 #82①: 这段反查体 (含类别/关键词兜底) 原样搬进
+                    //   mapPage.dangerLevelOf(), 盘与「目标」Tab 同读一份 —— 以前它只有
+                    //   圆点有, 于是同一条毒蛇在盘上是"无危险"灰.
+                    readonly property int _lvl: mapPage.dangerLevelOf(modelData)
                     color: {
                         // 缓存未就绪时用灰色, 避免 binding loop
                         if (_lvl < 0) return CommonOptions.colorTextDisabled
@@ -876,15 +1215,38 @@ Page {
                             mapPage.markerDetailKind = "species"
                             // 2026-10-19: Dialog.title 走应用默认字体, PUA 码位在这里是方框;
                             //   而且该串还会被 encodeURIComponent 拼进 geo: URI. 只留纯文字.
-                            mapPage.markerDetailTitle = "物种标注"
+                            // 2026-10-26 A27: 标题原来硬写 "物种标注" —— 用户点开只看到
+                            //   类别名而看不到是哪个物种. 有名报名, 没名如实说没名
+                            //   (不给假读数, 也不硬套一个物种名).
+                            mapPage.markerDetailTitle = modelData.speciesName
+                                                        || "未命名标注"
                             mapPage.markerDetailSub = "经纬度: " +
                                 modelData.lat.toFixed(5) + ", " +
                                 modelData.lon.toFixed(5)
+                                + mapPage.markPrecision(modelData)
+                            mapPage.markerDetailSpeciesId = modelData.speciesId || ""
+                            mapPage.markerDetailCategory = modelData.speciesCategory || ""
+                            mapPage.markerDetailDanger = mapPage.dangerLevelOf(modelData)
+                            // 2026-10-29 (问题6): 弹层要能删掉"这一条标注", 句柄是
+                            //   species_<id>.json 的 id, 不是图鉴的 speciesId.
+                            mapPage.markerDetailLocationId = modelData.id || ""
                             mapPage.markerDetailRouteId = ""
                             mapPage.markerDetailCoord = QtPositioning.coordinate(
                                 modelData.lat, modelData.lon)
-                            mapPage.markerDetailNote = modelData.note || ""
-                            mapPage.markerDetailSource = modelData.source || ""
+                            // 记录里没有 source 字段 (src/map/MapService_species.cpp:43-55
+                            // 写的是 id/speciesId/speciesName/speciesCategory/lat/lon/
+                            // altitude/note/takenAt/dangerLevel), 而两条旧写路径把内部键
+                            // ("manual" / "field_guide") 塞进了 addSpeciesLocation 的第 7
+                            // 参 = note. 所以这一层把它们翻回人话, 真备注与内部键不混排;
+                            // 「来源」那行以前读 modelData.source (恒 undefined) → 永远显示
+                            // "(手动)", 那是假读数, 现在按 note 里的实际内部键报.
+                            var noteRaw = modelData.note || ""
+                            var internal = noteRaw === "field_guide" || noteRaw === "camera"
+                                           ? "拍照记录"
+                                           : (noteRaw === "manual" ? "手动标注" : "")
+                            mapPage.markerDetailNote = internal.length > 0 ? "" : noteRaw
+                            mapPage.markerDetailSource = internal
+                            mapPage.markerDetailTime = modelData.takenAt || ""
                             markerDetailDialog.open()
                         }
                     }
@@ -919,7 +1281,7 @@ Page {
                         anchors.centerIn: parent
                         text: modelData.label
                         color: CommonOptions.colorTextOnAccent
-                        font.pixelSize: 11
+                        font.pixelSize: styles.fsMd
                         font.bold: true
                     }
                     MouseArea {
@@ -933,6 +1295,7 @@ Page {
                                 modelData.coord.longitude.toFixed(5)
                             mapPage.markerDetailRouteId = modelData.routeId
                             mapPage.markerDetailCoord = modelData.coord
+                            mapPage.markerDetailLocationId = ""
                             markerDetailDialog.open()
                         }
                     }
@@ -956,7 +1319,7 @@ Page {
                         anchors.centerIn: parent
                         text: "!"
                         color: CommonOptions.colorTextOnAccent
-                        font.pixelSize: 10
+                        font.pixelSize: styles.fsSm
                         font.bold: true
                     }
                     MouseArea {
@@ -969,6 +1332,7 @@ Page {
                                 modelData.coord.longitude.toFixed(5)
                             mapPage.markerDetailRouteId = modelData.routeId
                             mapPage.markerDetailCoord = modelData.coord
+                            mapPage.markerDetailLocationId = ""
                             markerDetailDialog.open()
                         }
                     }
@@ -1005,6 +1369,50 @@ Page {
             }
         }
 
+        // 2026-10-29 (问题2): 单点轨迹的落点. MapPolyline 少于 2 点不画, 而只有 1 个
+        //   有效点的轨迹在列表里照样是"已加载" —— 不给这颗点就真的什么都没有.
+        //   形状同路线 S/E 标记 (圆点 + 白描边), 小了半档: 它是一个点, 不是一个端点.
+        Repeater {
+            model: mapPage.trackMarkers
+            delegate: MapQuickItem {
+                required property var modelData
+                coordinate: modelData.coord
+                anchorPoint.x: 6
+                anchorPoint.y: 6
+                sourceItem: Rectangle {
+                    width: 12
+                    height: 12
+                    radius: 6
+                    color: modelData.color
+                    border.color: CommonOptions.colorTextOnAccent
+                    border.width: styles.lineHair * 2
+                }
+            }
+        }
+
+    }
+
+    // ── Map 的手势层 (长按 / 捏合 / 平移) ─────────────────────────────────
+    // 2026-10-23 #105: 这三件原来直接挂在 Map 里, 而 Map 铺满整页 —— 抽屉拉开后
+    // 它仍然"包含"落在卡片上的触点. qquickdeliveryagent.cpp:2002 pointerTargets()
+    // 会把树里**所有**含该触点的 item 拍平成按绘制序优先的列表, 卡片上没人接手的那
+    // 次按下会继续往下命中地图的处理器; 之后 deliverUpdatedPoints (:2078) 只把后续
+    // move 发给独占抓握者 → 谁先抢到这一笔, 谁拿走整笔手势. 真机实测: 手指在卡片上
+    // 滑, 盘心 36.4157→36.3040, 列表一行没动.
+    // 处理器唯一的"占地"开关是 parentItem 的几何 (qquickpointerhandler.cpp:786
+    // wantsEventPoint → parentContains; handler 自己 0×0 不参与判断), 所以把它们挪
+    // 进这块与 Map 同原点、同尺寸的手势层, 抽屉一开就让开抽屉的高度: 卡片里的触点
+    // 根本不进候选表, 列表与按钮按自己的规则保住抓握, 地图只剩上面那块.
+    // 长按一并挪进来 —— 之前按住卡片空白 0.5 秒也会弹「添加标注」, 同一个因.
+    // 换算不用跟着改: centroid.position / point.position 是 parentItem 坐标, 而本层
+    // 与 Map 同原点 (只减底边高, 不动原点). offscreen 探针实测 Map::toCoordinate 吃的
+    // 正是 item 坐标 —— 400×400 的 Map 放在 scene(60,200), fromCoordinate(center) 得
+    // 200,200 而不是 260,400.
+    Item {
+        id: mapGestureLayer
+        anchors.fill: parent
+        anchors.bottomMargin: bottomSheet.opened ? bottomSheet.height : 0
+
         // 2026-09-15: 长按地图 → 在长按点添加物种标注
         // 2026-10-21 #78 (A6 真因): 原来这行写的是 `gesturePolicy: TapHandler.ReleaseWithinBounds`,
         //   而 Qt 6 的 QQuickPointerTapHandler::wantsGrab() 里只有默认的 DragThreshold 走
@@ -1029,9 +1437,86 @@ Page {
             }
         }
 
-        // 2026-09-17: 双指缩放 - Qt 6.7 Map 控件自身已支持双指缩放手势, 无需自定义
-        // 之前自定义 PinchHandler + onPinchUpdated/Finished 在 qmlcachegen 静态编译下
-        // 报 "non-existent property" 让 MapPage 加载失败, 现在彻底删除
+        // 2026-10-23 #78 (A1 收口): 平移与捏合的手势引擎.
+        // 为什么前两轮修完现象不变: Qt 6.7 的 `Map` 类型自己一个手势件都没有 ——
+        // 官方那个"可交互地图" MapView.qml 就是在 Map 里面手写 DragHandler +
+        // PinchHandler 拼出来的 (见 /opt/Qt/6.7.2/gcc_64/qml/QtLocation/MapView.qml).
+        // #43 解的是 center/zoomLevel 声明式绑定锁死, #78 解的是 TapHandler 独占抓握
+        // 饿死地图, 两条都只是在清障, 引擎一直没人补 → "只有手指拖不动, +/- 与程序
+        // 改 center 都正常". 下面两块照 MapView 的写法搬过来.
+        //
+        // 没搬的三样, 都不是嫌麻烦:
+        //   - 惯性动画: 要额外 import Qt.labs.animation;
+        //   - BoundaryRule on zoomLevel: MapView 用它兜档位, 但 **BoundaryRule 就注册在
+        //     Qt.labs.animation 里** (QtLabsAnimation/private/qquickboundaryrule_p.h 的
+        //     QML_NAMED_ELEMENT), 而这个模块在 Android Qt 安装目录里根本没有
+        //     (容器实测 `ls /opt/Qt/6.7.2/android_arm64_v8a/qml | grep -i labs` = 空),
+        //     所以搬不过来. 而 offscreen 探针证实 `Map` 自己**不**夹档位
+        //     (maximumZoomLevel: 18 时赋 25 仍是 25), 越界档位的直接后果就是取不存在
+        //     的瓦片层级 → 白屏, 与 #14/#21 是同一个观感. 于是下面 onScaleChanged 里
+        //     显式夹一次. 另外两条写 zoomLevel 的路本来就夹过: stepZoom() 越界直接
+        //     return, CommonOptions::fitBounds 用 qBound(minZoom, z, maxZoom).
+        //   - tilt / 旋转: 本页 bearing 固定正北 (见上), 两指旋转是另一件事, 要改先出稿评审.
+        // 2026-10-23 真机 (用户: "可以手动移动, 但不能双指缩放") #103. 当时改了两处, 只有
+        //   ① 是在 Qt 6.7 源码里证实的, ② 如实标成未证实:
+        //   ① 证实: 倍率区间从来没在手势之外预热过 —— 官方 MapView.qml 是在
+        //      Component.onCompleted(:52) 与 onZoomLevelChanged(:67) 两处算
+        //      resetPinchMinMax 的, 搬过来时这两处全漏了, 只在 onActiveChanged 里算.
+        //      现在补成 map.resetPinchMinMax() (见上面 bearing: 0 之后那段).
+        //   ② 未证实: 把 PinchHandler 挪到 DragHandler 前面, 与官方 78/128 行的顺序一致.
+        //
+        // 2026-10-26 A32 真机复验: 用户手动捏合后, stage0.log 里 **一条 [pinch] 都没有**
+        //   (同会话有 `[map] speciesMarkers=28`, 证明 console.log 是入库的) → active 从未
+        //   翻转, 也就是两指从来没凑成一次合格的多点抓握. ① 早就在码里却现象不变, ② 换
+        //   顺序也没换来结果 —— 真因是当年那行 grabPermissions 写反了方向:
+        //   PointerHandler.TakeOverForbidden 的含义是"**本**处理器不许去抢别人", 不是
+        //   "别人不许来抢本处理器" (原注释理解反了). 于是第一根手指被 DragHandler 独占
+        //   平移之后, PinchHandler 抢不回来, eligiblePoints 永远停在 1, 与
+        //   qquickmultipointhandler.cpp 里"已被独占抓握的触点直接跳过"那条完全对得上.
+        //   现在删掉这行回到默认权限 (CanTakeOverFromItems | CanTakeOverFromHandlersOf
+        //   DifferentType), 与官方 MapView.qml 的 PinchHandler 一致 —— 它也没写这项.
+        //   担心的"长按标注打断捏合"不成立: 长按走的是 TapHandler.onLongPressed, 默认
+        //   权限下反过来是捏合能接管它, 方向是对的.
+        //   判据不变, 仍是下面这行日志: 复验必须看到 `active=true pts=2`, 看不到就说明
+        //   还有第二个拦路点 (往 parentItem 几何与上层浮层查, 见 #105 抽屉让位).
+        PinchHandler {
+            id: mapZoomHandler
+            target: null
+            // 捏合中心对应的经纬度: 一放大就以它为准把地图挪回去, 手指底下的地物不跑偏
+            // (类型名是 `geoCoordinate` 不是 C++ 的 QGeoCoordinate —— QtPositioning 就注册
+            //  了小写那一个, 写大写是加载期硬错误 "QGeoCoordinate is not a type", 整页白屏)
+            property geoCoordinate startCoord
+            onActiveChanged: {
+                if (active)
+                    mapZoomHandler.startCoord = map.toCoordinate(centroid.position, false)
+                // 真机查案用的唯一线索: 这个日志决定"两指到底有没有被送到处理器".
+                // 只在 active 翻转时打一行, 不在 onScaleChanged 里打 (那是逐帧的).
+                // 2026-10-28 A32 复盘: 这里原来写 activeTouchPoints —— Qt 6 没这个属性
+                //   (MultiPointHandler 的是 activeTouches). 整条表达式在 console.log 求值
+                //   阶段就抛 ReferenceError, 一行都出不来. 于是上一轮把"stage0.log 里 0 条
+                //   [pinch]"读成"handler 从未 active", 顺着这个假信号去改 grabPermissions,
+                //   而真机上手捏本来就能缩放 (用户 2026-10-27 复验). 判据要成立, 先得保证
+                //   这行日志本身打得出来.
+                console.log("[pinch] active=" + active + " pts=" + mapZoomHandler.activeTouches.length
+                            + " zoom=" + map.zoomLevel)
+            }
+            onScaleChanged: (delta) => {
+                // 与官方同款守卫: 这一步改 zoomLevel 不能反过来触发 onZoomLevelChanged
+                // 去 resetPinchMinMax —— 那会在手势进行中把 persistentScale 打回 1,
+                // 地图在两指下一跳一停.
+                map.pinchAdjustingZoom = true
+                var z = map.zoomLevel + Math.log2(delta)
+                map.zoomLevel = Math.min(Math.max(z, map.minimumZoomLevel), map.maximumZoomLevel)
+                map.alignCoordinateToPoint(mapZoomHandler.startCoord, centroid.position)
+                map.pinchAdjustingZoom = false
+            }
+        }
+
+        DragHandler {
+            id: mapPanHandler
+            target: null
+            onTranslationChanged: (delta) => map.pan(-delta.x, -delta.y)
+        }
     }
 
     // 2026-09-15: 长按地图后弹的"添加标注"对话框
@@ -1128,7 +1613,7 @@ Page {
                           mapPage.pendingAnnotateCoord.latitude.toFixed(6) + ", " +
                           mapPage.pendingAnnotateCoord.longitude.toFixed(6) : ""
                     color: CommonOptions.colorWarn
-                    font.pixelSize: 12
+                    font.pixelSize: styles.fsMd
                     font.bold: true
                     elide: Text.ElideRight
                 }
@@ -1138,7 +1623,7 @@ Page {
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 8
-                Text { text: "类别:"; color: CommonOptions.colorText; font.pixelSize: 12; Layout.preferredWidth: 50 }
+                Text { text: "类别:"; color: CommonOptions.colorText; font.pixelSize: styles.fsMd; Layout.preferredWidth: 50 }
                 ComboBox {
                     id: catCombo
                     Layout.fillWidth: true
@@ -1184,7 +1669,7 @@ Page {
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 8
-                Text { text: "物种:"; color: CommonOptions.colorText; font.pixelSize: 12; Layout.preferredWidth: 50 }
+                Text { text: "物种:"; color: CommonOptions.colorText; font.pixelSize: styles.fsMd; Layout.preferredWidth: 50 }
                 ComboBox {
                     id: speciesCombo
                     Layout.fillWidth: true
@@ -1216,8 +1701,13 @@ Page {
                 radius: 4
                 Text {
                     anchors.centerIn: parent
+                    // 必须自己限宽: 这条串最长能到"高危 (Lv4) - 某某某 · 按类别估, 未取物种记录",
+                    //   不限宽时它按自然宽度画出去, 两端溢出 36 高的色条压住弹层边框.
+                    width: parent.width - 2 * styles.spSm
+                    horizontalAlignment: Text.AlignHCenter
+                    elide: Text.ElideRight
                     color: CommonOptions.colorTextOnAccent
-                    font.pixelSize: 12
+                    font.pixelSize: styles.fsMd
                     font.bold: true
                     text: {
                         var lvl = addAnnotateDialog.computedDangerLevel
@@ -1244,17 +1734,21 @@ Page {
         function saveAndClose() {
             var c = mapPage.pendingAnnotateCoord
             if (!c) {
-                toast.error("坐标没取到, 请重新长按地图")
+                toast.error("坐标没取到, 请重新在图上选点")
                 return
             }
             // speciesId + speciesName 来自 selection, category 存类别名
+            // 2026-10-26「精度到 1 m」: 第 6/8 参 (altitude/accuracy) 原来一个都不传,
+            //   C++ 默认 0 直接落盘成"海平面 0 米 / 精度 0 米". 图上手选的点**没有**
+            //   高程也没有 ± 精度 (它不是 GPS 读数), 传 NaN 让那一键整条不写.
             var catKey = addAnnotateDialog.categoryKeys[addAnnotateDialog.selectedCategory] || "manual"
             var res = mapService.addSpeciesLocation(
                 addAnnotateDialog.selectedSpeciesId,
                 addAnnotateDialog.selectedSpeciesName,
                 catKey,
-                c.latitude, c.longitude, 0,
-                noteField.text)
+                c.latitude, c.longitude, Number.NaN,
+                noteField.text, Number.NaN,
+                addAnnotateDialog.computedDangerLevel)
             if (res && res.ok) {
                 addAnnotateDialog.close()
                 toast.success("已标注: " + (addAnnotateDialog.selectedSpeciesName
@@ -1268,20 +1762,12 @@ Page {
             }
         }
 
-        footer: RowLayout {
-            spacing: styles.spSm
-            Item { Layout.fillWidth: true }
-            OutlineButton {
-                text: "取消"
-                tone: CommonOptions.colorTextMuted
-                onClicked: addAnnotateDialog.close()
-            }
-            PrimaryButton {
-                text: "保存标注"
-                tone: CommonOptions.colorAccent
-                textSize: styles.fsMd
-                onClicked: addAnnotateDialog.saveAndClose()
-            }
+        footer: DialogFooter {
+            cancelText: "取消"
+            confirmText: "保存标注"
+            kind: "primary"
+            onCancel: addAnnotateDialog.close()
+            onConfirm: addAnnotateDialog.saveAndClose()
         }
     }
 
@@ -1296,14 +1782,12 @@ Page {
         Material.background: CommonOptions.colorSurface
         Material.foreground: CommonOptions.colorText
         padding: styles.spMd
-        footer: RowLayout {
-            spacing: styles.spSm
-            Item { Layout.fillWidth: true }
-            OutlineButton {
-                text: "关闭"
-                tone: CommonOptions.colorTextMuted
-                onClicked: markerDetailDialog.close()
-            }
+        footer: DialogFooter {
+            // 纯查看型弹层: 只有一个"关掉", 没有需要确认的代价 → 不占色口也不做实心
+            kind: "plain"
+            cancelText: ""
+            confirmText: "关闭"
+            onConfirm: markerDetailDialog.close()
         }
 
         contentItem: ColumnLayout {
@@ -1312,24 +1796,66 @@ Page {
             Text {
                 text: mapPage.markerDetailSub
                 color: CommonOptions.colorText
-                font.pixelSize: 12
+                font.pixelSize: styles.fsMd
                 wrapMode: Text.WordWrap
                 Layout.fillWidth: true
             }
 
-            // 物种标注: 显示 note / source
+            // 物种标注: 类别 + 危险档 + note / source
+            // 2026-10-26 A27: 名称在标题里, 类别与危险档以前根本没往弹层传 (数据里有),
+            //   所以点毒蛇也只剩"物种标注 + 经纬度". 未知就整行不出现, 不填"未知"占位.
+            // 下面这些单行项一律配 elide: Layout.fillWidth 只定宽度不折行时,
+            //   Qt 不自动截断, 长路线名/长来源串会画出弹层边框压住下一条 (2026-10-29 字号收口时一并补).
             Text {
                 visible: mapPage.markerDetailKind === "species"
-                text: "备注: " + (mapPage.markerDetailNote || "(无)")
+                         && mapPage.markerDetailCategory.length > 0
+                text: "类别: " + CommonOptions.speciesCategoryLabel(
+                          mapPage.markerDetailCategory)
                 color: CommonOptions.colorTextMuted
-                font.pixelSize: 12
+                font.pixelSize: styles.fsMd
+                elide: Text.ElideRight
                 Layout.fillWidth: true
             }
             Text {
                 visible: mapPage.markerDetailKind === "species"
-                text: "来源: " + (mapPage.markerDetailSource || "(手动)")
+                         && CommonOptions.dangerLevelLabel(mapPage.markerDetailDanger).length > 0
+                text: "危险度: " + CommonOptions.dangerLevelLabel(mapPage.markerDetailDanger)
+                // 文字与地图圆点/盘上的点同一条 dangerColor, 不能红点配绿字
+                color: CommonOptions.dangerColor(mapPage.markerDetailDanger)
+                font.pixelSize: styles.fsMd
+                font.bold: true
+                elide: Text.ElideRight
+                Layout.fillWidth: true
+            }
+            // 备注 / 来源 / 记录时刻: 没有就不出现这一行 ("(无)"/"(手动)" 是占位读数,
+            //   看着像数据真这么写着 —— 与「不给假读数」冲突, 2026-10-26 去掉).
+            Text {
+                visible: mapPage.markerDetailKind === "species"
+                         && mapPage.markerDetailNote.length > 0
+                text: "备注: " + mapPage.markerDetailNote
                 color: CommonOptions.colorTextMuted
-                font.pixelSize: 11
+                font.pixelSize: styles.fsMd
+                wrapMode: Text.WordWrap
+                Layout.fillWidth: true
+            }
+            Text {
+                visible: mapPage.markerDetailKind === "species"
+                         && mapPage.markerDetailSource.length > 0
+                text: "来源: " + mapPage.markerDetailSource
+                color: CommonOptions.colorTextMuted
+                font.pixelSize: styles.fsSm
+                elide: Text.ElideRight
+                Layout.fillWidth: true
+            }
+            Text {
+                visible: mapPage.markerDetailKind === "species"
+                         && mapPage.markerDetailTime.length > 0
+                // takenAt 是 ISODate 串 (数据侧原样), 只截到分钟 —— 标注精度到秒没意义,
+                //   而全串在一行里会挤掉上一条
+                text: "记录于: " + mapPage.markerDetailTime.substring(0, 16)
+                color: CommonOptions.colorTextDim
+                font.pixelSize: styles.fsSm
+                elide: Text.ElideRight
                 Layout.fillWidth: true
             }
 
@@ -1341,16 +1867,18 @@ Page {
                 visible: mapPage.markerDetailKind === "danger"
                 text: "所属路线: " + (mapPage._routeNameById(mapPage.markerDetailRouteId) || "")
                 color: CommonOptions.colorTextMuted
-                font.pixelSize: 11
+                font.pixelSize: styles.fsMd
+                elide: Text.ElideRight
                 Layout.fillWidth: true
             }
 
-            // 起终点: 所属路线名
+            // 起终点: 所属路线名 (与上面危险点那一行同角色, 字号必须同档)
             Text {
                 visible: mapPage.markerDetailKind === "route_endpoint"
                 text: "所属路线: " + (mapPage._routeNameById(mapPage.markerDetailRouteId) || "")
                 color: CommonOptions.colorTextMuted
-                font.pixelSize: 12
+                font.pixelSize: styles.fsMd
+                elide: Text.ElideRight
                 Layout.fillWidth: true
             }
 
@@ -1391,12 +1919,28 @@ Page {
                 }
             }
 
-            // 物种标注: 删除 / 导航
+            // 物种标注: 跳图鉴 / 导航
             RowLayout {
                 visible: mapPage.markerDetailKind === "species"
                 Layout.fillWidth: true
                 Layout.topMargin: 8
                 spacing: 8
+
+                // 2026-10-26 A27: 标注是物种库里某条物种的"在哪儿见过"的记录, 野外看到
+                //   一个点却查不到它长什么样/怎么处理, 等于白标. speciesId 为空的老数据
+                //   (旧「标注这里」写进来的那批) 没有可跳的对象, 按钮不出现.
+                PrimaryButton {
+                    text: "看图鉴详情"
+                    Layout.fillWidth: true
+                    tone: CommonOptions.colorAccent
+                    textSize: styles.fsMd
+                    visible: mapPage.markerDetailSpeciesId.length > 0
+                    onClicked: {
+                        mapPage.ApplicationWindow.window.navBus.navigateTo(
+                            "FieldGuideDetailPage",
+                            { speciesId: mapPage.markerDetailSpeciesId })
+                    }
+                }
 
                 OutlineButton {
                     text: "导航到此"
@@ -1406,10 +1950,63 @@ Page {
                     onClicked: {
                         if (mapPage.markerDetailCoord) {
                             var c = mapPage.markerDetailCoord
-                            CommonOptions.openMapMarker(c.latitude, c.longitude, "物种标注")
+                            // 传读数而不是硬编码"物种标注": 外链地图的标题就是用户
+                            //   在高德里看到的那一行, 报"物种标注"等于什么都没报.
+                            CommonOptions.openMapMarker(c.latitude, c.longitude,
+                                                       mapPage.markerDetailTitle || "标注点")
                         }
                     }
                 }
+            }
+
+            // 2026-10-29 (问题6): 标注点错了/物种认错了, 以前只能去别处找入口删,
+            //   弹层里连"删除"两个字都没有. 单占一行靠右 —— 不可撤的操作不与
+            //   「看图鉴详情/导航到此」并排, 免得拇指够导航时点穿到删除上.
+            RowLayout {
+                visible: mapPage.markerDetailKind === "species"
+                         && mapPage.markerDetailLocationId.length > 0
+                Layout.fillWidth: true
+                Layout.topMargin: 4
+                spacing: 8
+
+                Item { Layout.fillWidth: true }
+
+                OutlineButton {
+                    text: "删除这条标注"
+                    tone: CommonOptions.colorDanger
+                    onClicked: confirmDeleteMark.open()
+                }
+            }
+        }
+    }
+
+    // 2026-10-29 (问题6): 删除标注前的确认. 删的是本机那一条记录文件, 不能撤,
+    //   所以走 DialogFooter 的危险档 (描边 + 红字 + 「不可撤」).
+    Dialog {
+        id: confirmDeleteMark
+        title: "删除这条标注?"
+        anchors.centerIn: parent
+        modal: true
+        width: Math.min(360, mapPage.width - 2 * styles.pageMargin)
+        standardButtons: Dialog.NoButton
+        Material.background: CommonOptions.colorSurface
+        Material.foreground: CommonOptions.colorText
+        padding: styles.spMd
+
+        contentItem: Text {
+            text: "从本机删掉「" + (mapPage.markerDetailTitle || "标注点") +
+                  "」? 删掉后图上和盘上都不再有这个点, 物种本身不受影响."
+            color: CommonOptions.colorText
+            font.pixelSize: styles.fsMd
+            wrapMode: Text.WordWrap
+        }
+        footer: DialogFooter {
+            cancelText: "留着"
+            confirmText: "删除"
+            onCancel: confirmDeleteMark.close()
+            onConfirm: {
+                mapPage.deleteMarkedSpecies(mapPage.markerDetailLocationId)
+                confirmDeleteMark.close()
             }
         }
     }
@@ -1427,14 +2024,11 @@ Page {
         standardButtons: Dialog.NoButton
         Material.background: CommonOptions.colorSurface
         Material.foreground: CommonOptions.colorText
-        footer: RowLayout {
-            spacing: styles.spSm
-            Item { Layout.fillWidth: true }
-            OutlineButton {
-                text: "关闭"
-                tone: CommonOptions.colorTextMuted
-                onClicked: summaryDialog.close()
-            }
+        footer: DialogFooter {
+            kind: "plain"
+            cancelText: ""
+            confirmText: "关闭"
+            onConfirm: summaryDialog.close()
         }
 
         // 入口参数 (由 openSummary 注入)
@@ -1463,30 +2057,38 @@ Page {
     // 2026-09-15: 已选列表 - 单击 chip 弹出, 列出全部选中 + 单项删除
     Dialog {
         id: selectedListDialog
-        title: "已选 " + (mapPage.selectedRouteIds.length + mapPage.selectedTrackIds.length) + " 项"
+        // 2026-10-23 真机 (A5 假读数): 标题原来数 selectedRouteIds+selectedTrackIds,
+        //   列表却画 routeOverlays+trackOverlays —— 缺点位的那条路线进了前者没进后者,
+        //   于是「已选 2 项」下面只有一行. 现在标题与列表同源, 数得出来的就一定删得掉.
+        title: "已选 " + (mapPage.routeOverlays.length + mapPage.trackOverlays.length) + " 项"
         anchors.centerIn: parent
         width: Math.min(420, mapPage.width - 2 * styles.pageMargin)
-        height: Math.min(parent.height * 0.7, 520)
+        // 2026-10-23 真机 (A6): height 原来写死 min(0.7h, 520), 两个毛病一起出 ——
+        //   ① header + 1 行 + footer 远不到 520, 中间一大片空白, 行被顶在弹层正中;
+        //   ② footer 排在 contentItem 之下, 内容一高过 520 就被推到弹层背景外面,
+        //      真机上「全部清空」的右边框和下半截直接没了 (crop_k1_footer).
+        //   改成按内容自适应: Dialog.implicitHeight 已含 header/footer, 上限仍收 0.7 屏,
+        //   列表自己有 260 的 preferredHeight 天花板, 不会顶穿.
+        padding: styles.spMd
+        height: Math.min(parent.height * 0.7, implicitHeight)
         // 2026-10-20 #41: 两个动作从 contentItem 末尾挪进 footer —— 弹层里"操作"和
         //   "读数"分栏, 列表滚到底也不会把按钮挤出可视区.
         standardButtons: Dialog.NoButton
         Material.background: CommonOptions.colorSurface
         Material.foreground: CommonOptions.colorText
-        footer: RowLayout {
-            spacing: styles.spSm
-            Item { Layout.fillWidth: true }
-            OutlineButton {
-                text: "关闭"
-                tone: CommonOptions.colorTextMuted
-                onClicked: selectedListDialog.close()
-            }
-            OutlineButton {
-                text: "全部清空"
-                tone: CommonOptions.colorDanger
-                onClicked: {
-                    mapPage.clearSelections()
-                    selectedListDialog.close()
-                }
+        footer: DialogFooter {
+            kind: "danger"
+            cancelText: "关闭"
+            confirmText: "全部清空"
+            // 清空选中只是视图状态, 重新点一行就回来了 —— 不写「不可撤」的附注
+            confirmCode: ""
+            onCancel: selectedListDialog.close()
+            // 清空是不可逆的, 走 confirmClearDialog. 那张确认框本来就写好了, 只是
+            // 唯一的入口 (浮层 chip 的 selectedClearClicked) 从没被发出过 —— #82 复盘
+            // 把这里接成唯一出口. 先关清单再弹确认, 免得两层叠住确认那句"已选 N 项".
+            onConfirm: {
+                selectedListDialog.close()
+                confirmClearDialog.open()
             }
         }
 
@@ -1508,7 +2110,7 @@ Page {
                     required property var modelData
                     width: ListView.view ? ListView.view.width : 0
                     height: 56
-                    color: hoverArea.containsMouse ? CommonOptions.colorSurfaceDim : CommonOptions.colorSurface
+                    color: hoverArea.hovered ? CommonOptions.colorSurfaceDim : CommonOptions.colorSurface
                     radius: 4
 
                     RowLayout {
@@ -1542,53 +2144,55 @@ Page {
                                     Layout.fillWidth: true
                                     text: modelData.name || "(未命名)"
                                     color: CommonOptions.colorText
-                                    font.pixelSize: 14
+                                    font.pixelSize: styles.fsLg
                                     font.bold: true
                                     elide: Text.ElideRight
                                 }
                             }
                             Text {
-                                text: (modelData.kind === "travel" ? "自驾游" : "徒步路线") +
-                                      "  ·  " + modelData.path.length + " 个点"
+                                text: {
+                                    var label = modelData.kind === "travel" ? "自驾游" : "徒步路线"
+                                    // 「N 个点」只在真有路径点时才是轨迹读数; 起终点
+                                    // 直线写「2 个点」会被当成一条测过的轨迹, 违反
+                                    // 「不给假读数」. 示意线就如实说它是示意,
+                                    // 另外把坐标量化误差与点的性质一起报出来 (#131).
+                                    return label + mapPage._pathNote(modelData)
+                                            + mapPage._precisionNote(modelData.precisionM,
+                                                                    modelData.coordSource)
+                                }
                                 color: CommonOptions.colorTextMuted
-                                font.pixelSize: 11
+                                font.pixelSize: styles.fsSm
+                                elide: Text.ElideRight
                             }
                         }
 
                         // 2026-09-15: 概览按钮 - 弹出 RouteSummaryPanel
-                        Button {
-                            contentItem: IconLabel {
-                                name: "equalizer"
-                                size: 18
-                                tintColor: CommonOptions.colorTextOnAccent
-                            }
-                            Layout.preferredWidth: 40
-                            Layout.preferredHeight: 40
-                            Material.background: CommonOptions.colorAccent
-                            Material.foreground: CommonOptions.colorTextOnAccent
-                            onClicked: {
+                        // 2026-10-28 控件盘点: 原来是裸 Button + Material.background,
+                        //   圆角走 Material.buttonRadius, 与全站方角卡片的 rSm 不是一个形状;
+                        //   换成行内动作方块母版 (与「轨迹」Tab 的分析格、③页删除格同一枚).
+                        IconActionCell {
+                            iconName: "equalizer"
+                            filled: true
+                            onTriggered: {
                                 mapPage.openSummary(modelData.kind === "travel" ? "travel" : "route",
                                                      modelData.id, modelData.name)
                             }
                         }
-                        Button {
-                            contentItem: IconLabel {
-                                name: "close"
-                                size: 18
-                                tintColor: CommonOptions.colorTextOnAccent
-                            }
-                            Layout.preferredWidth: 40
-                            Layout.preferredHeight: 40
+                        IconActionCell {
+                            iconName: "close"
+                            filled: true
                             // 2026-10-21 #65: 原来是 colorDanger. 这个叉只是把线从当前
                             //   地图上摘掉 (routeOverlays/selectedRouteIds 少一项), 库里
                             //   数据一条没动, 重新勾选就回来了 —— 不配占用危险红.
-                            Material.background: CommonOptions.colorAccent
-                            Material.foreground: CommonOptions.colorTextOnAccent
-                            onClicked: mapPage.removeRoute(modelData.id)
+                            onTriggered: mapPage.removeRoute(modelData.id)
                         }
                     }
 
-                    MouseArea { id: hoverArea; anchors.fill: parent; hoverEnabled: true }
+                    // 2026-10-23 (A4 同族): 这里只是要一个悬停高亮, 原来用
+                    //   MouseArea{anchors.fill; hoverEnabled} —— 桌面悬停能亮, 但触屏上
+                    //   它按下即独占抓握, 清单超过 260px 上限时那一小段也拖不动.
+                    //   HoverHandler 只处理悬停, 从不参与触摸抓握.
+                    HoverHandler { id: hoverArea }
                 }
             }
 
@@ -1606,7 +2210,12 @@ Page {
                     required property var modelData
                     width: ListView.view ? ListView.view.width : 0
                     height: 56
-                    color: hoverArea.containsMouse ? CommonOptions.colorSurfaceDim : CommonOptions.colorSurface
+                    // 2026-10-27 #134: 原先这里读的是 hoverArea —— 那个 id 声明在**路线**
+                    //   delegate 里. QML 的 id 作用域只在声明它的组件内, 跨 delegate 引用
+                    //   是悬空引用: 整条绑定抛 ReferenceError 后被吞, Rectangle 停在类型
+                    //   默认的 #FFFFFF → 轨迹行永远白底, 看着像"色彩标注不对".
+                    //   本 delegate 自己的 hoverArea2 从来没被读过, 现在接上.
+                    color: hoverArea2.hovered ? CommonOptions.colorSurfaceDim : CommonOptions.colorSurface
                     radius: 4
 
                     RowLayout {
@@ -1636,48 +2245,36 @@ Page {
                                     Layout.fillWidth: true
                                     text: modelData.name || "(轨迹)"
                                     color: CommonOptions.colorText
-                                    font.pixelSize: 14
+                                    font.pixelSize: styles.fsLg
                                     font.bold: true
                                     elide: Text.ElideRight
                                 }
                             }
                             Text {
-                                text: "轨迹  ·  " + modelData.path.length + " 个点"
+                                text: "轨迹  ·  " + (modelData.pointCount || modelData.path.length)
+                                     + " 个点"
+                                     + (modelData.thinned ? " · 画线已抽稀" : "")
                                 color: CommonOptions.colorTextMuted
-                                font.pixelSize: 11
+                                font.pixelSize: styles.fsSm
                             }
                         }
 
-                        // 2026-09-15: 概览按钮
-                        Button {
-                            contentItem: IconLabel {
-                                name: "equalizer"
-                                size: 18
-                                tintColor: CommonOptions.colorTextOnAccent
-                            }
-                            Layout.preferredWidth: 40
-                            Layout.preferredHeight: 40
-                            Material.background: CommonOptions.colorAccent
-                            Material.foreground: CommonOptions.colorTextOnAccent
-                            onClicked: mapPage.openSummary("track", modelData.id, modelData.name)
+                        // 2026-09-15: 概览按钮 (2026-10-28 控件盘点: 与路线行同一枚方块)
+                        IconActionCell {
+                            iconName: "equalizer"
+                            filled: true
+                            onTriggered: mapPage.openSummary("track", modelData.id, modelData.name)
                         }
-                        Button {
-                            contentItem: IconLabel {
-                                name: "close"
-                                size: 18
-                                tintColor: CommonOptions.colorTextOnAccent
-                            }
-                            Layout.preferredWidth: 40
-                            Layout.preferredHeight: 40
+                        IconActionCell {
+                            iconName: "close"
+                            filled: true
                             // 同路线行: 摘掉轨迹画线不是删数据 (轨迹还在本机库里, 从记录
                             //   Tab 重新勾选即恢复) → 墨底, 不用危险红.
-                            Material.background: CommonOptions.colorAccent
-                            Material.foreground: CommonOptions.colorTextOnAccent
-                            onClicked: mapPage.removeTrack(modelData.id)
+                            onTriggered: mapPage.removeTrack(modelData.id)
                         }
                     }
 
-                    MouseArea { id: hoverArea2; anchors.fill: parent; hoverEnabled: true }
+                    HoverHandler { id: hoverArea2 }
                 }
             }
 
@@ -1688,7 +2285,7 @@ Page {
                 Layout.fillWidth: true
                 text: "当前无选中项"
                 color: CommonOptions.colorTextDim
-                font.pixelSize: 14
+                font.pixelSize: styles.fsMd
                 horizontalAlignment: Text.AlignHCenter
                 topPadding: 30
                 bottomPadding: 30
@@ -1710,28 +2307,20 @@ Page {
         padding: styles.spMd
 
         Text {
-            text: "已选 " + (mapPage.selectedRouteIds.length + mapPage.selectedTrackIds.length) +
+            text: "已选 " + (mapPage.routeOverlays.length + mapPage.trackOverlays.length) +
                   " 项 (路线/轨迹), 全部清空?"
             color: CommonOptions.colorText
             font.pixelSize: styles.fsMd
             wrapMode: Text.WordWrap
         }
-        footer: RowLayout {
-            spacing: styles.spSm
-            Item { Layout.fillWidth: true }
-            OutlineButton {
-                text: "留着"
-                tone: CommonOptions.colorTextMuted
-                onClicked: confirmClearDialog.close()
-            }
-            PrimaryButton {
-                text: "清空"
-                tone: CommonOptions.colorDanger
-                textSize: styles.fsMd
-                onClicked: {
-                    mapPage.clearSelections()
-                    confirmClearDialog.close()
-                }
+        footer: DialogFooter {
+            cancelText: "留着"
+            confirmText: "清空"
+            confirmCode: "不可撤"
+            onCancel: confirmClearDialog.close()
+            onConfirm: {
+                mapPage.clearSelections()
+                confirmClearDialog.close()
             }
         }
     }
@@ -1745,16 +2334,24 @@ Page {
     MapInstrumentOverlay {
         anchors.fill: parent
 
-        heading: mapPage.headingDeg
-        hasHeading: mapPage.hasHeading
+        heading: mapPage.effHeadingDeg
+        hasHeading: mapPage.hasEffHeading
         calibrationPct: mapPage.calibPct
+        headingNote: mapPage.headingNote
+        accText: mapPage.accText
         targets: mapPage.dialTargets
         zoomLevel: mapPage.mapZoomInt
         scaleText: mapPage.scaleText
         scaleBarPx: mapPage.scaleBarPx
         markCount: mapPage.speciesLocations.length
-        selectedCount: mapPage.selectedRouteIds.length + mapPage.selectedTrackIds.length
+        // 2026-10-23 (A5): chip / 清单 / 确认框三处计数改同一口径 —— 都以"清单里真列得出来、
+        //   真删得掉"的 overlay 为准. 用 selectedRouteIds 数会把画不出线的路线算进去.
+        selectedCount: mapPage.routeOverlays.length + mapPage.trackOverlays.length
         locateReady: mapPage.hasFix
+        // 两档工作台 (2026-10-28): selChip 要浮在底栏顶上, 底栏现在是变高的
+        //   (折叠 130 / 展开最多 409), 常量贴不住 —— 把抽屉实时高度喂给叠层.
+        //   visible 而不是 opened: 开合动画途中 visible 先翻, height 已定, 不会闪.
+        sheetHeight: bottomSheet.visible ? bottomSheet.height : 0
 
         onSearchClicked: bottomSheet.openTab(3)
         onLayersClicked: baseMapMenu.popup()
@@ -1762,7 +2359,6 @@ Page {
         onZoomInClicked: mapPage.stepZoom(1)
         onZoomOutClicked: mapPage.stepZoom(-1)
         onSelectedClicked: selectedListDialog.open()
-        onSelectedClearClicked: confirmClearDialog.open()
         onSosConfirmed: mapPage.ApplicationWindow.window.navBus.navigateTo("SOSPage", {})
     }
 
@@ -1817,8 +2413,12 @@ Page {
         id: bottomSheet
         // 2026-09-15: Drawer 不接受 anchors (Drawer/Popup 父容器已由 edge 自动贴底),
         // 之前写 anchors.left/right/bottom 触发 "Cannot assign to non-existent property"
+        // 2026-10-23 真机 (A3): 这里原来还有一行 `y: parent.height - height`. 它是
+        //   QQuickPopup 关闭过渡要动的那个属性 —— 一旦在实例上写死, 声明式绑定优先级
+        //   高于过渡动画, 于是 bottomSheet.close() 只把 position 归零, 卡片纹丝不动
+        //   (真机点「目标」行两次取证: 地图居中了, 抽屉还占着 60% 屏). 手动下拉能关
+        //   是因为走的是 Drawer 自己的 drag, 不经过这条绑定. 贴底交给 edge: Qt.BottomEdge.
         x: 0
-        y: parent ? parent.height - height : 0
         width: parent ? parent.width : 360
 
         // 2026-10-16: 实时坐标改由这里绑 (mapPage 这个 id 在本文件可见).
@@ -1847,9 +2447,69 @@ Page {
         onRouteSelected: function(routeId, route) { mapPage.onRouteSelected(routeId, route) }
         onTrackSelected: function(trackId, track) { mapPage.onTrackSelected(trackId, track) }
         onTargetClicked: function(target) { mapPage.focusTarget(target) }
+        // 2026-10-27 #132: 「查找」地点模式的行 = 某条路线/某条自驾的一个端点,
+        //   动作和「目标」行完全一样 (把地图挪过去 + 收抽屉), 所以复用 focusTarget,
+        //   不新增第三种"地图怎么动"的语义.
+        onPlaceSelected: function(place) { mapPage.focusTarget(place) }
         onTrackAnalyzeRequested: function(trackId) { mapPage.openTrackDetail(trackId) }
         // 2026-10-09: 导入入口打通 (此前 importDialog 无任何 .open() 触发点 → 死功能)
         onTrackImportRequested: importDialog.open()
+        // 2026-10-23 #109: 轨迹 Tab 的「清空」—— 此前"已加载"(旧文案"已画线")只能逐条再点一次取消,
+        //   多选之后没有任何批量出口.
+        onTracksClearRequested: mapPage.clearTrackSelections()
+    }
+
+    // 2026-10-23 真机: 卡片收起时整个 Drawer 在屏外, 地图上**没有任何可见入口**,
+    // 没人知道要上滑 (drawer 自己的 dragMargin 那 80px 又被底部 OSM attribution 和
+    // App 的标签栏占着, 拖了也没反应). 补一颗常驻小把手: 点一下展开到上次的 Tab,
+    // 按住往上拖同样展开; 卡片一开就让位给它自己那根抓条, 不出现两根.
+    // 2026-10-28 两档改后这里的判定照旧成立: fold 不动 visible (只是 height 从 409
+    //   收到 130, 抽屉还开着), bottomSheet.visible 变 false 只剩"整个关掉"这一种情况
+    //   —— 折叠态那 130 入口条自己就是四格入口, 不需要也不该再叠一颗把手;
+    //   把手只在用户把条也拖关后回来.
+    Rectangle {
+        id: sheetHandle
+        z: 1000   // 与浮层同层, 压在 MapQuickItem 之上
+        visible: !bottomSheet.visible
+        x: (mapPage.width - width) / 2
+        y: mapPage.height - height - styles.bottomSheetPeek
+        width: sheetHandleCol.implicitWidth + 2 * styles.spMd
+        height: sheetHandleCol.implicitHeight + 2 * styles.spSm
+        radius: styles.rPill
+        color: CommonOptions.colorSurface
+        border.color: CommonOptions.colorDivider
+        border.width: styles.lineHair
+
+        Column {
+            id: sheetHandleCol
+            anchors.centerIn: parent
+            spacing: styles.spXs
+            // 抓条: 与卡片顶部那根同形同色, 让人认出是同一个东西的两态
+            Rectangle {
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: styles.icSm
+                height: styles.lineAccent
+                radius: styles.lineAccent / 2
+                color: CommonOptions.colorTextDim
+            }
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: "地图工作台"
+                color: CommonOptions.colorText
+                font.pixelSize: styles.fsSm
+            }
+        }
+        TapHandler { onTapped: bottomSheet.openTab(bottomSheet.currentTab) }
+        DragHandler {
+            target: null
+            onTranslationChanged: (delta) => {
+                // 两档工作台 (2026-10-28): 原来这里 open() —— 在旧单档抽屉里 open() 就
+                //   等于"露出 480 面板"; 新抽屉默认 folded=true, 裸 open() 只把 130 的
+                //   入口条顶出来, 上拉的人想要的却是面板本体. openTab(当前档) = 展开 +
+                //   停在上次那一面, 与点把手 (上面 onTapped) 同一个落点, 两条手势不打架.
+                if (translation.y < -40 && !bottomSheet.opened) bottomSheet.openTab(bottomSheet.currentTab)
+            }
+        }
     }
 
     function onCaptureRequested() {
@@ -1864,7 +2524,18 @@ Page {
 
     function onRouteSelected(routeId, route) {
         // 2026-09-15: 路线联动 - 多选叠加 / 再点取消
+        var before = mapPage.selectedRouteIds.length
         mapPage.addOrToggleRoute(route)
+        // 2026-10-23 真机 (A13): 点一条查找结果, 原来只有那一行换了描边, 地图纹丝不动
+        //   (c4 取证: 日志只有一句 addOrToggleRoute 警告, 屏幕上看不到任何变化) ——
+        //   用户既不知道"选中"发生了什么, 也看不到那条线在哪. 现在选上就把视野套到
+        //   已选集合 (fitBoundsToRoutes 已经按展开的抽屉扣掉底部可视区), 并给一条回执.
+        //   取消选中不动视野: 那是"擦掉一条线", 不是"换一块地方看".
+        if (mapPage.selectedRouteIds.length > before) {
+            mapPage.fitBoundsToRoutes()
+            toast.success("已选中「" + (route.name || routeId) + "」, 视野套到已选 " +
+                          (mapPage.routeOverlays.length + mapPage.trackOverlays.length) + " 项")
+        }
     }
 
     // 2026-09-15: 新增: 加或取消一条路线
@@ -1909,9 +2580,24 @@ Page {
         }
 
         if (coords.length < 2) {
-            // 至少要 2 个点才能画线, 没有就只标起点
+            // 至少要 2 个点才能画线, 没有就只标起点.
+            // 2026-10-23 真机 (A5「已选 2 项却只列 1 行」): 这条分支原来只塞 routeMarkers
+            //   就跳过 overlay, 可下面照样 selectedRouteIds.concat(rid) —— 缺点位的路线
+            //   (route_mt_yi 那批) 选上之后在「已选清单」里数得到、画不出、也删不掉.
+            //   现在"选上就一定在列表里": path 只有 1 个点时 MapPolyline 不画线, 但行数
+            //   与计数一致, 行副标题如实写「1 个点」, 而不是假装这条线不存在.
             if (coords.length === 1) {
-                var colorIdx = mapPage.selectedRouteIds.length
+                var colorIdx = mapPage._freeColorIdx()
+                mapPage.routeOverlays = mapPage.routeOverlays.concat([{
+                    id: rid,
+                    name: route.name || "(未命名)",
+                    colorIdx: colorIdx,
+                    color: mapPage._colorForIndex(colorIdx),
+                    path: coords,
+                    approx: true,
+                    precisionM: route.coordPrecisionM,
+                    coordSource: route.coordSource
+                }])
                 mapPage.routeMarkers = mapPage.routeMarkers.concat([{
                     routeId: rid,
                     coord: coords[0],
@@ -1921,12 +2607,19 @@ Page {
             }
             console.warn("addOrToggleRoute: route " + rid + " 缺少路径点, 仅标注起点")
         } else {
-            var ci = mapPage.selectedRouteIds.length
+            var ci = mapPage._freeColorIdx()
             mapPage.routeOverlays = mapPage.routeOverlays.concat([{
                 id: rid,
                 name: route.name || "(未命名)",
+                colorIdx: ci,
                 color: mapPage._colorForIndex(ci),
-                path: coords
+                path: coords,
+                // 库里没有路径点时 coords 就是 起点→终点 两个端点, 画出来的是一条
+                // 示意直线, 不是这条路线实际走过的轨迹. 如实带上这个标记, 列表行
+                // 据此写「起终点示意」而不是「2 个点」—— 后者会被当成真轨迹读.
+                approx: !(wps && wps.length >= 2),
+                precisionM: route.coordPrecisionM,
+                coordSource: route.coordSource
             }])
             // 起终点 marker
             var markers = []
@@ -1935,10 +2628,14 @@ Page {
             mapPage.routeMarkers = mapPage.routeMarkers.concat(markers)
 
             // 2026-09-15: 中间路径点 (营地/垭口等) - 仅 waypoints 模式有, 用半透明小方块
+            // 2026-10-27 #131: 实测 GPS 轨迹灌进库后, 中间点里绝大多数是 type="track"
+            // 的采样点(一条线 120~160 个)。它们是线的形状本身, 不是"地点" —— 逐点
+            // 插方块会把图糊成一片, 所以只给有名字的路点(垭口/营地/泉眼)出标记。
             if (wps && wps.length > 2) {
                 var wpMarkers = []
                 for (var wp = 1; wp < wps.length - 1; wp++) {
                     var w = wps[wp]
+                    if (w.type === "track") continue
                     var wlat = (w.lat !== undefined) ? w.lat : w.latitude
                     var wlon = (w.lon !== undefined) ? w.lon : w.longitude
                     if (mapPage._validCoord(wlat, wlon)) {
@@ -1956,7 +2653,14 @@ Page {
             }
         }
 
-        mapPage.selectedRouteIds = mapPage.selectedRouteIds.concat([rid])
+        // 2026-10-23 (A5): 一个有效坐标都没有 → 不进选中集. 否则它既不在清单里也没法
+        //   取消 (removeRoute 按 overlay 走), 变成一个只能靠「全部清空」收拾的幽灵项.
+        if (coords.length >= 1) {
+            mapPage.selectedRouteIds = mapPage.selectedRouteIds.concat([rid])
+        } else {
+            toast.warn("「" + (route.name || rid) + "」没有可用坐标, 画不到图上")
+            return
+        }
 
         // 危险点 (从 getDangers 拿, 多条路线叠加)
         // 注意: getDangers 返回的 QVariantMap 含 locations 字段, 是 JSON 字符串
@@ -2061,20 +2765,41 @@ Page {
         }
 
         if (coords.length >= 2) {
-            var ci = mapPage.selectedRouteIds.length
+            var ci = mapPage._freeColorIdx()
             mapPage.routeOverlays = mapPage.routeOverlays.concat([{
                 id: tid,
                 name: travel.name || "(自驾游)",
+                colorIdx: ci,
                 color: mapPage._colorForIndex(ci),
                 path: coords,
-                kind: "travel"
+                kind: "travel",
+                // travel.json 只有 startLat/Lon 与 endLat/Lon, 没有任何路径点,
+                // 所以自驾游在图上永远是一条示意直线.
+                approx: true,
+                precisionM: travel.coordPrecisionM,
+                coordSource: travel.coordSource
             }])
             var markers = []
             markers.push({ routeId: tid, coord: coords[0], label: "S", color: mapPage._colorForIndex(ci) })
             markers.push({ routeId: tid, coord: coords[coords.length - 1], label: "E", color: mapPage._colorForIndex(ci) })
             mapPage.routeMarkers = mapPage.routeMarkers.concat(markers)
         } else if (coords.length === 1) {
-            var ci2 = mapPage.selectedRouteIds.length
+            // 2026-10-27 #134: 原来这一支只塞 marker 就往下走 selectedRouteIds.concat,
+            //   于是"只有一个端点能用"的自驾进了选中集却不在清单里 —— 画不出、也删不掉,
+            //   和路线那边 A5「已选 2 项却只列 1 行」是同一个坑 (那边已按"选上就一定在
+            //   列表里"修过, 这里补齐).
+            var ci2 = mapPage._freeColorIdx()
+            mapPage.routeOverlays = mapPage.routeOverlays.concat([{
+                id: tid,
+                name: travel.name || "(自驾游)",
+                colorIdx: ci2,
+                color: mapPage._colorForIndex(ci2),
+                path: coords,
+                kind: "travel",
+                approx: true,
+                precisionM: travel.coordPrecisionM,
+                coordSource: travel.coordSource
+            }])
             mapPage.routeMarkers = mapPage.routeMarkers.concat([{
                 routeId: tid,
                 coord: coords[0],
@@ -2087,6 +2812,15 @@ Page {
     }
 
     // 2026-09-15: 自动 fit bounds - 包含所有选中的路线 + 轨迹
+    // 2026-10-22 #82: 档位改由 CommonOptions.fitBounds 按 web-mercator 反推, 与本页
+    //   比例尺同一个口径. 旧的"经验公式 z = round(9 - log2(km))"注释里自己写着
+    //   "1 km → z15", 代码算出来却是 z≈10 (1 km 的视野在 z10 宽约 200 km), 差约 7 档:
+    //   线被压到亚像素 → 用户报的"选了轨迹不画线"和"多选后比例尺跳到 200km"是同一个
+    //   错的两处表现. 另外原逻辑按整块 Map 居中, 而底栏抽屉 (MapBottomSheet, 高
+    //   min(0.6h, 480)) 就压在地图上, 居中的线有一段正好落在板子底下.
+    // 2026-10-29 (问题2): 返回 false = 视野没能设上 (还没布局出宽高 / 坐标算不出来).
+    //   调用方据此下一轮再试一次 —— 原来是静默 return, 页面初建时正好踩中"线加进去了
+    //   但视野没动", 屏幕上看就是没画.
     function fitBoundsToRoutes() {
         var allCoords = []
         for (var i = 0; i < mapPage.routeOverlays.length; i++) {
@@ -2099,7 +2833,7 @@ Page {
                 allCoords.push(mapPage.trackOverlays[t].path[q])
             }
         }
-        if (allCoords.length === 0) return
+        if (allCoords.length === 0) return false
 
         var minLat = allCoords[0].latitude, maxLat = allCoords[0].latitude
         var minLon = allCoords[0].longitude, maxLon = allCoords[0].longitude
@@ -2110,31 +2844,37 @@ Page {
             if (c.longitude < minLon) minLon = c.longitude
             if (c.longitude > maxLon) maxLon = c.longitude
         }
-        var cLat = (minLat + maxLat) / 2
-        var cLon = (minLon + maxLon) / 2
-        map.center = QtPositioning.coordinate(cLat, cLon)
 
-        // 估算 zoom: 用 lat/lon 跨度, 经度 1° ≈ 111km * cos(lat)
-        var latSpan = Math.max(maxLat - minLat, 0.005)
-        var lonSpan = Math.max(maxLon - minLon, 0.005)
-        var kmPerLat = 111.0
-        var kmPerLon = 111.0 * Math.cos(cLat * Math.PI / 180)
-        var heightKm = latSpan * kmPerLat
-        var widthKm = lonSpan * kmPerLon
-        var maxKm = Math.max(heightKm, widthKm, 0.5)  // 至少 0.5km
-        // 经验公式: zoom ≈ 8 - log2(km)
-        // 1 km → z15, 10 km → z12, 100 km → z9, 1000 km → z5
-        var zoom = Math.max(4, Math.min(16, Math.round(9 - Math.log2(maxKm))))
-        map.zoomLevel = zoom
-        mapPage.currentZoom = zoom
+        // 可视区 = Map 减掉展开的抽屉, 四周再留 pad 的呼吸位 (线不贴屏边/板边).
+        var pad = 24
+        var sheetH = bottomSheet.visible ? bottomSheet.height : 0
+        if (!isFinite(sheetH) || sheetH < 0) sheetH = 0
+        sheetH = Math.min(sheetH, map.height * 0.7)
+        // 上限收到 16: 单条 200 m 的轨迹不该顶到 maximumZoomLevel (18) —— 那一档
+        //   Esri/高德的瓦片经常没有, 视野对了但底图空白, 又变成"什么都没画".
+        var f = CommonOptions.fitBounds(minLat, maxLat, minLon, maxLon,
+                                        map.width, map.height,
+                                        pad, pad,
+                                        map.width - 2 * pad,
+                                        map.height - sheetH - 2 * pad,
+                                        map.minimumZoomLevel,
+                                        Math.min(map.maximumZoomLevel, 16))
+        if (!f || !isFinite(f.zoom) || !isFinite(f.centerLat) || !isFinite(f.centerLon))
+            return false
+        map.center = QtPositioning.coordinate(f.centerLat, f.centerLon)
+        map.zoomLevel = f.zoom
+        mapPage.currentZoom = f.zoom
+        return true
     }
 
     function onTrackSelected(trackId, track) {
         // 2026-09-15: 轨迹联动 - 拉轨迹点, 画 polyline, 多选叠加
-        mapPage.addOrToggleTrack(trackId)
+        mapPage.addOrToggleTrack(trackId, track)
     }
 
-    function addOrToggleTrack(trackId) {
+    // silent: 进页复原会话时为 true —— 那批失败只值得一条 console, 不该在用户刚打开
+    //   地图时连弹三个提示.
+    function addOrToggleTrack(trackId, track, silent) {
         if (!trackId) return
         if (mapPage.selectedTrackIds.indexOf(trackId) >= 0) {
             mapPage.removeTrack(trackId)
@@ -2142,27 +2882,93 @@ Page {
         }
         var points = mapService.getTrackPoints(trackId)
         if (!points || points.length < 1) {
-            console.warn("addOrToggleTrack: track " + trackId + " 无轨迹点")
+            console.warn("[map] 轨迹 " + trackId + " 没有任何点 (track_<id>_points.json 为空或不存在)")
+            if (!silent) toast.warn("这条轨迹在本机没有存下任何点, 画不到图上")
             return
         }
+        // 2026-10-29 (问题2): 逐点校验改成与 C++ 侧同一个坐标门 (_validCoord):
+        //   原来只挡 NaN, 于是 (0,0) 这种"没填"的哨兵会一路进 path —— 抽稀后整条线可能
+        //   落在几内亚湾, fitBounds 也跟着跑到那儿, 屏上就是"没有线". 另外兼容
+        //   {lat,lon} 形状: 只有 QGeoCoordinate 才有 latitude/longitude.
         var coords = []
+        var bad = 0
         for (var i = 0; i < points.length; i++) {
             var p = points[i]
-            if (p && !isNaN(p.latitude) && !isNaN(p.longitude)) {
-                coords.push(QtPositioning.coordinate(p.latitude, p.longitude))
+            var la = Number.NaN, lo = Number.NaN
+            if (p) {
+                la = (p.latitude !== undefined) ? Number(p.latitude) : Number(p.lat)
+                lo = (p.longitude !== undefined) ? Number(p.longitude) : Number(p.lon)
             }
+            if (mapPage._validCoord(la, lo)) coords.push(QtPositioning.coordinate(la, lo))
+            else ++bad
         }
-        if (coords.length < 1) return
+        if (coords.length === 0) {
+            console.warn("[map] 轨迹 " + trackId + ": " + points.length
+                         + " 个点全部无效 (缺经纬度 / NaN / (0,0))")
+            if (!silent) toast.error("这条轨迹的 " + points.length
+                                     + " 个点都不是有效坐标, 画不到图上")
+            return
+        }
 
-        var ci = mapPage.trackOverlays.length
+        // 2026-10-27 #134: 两步路一条徒步能给到 1.2 万~2.4 万个点 (手头文件实测
+        //   12552 / 24075). MapPolyline 每帧要把整条 path 重投影, 这个量级上抽屉
+        //   一开、地图一动就会卡成幻灯片. 画线按步长抽稀到 <=2000 顶点, 首末点必留
+        //   (线头和线尾是用户认这条线的锚), 统计/剖面仍走 mapService 的全量点。
+        //   行数照实写全量点, 并标一句"画线已抽稀", 不让人把抽稀后的折线当成原始轨迹。
+        var drawn = coords
+        var thinned = false
+        if (coords.length > 2000) {
+            var stride = Math.ceil(coords.length / 2000)
+            drawn = []
+            for (var s = 0; s < coords.length; s += stride) drawn.push(coords[s])
+            if (drawn[drawn.length - 1] !== coords[coords.length - 1]) {
+                drawn.push(coords[coords.length - 1])
+            }
+            thinned = true
+        }
+
+        // 2026-10-27 #134: 名称原来硬写 "(轨迹)". 导入进来的两步路轨迹标题就在
+        //   track_<id>.json 里 (现在 importKml 也真的把它写进去了), 记录 Tab 那条
+        //   又已经带在信号里 —— 两个都拿不到才回落到"未命名轨迹".
+        //   不拿名字的话, 已选清单和概览面板标题一起塌成 "(轨迹)", 叠了两条就分不清.
+        var trackName = (track && track.name) ? track.name : ""
+        if (trackName.length === 0) {
+            var meta = mapService.getTrackById(trackId)
+            if (meta && meta.ok && meta.value && meta.value.name) trackName = meta.value.name
+        }
+        if (trackName.length === 0) trackName = "未命名轨迹"
+
+        var ci = mapPage._freeColorIdx()
         mapPage.trackOverlays = mapPage.trackOverlays.concat([{
             id: trackId,
-            name: "(轨迹)",
-            color: mapPage._colorForIndex(mapPage.selectedRouteIds.length + ci),
-            path: coords
+            name: trackName,
+            colorIdx: ci,
+            color: mapPage._colorForIndex(ci),
+            path: drawn,
+            pointCount: coords.length,
+            thinned: thinned
         }])
         mapPage.selectedTrackIds = mapPage.selectedTrackIds.concat([trackId])
-        mapPage.fitBoundsToRoutes()
+        // 2026-10-29 (问题2): 单点轨迹 MapPolyline 一个像素都不画 (它要 >=2 点), 但行上
+        //   照样显示"已加载" —— 补一颗点, 至少能看见这条轨迹在哪儿.
+        if (drawn.length < 2) {
+            mapPage.trackMarkers = mapPage.trackMarkers.concat([{
+                trackId: trackId,
+                coord: drawn[0],
+                color: mapPage._colorForIndex(ci)
+            }])
+        }
+        // 2026-10-29 (问题2): 判据行: 点数/无效点/画几个顶点. 真机上"没有线"时,
+        //   logcat 里这一行就能分清是数据没了、坐标坏了, 还是数据都在只是没画出来.
+        console.log("[map] 轨迹 " + trackId + ": points=" + points.length
+                    + " valid=" + coords.length + " bad=" + bad
+                    + " drawn=" + drawn.length + (thinned ? " (已抽稀)" : "")
+                    + " overlays=" + mapPage.trackOverlays.length)
+        if (!mapPage.fitBoundsToRoutes()) {
+            // 页面初建 / 抽屉刚展开时 Map 可能还没量出宽高, fitBounds 会"不动" ——
+            //   下一轮事件循环再套一次视野, 线才不会留在上一块屏幕上.
+            Qt.callLater(mapPage.fitBoundsToRoutes)
+        }
     }
 
     function removeTrack(trackId) {
@@ -2176,6 +2982,12 @@ Page {
             if (mapPage.trackOverlays[k].id !== trackId) newOverlays.push(mapPage.trackOverlays[k])
         }
         mapPage.trackOverlays = newOverlays
+        // 单点轨迹的标记 (见 addOrToggleTrack) 跟着 overlay 一起走
+        var newPts = []
+        for (var m = 0; m < mapPage.trackMarkers.length; m++) {
+            if (mapPage.trackMarkers[m].trackId !== trackId) newPts.push(mapPage.trackMarkers[m])
+        }
+        mapPage.trackMarkers = newPts
     }
 
     // 2026-09-15: 清空所有选择
@@ -2187,6 +2999,21 @@ Page {
         mapPage.waypointMarkers = []
         mapPage.dangerMarkers = []
         mapPage.trackOverlays = []
+        mapPage.trackMarkers = []
+    }
+
+    // 2026-10-23 #109: 「轨迹」Tab 的清空只抹轨迹, 不动已选路线 —— 那颗按钮就在轨迹列表
+    //   头上, 用户按它的预期是"把画出来的线擦掉", 顺手清路线等于越权删掉他另一屏的选择.
+    function clearTrackSelections() {
+        if (mapPage.selectedTrackIds.length === 0 && mapPage.trackOverlays.length === 0) {
+            toast.info("盘上没有已画的轨迹")
+            return
+        }
+        var n = mapPage.selectedTrackIds.length
+        mapPage.selectedTrackIds = []
+        mapPage.trackOverlays = []
+        mapPage.trackMarkers = []
+        toast.success("已擦掉 " + n + " 条轨迹线")
     }
 
     // 2026-09-15: 打开概览面板 (kind: route / travel / track)
@@ -2204,9 +3031,16 @@ Page {
     }
 
     // 2026-09-11: 线路支持外部数据格式导入 (GPX/KML/CSV 三种, 复用 mapService
-    // 现有 importGpx / importKml / importCsv 接口). 用 FileDialog 选文件,
-    // onAccepted 根据扩展名分发. 入口: 底栏「导航」Tab 的「导入」按钮 (2026-10-09 打通).
-    // 导入成功后 MapService emit dataChanged, NavigationTab 监听后自查刷新.
+    // 现有 importGpx / importKml / importCsv 接口). 入口: 底栏「轨迹」Tab 的「导入」按钮
+    // (2026-10-09 打通). 导入成功后 MapService emit dataChanged, NavigationTab 监听后自查刷新.
+    //
+    // 2026-10-28 (#148): 从"只有一颗系统选择器按钮"改成两条路 ——
+    //   ① 搜本机: 用户在微信里收到的 .kml/.gpx 落在 com.tencent.mm 的下载目录, 那串
+    //      路径人记不住、系统选择器也要翻好几层。C++ 侧 FileScanner 按候选根目录扫一遍,
+    //      命中直接列在弹窗里, 点一行就导入。
+    //   ② 系统选择器仍然留着: 没开"全部文件访问"时有些目录应用侧压根读不到,
+    //      但系统那侧挑得进来 —— 挑回来的 content:// 走既有的"复制进沙盒"通道 (#134)。
+    // 权限不在启动时要, 只有用户点「开启全部文件访问」才跳系统设置页。
     Dialog {
         id: importDialog
         title: "导入外部轨迹"
@@ -2217,43 +3051,129 @@ Page {
         Material.background: CommonOptions.colorSurface
         Material.foreground: CommonOptions.colorText
         // 上一次的结果不该在下一次打开时还挂在上面
-        onAboutToShow: mapPage._importStatus = ""
-        footer: RowLayout {
-            spacing: styles.spSm
-            Item { Layout.fillWidth: true }
-            OutlineButton {
-                text: "关闭"
-                tone: CommonOptions.colorTextMuted
-                onClicked: importDialog.close()
-            }
+        onAboutToShow: {
+            mapPage._importStatus = ""
+            mapPage._trackFindStatus = ""
+        }
+        footer: DialogFooter {
+            kind: "plain"
+            cancelText: ""
+            confirmText: "关闭"
+            onConfirm: importDialog.close()
         }
 
         contentItem: ColumnLayout {
-            spacing: 12
+            spacing: styles.spMd
 
             Text {
-                text: "支持 GPX (奥维/户外助手) / KML (Google Earth) / CSV (自建)"
+                text: "支持 GPX (奥维/户外助手) / KML (Google Earth) / CSV (自建)。"
+                      + "微信收到的文件可以按名字直接搜本机。"
                 color: CommonOptions.colorTextMuted
-                font.pixelSize: 12
+                font.pixelSize: styles.fsSm
                 wrapMode: Text.WordWrap
                 Layout.fillWidth: true
             }
 
-            PrimaryButton {
+            // ① 搜本机
+            RowLayout {
+                spacing: styles.spSm
                 Layout.fillWidth: true
-                // 2026-10-19: 原 "\ue2c6 选择文件…" 是图标字体混文案 → 中文缺字;
-                //   且 \ue2c6 (file_download) 不在 IconLabel 实测表内, 本字体也没有
-                //   "下载文件"字形, 所以只留文案.
-                text: "选择文件 (GPX / KML / CSV)"
-                textSize: styles.fsMd
-                onClicked: importFileDialog.open()
+
+                TextField {
+                    id: trackFindField
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: styles.fieldH
+                    placeholderText: "按名字搜（可留空列全部）"
+                    placeholderTextColor: CommonOptions.colorTextDim
+                    color: CommonOptions.colorText
+                    font.pixelSize: styles.fsMd
+                    leftPadding: styles.spMd
+                    rightPadding: styles.spSm
+                    background: Rectangle {
+                        radius: styles.rMd
+                        color: CommonOptions.colorSurfaceDim
+                        border.color: CommonOptions.colorDivider
+                        border.width: styles.lineHair
+                    }
+                    onAccepted: mapPage.searchTrackFiles(text)
+                }
+
+                OutlineButton {
+                    Layout.alignment: Qt.AlignVCenter
+                    text: mapPage._trackSearching ? "搜索中" : "搜索本机"
+                    enabled: !mapPage._trackSearching
+                    onClicked: mapPage.searchTrackFiles(trackFindField.text)
+                }
+            }
+
+            Text {
+                visible: mapPage._trackFindStatus.length > 0
+                text: mapPage._trackFindStatus
+                      + (mapPage._trackFindStatus.length > 0
+                         && !mapPage._allFilesReadable ? "\n微信等目录要系统里给「全部文件访问」才搜得到" : "")
+                color: CommonOptions.colorTextMuted
+                font.pixelSize: styles.fsSm
+                wrapMode: Text.WordWrap
+                Layout.fillWidth: true
+            }
+
+            ListView {
+                id: trackFileList
+                Layout.fillWidth: true
+                // 命中才占高; 没命中时这一格必须是 0, 否则弹窗里挂一片死空间 (#109 那一类)
+                Layout.preferredHeight: mapPage._trackFileHits.length > 0
+                    ? Math.min(contentHeight, 4 * (styles.rowHTall + styles.cardGap))
+                    : 0
+                visible: Layout.preferredHeight > 0
+                clip: true
+                spacing: styles.cardGap
+                boundsBehavior: Flickable.StopAtBounds
+                model: mapPage._trackFileHits
+
+                delegate: Rectangle {
+                    required property var modelData
+
+                    width: trackFileList.width
+                    height: styles.rowHTall
+                    color: "transparent"
+
+                    ListRow {
+                        anchors.fill: parent
+                        dense: true
+                        showChevron: false
+                        title: modelData.name
+                        subtitle: mapPage._fileHitSubtitle(modelData)
+                        subtitleColor: CommonOptions.colorTextDim
+                        titleColor: CommonOptions.colorText
+                        accent: CommonOptions.colorAccentSoft
+                        bg: CommonOptions.colorSurface
+                        onClicked: mapPage.importTrackFromPath(modelData.path)
+                    }
+                }
+            }
+
+            // ② 系统选择器 + 权限入口 (只在读不到时才出现, 不给已经能读的人多看一颗)
+            RowLayout {
+                spacing: styles.spSm
+
+                OutlineButton {
+                    Layout.alignment: Qt.AlignVCenter
+                    text: "系统选择器…"
+                    onClicked: importFileDialog.open()
+                }
+                OutlineButton {
+                    visible: !mapPage._allFilesReadable
+                    Layout.alignment: Qt.AlignVCenter
+                    text: "开启全部文件访问"
+                    onClicked: mapPage.openAllFilesAccess()
+                }
             }
 
             Text {
                 visible: mapPage._importStatus.length > 0
                 text: mapPage._importStatus
                 color: mapPage._importStatusColor
-                font.pixelSize: 12
+                font.pixelSize: styles.fsSm
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
             }
@@ -2262,6 +3182,122 @@ Page {
 
     property string _importStatus: ""
     property color _importStatusColor: CommonOptions.colorTextMuted
+
+    // === #148 本机轨迹文件搜索的状态 ===
+    property var _trackFileHits: []
+    property string _trackFindStatus: ""
+    property bool _trackSearching: false
+    // 默认按"能读"处理: 这颗按钮只在实测读不到时才露面, 不预先吓用户一次。
+    // 值来源是搜索那一次顺带问回来的, 所以进弹窗不搜东西时它是默认态 —— 正常。
+    property bool _allFilesReadable: true
+    property string _trackFindKeyword: ""
+
+    // 扫描是同步的磁盘遍历, 放到下一轮事件循环再跑: 先把「搜索中」画出来,
+    // 不然按钮点了像没反应 (野外设备上 FUSE 列目录可以到几百毫秒)。
+    Timer {
+        id: trackFindTimer
+        interval: 50
+        repeat: false
+        onTriggered: mapPage._scanTrackFiles()
+    }
+
+    function searchTrackFiles(kw) {
+        mapPage._trackFindKeyword = String(kw || "").trim()
+        mapPage._trackSearching = true
+        mapPage._trackFindStatus = "正在搜索本机…"
+        mapPage._importStatus = ""
+        trackFindTimer.restart()
+    }
+
+    function _scanTrackFiles() {
+        if (!androidPlatform || typeof androidPlatform.searchTrackFiles !== "function") {
+            mapPage._trackSearching = false
+            mapPage._trackFindStatus = "这台设备没有本机文件搜索, 用系统选择器"
+            return
+        }
+        var hits = androidPlatform.searchTrackFiles(mapPage._trackFindKeyword) || []
+        mapPage._allFilesReadable = (typeof androidPlatform.canReadAllFiles === "function")
+            ? androidPlatform.canReadAllFiles() : true
+        mapPage._trackFileHits = hits
+        mapPage._trackSearching = false
+        mapPage._trackFindStatus = hits.length > 0
+            ? ("找到 " + hits.length + " 个，点一行直接导入")
+            : (mapPage._trackFindKeyword.length > 0
+                ? ("没有文件名含「" + mapPage._trackFindKeyword + "」的 GPX/KML/CSV")
+                : "没搜到可导入的 GPX/KML/CSV")
+        // 判据行: 真机上"搜不到"分三种 (没那个目录 / 目录读不到 / 读了没匹配),
+        // 逐根明细在 C++ 侧 [filescan] 已经打过, 这里只记这一条决定 UI 的结果。
+        console.log("[trackfind] kw=" + mapPage._trackFindKeyword + " hits=" + hits.length
+                    + " allFiles=" + mapPage._allFilesReadable)
+    }
+
+    function openAllFilesAccess() {
+        if (androidPlatform && typeof androidPlatform.openAllFilesAccessSettings === "function")
+            androidPlatform.openAllFilesAccessSettings()
+    }
+
+    function _fileHitSubtitle(hit) {
+        var bytes = Number(hit.sizeBytes || 0)
+        var size = bytes >= 1048576 ? (bytes / 1048576).toFixed(1) + " MB"
+                     : bytes >= 1024 ? Math.round(bytes / 1024) + " KB" : bytes + " B"
+        var when = Qt.formatDateTime(new Date(Number(hit.mtimeMs || 0)), "yyyy-MM-dd hh:mm")
+        // 目录只给末两段: 全路径在 400dp 宽的弹窗里必定折行成三行
+        var parts = String(hit.dir || "").split("/")
+        var tail = parts.length > 2 ? parts[parts.length - 2] + "/" + parts[parts.length - 1]
+                                    : String(hit.dir || "")
+        return size + " · " + when + (tail.length > 0 ? " · " + tail : "")
+    }
+
+    // 本地路径 → 解析入库 → 画线。系统选择器与本机搜索两条路都汇到这里。
+    // hintUri: 复制进沙盒时源 URI 末段可能没带扩展名, 让调用方能回看它认格式 (#134)。
+    function importTrackFromPath(localPath, hintUri) {
+        var path = String(localPath || "").replace(/^file:\/\//, "")
+        if (path.length === 0) {
+            mapPage._importStatus = "没拿到文件地址"
+            mapPage._importStatusColor = CommonOptions.colorLegendAmber
+            return
+        }
+        var kind = mapPage._trackFileKind(path)
+        if (kind.length === 0 && hintUri)
+            kind = mapPage._trackFileKind(hintUri)
+        var r = null
+        if (kind === "gpx") {
+            r = mapService.importGpx(path)
+        } else if (kind === "kml") {
+            r = mapService.importKml(path)
+        } else if (kind === "csv") {
+            r = mapService.importCsv(path)
+        } else {
+            // 2026-10-19: _importStatus 由默认字体的 Text 显示, PUA 码位是方框 → 去码位留文字.
+            // 2026-10-20: colorRedBright 与 SOS 的危险红同值, 一次导入失败不配用
+            //   危险色 → 常驻提示统一用 legend amber (同装备页口径).
+            mapPage._importStatus = "不支持的文件格式: " + path.split("/").pop()
+            mapPage._importStatusColor = CommonOptions.colorLegendAmber
+            return
+        }
+        if (r && r.ok && r.value) {
+            var trackId = r.value
+            // 2026-09-15: 导入成功后, 在当前地图上自动画线 + fit
+            // (不再 push TrackDetailPage; 用户随时可在「已选」浮卡里点该行右侧的
+            //  等号柱图标按钮打开概览面板, 详情页从那儿进)
+            var r2 = mapService.getTrackById(trackId)  // 2026-10-09: 契约切 Result, 读 .value
+            var meta = (r2 && r2.ok) ? r2.value : null
+            var trackName = (meta && meta.name) ? meta.name : "(导入轨迹)"
+            mapPage._importStatus = "导入成功: " + trackName
+            mapPage._importStatusColor = CommonOptions.colorSuccess
+            // 2026-10-09: MapService 导入时已 emit dataChanged, NavigationTab 监听后自查刷新.
+            importDialog.close()
+            // 2026-10-27 #134: 把刚读到的 meta 一起递给 addOrToggleTrack ——
+            //   它原来只拿 id, 名字要靠再查一次; 递过来就少一次磁盘读, 列表行
+            //   也不会先闪 "未命名轨迹" 再改名.
+            mapPage.addOrToggleTrack(trackId, meta)
+        } else {
+            // 2026-09-21: 失败时显示具体错误 (Result.error.message)
+            var errMsg = (r && r.error && r.error.message) || "未知错误"
+            mapPage._importStatus = "导入失败: " + errMsg
+            mapPage._importStatusColor = CommonOptions.colorLegendAmber
+        }
+    }
 
     FileDialog {
         id: importFileDialog
@@ -2278,47 +3314,29 @@ Page {
             } else if (selectedFile && selectedFile.toString().length > 0) {
                 url = selectedFile.toString()
             }
-            var path = url.replace(/^file:\/\//, "")
-            if (path.length === 0) {
+            if (url.length === 0) {
                 mapPage._importStatus = "系统没回传文件地址"
                 mapPage._importStatusColor = CommonOptions.colorLegendAmber
                 return
             }
-            var lower = path.toLowerCase()
-            var r = null
-            if (lower.endsWith(".gpx")) {
-                r = mapService.importGpx(path)
-            } else if (lower.endsWith(".kml")) {
-                r = mapService.importKml(path)
-            } else if (lower.endsWith(".csv")) {
-                r = mapService.importCsv(path)
-            } else {
-                // 2026-10-19: _importStatus 由默认字体的 Text 显示, PUA 码位是方框 → 去码位留文字.
-                mapPage._importStatus = "不支持的文件格式: " + path
-                // 2026-10-20: colorRedBright 与 SOS 的危险红同值, 一次导入失败不配用
-                //   危险色 → 常驻提示统一用 legend amber (同装备页口径).
-                mapPage._importStatusColor = CommonOptions.colorLegendAmber
-                return
+            // 2026-10-27 #134: Android 11+ 的文件选择器回的是 content:// URI, QFile
+            //   打不开它 —— 原先这里只剥 file://, 于是真机上选完两步路 KML 直接
+            //   "无法打开 KML 文件", 解析器根本没被跑到. 走拍照检索同一套"复制进沙盒"
+            //   通道 (androidPlatform.importImage, 后缀现在会保留 .kml/.gpx/.csv).
+            var local = url
+            if (androidPlatform) {
+                var copied = androidPlatform.importImage(url)
+                if (copied && copied.length > 0) {
+                    local = copied
+                } else if (url.indexOf("content://") === 0) {
+                    mapPage._importStatus = "这个文件应用复制不到本地, 换一次的下载目录或先存到本机"
+                    mapPage._importStatusColor = CommonOptions.colorLegendAmber
+                    return
+                }
             }
-            if (r && r.ok && r.value) {
-                var trackId = r.value
-                // 2026-09-15: 导入成功后, 在当前地图上自动画线 + fit
-                // (不再 push TrackDetailPage; 用户随时可在「已选」浮卡里点该行右侧的
-                //  等号柱图标按钮打开概览面板, 详情页从那儿进)
-                var r2 = mapService.getTrackById(trackId)  // 2026-10-09: 契约切 Result, 读 .value
-                var trackName = (r2 && r2.ok && r2.value && r2.value.name) || "(导入轨迹)"
-                mapPage._importStatus = "导入成功: " + trackName
-                mapPage._importStatusColor = CommonOptions.colorSuccess
-                // 2026-10-09: 删除未定义的 mapPage.refreshData() (TypeError);
-                //   MapService 导入时已 emit dataChanged, NavigationTab 监听后自查 refresh.
-                importDialog.close()
-                mapPage.addOrToggleTrack(trackId)
-            } else {
-                // 2026-09-21: 失败时显示具体错误 (Result.error.message)
-                var errMsg = (r && r.error && r.error.message) || "未知错误"
-                mapPage._importStatus = "导入失败: " + errMsg
-                mapPage._importStatusColor = CommonOptions.colorLegendAmber
-            }
+            // 2026-10-28 (#148): 认格式 + 入库 + 画线这一段与"搜本机"那条路完全同构,
+            //   收进 importTrackFromPath, 两处共用一份 (原来两份复制体各自漂移过).
+            mapPage.importTrackFromPath(local, url)
         }
     }
 }

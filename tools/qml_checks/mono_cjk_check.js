@@ -62,3 +62,4 @@ for (const f of walk(ROOT, [])) {
 }
 console.log('=== monoFont 对象里 text 含汉字: ' + hits.length + ' 处 ===');
 for (const [f, l, t] of hits) console.log(f + ':' + l + '  ' + t);
+process.exit(hits.length ? 1 : 0);

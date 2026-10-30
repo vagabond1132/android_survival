@@ -21,15 +21,15 @@
 #include <QGeoCoordinate>
 #include <QVariantMap>
 #include <QVariantList>
+#include <limits>  // 2026-10-26「精度到 1 m」: 形参默认值用 quiet_NaN 表示"未知"
 #include "../common/ServiceBase.h"  // 2026-09-21 阶段 L2
 #include "../common/AltitudeLevel.h"  // 2026-10-21 (#18 C3): 海拔段位改这里统一取
 
 // 轨迹记录频率
 enum class TrackFrequency {
-    Seconds_2 = 2,    // 2 秒
     Seconds_5 = 5,    // 5 秒（默认）
     Seconds_10 = 10,  // 10 秒
-    Seconds_20 = 20,  // 20 秒
+    Seconds_15 = 15,  // 15 秒
     Seconds_30 = 30   // 30 秒
 };
 
@@ -163,9 +163,13 @@ public:
     Q_INVOKABLE QVariantMap startTrack(const QString& name,
                                        int frequencySeconds = 5);
     // 2026-09-21: 阶段 L3.4 - addTrackPoint/stopTrack/deleteTrack 切 Result
+    // 2026-10-26「精度到 1 m」: 补 accuracy (米, 68% 半径).
+    //   "未知"一律传 NaN (或省略) —— 用 -1 当哨兵会被 isfinite 放行、落成"海平面 -1 米"
+    //   的假读数; 未知时那一键整条不写.
     Q_INVOKABLE QVariantMap addTrackPoint(const QString& trackId,
                                            double lat, double lon,
-                                           double elevation = 0);
+                                           double elevation = std::numeric_limits<double>::quiet_NaN(),
+                                           double accuracy = std::numeric_limits<double>::quiet_NaN());
     Q_INVOKABLE QVariantMap stopTrack(const QString& trackId);
     Q_INVOKABLE QVariantList getAllTracks() const;
     // 2026-10-09: 契约统一 - 返回 Result 风格 {ok, value, error}.
@@ -176,6 +180,9 @@ public:
     Q_INVOKABLE QVariantList getFrequencyOptions();
     Q_INVOKABLE QString getFrequencyLabel(int seconds);
     Q_INVOKABLE int getDefaultFrequency() const;
+    // 2026-10-29: 用户选过的采样档位落 QSettings (与 ui/nightMode 同一套机制),
+    //   重启后 getDefaultFrequency() 读回它, 不必每次重选. 只认 5/10/15/30.
+    Q_INVOKABLE void setFrequencySeconds(int seconds);
     Q_INVOKABLE QVariantList getTrackElevations(const QString& trackId);
 
     // 导入导出
@@ -192,15 +199,29 @@ public:
 
     // 物种位置
     // 2026-09-21: 阶段 L3.4 - addSpeciesLocation 切 Result
+    // 2026-10-26「轨迹/标注点精度到 1 m」: 末尾补 accuracy (米, 68% 半径).
+    //   注意第 6 个参数一直是 **altitude** 不是 accuracy (以前被误读过一次).
+    //   altitude/accuracy 未知时传 NaN (或省略), 那一键整条不写 —— 原来 QML 各调用点
+    //   一律写 0, 落盘就成了"海平面 0 米 / 精度 0 米"两个假数.
+    // 2026-10-28 问题2: 末尾补 dangerLevel. 「添加标注」对话框已经算出危险档
+    //   (选物种取物种的, 只选类别按类别估), 原来第 9 参不存在、C++ 把 dangerLevel
+    //   写死 0 → 用户在弹层里看到的危险档根本没进文件; 现在原样落盘.
+    //   读侧仍走 MapPage.dangerLevelOf() 反查, 这一键只是把当时的判定留住.
     Q_INVOKABLE QVariantMap addSpeciesLocation(const QString& speciesId,
                                                  const QString& speciesName,
                                                  const QString& category,
                                                  double lat, double lon,
-                                                 double altitude = 0,
-                                                 const QString& note = QString());
+                                                 double altitude = std::numeric_limits<double>::quiet_NaN(),
+                                                 const QString& note = QString(),
+                                                 double accuracy = std::numeric_limits<double>::quiet_NaN(),
+                                                 int dangerLevel = 0);
     Q_INVOKABLE QVariantList getSpeciesLocations();
     Q_INVOKABLE QVariantList getSpeciesLocationsInBounds(
         double minLat, double maxLat, double minLon, double maxLon);
+    // 2026-10-23 #113: 删除一条标注 (物种详情页「地图上的记录」每行的删除入口).
+    //   locationId = addSpeciesLocation 生成的 epoch-ms 字符串, 直接拼进 species_<id>.json
+    //   文件名, 所以只收纯数字. 返回 Result {ok, value=是否真的删掉一个文件}.
+    Q_INVOKABLE QVariantMap deleteSpeciesLocation(const QString& locationId);
 
     // 统计
     Q_INVOKABLE QVariantMap getStats();
@@ -214,7 +235,8 @@ public:
     //           splits:[{km, durationS, avgPace}], ok }
     Q_INVOKABLE QVariantMap getTrackStats(const QString& trackId, double weightKg = 65.0);
 
-    // 2026-09-14: P1 海拔+速度曲线数据 (供 QtCharts 使用)
+    // 2026-09-14: P1 海拔+速度曲线数据 (供 qml/components/base/LineProfile.qml 自绘;
+    //   原先写"供 QtCharts 使用", 2026-10-26 #121 把 Charts 整个依赖删了)
     // 返回: { distances:[m], elevations:[m], speeds:[m/s], pointCount }
     Q_INVOKABLE QVariantMap getTrackProfile(const QString& trackId);
 
@@ -241,7 +263,6 @@ signals:
 
 private:
     QString generateId() const;
-    void recomputeTrackStats(Track& track);
     bool ensureSchema();
     QString m_storagePath;
     BaseMapType m_currentBaseMap = BaseMapType::Terrain;

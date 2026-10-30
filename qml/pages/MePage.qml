@@ -14,6 +14,15 @@
  */
 
 import QtQuick
+// 2026-10-23 真机: 「我」页整页空白. stage0.log 一句到位 ——
+//   StackView: push: MePage.qml:17 module "QtQuick.Controls" plugin
+//   "qml_QtQuick_Controls_qtquickcontrols2plugin" not found
+// 全项目 26 页只有这一行写了**裸的** `import QtQuick.Controls`: 基座模块的插件
+// androiddeployqt 不会打包 (APK 里只有 Material/Basic/impl 三个 style 插件), 所以
+// 这一行在真机上必然解析失败, push 不出对象 → 页体全空. 其余页只 import
+// QtQuick.Controls.Material 就拿到了 Page / ScrollView / Switch (Material 的 qmldir
+// 里逐个列了这些类型), 所以这里跟着删掉就行, 不为此多塞一个 12KB 插件.
+// 门禁: tools/qml_checks/controls_import_check.js 守住"裸 Controls import"不再出现.
 import QtQuick.Controls.Material
 import QtQuick.Layouts
 import OutdoorSurvival 1.0
@@ -98,7 +107,7 @@ Page {
                 Layout.rightMargin: styles.pageMargin
                 Layout.topMargin: 2
                 text: "我的记录"
-                trailing: "RECORDS"
+                trailing: "记录"
             }
             RowLayout {
                 Layout.fillWidth: true
@@ -149,7 +158,7 @@ Page {
                 Layout.rightMargin: styles.pageMargin
                 Layout.topMargin: styles.spSm
                 text: "会点进去的"
-                trailing: "ENTRIES"
+                trailing: "常用入口"
             }
             ColumnLayout {
                 Layout.fillWidth: true
@@ -219,6 +228,50 @@ Page {
                 }
             }
 
+            // === 显示 ===
+            // 2026-10-22 用户提的「增加 夜晚/白天 颜色切换」. 开关只写
+            // CommonOptions.nightMode 一个 bool: 全站颜色都是 token, 翻档靠
+            // nightModeChanged 重算, 值落 QSettings 由 main.cpp 启动读回.
+            SectionTitle {
+                Layout.leftMargin: styles.pageMargin
+                Layout.rightMargin: styles.pageMargin
+                Layout.topMargin: styles.spMd
+                text: "显示"
+                trailing: "夜行不刺眼"
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.leftMargin: styles.pageMargin
+                Layout.rightMargin: styles.pageMargin
+                Layout.minimumHeight: styles.touchMin
+                spacing: styles.spMd
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 1
+                    Text {
+                        Layout.fillWidth: true
+                        text: "夜晚配色"
+                        font.pixelSize: styles.fsMd
+                        color: CommonOptions.colorText
+                        elide: Text.ElideRight
+                    }
+                    Text {
+                        Layout.fillWidth: true
+                        text: "只翻纸与墨; 信号色 (橙=火 / 红=危险 / 绿=植被) 不动"
+                        font.pixelSize: styles.fsXs
+                        color: CommonOptions.colorTextDim
+                        wrapMode: Text.WordWrap
+                    }
+                }
+                Switch {
+                    Layout.alignment: Qt.AlignVCenter
+                    Layout.preferredHeight: styles.touchMin
+                    checked: CommonOptions.nightMode
+                    onToggled: CommonOptions.nightMode = checked
+                }
+            }
+
             // === 版本条 (等宽, 现场排错时用户能直接念出来) ===
             RowLayout {
                 Layout.fillWidth: true
@@ -233,8 +286,14 @@ Page {
                 Layout.rightMargin: styles.pageMargin
                 Layout.bottomMargin: styles.spLg
                 spacing: styles.spSm
+                // 汉字与码位分两个节点: Plate 是等宽+字距, "版本" 两字进去就是方框.
+                // (原先写的是 Plate{ prefix:"BUILD" }, 但 code 非空时 prefix 根本不参与渲染.)
+                Text {
+                    text: "版本"
+                    font.pixelSize: styles.fsXs
+                    color: CommonOptions.colorTextDim
+                }
                 Plate {
-                    prefix: "BUILD"
                     code: App.version
                 }
                 Text {

@@ -55,7 +55,22 @@ Item {
     property real maxSpeed: 0         // m/s (轨迹)
     property real avgPace: 0          // min/km (轨迹)
     property int durationS: 0         // s (轨迹)
-    property int pointCount: 0
+    // 2026-10-27 #134: 导入的 GPX/CSV 若文件里没有时间, 逐点时刻整条留空 →
+    //   getTrackStats 算不出时长, 而 formatDuration(0) 是 "0小时0分钟" ——
+    //   看着像"这趟只走了 0 分钟". 未知时那一格画 "—" (与高程四格同一口径:
+    //   未知不出现, 不填 0). 这个标志当时只声明没接线, 2026-10-29 #168 才由
+    //   load() 按 durationS 键在不在真正赋值 (见那里的注释).
+    property bool durationKnown: true
+    // 2026-10-29 #168: 与 durationKnown 同一族 —— 一条没有任何高程的轨迹, 剖面数据里
+    //   每个点都是 C++ 填的 0, 画出来是一条贴着 0 的线还标着"最高 0m / 最低 0m"。
+    //   这一族未知时剖面整块改成"无海拔数据", 不画假线。
+    property bool altKnown: true
+    // 2026-10-26「精度到 1 m」: 轨迹这一族才有的定位精度 (getTrackStats 只有在至少
+    //   一个点带 ± 时才写这几个键). NaN = 这条轨迹没有任何精度读数 → 整格不出现,
+    //   而不是画一个 "±0 m" 让人以为这趟走得极准.
+    property real accAvgM: Number.NaN
+    property real accBestM: Number.NaN
+    property real accWorstM: Number.NaN
 
     // 估算时长 (路线用) - 5 km/h 平地 + 爬升 0.5 km/h
     function _estimateDurationFromRoute(distKm, gain) {
@@ -87,6 +102,8 @@ Item {
 
     function load() {
         loadError = ""
+        durationKnown = true
+        altKnown = true
         if (!itemId) {
             loadError = "缺少 ID"
             return
@@ -107,7 +124,6 @@ Item {
                 durationS = _estimateDurationFromRoute(r.distanceKm || 0, gainM)
                 // 海拔剖面用 waypoints
                 var wps = routeService.getWaypoints(itemId)
-                pointCount = wps.length
                 var dists = [], elevs = []
                 if (wps && wps.length > 0) {
                     var cumDist = 0
@@ -145,16 +161,15 @@ Item {
                 }
                 name = t.name || ""
                 distM = (t.distanceKm || 0) * 1000
-                gainM = t.maxAltitude || 0  // 自驾无 gain, 用 maxAlt
-                lossM = 0
+                gainM = Number.NaN   // travel.json 没有爬升/下降字段, 原来拿 maxAltitude
+                lossM = Number.NaN   // 冒充 gain, 读数会显示成"累计爬升 3500m"
                 maxAlt = t.maxAltitude || 0
-                minAlt = 0
+                minAlt = Number.NaN
                 durationS = (t.driveHours || 0) * 3600
-                pointCount = 2
-                // 自驾只有起终点, 画不出剖面
-                var dists2 = [0, distM]
-                var elevs2 = [0, gainM]
-                profile = { distances: dists2, elevations: elevs2, speeds: [], timestamps: [] }
+                // 自驾只有起终点两个坐标, 没有任何高程序列 —— 剖面留空, 画布按
+                // "无海拔数据" 如实呈现. 原来这里塞 [0, gainM] 两点, 画出来的是一根
+                // 从 0 直线爬到最高海拔的假剖面.
+                profile = { distances: [], elevations: [], speeds: [], timestamps: [] }
                 profileReloaded()
                 stats = {
                     startName: t.startName, endName: t.endName,
@@ -174,15 +189,34 @@ Item {
                 var trackInfo = (r && r.ok) ? r.value : ({})
                 name = (trackInfo && trackInfo.name) || "(轨迹)"
                 distM = s.distanceM || 0
-                gainM = s.elevationGainM || 0
-                lossM = s.elevationLossM || 0
-                maxAlt = s.maxAlt || 0
-                minAlt = s.minAlt || 0
+                // 2026-10-26「精度到 1 m」: 一条全程没有高程的轨迹 (纯 2D 定位, 或
+                //   导入时就没有 ele) 原来会把缺键读成 0, 四张卡同时变成
+                //   "爬升 0 / 下降 0 / 最高 0 / 最低 0 m" —— 看着像实测数据.
+                //   未知改写成 NaN, 由下面的 _altText 画成 "—".
+                if (s.hasAltitude === true) {
+                    gainM = s.elevationGainM || 0
+                    lossM = s.elevationLossM || 0
+                    maxAlt = s.maxAlt || 0
+                    minAlt = s.minAlt || 0
+                } else {
+                    gainM = Number.NaN
+                    lossM = Number.NaN
+                    maxAlt = Number.NaN
+                    minAlt = Number.NaN
+                    altKnown = false
+                }
                 avgSpeed = s.avgSpeed || 0
                 maxSpeed = s.maxSpeed || 0
                 avgPace = s.avgPace || 0
                 durationS = s.durationS || 0
-                pointCount = s.pointCount || 0
+                // 2026-10-29 #168: 这个标志之前从没被赋过值 (恒 true), 于是没有时间戳的
+                //   导入轨迹在时长格上写出 "0小时0分钟"。C++ 侧现在算不出就不写 durationS
+                //   这个键, 这里按"键在不在"判 —— 死接线就此接通。
+                durationKnown = s.durationS !== undefined
+                // 未知保持 NaN: `s.accuracyAvgM || 0` 会把"没这个键"变成"精度 0 米"
+                accAvgM = Number(s.accuracyAvgM)
+                accBestM = Number(s.accuracyBestM)
+                accWorstM = Number(s.accuracyWorstM)
                 stats = {
                     calorieKcal: s.calorieKcal || 0,
                     weightKg: s.weightKg || 65,
@@ -227,21 +261,53 @@ Item {
     Styles { id: styles; visible: false }
 
     // 统计卡数据: label / value / unit / accent
+    // 2026-10-26「精度到 1 m」: 高程未知 (NaN) 时这一格写 "—" 而不是 Math.round(NaN)
+    //   出来的 "NaN", 也不写会被当成实测的 "0".
+    function _altNum(v) { return isFinite(v) ? Math.round(v).toString() : "—" }
+    // 未知时单位也一并撤掉: 写 "— m" 那枚 m 会让这格看着像"长度单位已知的测量"
+    function _altUnit(v) { return isFinite(v) ? "m" : "" }
     readonly property var _statCards: [
         { label: "距离",     value: (distM / 1000).toFixed(2), unit: "km",
           accent: CommonOptions.colorAccent },
-        { label: "累计爬升", value: Math.round(gainM).toString(),  unit: "m",
+        { label: "累计爬升", value: _altNum(gainM),  unit: _altUnit(gainM),
           accent: CommonOptions.categoryColor(4) },
-        { label: "累计下降", value: Math.round(lossM).toString(),  unit: "m",
+        { label: "累计下降", value: _altNum(lossM),  unit: _altUnit(lossM),
           accent: CommonOptions.colorWarn },
-        { label: "最高海拔", value: Math.round(maxAlt).toString(), unit: "m",
+        { label: "最高海拔", value: _altNum(maxAlt), unit: _altUnit(maxAlt),
           accent: CommonOptions.categoryColor(3) },
-        { label: "最低海拔", value: Math.round(minAlt).toString(), unit: "m",
+        { label: "最低海拔", value: _altNum(minAlt), unit: _altUnit(minAlt),
           accent: CommonOptions.categoryColor(1) },
         { label: kind === "track" ? "实际时长" : "估算时长",
           // 退出时 mapService 可能先于本绑定销毁, null 守卫防止重算炸一次
-          value: mapService ? mapService.formatDuration(durationS) : "", unit: "",
+          value: durationKnown && mapService ? mapService.formatDuration(durationS) : "—",
+          unit: "",
           accent: CommonOptions.colorTrack }
+    ]
+    // 轨迹带精度读数时多一格; 路线/自驾没有这个概念 → accAvgM 恒为 NaN, 格子不出现.
+    readonly property var _cards: {
+        var out = root._statCards.slice()
+        if (isFinite(accAvgM) && accAvgM > 0) {
+            out.push({ label: "定位精度", value: "±" + Math.round(accAvgM), unit: "m",
+                       accent: CommonOptions.colorWarn })
+        }
+        return out
+    }
+
+    // 2026-10-29 #169「最快速度压盖热量字体」: 这一组原来不写成卡, 是 GridLayout{columns:3}
+    //   里塞两行 "标签(固定 40) + 数值(fillWidth) + 副读数(固定 110)"。三列均分后一格
+    //   只有 ~120px, 40+110 还没算数值就已经超了, 副读数被推出格子边界 —— Rectangle 不裁剪,
+    //   于是"最快"那行的「热量 …」直接压在相邻文字上。改成与上面 6 张统计卡同一形状
+    //   (标签 / 数值 / 副读数各一行), 横向不再抢宽度。
+    //   副读数按 [[no-fake-readout-rule]] 只在真有读数时出现: 配速 0 是"算不出",
+    //   热量 0 同理, 都不是实测值 → 那一行整行不画。
+    readonly property var _speedCards: [
+        { label: "平均速度", value: formatSpeed(avgSpeed),
+          sub: avgPace > 0 ? "配速 " + formatPace(avgPace) : "",
+          accent: CommonOptions.colorTrack },
+        { label: "最快速度", value: formatSpeed(maxSpeed),
+          sub: (stats.calorieKcal || 0) > 0
+               ? "热量 " + Math.round(stats.calorieKcal) + " kcal" : "",
+          accent: CommonOptions.colorWarn }
     ]
 
     ScrollView {
@@ -327,7 +393,7 @@ Item {
                 columnSpacing: styles.cardGap
 
                 Repeater {
-                    model: root._statCards
+                    model: root._cards
                     delegate: Rectangle {
                         required property var modelData
                         Layout.fillWidth: true
@@ -408,7 +474,8 @@ Item {
                             var labelFont = styles.fsSm + "px " + Qt.application.font.family
                             var noteFont  = styles.fsXs + "px " + Qt.application.font.family
 
-                            if (!profile || !profile.distances || profile.distances.length < 2) {
+                            if (!root.altKnown
+                                || !profile || !profile.distances || profile.distances.length < 2) {
                                 ctx.fillStyle = CommonOptions.css(CommonOptions.colorTextDim)
                                 ctx.font = labelFont
                                 ctx.textAlign = "center"
@@ -477,12 +544,14 @@ Item {
                 Layout.fillWidth: true
                 Layout.leftMargin: styles.pageGap
                 Layout.rightMargin: styles.pageGap
-                Layout.preferredHeight: styles.rowH * 2
+                // 卡片高度跟着内容走: 原来写死 rowH*2, 副读数一换行就被裁
+                Layout.preferredHeight: speedCol.implicitHeight + styles.spSm * 2
                 visible: kind === "track"
                 radius: styles.rMd
                 color: CommonOptions.colorSurface
 
                 ColumnLayout {
+                    id: speedCol
                     anchors.fill: parent
                     anchors.margins: styles.spSm
                     spacing: styles.spXs
@@ -493,43 +562,48 @@ Item {
                         text: "速度分析"
                     }
 
+                    // 两列: 一格 ~190px, 标签 / 数值 / 副读数各占一行, 谁也不挤谁
                     GridLayout {
                         Layout.fillWidth: true
-                        columns: 3
-                        rowSpacing: styles.spXs
-                        columnSpacing: styles.spMd
+                        columns: 2
+                        rowSpacing: styles.cardGap
+                        columnSpacing: styles.cardGap
 
                         Repeater {
-                            model: [
-                                { k: "平均", v: formatSpeed(avgSpeed),
-                                  sub: "配速 " + formatPace(avgPace) },
-                                { k: "最快", v: formatSpeed(maxSpeed),
-                                  sub: "热量 " + Math.round(stats.calorieKcal || 0) + " kcal" }
-                            ]
-                            delegate: RowLayout {
+                            model: root._speedCards
+                            delegate: Rectangle {
                                 required property var modelData
                                 Layout.fillWidth: true
-                                spacing: styles.spXs
-                                Text {
-                                    text: modelData.k
-                                    color: CommonOptions.colorTextMuted
-                                    font.pixelSize: styles.fsSm
-                                    Layout.preferredWidth: 40
-                                }
-                                Text {
-                                    text: modelData.v
-                                    color: CommonOptions.colorText
-                                    font.pixelSize: styles.fsMd
-                                    font.bold: true
-                                    Layout.fillWidth: true
-                                }
-                                Text {
-                                    text: modelData.sub
-                                    color: CommonOptions.colorTextMuted
-                                    font.pixelSize: styles.fsSm
-                                    Layout.preferredWidth: 110
-                                    horizontalAlignment: Text.AlignRight
-                                    elide: Text.ElideRight
+                                Layout.preferredHeight: speedCardCol.implicitHeight
+                                                       + styles.spSm * 2
+                                radius: styles.rSm
+                                color: CommonOptions.colorSurface
+                                ColumnLayout {
+                                    id: speedCardCol
+                                    anchors.fill: parent
+                                    anchors.margins: styles.spSm
+                                    spacing: 2
+                                    Text {
+                                        text: modelData.label
+                                        color: CommonOptions.colorTextDim
+                                        font.pixelSize: styles.fsXs
+                                    }
+                                    Text {
+                                        Layout.fillWidth: true
+                                        text: modelData.value
+                                        color: modelData.accent
+                                        font.pixelSize: styles.fsXl
+                                        font.bold: true
+                                        elide: Text.ElideRight
+                                    }
+                                    Text {
+                                        visible: text.length > 0
+                                        text: modelData.sub
+                                        color: CommonOptions.colorTextMuted
+                                        font.pixelSize: styles.fsXs
+                                        Layout.fillWidth: true
+                                        elide: Text.ElideRight
+                                    }
                                 }
                             }
                         }

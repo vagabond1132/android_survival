@@ -47,6 +47,7 @@ class QQmlContext;
 #include "../equipment/EquipmentService.h"
 #include "../map/MapService.h"
 #include "ImageFetcherService.h"  // 2026-09-19: 运行时图册获取
+#include "WeatherForecastService.h"  // 2026-10-28 (#154): 当前天气预报 (环境条件第 2 源)
 
 // 2026-09-10: 不能 #include <QQmlContext>, 会强制引入 QUrl/QString/QVariant
 // 的 forward decl 在 namespace 内, 触发 "incomplete type" 错误.
@@ -96,6 +97,7 @@ public:
     EquipmentService*    equipment()   const { return m_equipment.get(); }
     MapService*         mapService()  const { return m_map.get(); }
     ImageFetcherService* imageFetcher() const { return m_imageFetcher.get(); }  // 2026-09-19
+    WeatherForecastService* weather() const { return m_weather.get(); }         // 2026-10-28 (#154)
     CompassSensor*       compass()      const { return m_compass; }             // 2026-10-20
 
 private:
@@ -118,6 +120,7 @@ private:
     std::unique_ptr<EquipmentService>   m_equipment;
     std::unique_ptr<MapService>        m_map;
     std::unique_ptr<ImageFetcherService> m_imageFetcher;  // 2026-09-19
+    std::unique_ptr<WeatherForecastService> m_weather;    // 2026-10-28 (#154)
     CompassSensor* m_compass = nullptr;  // 2026-10-20: QObject parent = this, 不 manual delete
 };
 

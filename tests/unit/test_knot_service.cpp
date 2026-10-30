@@ -37,7 +37,7 @@ private slots:
         delete m_db;
     }
 
-    void test_load_data() {
+    void test_loadCount() {  // 2026-10-22: 原名 test_load_data — QTest 把 *_data 当数据函数, 没有同名 _test 就整条静默跳过
         QVERIFY(m_service->totalCount() > 0);
         qInfo() << "Loaded knots:" << m_service->totalCount();
     }

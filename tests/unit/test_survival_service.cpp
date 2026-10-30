@@ -59,7 +59,7 @@ private slots:
         delete m_db;
     }
 
-    void test_load_data() {
+    void test_loadCount() {  // 2026-10-22: 原名 test_load_data — QTest 把 *_data 当数据函数, 没有同名 _test 就整条静默跳过
         // survival_items.json 有 15 条, 低于 10 说明 JSON 解析或入库有丢数据
         const QVariantList all = allItems();
         QVERIFY2(all.size() >= 15, qPrintable(QStringLiteral("加载 %1 条").arg(all.size())));

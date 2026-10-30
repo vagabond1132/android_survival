@@ -13,6 +13,7 @@
 #include <QSet>
 #include <QDateTime>
 #include <QGeoCoordinate>
+#include <QJsonArray>  // seedWaypoints 参数 (装载时灌 waypoints 表)
 #include "../common/ServiceBase.h"  // 2026-09-21 阶段 L2
 
 namespace outdoor {
@@ -55,6 +56,14 @@ struct Route {
     QString trailendName;         // 终点中文名
     QString trailheadAddress;    // 起点详细地址(省+市+具体)
     QString trailendAddress;      // 终点详细地址
+    // 端点坐标的可信度(2026-10-27 #131, 由 scripts/annotate_endpoint_data.js 补标):
+    // coordPrecisionM 是坐标字面量的量化误差(米, 取两端最差的那个轴), 0 = 未知;
+    // coordSource 说明这个坐标是从哪来的(editorial_estimate / gps_track_2bulu ...)。
+    // 二者一起决定 UI 能不能把端点当导航目标用, 见「不给假读数」。
+    int coordPrecisionM = 0;
+    QString coordSource;
+    bool trailheadCoordUnavailable = false;  // 库里坐标被判定不可信后只留名称/地址
+    bool trailendCoordUnavailable = false;
     QStringList tags;
     QString routeNature = QStringLiteral("穿越");  // 性质:穿越/环线/单程
     bool isWild = false;          // 是否野线(非景区)
@@ -128,6 +137,11 @@ public:
     Q_INVOKABLE QStringList getAvailableMonths();  // 2026-09-21: Phase 4 改 QStringList
     Q_INVOKABLE QStringList getAvailableNatures();
     Q_INVOKABLE QVariantList search(const QString& keyword);
+    // 2026-10-27 #132: 地点级检索. search() 回的是路线卡 (id/name/province/difficulty/
+    // distanceKm), 没有坐标, 落不到图上 —— "在地图上搜地点"要的是一条能定位的 POI,
+    // 所以这里把 749 条路线的 1498 个起终点摊平成 POI 返回, 每条带 lat/lon 与归属路线.
+    // 排序按"命中得多强"而不是字母序: POI 名 > 路线名/别名 > 山/区/市/省.
+    Q_INVOKABLE QVariantList searchPlaces(const QString& keyword, int limit = 60);
     Q_INVOKABLE QVariantList getFavorites() const;
     Q_INVOKABLE QVariantList getMostVisited(int limit = 10);
     Q_INVOKABLE QVariantList getNearby(double lat, double lon,
@@ -145,6 +159,8 @@ public:
 
     // 路点
     Q_INVOKABLE QVariantList getWaypoints(const QString& routeId);
+    // polyline 是否在库: 0 = 没有路径点, 地图上只能画起终点示意直线
+    Q_INVOKABLE int waypointCount(const QString& routeId);
 
     // 危险点
     Q_INVOKABLE QVariantList getDangers(const QString& routeId);
@@ -166,6 +182,10 @@ private:
     bool ensureSchema();
     bool loadFromJson();
     bool insertRoute(const Route& route);
+    // routes.json 里带 "waypoints" 数组的条目(实测 GPS 轨迹)在装载时灌进 waypoints 表;
+    // 表里没有这批路线的旧行(含改点后的残留), 所以先按 route_id DELETE 再整批 INSERT.
+    // 返回写入的点数, 0 = 没写(调用方据此决定是否告警).
+    int seedWaypoints(const QString& routeId, const QJsonArray& points);
     void rebuildIndex();  // 构建省/月二级索引
 
     // 2026-09-21 阶段 L2: m_db 上移到 ServiceBase

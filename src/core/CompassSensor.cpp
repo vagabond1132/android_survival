@@ -18,6 +18,9 @@ CompassSensor::CompassSensor(QObject* parent)
     m_available = !ids.isEmpty();
     if (!m_available)
         Logger::info(QStringLiteral("CompassSensor: 无罗盘硬件 (可用设备数 0), 方位盘退为空盘"));
+    else
+        Logger::info(QStringLiteral("CompassSensor: 找到 %1 个罗盘后端, 首个 id=%2")
+                         .arg(ids.size()).arg(QString::fromLatin1(ids.first())));
 
     connect(m_compass, &QSensor::readingChanged, this, &CompassSensor::onReadingChanged);
 }
@@ -42,10 +45,15 @@ void CompassSensor::setActive(bool on)
             emit activeChanged();
             return;
         }
+        // 2026-10-26: 真机报"方位数据未变化", 而原来 start 成功这条路一个字都不说.
+        Logger::info(QStringLiteral("CompassSensor: start() 成功, 等 readingChanged"));
     } else {
         m_compass->stop();
         m_valid = false;
+        m_readingCount = 0;
         emit validChanged();
+        Logger::info(QStringLiteral("CompassSensor: 已停止 (本页共收到 %1 帧读数)")
+                         .arg(m_readingCount));
     }
     emit activeChanged();
 }
@@ -58,6 +66,16 @@ void CompassSensor::onReadingChanged()
     const qreal az = reading->azimuth();
     const qreal cal = reading->calibrationLevel();
 
+    ++m_readingCount;
+    // 首帧只说一次: 这一句能区分"start 成功但后端从不送读数"和"读数一直是 0/NaN",
+    //   这两种在界面上长得一模一样 (指针不动), 根因完全不同 (前者是插件/权限,
+    //   后者是硬件或校准). release 包 logcat 全空, 只有 stage0.log 说得出这句话.
+    if (!m_loggedFirstReading) {
+        m_loggedFirstReading = true;
+        Logger::info(QStringLiteral("CompassSensor: 首帧 azimuth=%1 calibrationLevel=%2")
+                         .arg(az).arg(cal));
+    }
+
     // calibrationLevel: 0..1, 部分后端给 -1 表示不提供
     const int calPct = (cal < 0) ? -1
                                  : qRound(qBound<qreal>(0.0, cal, 1.0) * 100.0);
@@ -68,6 +86,10 @@ void CompassSensor::onReadingChanged()
 
     if (!std::isfinite(az)) {
         if (m_valid) { m_valid = false; emit validChanged(); }
+        // 无效帧要说, 但每 50 帧一次就够 (持续 NaN 时不能刷屏)
+        if (m_readingCount % 50 == 1)
+            Logger::warn(QStringLiteral("CompassSensor: azimuth 非有限值, 第 %1 帧")
+                             .arg(m_readingCount));
         return;
     }
 

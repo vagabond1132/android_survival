@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "kingdom": "fungi",
-  "updated_at": "2026-09-29",
+  "updated_at": "2026-10-28",
   "description": "全国常见蘑菇图鉴(致命/毒/可食)——个人使用,谨慎采食",
   "mushrooms": [
     {
@@ -1916,27 +1916,37 @@
       "common_name": "灵芝",
       "scientific_name": "Ganoderma lucidum",
       "kingdom": "fungi",
-      "category": "edible_mushroom",
-      "danger_level": 0,
+      "category": "medicinal",
+      "danger_level": 1,
       "alias": [
         "赤芝",
-        "瑞草"
+        "瑞草",
+        "灵芝草",
+        "仙草"
       ],
       "features": [
         "菌盖肾形或半圆形,红褐色",
         "表面有同心环纹和漆样光泽",
-        "菌柄侧生,有漆样光泽"
+        "菌柄侧生,有漆样光泽",
+        "多孔菌科真菌",
+        "菌盖肾形或伞形,漆样光泽(关键)",
+        "表面红褐至紫褐,有环纹",
+        "菌柄侧生"
       ],
       "distribution": [
         "山东",
         "河南",
         "河北",
-        "山西"
+        "山西",
+        "全国广布"
       ],
-      "min_elevation": 200,
+      "min_elevation": 0,
       "max_elevation": 2000,
       "habitats": [
-        "阔叶树枯木"
+        "阔叶树枯木",
+        "阔叶林枯木",
+        "树桩",
+        "木桩"
       ],
       "active_months": [
         "6",
@@ -1949,13 +1959,30 @@
       "latency_hours": 0,
       "mortality_rate": "无",
       "symptoms": [],
-      "look_alike": [],
+      "look_alike": [
+        {
+          "name": "紫芝(近缘)",
+          "distinction": "灵芝菌盖红褐有漆光;紫芝色更深紫黑;均为药用真菌,无漆光者勿采",
+          "fatality": "无毒"
+        }
+      ],
       "first_aid_id": "",
       "first_aid_links": {},
       "protective_gear": [
-        "木质化不可食,药用"
+        "木质化不可食,药用",
+        "勿采食不明真菌",
+        "须遵医嘱"
       ],
-      "route_associations": [],
+      "route_associations": [
+        {
+          "route_id": "route_lao_mountain",
+          "months": [
+            "7",
+            "8",
+            "9"
+          ]
+        }
+      ],
       "representative_color": {
         "h": 20,
         "s": 60,
@@ -1964,13 +1991,31 @@
       "images": [
         "whole"
       ],
-      "description": "传统名贵中药材。",
+      "description": "华北阔叶林枯木上生长的传统药用真菌,菌盖有漆样光泽。野生品须与毒菌区分,建议遵医嘱使用。",
       "source": "本草纲目 / 中国食用菌图鉴",
       "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Ganoderma lucidum",
-        "灵芝 mushroom"
-      ]
+        "灵芝 mushroom",
+        "灵芝 plant"
+      ],
+      "edible_part": [
+        "whole"
+      ],
+      "edible_months": [
+        "7",
+        "8",
+        "9"
+      ],
+      "edible_method": [
+        "decoction",
+        "powder"
+      ],
+      "taste": "甘苦",
+      "harvest_tips": "全年采成熟子实体(多夏秋)",
+      "nutrition": "补气安神、止咳平喘(药材须遵医嘱)",
+      "raw_edible": false,
+      "must_cook": true
     },
     {
       "id": "mushroom_sparassis",

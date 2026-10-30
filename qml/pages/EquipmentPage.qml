@@ -15,9 +15,9 @@
  *
  * 四条不能破的规则:
  *   ① 不编读数. 库件数 / 关键件数 / 清单份数 / 重量全部由 equipmentService 现算,
- *      页面不写死 43 或 5.
+ *      页面不写死 49 或 5.
  *   ② 表单里每一项都真的进 params. 旧版还发 tempAvg/tempMin/uvIndex/people 四个字段,
- *      但 equipment_rules.json 的 39 条规则里没有任何温度或人数条件
+ *      但 equipment_rules.json 的 42 条规则里没有任何温度或人数条件
  *      (RuleConditionStrategy 注册的前缀: altitude/precipitation/season/wind_speed/
  *      wind_level/difficulty/days/diurnal_range/humidity/uv_level/is_*), 留着等于
  *      让用户以为"调了有用" → 一并删掉, 并在卡片注里写明不参与.
@@ -59,7 +59,7 @@ Page {
     property int days: 2
     property int difficulty: 2          // 1-5
     property int seasonIndex: 1         // 0春 1夏 2秋 3冬
-    property int precipIndex: 0         // 0无 1小 2中 3大 4暴
+    property int precipIndex: 0         // 0无 1小 2中 3大 4暴 (冬 = 雪)
     property int humidityIndex: 1       // 0干 1中 2湿
     property int uvLevelIndex: 2        // 0弱 1中 2强 3很强 4极强
     property int windLevelIndex: 1      // 0静 1微 2中 3大 4强
@@ -67,6 +67,283 @@ Page {
     property bool isRainySeason: false
     property bool isDesert: false
     property bool isCoastal: false
+
+    // === 2026-10-22: 背负方式 (轻装 / 重装) ================================
+    // 档位序数与 EquipmentService.h LoadStyle 一一对应 (0 轻装一日 … 3 多日重装).
+    // loadFollowTrip 为真时按天数/难度推, 推断式必须与引擎 generateList 里那段
+    // 保持一致 (EquipmentService.cpp "params.days >= 3 ? Expedition : ..."),
+    // 否则表单显示的档位和真正送进规则的档位会打架.
+    property int loadIndex: 2
+    property bool loadFollowTrip: true
+    readonly property int loadAuto: days >= 3 ? 3
+                                    : (days >= 2 ? 2 : (difficulty >= 4 ? 1 : 0))
+    readonly property int loadEffective: loadFollowTrip ? loadAuto : loadIndex
+    readonly property var loadNames: ["轻装一日", "单日强度", "过夜重装", "多日重装"]
+
+    // === 2026-10-29: 天气来源 (手填 / 往年推演 / 当前天气预报) ==============
+    // 1 与 2 都是"自动档": 读数写回下面那五排 chip; 用户手改任意一档即切回手填
+    // (保留刚填进来的值当起点), 不搞"看起来自动其实被覆盖"的隐藏态.
+    // 2 是在线预报 (#154 落的服务层, 这一轮才接上页面): 只要拿不到能用的数
+    // (没定位 / 没网 / 缓存太旧 / 这一天空), 就**自动降到 1 的推演读数**并把原因
+    // 写在读数下面 —— 环境条件这一整块不允许空白, 也不允许"预报"两个字挂着一份空数.
+    property int weatherSource: 1       // 0 手填 / 1 往年推演 / 2 当前天气预报
+    property string climateProvince: "" // 空 = 还没选 (表里 34 省, 见 climate_normals.json)
+    property int climateMonth: new Date().getMonth() + 1
+    property var climateRead: ({})      // equipmentService.climateFor 的原样返回
+    readonly property bool hasClimate: climateRead.tempAvg !== undefined
+    property var forecastRead: ({})     // weatherService.forecastFor 的原样返回
+    readonly property bool hasForecast: forecastRead.tempAvg !== undefined
+    // 来源句与降级原因一律**赋值**、不做绑定 (#111 两条 binding loop 的同一条教训)
+    property string forecastSrcLine: ""
+    property string forecastFailLine: ""
+    readonly property bool hasEnv: hasForecast || hasClimate
+    // 读数条与雪/雨折档只看这一份: 预报优先, 拿不到就是推演. 两边引擎侧键同名
+    // (WeatherForecastService 头注写明了), 所以页面只写一套折档.
+    readonly property var envRead: hasForecast ? forecastRead : climateRead
+    /// 缓存超过 12 小时就不当"今天的天气"用 (服务的复用窗口是 30 分钟)
+    readonly property int forecastMaxAgeMinutes: 720
+
+    // 2026-10-23 (#111) 真机 stage0.log 两条告警是同一个环:
+    //   EquipmentPage.qml:46 (根对象) Binding loop detected for property "climateSrcLine"
+    //   读数条那条 QQuickText     Binding loop detected for property "text"
+    // 它原来是个 readonly 块绑定, 读 climateRead + climateMonth, 唯一消费者是下面
+    // climateReadout 里的 Text.text. 自指路径 (求值 → 写回 → 再求值):
+    //   climateSrcLine 求值 → Text.text 被写 → QQuickText 尺寸变
+    //   → climateReadout (anchors.fill: parent) 重算 → Rectangle.implicitHeight
+    //   → 外层布局把高度发回 Rectangle → anchors.fill 把尺寸发给 climateReadout
+    //   → 同一条 Text 的排版重来 → climateSrcLine 在同一批次里被重入 → 两条一起报.
+    // 这一处先把"绑定"这条边拆掉: 整句只在 applyClimate() (climateRead 的唯一写者)
+    // 里拼好并 **赋值**, 属性上没有绑定, 结构上就不可能再被重入. 另一半 (anchors.fill
+    // ↔ implicitHeight 的高度环) 在 climateReadout 那块单独断, 两条边都断环才真的没有.
+    // 汉字不进等宽 (规则 ③): 这句里全是汉字与数字, 消费者用默认字族.
+    property string climateSrcLine: ""
+
+    // Precipitation 枚举 (EquipmentService.h) 的显示名: 1-4 雨, 5-8 雪.
+    // 这里只是把引擎算出来的档位翻成人话, 不参与判定.
+    readonly property var precipNames: ["无降水", "小雨", "中雨", "大雨", "暴雨",
+                                        "小雪", "中雪", "大雪", "暴雪"]
+    readonly property var humidityNames: ["干燥", "适中", "闷热"]
+    // 读数条要把引擎算出的等级翻回成人话, 而下面那两排 chip 就是同一份档位 ——
+    // 两处必须用同一个数组, 否则"显示强、发出去是中等"这种错就藏在两份字面量里.
+    readonly property var uvLevelNames: ["弱", "中等", "强", "很强", "极强"]
+    readonly property var windLevelNames: ["静风", "微风", "中等", "大风", "强风"]
+
+    readonly property var provinceChoices: {
+        if (!equipmentService) return []
+        var n = equipmentService.climateProvinceNames()
+        return n ? n : []
+    }
+    readonly property int climateTotal: provinceChoices.length
+
+    /**
+     * 2026-10-23 (#111): 来源句的唯一生产者. 读数与月份都从**入参**取, 函数内不读
+     * 页面状态, 更不读 climateSrcLine 自己 —— 这样它只能被 applyClimate 调一次,
+     * 不存在"绑定时读到自己"的自指.
+     */
+    function composeClimateSrcLine(c, month) {
+        climateSrcLine = (c.climateProvince || "") + " · " + month + " 月 @"
+                + c.climateAltitudeM + " m (代表站 " + c.climateRefAltitudeM
+                + " m, 温度修正 " + c.climateCorrectC + " ℃)"
+    }
+
+    /**
+     * 自动档: 把往年读数**写回下面那五排 chip**, 而不是另起一条参数通道 ——
+     * 表单显示的就是真正送进引擎的, 用户一眼能看见"它替我填成了什么",
+     * 手改任意一档 (onClicked 里 weatherSource = 0) 即转手填, 不留隐藏态.
+     *
+     * 2026-10-23 (#111): climateSrcLine 不再是绑定, 所以三个出口都要自己把它落定,
+     * 且要**先写来源句再写 climateRead** —— climateRead 一落, hasClimate 立刻把读数条
+     * 显出来并触发一轮布局, 那一刻 Text 读到的必须是新省份的句子, 不能是上一次的.
+     *
+     * 2026-10-29 (#155): 返回"有没有读到数" —— 预报档拿不到时要靠这个决定降不降级.
+     */
+    function applyClimate() {
+        if (weatherSource === 0 || !equipmentService || climateProvince.length === 0) {
+            climateSrcLine = ""
+            climateRead = ({})
+            return false
+        }
+        var r = equipmentService.climateFor(climateProvince, climateMonth, altMax)
+        if (!r || r.tempAvg === undefined) {
+            climateSrcLine = ""
+            climateRead = ({})
+            return false
+        }
+        composeClimateSrcLine(r, climateMonth)
+        climateRead = r
+        applyEnvRead(r)
+        return true
+    }
+
+    /**
+     * 2026-10-29: 五排 chip 的写回从 applyClimate 里拆出来共用 —— 预报与推演的
+     * 引擎侧键同名 (tempAvg/precipitation/uvLevel/...), 折档逻辑不该抄第二遍.
+     * 枚举 1-4 是雨, 5-8 是雪; 表单那一排只有 4 档, 雪档折回同位 (冬=降雪).
+     */
+    function applyEnvRead(r) {
+        seasonIndex = r.season
+        precipIndex = r.precipitation > 4 ? r.precipitation - 4 : r.precipitation
+        humidityIndex = r.humidity
+        uvLevelIndex = r.uvLevel
+        windLevelIndex = r.windLevel
+        diurnalRange = r.diurnalRange
+        isRainySeason = r.isRainySeason
+    }
+
+    /// 今天这一日 (open-meteo 按日期给, 键就是 ISO 日) —— 用本地日, 不用 toISOString (UTC)
+    function forecastDayIso() {
+        var d = new Date()
+        var p2 = function(n) { return n < 10 ? "0" + n : "" + n }
+        return d.getFullYear() + "-" + p2(d.getMonth() + 1) + "-" + p2(d.getDate())
+    }
+
+    /**
+     * 发请求. 只在"切到预报档"和"改了海拔"两处调, 不在读数回调里调 ——
+     * 30 分钟内命中缓存时 refresh 会**当场** emit forecastUpdated, 回调里再发一次
+     * 请求就是自己转自己.
+     */
+    function pullForecast() {
+        if (weatherSource !== 2 || !weatherService) return
+        if (!emergencyService || !emergencyService.hasLocation) return
+        weatherService.refresh(emergencyService.currentLatitude,
+                               emergencyService.currentLongitude, altMax)
+    }
+
+    /// 只读已拿回来的数 (缓存或刚拉到的), 不发请求; 返回有没有可用的读数
+    function readForecast() {
+        forecastRead = ({})
+        forecastSrcLine = ""
+        if (!weatherService) {
+            forecastFailLine = "天气预报服务还没就绪 · 检查 ServiceRegistry 是否注册 weatherService"
+            return false
+        }
+        if (!emergencyService || !emergencyService.hasLocation) {
+            forecastFailLine = "现在没有定位: 预报要经纬度才能问, 先去①营地或地图页拿到定位"
+            return false
+        }
+        var f = weatherService.forecastFor(forecastDayIso())
+        if (!f || f.tempAvg === undefined) {
+            forecastFailLine = "今天这一天的预报读不到 (还没拉到或离线)"
+            return false
+        }
+        if (f.ageMinutes !== undefined && f.ageMinutes > forecastMaxAgeMinutes) {
+            forecastFailLine = "这份预报是 " + Math.round(f.ageMinutes / 60) + " 小时前的, 太旧"
+            return false
+        }
+        forecastFailLine = ""
+        composeForecastSrcLine(f)
+        forecastRead = f
+        applyEnvRead(f)
+        return true
+    }
+
+    /**
+     * 预报的来源句: 日期 + 多旧 + 有没有做海拔修正.
+     * 「不给假读数」在这里的具体形状: ageMinutes 缺就不写"刚刚", 修正海拔缺就直说"未做".
+     */
+    function composeForecastSrcLine(f) {
+        var parts = ["预报 " + (f.forecastDate || forecastDayIso())]
+        // ageMinutes 的 -1 是服务侧"抓取时刻丢了"的哨兵, 不是"负一分钟前"; 直接写会
+        // 画出"抓于 -1 分钟前" —— 一个假读数, 所以这里按三态分: 未知 / 刚刚 / N 分钟前.
+        if (f.ageMinutes === undefined || f.ageMinutes < 0)
+            parts.push("抓取时刻未知")
+        else if (f.ageMinutes < 1)
+            parts.push("刚抓到")
+        else
+            parts.push("抓于 " + Math.round(f.ageMinutes) + " 分钟前")
+        parts.push(f.forecastElevationM !== undefined
+                   ? ("按 " + f.forecastElevationM + " m 修正")
+                   : "未做海拔修正")
+        forecastSrcLine = parts.join(" · ")
+    }
+
+    /**
+     * 三源总入口 (#147/#155): 预报 → 推演 → 手填, 上一级拿不到就降一级.
+     * 预报成功时**不再**跑 applyClimate —— 否则五排 chip 会被推演值盖回去.
+     */
+    function applyWeather() {
+        if (weatherSource === 0) {
+            forecastRead = ({})
+            forecastSrcLine = ""
+            forecastFailLine = ""
+            applyClimate()
+            return
+        }
+        if (weatherSource === 2) {
+            if (readForecast()) return
+            climateRead = ({})      // 清掉可能残留的上一份, 让 hasEnv 只反映推演结果
+        }
+        applyClimate()
+    }
+    onWeatherSourceChanged: {
+        if (weatherSource === 2) {
+            if (emergencyService) emergencyService.requestLocationUpdate()
+            pullForecast()
+        }
+        applyWeather()
+    }
+    onClimateProvinceChanged: applyWeather()
+    onClimateMonthChanged: applyWeather()
+    onAltMaxChanged: {
+        // 同一格点换海拔要重拉: 旧读数是按旧海拔修正过的, 不能当新数用
+        if (weatherSource === 2) pullForecast()
+        applyWeather()
+    }
+
+    Connections {
+        target: weatherService
+        function onForecastUpdated() { equipmentPage.applyWeather() }
+        function onForecastFailed(reason) {
+            equipmentPage.forecastRead = ({})
+            equipmentPage.forecastSrcLine = ""
+            equipmentPage.forecastFailLine = "预报拉取失败: " + reason
+            equipmentPage.applyClimate()
+        }
+    }
+
+    // 冬季的"降水"是雪, 不是雨. 引擎侧 precipitation 枚举 1-4 是雨、5-8 是雪
+    // (EquipmentService.h Precipitation), 所以同一档位在两个季节映射到不同值:
+    // 选「大雪」不会再命中"强降雨需防水"这种雨具理由, 只会命中雪规则.
+    //
+    // 2026-10-22 反例 (往年读数逼出来的): 海南 1 月 tempMin 15 ℃ → 季节按月份判是
+    // 「冬」, 降水却是 1 (= 小雨). 若这里仍按 isWinter 把那一排 chip 换成雪档,
+    // applyClimate 折回来的 index 1 会被当成「小雪」=5 送进引擎 —— 给海南一月下起雪.
+    // 所以雪/雨这一族改由**读数本身**决定: 自动档看 climateRead, 手填看季节.
+    // 折档 (r.precipitation>4 ? -4 : 原值) 与 precipValues 在两种族下都是精确互逆的.
+    readonly property bool isWinter: seasonIndex === 3
+    readonly property bool snowFamily: weatherSource !== 0 && hasEnv
+                                       ? envRead.precipitation > 4
+                                       : isWinter
+    readonly property var precipLabels: snowFamily
+                                        ? ["无", "小雪", "中雪", "大雪", "暴雪"]
+                                        : ["无", "小雨", "中雨", "大雨", "暴雨"]
+    readonly property var precipValues: snowFamily ? [0, 5, 6, 7, 8] : [0, 1, 2, 3, 4]
+
+    /**
+     * 读数条那六格 (#155): 预报与推演共用一份, 缺测的那一项整格不出现.
+     * 原来这里是六行硬拼的字符串 —— 预报侧一个字段缺测就会把 "undefined mm"
+     * 画上屏, 与「不给假读数」直接冲突, 所以改成按键是否存在决定 push.
+     * 降水毫米数两边键名不同 (月表 climatePrecipMm / 日预报 forecastPrecipMm).
+     */
+    readonly property var envTiles: {
+        if (!equipmentPage.hasEnv) return []
+        var r = equipmentPage.envRead
+        var mm = equipmentPage.hasForecast ? r.forecastPrecipMm : r.climatePrecipMm
+        var out = []
+        if (r.tempMin !== undefined) out.push(["夜温", r.tempMin + " ℃"])
+        if (r.tempAvg !== undefined) out.push(["日均", r.tempAvg + " ℃"])
+        if (r.precipitation !== undefined)
+            out.push(["降水", equipmentPage.precipNames[r.precipitation]
+                                 + (mm !== undefined ? " · " + mm + " mm" : "")])
+        if (r.uvLevel !== undefined)
+            out.push(["紫外线", equipmentPage.uvLevelNames[r.uvLevel]
+                                 + (r.uvIndex !== undefined ? " · " + r.uvIndex : "")])
+        if (r.windLevel !== undefined)
+            out.push(["风", equipmentPage.windLevelNames[r.windLevel]
+                                 + (r.windSpeed !== undefined ? " · " + r.windSpeed + " m/s" : "")])
+        if (r.diurnalRange !== undefined) out.push(["昼夜温差", r.diurnalRange + " ℃"])
+        return out
+    }
 
     // === 数据 ==============================================================
     property var lists: []              // getAllLists().value
@@ -82,10 +359,16 @@ Page {
     property string dlgCategory: "rescue"
     property bool dlgCritical: false
 
-    readonly property var categoryKeys: ["rescue", "protection", "warmth", "altitude",
-                                         "water", "food", "light", "tools", "navigation"]
-    readonly property var categoryNames: ["急救救援", "防护", "保暖", "高原",
-                                          "饮水", "食物", "照明", "工具", "导航"]
+    // 2026-10-22 (#84 补): 库扩到 77 件时新增了 shelter / carry / cook 三类, 这里
+    // 只列了 9 类 —— 分组本身不会丢 (order 从实际数据推, categoryLabel 兜底原键),
+    // 但分区标题会直接显示英文 "shelter", 新建条目的类别 chip 也选不到这三类.
+    // 顺序即分组显示顺序, 营地/背负/保暖/炊具排在前面是重装清单的主线.
+    readonly property var categoryKeys: ["shelter", "carry", "warmth", "cook",
+                                         "water", "food", "protection", "altitude",
+                                         "rescue", "light", "tools", "navigation"]
+    readonly property var categoryNames: ["营地庇护", "背负", "保暖", "炊具炉料",
+                                          "饮水", "食物", "防护", "高原",
+                                          "急救救援", "照明", "工具", "导航"]
     readonly property var seasonNames: ["春", "夏", "秋", "冬"]
 
     function categoryLabel(key) {
@@ -134,8 +417,16 @@ Page {
         if (view === 0) {
             if (!equipmentService) return "装备引擎还没就绪 · 检查 ServiceRegistry 是否注册 equipmentService"
             if (items.length === 0) return "装备库空 · 检查 assets/data/equipment_base.json 是否打进包里"
+            // 库件数在视图 chip 上已经写着, 读数行留给"这次到底按什么生成"
+            var src = equipmentPage.hasForecast
+                      ? "今天预报"
+                      : (weatherSource !== 0 && climateProvince.length > 0 && hasClimate
+                         ? (climateProvince + " " + climateMonth + "月往年") : "天气手填")
             return altMax + " m · " + days + " 天 · 难度 " + difficulty + " · "
-                   + seasonNames[seasonIndex] + " · 库 " + items.length + " 件"
+                   + loadNames[loadEffective] + " · "
+                   + seasonNames[seasonIndex]
+                   + (precipIndex > 0 ? " · " + precipLabels[precipIndex] : "")
+                   + " · " + src
         }
         if (view === 1) {
             if (lists.length === 0) return "还没有生成过清单 · 切到「生成」按行程条件出一份"
@@ -145,8 +436,8 @@ Page {
         return onlyCritical ? t + " · 现只列关键" : t
     }
 
-    readonly property string kicker: view === 0 ? "GEAR / PACK BUILDER"
-                                      : (view === 1 ? "GEAR / MY LISTS" : "GEAR / LIBRARY")
+    readonly property string kicker: view === 0 ? "装备 / 打包"
+                                      : (view === 1 ? "装备 / 我的清单" : "装备 / 装备库")
     readonly property string pageTitle: view === 0 ? "装备清单"
                                         : (view === 1 ? "我的清单" : "装备库")
 
@@ -283,16 +574,25 @@ Page {
         loadItems()
     }
 
-    Component.onCompleted: refreshAll()
+    Component.onCompleted: {
+        refreshAll()
+        // 下拉框显示的是第 0 项, 状态也得是第 0 项, 否则"看着选了四川其实没选"
+        if (climateProvince.length === 0 && provinceChoices.length > 0)
+            climateProvince = provinceChoices[0]
+        // 环境条件现在有三个来源, 首屏也要走三源总入口, 不能只灌往年表
+        applyWeather()
+    }
 
-    // 写操作 (addUserItem / updateUserItem / deleteUserItem / saveList) 在 C++ 侧
-    // 都会发 dataChanged 或 listGenerated → 一律靠信号回表, 不在调用处手动刷,
+    // 写操作 (addUserItem / updateUserItem / deleteUserItem / saveList / deleteList)
+    // 在 C++ 侧都会发 dataChanged 或 list* → 一律靠信号回表, 不在调用处手动刷,
     // 否则一次点击刷两遍.
     Connections {
         target: equipmentService
         function onDataChanged() { equipmentPage.refreshAll() }
         function onListGenerated(listId) { equipmentPage.loadLists() }
         function onListCompleted(listId) { equipmentPage.loadLists() }
+        // 重命名/勾选走 saveList → listModified, 之前这里没接, 改完名不回表
+        function onListModified(listId) { equipmentPage.loadLists() }
     }
     onOnlyCriticalChanged: rebuildItems()
 
@@ -322,6 +622,18 @@ Page {
         equipmentPage.isRainySeason = false
         equipmentPage.isDesert = false
         equipmentPage.isCoastal = false
+        equipmentPage.loadIndex = 2
+        equipmentPage.loadFollowTrip = true
+        equipmentPage.weatherSource = 1
+        equipmentPage.climateProvince = ""
+        equipmentPage.climateMonth = new Date().getMonth() + 1
+        // 2026-10-23 (#111): 这里原来直接 climateRead = ({}) 把读数清空, 而来源句
+        // (climateSrcLine) 现在是赋值不是绑定, 少一次调用就会把上一个省份的句子留在
+        // 属性上. 改调 applyClimate(): 省份为空走第一条分支, 读数与来源句一起归零.
+        // 2026-10-29 (#155): 换成 applyWeather() —— 预报那一源的读数与两句说明
+        // (forecastRead / forecastSrcLine / forecastFailLine) 也要在这里一起归零,
+        // 否则重置完"手填"档上还能看见上一份预报的数字.
+        equipmentPage.applyWeather()
         nameField.text = ""
         nameField.placeholderText = "清单名称 (留空自动命名)"
         equipmentPage.note = ""
@@ -348,7 +660,7 @@ Page {
             "difficulty": equipmentPage.difficulty,
             "season": equipmentPage.seasonIndex,
             "windSpeed": windSpeedByLevel[equipmentPage.windLevelIndex] || 0.0,
-            "precipitation": equipmentPage.precipIndex,
+            "precipitation": equipmentPage.precipValues[equipmentPage.precipIndex],
             "diurnalRange": equipmentPage.diurnalRange,
             "humidity": equipmentPage.humidityIndex,
             "uvLevel": equipmentPage.uvLevelIndex,
@@ -356,6 +668,31 @@ Page {
             "isRainySeason": equipmentPage.isRainySeason,
             "isDesert": equipmentPage.isDesert,
             "isCoastal": equipmentPage.isCoastal
+        }
+
+        // 背负方式: 跟随行程时发的就是引擎自己会推出的那一档; 显式发出去是为了
+        // 关掉跟随之后表单选的值真的说了算 (引擎里 load 缺省才走推断).
+        params["load"] = equipmentPage.loadEffective
+
+        // 天气来源: 「往年」与「预报」两档下温度/风速/紫外线的具体数值都在读数里
+        // (那五排 chip 只有档位), 等级已由 applyClimate/applyForecast 写回 chip,
+        // 引擎再按数值核一遍等级 —— 阈值只有一份 (EquipmentService 的换算函数).
+        // 2026-10-29 (#147/#155): 三源里两个自动档共用同一套键名 (WeatherForecastService
+        // 头注写明了"与 climateFor 同名同语义"), 所以这里不再按来源分支, 只判有没有读数.
+        if (equipmentPage.weatherSource !== 0) {
+            if (!equipmentPage.hasEnv) {
+                // 不静默退回手填: 用户选的是自动档, 拿不到就不生成
+                equipmentPage.note = equipmentPage.weatherSource === 2
+                        ? ("预报和往年都没取到数: " + (equipmentPage.forecastFailLine || "原因未知")
+                           + " · 切「往年推演」要先挑地点, 或改「手填」自己定档。")
+                        : "往年天气还没取到: 先挑地点; 这一带不在 34 省表里就切回「手填」。"
+                return
+            }
+            var c = equipmentPage.envRead
+            params["tempAvg"] = c.tempAvg
+            params["tempMin"] = c.tempMin
+            if (c.windSpeed !== undefined) params["windSpeed"] = c.windSpeed
+            if (c.uvIndex !== undefined) params["uvIndex"] = c.uvIndex
         }
 
         var result = equipmentService.generateList(listName, params)
@@ -564,6 +901,7 @@ Page {
         StackLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
+            Layout.bottomMargin: styles.bottomClearance   // A41: 末行给下面的吸底条让位
             currentIndex: equipmentPage.view
 
             // ============================================================
@@ -721,6 +1059,83 @@ Page {
                             color: CommonOptions.colorInk3
                             wrapMode: Text.WordWrap
                         }
+
+                        // --- 背负方式 (2026-10-22 新增块, 左侧 3px 橙条标出) ---
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Layout.leftMargin: styles.spMd
+                            spacing: styles.spXs
+
+                            Rectangle {
+                                Layout.fillHeight: true
+                                Layout.preferredWidth: styles.lineAccent
+                                color: CommonOptions.colorBlaze
+                            }
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: styles.spXs
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: styles.spXs
+                                    Text {
+                                        Layout.preferredWidth: 56
+                                        text: "背负"
+                                        color: CommonOptions.colorInk3
+                                        font.pixelSize: styles.fsXs
+                                    }
+                                    Repeater {
+                                        model: equipmentPage.loadNames
+                                        delegate: Chip {
+                                            required property int index
+                                            required property var modelData
+                                            Layout.fillWidth: true
+                                            text: modelData
+                                            checked: equipmentPage.loadEffective === index
+                                            accent: CommonOptions.colorAccent
+                                            textSize: styles.fsXs
+                                            onClicked: {
+                                                equipmentPage.loadFollowTrip = false
+                                                equipmentPage.loadIndex = index
+                                            }
+                                        }
+                                    }
+                                }
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: styles.spXs
+                                    Item { Layout.preferredWidth: 56 }
+                                    Chip {
+                                        text: "跟随行程"
+                                        checked: equipmentPage.loadFollowTrip
+                                        accent: CommonOptions.colorTealDeep
+                                        textSize: styles.fsXs
+                                        onClicked: equipmentPage.loadFollowTrip =
+                                                   !equipmentPage.loadFollowTrip
+                                    }
+                                    Text {
+                                        Layout.fillWidth: true
+                                        text: equipmentPage.loadFollowTrip
+                                              ? (equipmentPage.days + " 天 / 难度 "
+                                                 + equipmentPage.difficulty + " → 自动这档")
+                                              : "已手动定档"
+                                        font.pixelSize: styles.fsXs
+                                        color: CommonOptions.colorInk3
+                                        elide: Text.ElideRight
+                                    }
+                                }
+
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: "不过夜就不背包里的帐篷睡袋 —— 这一档改的是"
+                                          + "帐篷 / 睡袋 / 炉具 / 氧气进不进绝对必带。"
+                                    font.pixelSize: styles.fsXs
+                                    color: CommonOptions.colorInk3
+                                    wrapMode: Text.WordWrap
+                                }
+                            }
+                        }
                     }
 
                     // --- 环境卡 ---
@@ -737,6 +1152,227 @@ Page {
                             pixelSize: styles.fsLg
                         }
 
+                        // --- 天气来源 (2026-10-22 新增块, 3px 橙条标出) -------
+                        // 「往年」档下这五排 chip 不是给用户瞎填的: 它显示的是
+                        // climateFor 替这条路线填出来的档位 (applyClimate 写回),
+                        // 手改任意一档即切回「手填」, 不留"看着自动其实被覆盖"的态.
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Layout.leftMargin: styles.spMd
+                            spacing: styles.spXs
+
+                            Rectangle {
+                                Layout.fillHeight: true
+                                Layout.preferredWidth: styles.lineAccent
+                                color: CommonOptions.colorBlaze
+                            }
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: styles.spSm
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: styles.btnHSm
+                                    spacing: 0
+
+                                    Repeater {
+                                        model: ["手填", "往年推演", "当前天气预报"]
+                                        delegate: Rectangle {
+                                            required property int index
+                                            required property var modelData
+                                            Layout.fillWidth: true
+                                            Layout.preferredHeight: styles.btnHSm
+                                            border.width: styles.lineHair
+                                            border.color: CommonOptions.colorText
+                                            color: equipmentPage.weatherSource === index
+                                                   ? CommonOptions.colorText
+                                                   : CommonOptions.colorSurface
+                                            // 相邻两枚之间只画一条线: 后一枚盖掉自己的左边
+                                            Layout.leftMargin: index > 0 ? -styles.lineHair : 0
+                                            Text {
+                                                anchors.centerIn: parent
+                                                text: modelData
+                                                font.pixelSize: styles.fsSm
+                                                font.bold: equipmentPage.weatherSource === index
+                                                color: equipmentPage.weatherSource === index
+                                                       ? CommonOptions.colorTextOnAccent
+                                                       : CommonOptions.colorTextMuted
+                                            }
+                                            MouseArea {
+                                                anchors.fill: parent
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: equipmentPage.weatherSource = index
+                                            }
+                                        }
+                                    }
+                                }
+
+                                FilterRow {
+                                    Layout.fillWidth: true
+                                    label: "地点"
+                                    labelWidth: 56
+                                    comboModel: equipmentPage.provinceChoices
+                                    comboCurrentIndex: Math.max(
+                                        0, equipmentPage.provinceChoices.indexOf(
+                                               equipmentPage.climateProvince))
+                                    // 2026-10-29 (#155): 预报档也要能改 —— 预报取不到时
+                                    // 落回的就是这一份往年读数, 锁住等于把降级的那条路也锁了.
+                                    enabled: equipmentPage.weatherSource !== 0
+                                    onComboActivated: (i, v) => {
+                                        equipmentPage.climateProvince = String(v)
+                                    }
+                                }
+
+                                FilterRow {
+                                    Layout.fillWidth: true
+                                    label: "月份"
+                                    labelWidth: 56
+                                    stepperValue: equipmentPage.climateMonth + " 月 · "
+                                                  + equipmentPage.seasonNames[
+                                                        (equipmentPage.climateMonth >= 3
+                                                         && equipmentPage.climateMonth <= 5) ? 0
+                                                        : (equipmentPage.climateMonth <= 8 ? 1
+                                                           : (equipmentPage.climateMonth <= 11 ? 2 : 3))]
+                                    stepperMinusEnabled: equipmentPage.weatherSource !== 0
+                                    stepperPlusEnabled: equipmentPage.weatherSource !== 0
+                                    onStepperMinus: equipmentPage.climateMonth =
+                                            equipmentPage.climateMonth <= 1
+                                            ? 12 : equipmentPage.climateMonth - 1
+                                    onStepperPlus: equipmentPage.climateMonth =
+                                            equipmentPage.climateMonth >= 12
+                                            ? 1 : equipmentPage.climateMonth + 1
+                                }
+
+                                // 读数条: 自动档下"它替我填成了什么"全在这一块
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    // 这块必须有 implicitHeight: 里面的 ColumnLayout 不再
+                                    // anchors.fill 父项, 不写这条就是 0 高, 读数会溢出压住
+                                    // 后面的行 (layout_collapse_check 命中项, 也是"清单页
+                                    // 布局差"的真因). 撑高度的子项必须**不锚底边**, 见下面
+                                    // climateReadout 的 #111 注.
+                                    implicitHeight: climateReadout.implicitHeight + 2 * styles.spSm
+                                    visible: equipmentPage.hasEnv
+                                    border.width: styles.lineHair
+                                    border.color: CommonOptions.colorText
+                                    color: CommonOptions.colorSurfaceDim
+
+                                    ColumnLayout {
+                                        id: climateReadout
+                                        // 2026-10-23 (#111): 原来是 anchors.fill: parent ——
+                                        // 那是一条闭合的高度自指环:
+                                        //   Rectangle.implicitHeight ← climateReadout.implicitHeight
+                                        //   → Rectangle.height (外层 ColumnLayout 按 implicitHeight
+                                        //     给它发行高) → climateReadout 被 anchors.fill 拉成
+                                        //     父项高度 → 布局重排子项 → climateReadout.implicitHeight
+                                        //   → 回到第一行.
+                                        // 环里每一次重排都要重发那条 Text.text (绑的是
+                                        // equipmentPage.climateSrcLine), 于是 Qt 在同一批次里
+                                        // 重入它, 真机就是这条 QQuickText 报
+                                        // "Binding loop detected for property text".
+                                        // 改法照抄 PositionReadout.qml:76-82 那个已评审的写法:
+                                        // 只锚左/右/顶, 不锚底 —— 布局高度由它自己的
+                                        // implicitHeight 决定, 父项高度由它撑, 单向依赖.
+                                        // Card.qml 头注早就把 fill + implicitHeight 列为禁忌.
+                                        anchors.left: parent.left
+                                        anchors.right: parent.right
+                                        anchors.top: parent.top
+                                        anchors.margins: styles.spSm
+                                        spacing: styles.spXs
+
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            spacing: styles.spSm
+                                            Text {
+                                                Layout.fillWidth: true
+                                                text: equipmentPage.hasForecast ? "今天预报" : "往年这个时候"
+                                                color: CommonOptions.colorText
+                                                font.pixelSize: styles.fsSm
+                                                font.bold: true
+                                            }
+                                            Text {
+                                                text: equipmentPage.hasForecast ? "逐日预报" : "常年值"
+                                                font.pixelSize: styles.fsXs
+                                                color: CommonOptions.colorInk3
+                                            }
+                                        }
+
+                                        GridLayout {
+                                            Layout.fillWidth: true
+                                            columns: 3
+                                            rowSpacing: styles.spXs
+                                            columnSpacing: styles.spSm
+
+                                            Repeater {
+                                                model: equipmentPage.envTiles
+                                                delegate: StatTile {
+                                                    required property var modelData
+                                                    Layout.fillWidth: true
+                                                    label: modelData[0]
+                                                    value: modelData[1]
+                                                    valueSize: styles.fsMd
+                                                }
+                                            }
+                                        }
+
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            spacing: styles.spXs
+                                            // 汉字与读数分两个节点: 名字用默认字族, 数值那截才允许等宽
+                                            Text {
+                                                Layout.alignment: Qt.AlignVCenter
+                                                text: "数据来源"
+                                                font.pixelSize: styles.fsXs
+                                                color: CommonOptions.colorInk3
+                                            }
+                                            Text {
+                                                Layout.fillWidth: true
+                                                text: equipmentPage.hasForecast
+                                                      ? equipmentPage.forecastSrcLine
+                                                      : equipmentPage.climateSrcLine
+                                                font.pixelSize: styles.fsXs
+                                                color: CommonOptions.colorTextMuted
+                                                elide: Text.ElideRight
+                                            }
+                                        }
+
+                                        // 降级说明: 只在预报档没吃上时才占一行, 而且说清
+                                        // 现在这一屏是推演而不是预报 —— 不说就等于骗人.
+                                        Text {
+                                            Layout.fillWidth: true
+                                            visible: equipmentPage.weatherSource === 2
+                                                     && equipmentPage.forecastFailLine.length > 0
+                                            text: "退回往年推演: " + equipmentPage.forecastFailLine
+                                            font.pixelSize: styles.fsXs
+                                            color: CommonOptions.colorHazard
+                                            wrapMode: Text.WordWrap
+                                        }
+                                    }
+                                }
+
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: equipmentPage.hasForecast
+                                          ? ("这一屏是逐日在线预报, 只到未来几天; 天数更长的行程仍按往年推演那一档带。")
+                                          : (equipmentPage.hasClimate
+                                             ? (equipmentPage.weatherSource === 2
+                                                ? "上面这屏是往年推演, 不是天气预报 —— 预报没吃上的原因见上一条。"
+                                                : "常年平均态, 不是天气预报 —— 只用来决定带不带冰爪这一级。")
+                                             : (equipmentPage.weatherSource === 1
+                                                ? ("这一带不在往年表里 (表内 "
+                                                   + equipmentPage.climateTotal + " 省), 切「手填」自己定档。")
+                                                : (equipmentPage.weatherSource === 2
+                                                   ? "预报和往年都没取到数 · 见上一条原因, 或切「手填」自己定档。"
+                                                   : "手填: 下面五档就是本次生成的输入。")))
+                                    font.pixelSize: styles.fsXs
+                                    color: equipmentPage.hasEnv ? CommonOptions.colorInk3
+                                                                : CommonOptions.colorHazard
+                                    wrapMode: Text.WordWrap
+                                }
+                            }
+                        }
+
                         RowLayout {
                             Layout.fillWidth: true
                             spacing: styles.spXs
@@ -747,7 +1383,7 @@ Page {
                                 font.pixelSize: styles.fsXs
                             }
                             Repeater {
-                                model: ["春", "夏", "秋", "冬"]
+                                model: equipmentPage.seasonNames
                                 delegate: Chip {
                                     required property int index
                                     required property var modelData
@@ -756,7 +1392,11 @@ Page {
                                     checked: equipmentPage.seasonIndex === index
                                     accent: CommonOptions.colorAccent
                                     textSize: styles.fsSm
-                                    onClicked: equipmentPage.seasonIndex = index
+                                    onClicked: {
+                                        // 手改任意一档 → 来源即刻转「手填」, 不留隐藏态
+                                        equipmentPage.weatherSource = 0
+                                        equipmentPage.seasonIndex = index
+                                    }
                                 }
                             }
                         }
@@ -766,12 +1406,12 @@ Page {
                             spacing: styles.spXs
                             Text {
                                 Layout.preferredWidth: 56
-                                text: "降水"
+                                text: equipmentPage.snowFamily ? "降雪" : "降水"
                                 color: CommonOptions.colorInk3
                                 font.pixelSize: styles.fsXs
                             }
                             Repeater {
-                                model: ["无", "小雨", "中雨", "大雨", "暴雨"]
+                                model: equipmentPage.precipLabels
                                 delegate: Chip {
                                     required property int index
                                     required property var modelData
@@ -780,7 +1420,10 @@ Page {
                                     checked: equipmentPage.precipIndex === index
                                     accent: CommonOptions.colorWater
                                     textSize: styles.fsXs
-                                    onClicked: equipmentPage.precipIndex = index
+                                    onClicked: {
+                                        equipmentPage.weatherSource = 0
+                                        equipmentPage.precipIndex = index
+                                    }
                                 }
                             }
                         }
@@ -795,7 +1438,7 @@ Page {
                                 font.pixelSize: styles.fsXs
                             }
                             Repeater {
-                                model: ["干燥", "适中", "闷热"]
+                                model: equipmentPage.humidityNames
                                 delegate: Chip {
                                     required property int index
                                     required property var modelData
@@ -804,7 +1447,10 @@ Page {
                                     checked: equipmentPage.humidityIndex === index
                                     accent: CommonOptions.colorWater
                                     textSize: styles.fsSm
-                                    onClicked: equipmentPage.humidityIndex = index
+                                    onClicked: {
+                                        equipmentPage.weatherSource = 0
+                                        equipmentPage.humidityIndex = index
+                                    }
                                 }
                             }
                         }
@@ -819,7 +1465,7 @@ Page {
                                 font.pixelSize: styles.fsXs
                             }
                             Repeater {
-                                model: ["弱", "中等", "强", "很强", "极强"]
+                                model: equipmentPage.uvLevelNames
                                 delegate: Chip {
                                     required property int index
                                     required property var modelData
@@ -828,7 +1474,10 @@ Page {
                                     checked: equipmentPage.uvLevelIndex === index
                                     accent: CommonOptions.colorLegendAmber
                                     textSize: styles.fsXs
-                                    onClicked: equipmentPage.uvLevelIndex = index
+                                    onClicked: {
+                                        equipmentPage.weatherSource = 0
+                                        equipmentPage.uvLevelIndex = index
+                                    }
                                 }
                             }
                         }
@@ -843,7 +1492,7 @@ Page {
                                 font.pixelSize: styles.fsXs
                             }
                             Repeater {
-                                model: ["静风", "微风", "中等", "大风", "强风"]
+                                model: equipmentPage.windLevelNames
                                 delegate: Chip {
                                     required property int index
                                     required property var modelData
@@ -852,7 +1501,10 @@ Page {
                                     checked: equipmentPage.windLevelIndex === index
                                     accent: CommonOptions.colorWater
                                     textSize: styles.fsXs
-                                    onClicked: equipmentPage.windLevelIndex = index
+                                    onClicked: {
+                                        equipmentPage.weatherSource = 0
+                                        equipmentPage.windLevelIndex = index
+                                    }
                                 }
                             }
                         }
@@ -864,10 +1516,16 @@ Page {
                             stepperValue: equipmentPage.diurnalRange + " °C"
                             stepperMinusEnabled: equipmentPage.diurnalRange > 0
                             stepperPlusEnabled: equipmentPage.diurnalRange < 40
-                            onStepperMinus: equipmentPage.diurnalRange =
-                                            Math.max(0, equipmentPage.diurnalRange - 5)
-                            onStepperPlus: equipmentPage.diurnalRange =
-                                           Math.min(40, equipmentPage.diurnalRange + 5)
+                            onStepperMinus: {
+                                equipmentPage.weatherSource = 0
+                                equipmentPage.diurnalRange =
+                                        Math.max(0, equipmentPage.diurnalRange - 5)
+                            }
+                            onStepperPlus: {
+                                equipmentPage.weatherSource = 0
+                                equipmentPage.diurnalRange =
+                                        Math.min(40, equipmentPage.diurnalRange + 5)
+                            }
                         }
 
                         // 地区标记: 多选 chip (雨季/沙漠/沿海)
@@ -889,15 +1547,24 @@ Page {
                                     checked: equipmentPage[modelData[1]] === true
                                     accent: CommonOptions.colorBlaze
                                     textSize: styles.fsSm
-                                    onClicked: equipmentPage[modelData[1]] =
-                                               !equipmentPage[modelData[1]]
+                                    onClicked: {
+                                        equipmentPage.weatherSource = 0
+                                        equipmentPage[modelData[1]] =
+                                                !equipmentPage[modelData[1]]
+                                    }
                                 }
                             }
                         }
 
                         Text {
                             Layout.fillWidth: true
-                            text: "海拔 2500 m 以上自动按高原处理 · 温度与人数不参与选装"
+                            text: "季节选「冬」时降水按降雪计 · 海拔 2500 m 以上自动按高原处理 · "
+                                  + "保暖/防暑看的是夜温与日均, 人数不参与选装"
+                                  + (equipmentPage.weatherSource === 2
+                                     ? " · 预报只覆盖未来几天, 出发前仍要对当天天气"
+                                     : equipmentPage.weatherSource === 1
+                                       ? " · 往年常态只有月内均值, 出发前请看实时天气"
+                                       : "")
                             font.pixelSize: styles.fsXs
                             color: CommonOptions.colorInk3
                             wrapMode: Text.WordWrap
@@ -962,10 +1629,8 @@ Page {
                             }
                             Text {
                                 Layout.alignment: Qt.AlignVCenter
-                                text: modelData.count + " LISTS"
-                                font.family: styles.monoFont
+                                text: modelData.count + " 份清单"
                                 font.pixelSize: styles.fsXs
-                                font.letterSpacing: 1.4
                                 color: CommonOptions.colorInk3
                             }
                         }
@@ -1117,10 +1782,8 @@ Page {
                             }
                             Text {
                                 Layout.alignment: Qt.AlignVCenter
-                                text: modelData.count + " ITEMS"
-                                font.family: styles.monoFont
+                                text: modelData.count + " 项"
                                 font.pixelSize: styles.fsXs
-                                font.letterSpacing: 1.4
                                 color: CommonOptions.colorInk3
                             }
                         }
@@ -1161,7 +1824,7 @@ Page {
                                     }
                                 }
                             }
-                            // "关键"是这一列唯一的信号 (5/43 件), 用琥珀文字而不是色条:
+                            // "关键"是这一列唯一的信号 (5/49 件), 用琥珀文字而不是色条:
                             // 色条在本页已经有海拔含义 (视图 1), 不能借来当第二套语义.
                             Text {
                                 Layout.alignment: Qt.AlignVCenter
@@ -1414,29 +2077,16 @@ Page {
             }
         }
 
-        footer: RowLayout {
-            // footer 由 Popup 按 Dialog.padding 内缩, 这里再写 Layout.* 边距是空操作
-            spacing: styles.spMd
-
-            OutlineButton {
-                Layout.preferredWidth: 88
-                Layout.alignment: Qt.AlignVCenter
-                text: "取消"
-                tone: CommonOptions.colorText
-                textSize: styles.fsSm
-                onClicked: itemDialog.reject()
-            }
-            PrimaryButton {
-                Layout.fillWidth: true
-                Layout.alignment: Qt.AlignVCenter
-                text: equipmentPage.dlgMode === "edit" ? "保存修改" : "存为我的装备"
-                tone: CommonOptions.colorAccent
-                textSize: styles.fsMd
-                onClicked: {
-                    equipmentPage.acceptItemDialog()
-                    // 校验/写入失败时 note 会留在页面上, 对话框不关, 用户能接着改
-                    if (equipmentPage.note.length === 0) itemDialog.accept()
-                }
+        footer: DialogFooter {
+            // 2026-10-26 按钮定稿: footer 排在 Dialog.padding 外面, 由 DialogFooter 自己管内缩与顶线
+            kind: "primary"
+            cancelText: "取消"
+            confirmText: equipmentPage.dlgMode === "edit" ? "保存修改" : "存为我的装备"
+            onCancel: itemDialog.reject()
+            onConfirm: {
+                equipmentPage.acceptItemDialog()
+                // 校验/写入失败时 note 会留在页面上, 对话框不关, 用户能接着改
+                if (equipmentPage.note.length === 0) itemDialog.accept()
             }
         }
     }
@@ -1489,33 +2139,19 @@ Page {
             }
         }
 
-        footer: RowLayout {
-            // footer 由 Popup 按 Dialog.padding 内缩, 这里再写 Layout.* 边距是空操作
-            spacing: styles.spMd
-
-            OutlineButton {
-                Layout.preferredWidth: 88
-                Layout.alignment: Qt.AlignVCenter
-                text: "取消"
-                tone: CommonOptions.colorText
-                textSize: styles.fsSm
-                onClicked: renameDialog.reject()
-            }
-            PrimaryButton {
-                Layout.fillWidth: true
-                Layout.alignment: Qt.AlignVCenter
-                text: "改名"
-                tone: CommonOptions.colorAccent
-                textSize: styles.fsMd
-                onClicked: {
-                    var nm = itemRenameField.text.trim()
-                    if (nm.length === 0) {
-                        equipmentPage.note = "名称不能为空, 清单还是原来那个"
-                        return
-                    }
-                    equipmentPage.renameList(renameDialog.listId, nm)
-                    if (equipmentPage.note.length === 0) renameDialog.accept()
+        footer: DialogFooter {
+            kind: "primary"
+            cancelText: "取消"
+            confirmText: "改名"
+            onCancel: renameDialog.reject()
+            onConfirm: {
+                var nm = itemRenameField.text.trim()
+                if (nm.length === 0) {
+                    equipmentPage.note = "名称不能为空, 清单还是原来那个"
+                    return
                 }
+                equipmentPage.renameList(renameDialog.listId, nm)
+                if (equipmentPage.note.length === 0) renameDialog.accept()
             }
         }
     }
@@ -1540,7 +2176,7 @@ Page {
             Text {
                 Layout.fillWidth: true
                 text: "删除清单"
-                color: CommonOptions.colorDanger
+                color: CommonOptions.colorDangerOnText
                 font.pixelSize: styles.fsLg
                 font.bold: true
                 elide: Text.ElideRight
@@ -1555,30 +2191,17 @@ Page {
             }
         }
 
-        footer: RowLayout {
-            // footer 由 Popup 按 Dialog.padding 内缩, 这里再写 Layout.* 边距是空操作
-            spacing: styles.spMd
-
-            OutlineButton {
-                Layout.preferredWidth: 88
-                Layout.alignment: Qt.AlignVCenter
-                text: "留着"
-                tone: CommonOptions.colorText
-                textSize: styles.fsSm
-                onClicked: confirmDeleteDialog.reject()
-            }
-            PrimaryButton {
-                Layout.fillWidth: true
-                Layout.alignment: Qt.AlignVCenter
-                text: "删除"
-                iconName: "delete"
-                tone: CommonOptions.colorDanger
-                textSize: styles.fsMd
-                onClicked: {
-                    equipmentPage.deleteList(confirmDeleteDialog.listId,
-                                             confirmDeleteDialog.listName)
-                    if (equipmentPage.note.length === 0) confirmDeleteDialog.accept()
-                }
+        footer: DialogFooter {
+            kind: "danger"
+            cancelText: "留着"
+            confirmText: "删除"
+            confirmIcon: "delete"
+            confirmCode: "不可撤"
+            onCancel: confirmDeleteDialog.reject()
+            onConfirm: {
+                equipmentPage.deleteList(confirmDeleteDialog.listId,
+                                         confirmDeleteDialog.listName)
+                if (equipmentPage.note.length === 0) confirmDeleteDialog.accept()
             }
         }
     }

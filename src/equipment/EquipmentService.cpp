@@ -24,8 +24,43 @@
 #include <QJsonParseError>
 #include <QRegularExpression>  // 2026-09-23: 复合条件 "X AND Y" 拆分
 #include <algorithm>
+#include <cmath>  // 2026-10-22: 气候海拔修正 round1
 
 namespace outdoor {
+
+namespace {
+
+/**
+ * @brief RecommendedItem → QML 可读的 QVariantMap 数组
+ *
+ * 2026-10-22: generateList 原来直接 `QVariant::fromValue(QList<RecommendedItem>)`,
+ *   QML 侧数组长度能读, 但每个元素是未注册 converter 的裸结构体 → 取 `.name` 得
+ *   undefined, 定量的 qty / unit / weightTotalG 更没法显示。改成与 getList 同一份映射。
+ * @param checkedIds 已勾选 id, generateList 传空 (新清单还没勾过)
+ */
+QVariantList recItemsToMaps(const QList<RecommendedItem>& recs,
+                            const QStringList& checkedIds) {
+    QVariantList out;
+    out.reserve(recs.size());
+    for (const auto& r : recs) {
+        QVariantMap m;
+        m["id"] = r.item.id;
+        m["name"] = r.item.name;
+        m["category"] = r.item.category;
+        m["weightG"] = r.item.weightG;
+        m["qty"] = r.qty;
+        m["unit"] = r.item.unit;
+        m["weightTotalG"] = r.weightTotalG();
+        m["reasons"] = r.reasons;
+        // 2026-09-28: 补 checked 字段 - QML 端 CategorySection 的 _checked 靠它回显,
+        //   之前完全不返回勾选状态 → 重启 App 后所有勾选看似丢失.
+        m["checked"] = checkedIds.contains(r.item.id);
+        out.append(m);
+    }
+    return out;
+}
+
+} // anonymous
 
 EquipmentService::EquipmentService(QObject* parent)
     : ServiceBase("EquipmentService", parent) {  // 2026-09-21 阶段 L2 (无 db)
@@ -49,6 +84,11 @@ bool EquipmentService::initialize() {
     if (!loadRules()) {
         Logger::error("Failed to load equipment rules");
         return false;
+    }
+
+    // 2026-10-22: 往年天气表缺了不能拦整个模块 (装备生成手填天气照样能用)
+    if (!loadClimateNormals()) {
+        Logger::warn("EquipmentService: climate normals unavailable, 天气只能手填");
     }
 
     // 加载偏好
@@ -192,6 +232,7 @@ bool EquipmentService::loadItems() {
         item.description = o["description"].toString();
         item.isCritical = o["is_critical"].toBool();
         item.isOTC = o["otc"].toBool();
+        item.unit = o["unit"].toString(QStringLiteral("件"));
         item.specs = o["specs"].toObject();
         m_items[item.id] = item;
     }
@@ -217,6 +258,37 @@ bool EquipmentService::loadRules() {
     return !m_rules.isEmpty();
 }
 
+// 2026-10-22: 往年天气表 (省 × 月)。缺表不影响装备生成 —— 天气退回手填,
+//   所以 initialize() 里这条失败只 warn, 不 return false。
+bool EquipmentService::loadClimateNormals() {
+    QString err;
+    auto doc = AssetLoader::loadJson("climate_normals.json", &err);
+    if (!doc) {
+        Logger::warn(QString("EquipmentService: loadClimateNormals: %1").arg(err));
+        return false;
+    }
+    if (!doc->isObject()) {
+        Logger::warn("EquipmentService: climate_normals.json root is not an object");
+        return false;
+    }
+
+    const QJsonObject root = doc->object();
+    m_climateLapseCPerKm = root["lapse_rate_c_per_1000m"].toDouble(-6.5);
+    m_climateUvPerKm = root["uv_per_1000m"].toDouble(0.12);
+
+    const QJsonArray provinces = root["provinces"].toArray();
+    for (const auto& v : provinces) {
+        const QJsonObject o = v.toObject();
+        const QString name = o["name"].toString().trimmed();
+        if (name.isEmpty()) continue;
+        m_climate.insert(name, o);
+    }
+    if (m_climate.isEmpty()) {
+        Logger::warn("EquipmentService: climate_normals.json has empty provinces array");
+    }
+    return !m_climate.isEmpty();
+}
+
 int EquipmentService::totalItems() const { return m_items.size(); }
 int EquipmentService::totalRules() const { return m_rules.size(); }
 
@@ -227,6 +299,16 @@ EquipmentAltitudeLevel EquipmentService::getAltitudeLevel(int altitudeM) {
 
 QString EquipmentService::getAltitudeLevelName(EquipmentAltitudeLevel level) {
     return AltitudeScale::nameOf(level);
+}
+
+QString EquipmentService::getLoadStyleName(int load) {
+    switch (static_cast<LoadStyle>(load)) {
+        case LoadStyle::DayHike:     return QStringLiteral("轻装一日");
+        case LoadStyle::FastPack:    return QStringLiteral("单日高强度");
+        case LoadStyle::Overnight:   return QStringLiteral("过夜重装");
+        case LoadStyle::Expedition:  return QStringLiteral("多日重装");
+    }
+    return QStringLiteral("轻装一日");
 }
 
 // 2026-10-21 (#18 C3): 这里原来还有 getAltitudeLevelName / getAltitudeLevelColor 两份
@@ -251,6 +333,45 @@ UVLevel EquipmentService::uvLevelFromIndex(float index) {
     return UVLevel::Extreme;
 }
 
+// 2026-10-28 (#154): 档位换算从 climateFor 里抽出来做成公开静态, 是因为在线天气预报
+//   要产出**同一套键**给装备引擎吃。阈值留在原地抄第二份, 两边就会漂。
+int EquipmentService::precipitationBandMonthly(double precipMm, double tempMinC) {
+    const bool snow = tempMinC <= -1.0;
+    if (precipMm < 5.0)  return static_cast<int>(Precipitation::None);
+    if (precipMm < 30.0) return static_cast<int>(snow ? Precipitation::SnowLight : Precipitation::Light);
+    if (precipMm < 90.0) return static_cast<int>(snow ? Precipitation::SnowModerate : Precipitation::Moderate);
+    if (precipMm < 180.0) return static_cast<int>(snow ? Precipitation::SnowHeavy : Precipitation::Heavy);
+    return static_cast<int>(snow ? Precipitation::SnowStorm : Precipitation::Storm);
+}
+
+int EquipmentService::precipitationBandDaily(double precipMm, double tempMinC) {
+    const bool snow = tempMinC <= -1.0;
+    if (precipMm < 0.1)  return static_cast<int>(Precipitation::None);
+    if (precipMm < 2.5)  return static_cast<int>(snow ? Precipitation::SnowLight : Precipitation::Light);
+    if (precipMm < 10.0) return static_cast<int>(snow ? Precipitation::SnowModerate : Precipitation::Moderate);
+    if (precipMm < 25.0) return static_cast<int>(snow ? Precipitation::SnowHeavy : Precipitation::Heavy);
+    return static_cast<int>(snow ? Precipitation::SnowStorm : Precipitation::Storm);
+}
+
+int EquipmentService::humidityBandMonthly(double precipMm) {
+    if (precipMm < 25.0)  return static_cast<int>(HumidityType::Dry);
+    if (precipMm < 100.0) return static_cast<int>(HumidityType::Moderate);
+    return static_cast<int>(HumidityType::Humid);
+}
+
+int EquipmentService::humidityBandFromRh(double rhPercent) {
+    if (rhPercent < 40.0)  return static_cast<int>(HumidityType::Dry);
+    if (rhPercent < 75.0)  return static_cast<int>(HumidityType::Moderate);
+    return static_cast<int>(HumidityType::Humid);
+}
+
+int EquipmentService::seasonFromMonth(int month) {
+    if (month >= 3 && month <= 5)       return static_cast<int>(Season::Spring);
+    if (month >= 6 && month <= 8)       return static_cast<int>(Season::Summer);
+    if (month >= 9 && month <= 11)      return static_cast<int>(Season::Autumn);
+    return static_cast<int>(Season::Winter);
+}
+
 QJsonObject EquipmentService::getAltitudeSegment(EquipmentAltitudeLevel level) {
     QJsonObject seg;
     seg["level"] = static_cast<int>(level);
@@ -258,6 +379,103 @@ QJsonObject EquipmentService::getAltitudeSegment(EquipmentAltitudeLevel level) {
     // 2026-10-21 (#18 C3): 原来这里塞了 seg["color"] = 老 Material 十六进制.
     //   色不进数据层: 界面按 level 取 CommonOptions.altitudeColor(level).
     return seg;
+}
+
+// === 往年天气 (省 × 月) ======================================================
+// 2026-10-22: 用户报"清单不看路线地点往年天气"。表里存的是**代表站海拔**处的常年
+//   值, 海拔修正在查询时现算 (同一省的路线可以在 500m 也可以在 4500m)。
+//   返回的键就是 generateList paramsMap 认的那几个, 页面合并进表单即可;
+//   档位 (precipitation / humidity / season) 也在这里换算, QML 不要再算一遍。
+QVariantMap EquipmentService::climateFor(const QString& province, int month, int altitudeM) const {
+    QVariantMap out;
+    if (m_climate.isEmpty() || province.trimmed().isEmpty()) return out;
+    if (month < 1 || month > 12) return out;
+    const int idx = month - 1;
+
+    // 跨省路线写成 "四川/西藏": 拆开逐省查, 各自做完海拔修正再取平均。
+    // 查不到的省名忽略; 一个都对不上则返回空 map (不编一份假天气)。
+    const QStringList parts = province.split('/', Qt::SkipEmptyParts);
+    double sumAvg = 0.0, sumMin = 0.0, sumWind = 0.0, sumUv = 0.0, sumMm = 0.0, sumDiurnal = 0.0;
+    double sumRef = 0.0, sumCorr = 0.0;
+    QStringList matched;
+    for (const QString& raw : parts) {
+        const QString name = raw.trimmed();
+        if (name.isEmpty()) continue;
+        const auto it = m_climate.constFind(name);
+        if (it == m_climate.constEnd()) continue;
+        const QJsonObject& o = it.value();
+
+        const double refAlt = o["refAltitudeM"].toDouble();
+        const double dKm = (altitudeM - refAlt) / 1000.0;
+        const double corr = m_climateLapseCPerKm * dKm;   // 这一档海拔修正量, 给来源行显示
+        const double tAvg = o["tempAvg"].toArray().at(idx).toDouble() + corr;
+        const double tMin = o["tempMin"].toArray().at(idx).toDouble() + corr;
+        const double uv = qBound(0.0,
+                                 o["uvIndex"].toArray().at(idx).toDouble() * (1.0 + m_climateUvPerKm * dKm),
+                                 16.0);
+
+        sumAvg += tAvg;
+        sumMin += tMin;
+        sumWind += o["windMs"].toArray().at(idx).toDouble();
+        sumUv += uv;
+        sumMm += o["precipMm"].toArray().at(idx).toDouble();
+        sumDiurnal += o["diurnalRange"].toArray().at(idx).toDouble();
+        sumRef += refAlt;
+        sumCorr += corr;
+        matched << name;
+    }
+    const int n = matched.size();
+    if (n == 0) return out;
+
+    const double tempAvg = sumAvg / n;
+    const double tempMin = sumMin / n;
+    const double precipMm = sumMm / n;
+    auto round1 = [](double v) { return std::round(v * 10.0) / 10.0; };
+
+    // 月降水量当"这个月大概多湿"的代理值: <5/30/90/180 mm 分档 (见 band_note);
+    //   夜间均温已在零下换成雪档。换算本体在 precipitationBandMonthly, 与日预报共用。
+    out["tempAvg"] = round1(tempAvg);
+    out["tempMin"] = round1(tempMin);
+    out["windSpeed"] = round1(sumWind / n);
+    out["uvIndex"] = round1(sumUv / n);
+    out["precipitation"] = precipitationBandMonthly(precipMm, tempMin);
+    out["humidity"] = humidityBandMonthly(precipMm);
+    out["diurnalRange"] = qRound(sumDiurnal / n);
+    out["season"] = seasonFromMonth(month);
+    out["isRainySeason"] = precipMm >= 80.0;
+    // 等级档一起给: QML 的环境 chip 要显示"这次被填成了什么", 而换算 (蒲福风级 /
+    //   WHO 紫外线) 的真身在上面两个静态函数里, 不在 QML 再抄一份阈值。
+    out["windLevel"] = static_cast<int>(windLevelFromSpeed(static_cast<float>(sumWind / n)));
+    out["uvLevel"] = static_cast<int>(uvLevelFromIndex(static_cast<float>(sumUv / n)));
+    // 以下只给界面显示来源用, generateList 读不到这些键也无害
+    out["climateProvince"] = matched.join("/");
+    out["climateMonth"] = month;
+    out["climateAltitudeM"] = altitudeM;
+    out["climatePrecipMm"] = round1(precipMm);
+    out["climateRefAltitudeM"] = qRound(sumRef / n);   // 代表站海拔
+    out["climateCorrectC"] = round1(sumCorr / n);      // 温度朝路线海拔修正了多少
+    return out;
+}
+
+QStringList EquipmentService::climateProvinceNames() const {
+    QStringList names = m_climate.keys();
+    names.sort();
+    return names;
+}
+
+// 2026-10-28 (#154): 在线预报按经纬度取数, 而 QML 手里只有省名 —— 坐标从表里给出去,
+//   不在 QML 硬编一份省城经纬度。查不到返回空 map, 调用方据此不发起请求。
+QVariantMap EquipmentService::climateStation(const QString& province) const {
+    QVariantMap out;
+    const QString name = province.trimmed();
+    if (name.isEmpty()) return out;
+    const auto it = m_climate.constFind(name);
+    if (it == m_climate.constEnd()) return out;
+    const QJsonObject& o = it.value();
+    out["lat"] = o["lat"].toDouble();
+    out["lon"] = o["lon"].toDouble();
+    out["refAltitudeM"] = o["refAltitudeM"].toDouble();
+    return out;
 }
 
 QVariantList EquipmentService::getAllItems() {
@@ -271,6 +489,7 @@ QVariantList EquipmentService::getAllItems() {
         m["isCritical"] = item.isCritical;
         m["isOTC"] = item.isOTC;
         m["description"] = item.description;
+        m["unit"] = item.unit;
         list.append(m);
     }
     return list;
@@ -304,6 +523,7 @@ QVariantMap EquipmentService::getById(const QString& id) {  // 2026-09-20: renam
     result["description"] = item.description;
     result["isCritical"] = item.isCritical;
     result["isOTC"] = item.isOTC;
+    result["unit"] = item.unit;
     return result;
 }
 
@@ -348,6 +568,9 @@ QList<RecommendedItem> EquipmentService::applyRules(
         else if (prioStr == "important") priority = Priority::Important;
         else if (prioStr == "recommended") priority = Priority::Recommended;
         QString ruleName = rule["name"].toString();
+        // 2026-10-22: 规则可选 "qty": {"energy_bar": 8, "water_liters": 2} —— 定量写在
+        //   规则里而不是库里, 因为带多少根能量棒取决于行程, 不是这件装备的属性。
+        const QJsonObject ruleQty = rule["qty"].toObject();
 
         // 检查条件
         bool matched = false;
@@ -367,18 +590,22 @@ QList<RecommendedItem> EquipmentService::applyRules(
             if (it == items.constEnd()) continue;
 
             const auto pos = indexOf.constFind(itemId);
+            const int wantQty = ruleQty.value(itemId).toInt(0);
             if (pos == indexOf.constEnd()) {
                 RecommendedItem rec;
                 rec.item = it.value();
                 rec.priority = priority;
                 rec.reasons << ruleName;
                 rec.sourceRule = rule["id"].toString();
+                rec.qty = wantQty > 0 ? wantQty : 1;
                 indexOf.insert(itemId, result.size());
                 result.append(rec);
                 continue;
             }
             RecommendedItem& rec = result[pos.value()];
             if (!rec.reasons.contains(ruleName)) rec.reasons << ruleName;
+            // 定量取最大: days>=2 给 8 根、days>=7 给 30 根, 7 天的行程拿 30
+            if (wantQty > rec.qty) rec.qty = wantQty;
             if (priority > rec.priority) {
                 rec.priority = priority;
                 rec.sourceRule = rule["id"].toString();
@@ -509,7 +736,7 @@ int EquipmentService::calculateTotalWeight(
     const QList<RecommendedItem>& items) {
     int total = 0;
     for (const auto& r : items) {
-        total += r.item.weightG;
+        total += r.weightTotalG();   // 2026-10-22: 单件重 × 定量
     }
     return total;
 }
@@ -576,6 +803,20 @@ QVariantMap EquipmentService::generateList(const QString& name,
         params.isPlateau = params.altitudeMax >= 2500;
     }
 
+    // 2026-10-22: 背负方式 (轻装/重装)。表单没这一项时按天数与难度推断 ——
+    //   过夜就要睡, 睡就要帐篷睡袋, 这件事以前只能靠用户自己想起来加。
+    if (paramsMap.contains("load")) {
+        params.load = static_cast<LoadStyle>(paramsMap.value("load").toInt());
+    } else if (params.days >= 3) {
+        params.load = LoadStyle::Expedition;
+    } else if (params.days >= 2) {
+        params.load = LoadStyle::Overnight;
+    } else if (params.difficulty >= 4) {
+        params.load = LoadStyle::FastPack;
+    } else {
+        params.load = LoadStyle::DayHike;
+    }
+
     // 应用规则
     QList<RecommendedItem> recommended = applyRules(params, m_items);
 
@@ -628,7 +869,14 @@ QVariantMap EquipmentService::generateList(const QString& name,
     }
 
     // 计算总重
-    list.totalWeightG = calculateTotalWeight(recommended);
+    // 2026-10-22: 原来这里算的是 recommended (含 _base_fallback 兜底进来的整件装备库),
+    //   所以"背负总重"恒等于全库重量 (77 件 ≈ 28kg), 轻装一日和多日重装读数一模一样.
+    //   可选档的语义是"按需携带", 不上包 —— 不计重.
+    QList<RecommendedItem> carry;
+    carry.append(list.critical);
+    carry.append(list.important);
+    carry.append(list.recommended);
+    list.totalWeightG = calculateTotalWeight(carry);
 
     // 保存
     saveListToStorage(list);
@@ -642,10 +890,18 @@ QVariantMap EquipmentService::generateList(const QString& name,
     result["altitudeLevelName"] = getAltitudeLevelName(
         getAltitudeLevel(params.altitudeMax));
     result["totalWeightG"] = list.totalWeightG;
-    result["critical"] = QVariant::fromValue(list.critical);
-    result["important"] = QVariant::fromValue(list.important);
-    result["recommended"] = QVariant::fromValue(list.recommended);
-    result["optional"] = QVariant::fromValue(list.optional);
+    result["days"] = params.days;
+    result["difficulty"] = params.difficulty;
+    result["season"] = static_cast<int>(params.season);
+    result["tempMin"] = static_cast<double>(params.tempMin);
+    result["tempAvg"] = static_cast<double>(params.tempAvg);
+    result["load"] = static_cast<int>(params.load);
+    result["loadName"] = getLoadStyleName(static_cast<int>(params.load));
+    const QStringList noChecked;   // 新生成的清单尚未勾选
+    result["critical"] = recItemsToMaps(list.critical, noChecked);
+    result["important"] = recItemsToMaps(list.important, noChecked);
+    result["recommended"] = recItemsToMaps(list.recommended, noChecked);
+    result["optional"] = recItemsToMaps(list.optional, noChecked);
 
     emit listGenerated(list.id);
     Logger::info(QString("Generated list %1: %2 critical, %3 important, %4 recommended, %5 optional")
@@ -677,6 +933,12 @@ void EquipmentService::saveListToStorage(const EquipmentList& list) {
     obj["altitudeCamp"] = list.params.altitudeCamp;
     obj["days"] = list.params.days;
     obj["difficulty"] = list.params.difficulty;
+    // 2026-10-22: 季节 / 温度 / 背负方式也落盘。详情页要用它们解释"为什么是这一套",
+    //   保命项按 temp_min 分档之后, 这几个数就是清单结论的一部分, 不落盘等于丢档案。
+    obj["season"] = static_cast<int>(list.params.season);
+    obj["tempMin"] = static_cast<double>(list.params.tempMin);
+    obj["tempAvg"] = static_cast<double>(list.params.tempAvg);
+    obj["load"] = static_cast<int>(list.params.load);
 
     QJsonArray checkedArr;
     for (const QString& id : list.checkedIds) {
@@ -701,7 +963,9 @@ void EquipmentService::saveListToStorage(const EquipmentList& list) {
             item["weightG"] = r.item.weightG;
             item["isCritical"] = r.item.isCritical;
             item["description"] = r.item.description;
+            item["unit"] = r.item.unit;
             o["item"] = item;
+            o["qty"] = r.qty;   // 2026-10-22: 定量 (无则为 1)
             QJsonArray rs;
             for (const QString& s : r.reasons) rs.append(s);
             o["reasons"] = rs;
@@ -736,6 +1000,15 @@ EquipmentList EquipmentService::loadListFromStorage(const QString& id) const {
     list.params.altitudeCamp = obj["altitudeCamp"].toInt();
     list.params.days = obj["days"].toInt();
     list.params.difficulty = obj["difficulty"].toInt();
+    // 2026-10-22: 季节 / 温度 / 背负 (老清单缺字段时保留 struct 默认值)
+    list.params.season = static_cast<Season>(obj["season"].toInt(
+        static_cast<int>(list.params.season)));
+    list.params.tempMin = static_cast<float>(obj["tempMin"].toDouble(
+        list.params.tempMin));
+    list.params.tempAvg = static_cast<float>(obj["tempAvg"].toDouble(
+        list.params.tempAvg));
+    list.params.load = static_cast<LoadStyle>(obj["load"].toInt(
+        static_cast<int>(list.params.load)));
     list.totalWeightG = obj["totalWeightG"].toInt();
     list.checkedCount = obj["checkedCount"].toInt();
     list.isCompleted = obj["isCompleted"].toBool();
@@ -760,6 +1033,9 @@ EquipmentList EquipmentService::loadListFromStorage(const QString& id) const {
             r2.item.weightG = item["weightG"].toInt();
             r2.item.isCritical = item["isCritical"].toBool();
             r2.item.description = item["description"].toString();
+            r2.item.unit = item["unit"].toString(QStringLiteral("件"));
+            r2.qty = o["qty"].toInt(1);
+            if (r2.qty < 1) r2.qty = 1;   // 2026-09 之前存的老清单没有 qty 字段
             QJsonArray rs = o["reasons"].toArray();
             for (const QJsonValue& rv : rs) {
                 if (rv.isString()) r2.reasons.append(rv.toString());
@@ -850,53 +1126,20 @@ QVariantMap EquipmentService::getList(const QString& id) {
     result["altitudeCamp"] = list.params.altitudeCamp;
     result["days"] = list.params.days;
     result["difficulty"] = list.params.difficulty;
+    // 2026-10-22: 清单档案里的天气与背负读数 (详情页据此解释档位从哪来)
+    result["season"] = static_cast<int>(list.params.season);
+    result["tempMin"] = static_cast<double>(list.params.tempMin);
+    result["tempAvg"] = static_cast<double>(list.params.tempAvg);
+    result["load"] = static_cast<int>(list.params.load);
+    result["loadName"] = getLoadStyleName(static_cast<int>(list.params.load));
     result["totalWeightG"] = list.totalWeightG;
     result["checkedCount"] = list.checkedCount;
     result["isCompleted"] = list.isCompleted;
 
-    QVariantList criticalList, importantList, recommendedList, optionalList;
-    for (const auto& r : list.critical) {
-        QVariantMap m;
-        m["id"] = r.item.id;
-        m["name"] = r.item.name;
-        m["weightG"] = r.item.weightG;
-        m["reasons"] = r.reasons;
-        // 2026-09-28: 补 checked 字段 - QML 端 CategorySection 的 _checked 靠它回显,
-        //   之前 getList 完全不返回勾选状态 → 重启 App 后所有勾选看似丢失.
-        m["checked"] = list.checkedIds.contains(r.item.id);
-        criticalList.append(m);
-    }
-    for (const auto& r : list.important) {
-        QVariantMap m;
-        m["id"] = r.item.id;
-        m["name"] = r.item.name;
-        m["weightG"] = r.item.weightG;
-        m["reasons"] = r.reasons;
-        m["checked"] = list.checkedIds.contains(r.item.id);
-        importantList.append(m);
-    }
-    for (const auto& r : list.recommended) {
-        QVariantMap m;
-        m["id"] = r.item.id;
-        m["name"] = r.item.name;
-        m["weightG"] = r.item.weightG;
-        m["reasons"] = r.reasons;
-        m["checked"] = list.checkedIds.contains(r.item.id);
-        recommendedList.append(m);
-    }
-    for (const auto& r : list.optional) {
-        QVariantMap m;
-        m["id"] = r.item.id;
-        m["name"] = r.item.name;
-        m["weightG"] = r.item.weightG;
-        m["reasons"] = r.reasons;
-        m["checked"] = list.checkedIds.contains(r.item.id);
-        optionalList.append(m);
-    }
-    result["critical"] = criticalList;
-    result["important"] = importantList;
-    result["recommended"] = recommendedList;
-    result["optional"] = optionalList;
+    result["critical"] = recItemsToMaps(list.critical, list.checkedIds);
+    result["important"] = recItemsToMaps(list.important, list.checkedIds);
+    result["recommended"] = recItemsToMaps(list.recommended, list.checkedIds);
+    result["optional"] = recItemsToMaps(list.optional, list.checkedIds);
     return result;
 }
 
@@ -915,6 +1158,9 @@ QVariantMap EquipmentService::deleteList(const QString& id) {
         Logger::error(QString("%1: %2").arg(ctx, err));
         return fail(ServiceErrorCode::IoError, err, ctx);
     }
+    // 2026-10-22 修 (用户报"删除清单后行不消失, 要重开页面"): 写操作里只有这条
+    //   没发信号, EquipmentPage 的 Connections 全靠 dataChanged 回表 → 行一直留在屏上.
+    emit dataChanged();
     return okVoid();
 }
 
@@ -1107,25 +1353,32 @@ QString EquipmentService::exportToPdf(const QString& listId,
     out += QString("=== %1 ===\n\n").arg(list.name);
     out += QString("最高海拔: %1 m\n").arg(list.params.altitudeMax);
     out += QString("行程天数: %1 天\n").arg(list.params.days);
-    out += QString("难度: %1 星\n\n").arg(list.params.difficulty);
+    out += QString("难度: %1 星\n").arg(list.params.difficulty);
+    // 2026-10-22: 档位现在按温度和背负分档, 导出不带这两行就等于把结论的来路丢了
+    out += QString("背负方式: %1\n").arg(getLoadStyleName(static_cast<int>(list.params.load)));
+    out += QString("夜间最低温: %1 ℃\n\n").arg(static_cast<double>(list.params.tempMin), 0, 'f', 0);
     out += QString("总重量: %1 g\n\n").arg(list.totalWeightG);
 
-    out += "【必带】\n";
-    for (const auto& r : list.critical) {
-        out += QString("- [ ] %1 (%2 g)\n").arg(r.item.name).arg(r.item.weightG);
-    }
-    out += "\n【强必带】\n";
-    for (const auto& r : list.important) {
-        out += QString("- [ ] %1 (%2 g)\n").arg(r.item.name).arg(r.item.weightG);
-    }
-    out += "\n【推荐】\n";
-    for (const auto& r : list.recommended) {
-        out += QString("- [ ] %1 (%2 g)\n").arg(r.item.name).arg(r.item.weightG);
-    }
-    out += "\n【可选】\n";
-    for (const auto& r : list.optional) {
-        out += QString("- [ ] %1 (%2 g)\n").arg(r.item.name).arg(r.item.weightG);
-    }
+    // 2026-10-22: 四档原本各写一份循环; 合成一份, 顺带把定量打出来 ——
+    //   照着这张纸装箱要写 "能量棒 ×8 根", 不是一个光秃秃的名字。
+    auto section = [&out](const QString& title, const QList<RecommendedItem>& recs) {
+        out += title + "\n";
+        for (const auto& r : recs) {
+            if (r.qty > 1) {
+                out += QString("- [ ] %1 ×%2 %3 (%4 g/%3, 计 %5 g)\n")
+                           .arg(r.item.name).arg(r.qty).arg(r.item.unit)
+                           .arg(r.item.weightG).arg(r.weightTotalG());
+            } else {
+                out += QString("- [ ] %1 (%2 g)\n")
+                           .arg(r.item.name).arg(r.item.weightG);
+            }
+        }
+        out += "\n";
+    };
+    section("【必带】", list.critical);
+    section("【强必带】", list.important);
+    section("【推荐】", list.recommended);
+    section("【可选】", list.optional);
 
     QFile file(filePath);
     if (file.open(QIODevice::WriteOnly)) {

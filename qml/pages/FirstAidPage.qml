@@ -169,7 +169,12 @@ Page {
         return t + " · 可走决策 " + decisionCount
     }
 
+    // rows 是 reload() 里命令式算的, 不是绑定 —— 改筛选必须自己触发重建, 否则
+    // chip 亮着而列表不动 (2026-10-27 真机 A36)。口径与 RouteListPage 一致。
+    // callLater 不是多余的: reload() 会重写 catCounts, 而 chip 行的 model 正读着它
+    //   → 就地重建会把"正在发 clicked 的那个 delegate"删在信号栈上。
     Component.onCompleted: reload()
+    onCurrentCategoryChanged: Qt.callLater(firstAidPage.reload)
     Connections {
         target: firstAidService
         function onDataChanged() { firstAidPage.reload() }
@@ -195,10 +200,8 @@ Page {
                 anchors.rightMargin: 40
                 spacing: 3
                 Text {
-                    text: "MANUAL / FIRST AID"
-                    font.family: styles.monoFont
+                    text: "手册 · 急救"
                     font.pixelSize: styles.fsXs
-                    font.letterSpacing: 1.8
                     color: CommonOptions.colorInk3
                 }
                 Text {
@@ -311,12 +314,9 @@ Page {
                             font.bold: true
                             elide: Text.ElideRight
                         }
-                        // 拉丁微标签才加字距, 中文不加 (样式铁律)
                         Text {
-                            text: modelData.count + " ENTRIES"
-                            font.family: styles.monoFont
+                            text: modelData.count + " 条"
                             font.pixelSize: styles.fsXs
-                            font.letterSpacing: 1.4
                             color: CommonOptions.colorInk3
                         }
                     }
@@ -399,7 +399,8 @@ Page {
                 // 留一行来源说明, 免得用户以为这些步骤是 App 自己写的.
                 footer: Item {
                     width: aidList.width
-                    height: footRow.implicitHeight + styles.spMd + styles.spLg
+                    // A41: 末尾那格 = 给吸底条 / 导航条的让位量
+                    height: footRow.implicitHeight + styles.spMd + styles.bottomClearance
 
                     RowLayout {
                         id: footRow

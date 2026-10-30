@@ -11,6 +11,8 @@
  */
 
 #include "MapService.h"
+#include "../common/SettingsStore.h"  // 2026-10-29: 采样档位持久化 (track/frequencySec)
+#include "../common/TrackMetrics.h"   // 2026-10-29 #168: 轨迹统计唯一定口径
 #include "../core/Logger.h"
 #include "../core/PathService.h"
 #include "../core/Result.h"
@@ -23,12 +25,46 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <QJsonValue>
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
 #include <QUuid>
 #include <QDateTime>
+#include <QRegularExpression>  // 2026-10-27 #134: importKml 拆 gx:coord / coordinates 用
 #include <QTextStream>
 #include <algorithm>
+#include <cmath>  // 2026-10-26: addTrackPoint 用 std::isfinite 挡 NaN 哨兵
+#include <limits>  // 2026-10-26: quiet_NaN 表示"这一帧没有高程", 不用 0 充数
+
+namespace {
+
+// 2026-10-27 #134: 导入器共用的坐标门 (GPX / KML / CSV 三处原来是三份手抄的判据,
+//   CSV 那份压根没写). 越界或 (0,0) 哨兵点一旦进轨迹, 统计里的距离会被一条到几内亚湾
+//   的往返拉爆, 而线上看着只是"线出屏了". 单轴为 0 仍是合法坐标 (赤道/本初子午线),
+//   只有成对为 0 才按"没填"拒掉 —— 与 QML 侧 MapPage._validCoord 同一口径.
+bool coordSane(double lat, double lon) {
+    return std::isfinite(lat) && std::isfinite(lon)
+            && lat >= -90.0 && lat <= 90.0 && lon >= -180.0 && lon <= 180.0
+            && !(lat == 0.0 && lon == 0.0);
+}
+
+// 2026-10-27 #134: stopTrack 把 endTime 写成"停止的这一刻", 对导入的旧文件是假读数.
+//   这里按文件里的真实末刻回填, 文件没给就留空串 —— 宁可不显示, 也不让列表把
+//   "刚刚"当成一条 2024 年轨迹的结束时间 (见 [[no-fake-readout-rule]]).
+void patchImportedEndTime(const QString& storagePath, const QString& trackId,
+                          const QDateTime& endTime) {
+    QFile tf(storagePath + QString("/track_%1.json").arg(trackId));
+    if (!tf.open(QIODevice::ReadOnly)) return;
+    QJsonObject obj = QJsonDocument::fromJson(tf.readAll()).object();
+    tf.close();
+    obj["endTime"] = endTime.isValid() ? endTime.toString(Qt::ISODate) : QString();
+    if (tf.open(QIODevice::WriteOnly)) {
+        tf.write(QJsonDocument(obj).toJson(QJsonDocument::Indented));
+        tf.close();
+    }
+}
+
+}  // namespace
 
 namespace outdoor {
 
@@ -50,8 +86,8 @@ QVariantMap MapService::startTrack(const QString& name, int frequencySeconds) {
     track.startTime = QDateTime::currentDateTime();
     track.source = "recorded";
 
-    // 验证频率（2/5/10/20/30）
-    int validFreqs[] = {2, 5, 10, 20, 30};
+    // 验证频率（5/10/15/30，与 getFrequencyOptions 同套）
+    int validFreqs[] = {5, 10, 15, 30};
     bool valid = false;
     for (int f : validFreqs) {
         if (f == frequencySeconds) { valid = true; break; }
@@ -85,8 +121,14 @@ QVariantMap MapService::startTrack(const QString& name, int frequencySeconds) {
 }
 
 // 2026-09-21: 阶段 L3.4 - addTrackPoint 切 Result<bool>
+// 2026-10-26「轨迹/标注点精度到 1 m」: 补 accuracy 形参并把每点精度落盘.
+//   原来点里只有 seq/lat/lon/elevation/timestamp —— 一条轨迹事后完全看不出
+//   "这一排点是 3 m 的卫星点还是 60 m 的网络点", 于是统计里那个总距离既可能是真的
+//   徒步距离, 也可能全是抖动堆出来的. 没有每点 ±, 任何"精度"都无从谈起.
+//   elevation/accuracy 传 NaN/<=0 = 未知, **整键不写** —— 写 0 会被读成"海平面 0 米"
+//   /"精度完美 0 米" (见 [[no-fake-readout-rule]]).
 QVariantMap MapService::addTrackPoint(const QString& trackId, double lat, double lon,
-                                       double elevation) {
+                                       double elevation, double accuracy) {
     using namespace outdoor::internal;
     const char* ctx = "MapService::addTrackPoint";
 
@@ -96,6 +138,15 @@ QVariantMap MapService::addTrackPoint(const QString& trackId, double lat, double
     if (!QFileInfo::exists(m_storagePath + QString("/track_%1.json").arg(trackId))) {
         return toQVariant(Err<bool>(ServiceErrorCode::NotFound,
                                       QStringLiteral("轨迹不存在: %1").arg(trackId), ctx));
+    }
+    // 2026-10-26: 采样点必须自证是有效坐标. RecordTab 现在每个采样周期直接落盘,
+    //   无权限时 EmergencyService 的 currentLatitude 是 0 —— 不过这道门就会攒一条
+    //   "落在几内亚湾的济南徒步轨迹" (标注那边早就为同一个坑写了守卫, 见 MapPage).
+    if (!std::isfinite(lat) || !std::isfinite(lon)
+            || lat < -90.0 || lat > 90.0 || lon < -180.0 || lon > 180.0
+            || (lat == 0.0 && lon == 0.0)) {
+        return toQVariant(Err<bool>(ServiceErrorCode::InvalidArgument,
+                                      QStringLiteral("采样点坐标无效"), ctx));
     }
 
     QString pointsFile = m_storagePath + QString("/track_%1_points.json").arg(trackId);
@@ -113,7 +164,8 @@ QVariantMap MapService::addTrackPoint(const QString& trackId, double lat, double
     point["seq"] = points.size();
     point["lat"] = lat;
     point["lon"] = lon;
-    point["elevation"] = elevation;
+    if (std::isfinite(elevation)) point["elevation"] = elevation;
+    if (std::isfinite(accuracy) && accuracy > 0) point["accuracy"] = accuracy;
     point["timestamp"] = QDateTime::currentDateTime().toString(Qt::ISODate);
     points.append(point);
 
@@ -149,44 +201,47 @@ QVariantMap MapService::stopTrack(const QString& trackId) {
     obj["endTime"] = QDateTime::currentDateTime().toString(Qt::ISODate);
 
     // 重新计算统计
+    //   口径只有一处: outdoor::track::compute() (见 TrackMetrics.h 头注释里的对账
+    //   实测)。这里再加上"文件自述优先": 两步路的 KML 在 <Document> 属性表里写了
+    //   它自己算的爬升/下降, importKml 抓成 declaredElevation*M 存进 meta, 有就用它
+    //   —— 用户是拿那个数对账的。自录轨迹没有这两个键, 走算出来的平滑值。
     QFile pf(m_storagePath + QString("/track_%1_points.json").arg(trackId));
     if (pf.open(QIODevice::ReadOnly)) {
         QJsonDocument pdoc = QJsonDocument::fromJson(pf.readAll());
         pf.close();
-        QJsonArray points = pdoc.array();
+        const QJsonArray points = pdoc.array();
         obj["pointCount"] = points.size();
 
-        // 计算距离和海拔
-        double totalDist = 0;
-        double maxAlt = -1e9, minAlt = 1e9;
-        double gain = 0, loss = 0;
-        QGeoCoordinate prev;
-        bool hasPrev = false;
-        double prevAlt = 0;
+        const outdoor::track::Metrics mt =
+            outdoor::track::compute(outdoor::track::samplesFromJson(points));
 
-        for (const auto& v : points) {
-            QJsonObject p = v.toObject();
-            QGeoCoordinate cur(p["lat"].toDouble(), p["lon"].toDouble());
-            double alt = p["elevation"].toDouble();
+        auto declared = [&obj](const QString& key, double fallback) {
+            const QJsonValue v = obj.value(key);
+            return (v.isDouble() && v.toDouble() >= 0.0) ? v.toDouble() : fallback;
+        };
 
-            if (hasPrev) {
-                totalDist += prev.distanceTo(cur);
-                if (alt > prevAlt) gain += (alt - prevAlt);
-                else loss += (prevAlt - alt);
-            }
-
-            maxAlt = std::max(maxAlt, alt);
-            minAlt = std::min(minAlt, alt);
-            prev = cur;
-            prevAlt = alt;
-            hasPrev = true;
+        obj["totalDistanceM"] = mt.distanceM;
+        obj["elevationGainM"] = declared(QStringLiteral("declaredElevationGainM"), mt.gainM);
+        obj["elevationLossM"] = declared(QStringLiteral("declaredElevationLossM"), mt.lossM);
+        if (mt.hasAltitude) {
+            obj["maxAltitudeM"] = mt.maxAltM;
+            obj["minAltitudeM"] = mt.minAltM;
+        } else {
+            // 一个高程都没有时不要把 0 写出去 —— 那会被读成"这条轨迹全在海平面"
+            obj.remove("maxAltitudeM");
+            obj.remove("minAltitudeM");
         }
-
-        obj["totalDistanceM"] = totalDist;
-        obj["elevationGainM"] = gain;
-        obj["elevationLossM"] = loss;
-        obj["maxAltitudeM"] = maxAlt;
-        obj["minAltitudeM"] = minAlt;
+        if (mt.accuracyCount > 0) {
+            obj["accuracyAvgM"] = mt.accuracyAvgM;
+            obj["accuracyBestM"] = mt.accuracyBestM;
+            obj["accuracyWorstM"] = mt.accuracyWorstM;
+            obj["accuracyPointCount"] = mt.accuracyCount;
+        } else {
+            obj.remove("accuracyAvgM");
+            obj.remove("accuracyBestM");
+            obj.remove("accuracyWorstM");
+            obj.remove("accuracyPointCount");
+        }
     }
 
     if (!file.open(QIODevice::WriteOnly)) {
@@ -222,8 +277,17 @@ QVariantList MapService::getAllTracks() const {
             m["source"] = obj["source"].toString();
             m["totalDistanceM"] = obj["totalDistanceM"].toDouble();
             m["elevationGainM"] = obj["elevationGainM"].toDouble();
-            m["maxAltitudeM"] = obj["maxAltitudeM"].toDouble();
-            m["minAltitudeM"] = obj["minAltitudeM"].toDouble();
+            // 2026-10-26: stopTrack 现在在"一个高程都没有"时不写这两个键.
+            //   这里必须跟着判存在, 否则 .toDouble() 把缺键读成 0, 列表上就是一行
+            //   "最高 0 m / 最低 0 m" 的假数 (见 [[no-fake-readout-rule]]).
+            if (obj.contains("maxAltitudeM")) m["maxAltitudeM"] = obj["maxAltitudeM"].toDouble();
+            if (obj.contains("minAltitudeM")) m["minAltitudeM"] = obj["minAltitudeM"].toDouble();
+            if (obj.contains("accuracyAvgM")) {
+                m["accuracyAvgM"] = obj["accuracyAvgM"].toDouble();
+                m["accuracyBestM"] = obj["accuracyBestM"].toDouble();
+                m["accuracyWorstM"] = obj["accuracyWorstM"].toDouble();
+                m["accuracyPointCount"] = obj["accuracyPointCount"].toInt();
+            }
             m["pointCount"] = obj["pointCount"].toInt();
             list.append(m);
         }
@@ -304,17 +368,18 @@ QVariantList MapService::getTrackElevations(const QString& trackId) {
 
 QVariantList MapService::getFrequencyOptions() {
     QVariantList options;
-    // 5 个频率选项（用户确认）
+    // 2026-10-28 用户定档: 5 / 10 / 15 / 30 秒. 原来那五档 (2/5/10/20/30) 里
+    //   "2 秒"在野外是"耗电一小时就没电", "20 秒"和 15/30 挤在一起没有区分度;
+    //   四档一排 chip 在抽屉里也刚好放得下 (原五档在 fsSm 下把行挤到换行).
     struct FreqOption {
         int seconds;
         QString label;
         QString description;
     };
     FreqOption opts[] = {
-        {2, "2 秒", "高精度，耗电大"},
         {5, "5 秒", "推荐平衡"},
-        {10, "10 秒", "省电，标准"},
-        {20, "20 秒", "长距离省电"},
+        {10, "10 秒", "标准，省电"},
+        {15, "15 秒", "长距离省电"},
         {30, "30 秒", "极省电，粗略"}
     };
     for (const auto& opt : opts) {
@@ -330,17 +395,30 @@ QVariantList MapService::getFrequencyOptions() {
 
 QString MapService::getFrequencyLabel(int seconds) {
     switch (seconds) {
-        case 2: return "2 秒（高精度）";
         case 5: return "5 秒（推荐）";
         case 10: return "10 秒（标准）";
-        case 20: return "20 秒（省电）";
+        case 15: return "15 秒（省电）";
         case 30: return "30 秒（粗略）";
         default: return QString::number(seconds) + " 秒";
     }
 }
 
 int MapService::getDefaultFrequency() const {
-    return 5;
+    // 2026-10-29: 这一条不再恒返 5 —— 用户选过的档位落 QSettings, 重启后读回.
+    //   照 ui/nightMode (CommonOptions::setNightMode) 那一套: 写只在 setter, 读在这里.
+    //   落盘值不可认 (旧版本残留 / 手改过配置) 就回 5, 不拿脏值当档位用.
+    const int saved = outdoor::SettingsStore::getInt(QStringLiteral("track/frequencySec"), 5);
+    return (saved == 5 || saved == 10 || saved == 15 || saved == 30) ? saved : 5;
+}
+
+void MapService::setFrequencySeconds(int seconds) {
+    // 只认 getFrequencyOptions 那一套四档: 写进设置里的值必须是引擎也认的档,
+    //   否则下次启动读回来是一个"界面高亮着一个 startTrack 会拒收的数".
+    if (seconds != 5 && seconds != 10 && seconds != 15 && seconds != 30) {
+        Logger::warn(QString("setFrequencySeconds: %1 不是合法档位, 不写设置").arg(seconds));
+        return;
+    }
+    outdoor::SettingsStore::setValue(QStringLiteral("track/frequencySec"), seconds);
 }
 
 QVariantMap MapService::importGpx(const QString& filePath) {
@@ -360,7 +438,6 @@ QVariantMap MapService::importGpx(const QString& filePath) {
     QString trackId;
     QString name;
     QDateTime trackStartTime;
-    QDateTime pointTime;
     // 2026-09-15: 修复 - 用栈式解析, 保证 <ele>/<time> 与 <trkpt> 一一对应
     QList<QGeoCoordinate> points;
     QList<double> elevations;
@@ -375,6 +452,15 @@ QVariantMap MapService::importGpx(const QString& filePath) {
     QDateTime currentTime;
     bool hasCurrentTime = false;
     bool hasAnyPoint = false;
+
+    // 2026-10-27 #134: GPX 的 <time> 按规范是 UTC (带 Z 或 ±偏移). QDateTime::fromString
+    //   配 Qt::ISODate 认这个 Z, 但回来的是 UTC 口径; 而本 App 落盘写的是不带 Z 的
+    //   墙钟串 (addTrackPoint 用 currentDateTime), 读方一律按本地解. 不转就整条 GPX
+    //   轨迹的时刻比真墙钟差 8 小时 (和 KML 同一个坑).
+    auto parseUtc = [](const QString& raw) {
+        QDateTime t = QDateTime::fromString(raw.trimmed(), Qt::ISODate);
+        return t.isValid() ? t.toLocalTime() : QDateTime();
+    };
 
     while (!xml.atEnd()) {
         xml.readNext();
@@ -391,7 +477,7 @@ QVariantMap MapService::importGpx(const QString& filePath) {
                 }
             } else if (nameTag == "time" && !inTrackPoint && !inRoutePoint) {
                 // 顶层 <time> 作为轨迹默认起始时间
-                trackStartTime = QDateTime::fromString(xml.readElementText().trimmed(), Qt::ISODate);
+                trackStartTime = parseUtc(xml.readElementText());
             } else if (nameTag == "trkpt" || nameTag == "rtept") {
                 // 准备接收当前点的子元素
                 inTrackPoint = (nameTag == "trkpt");
@@ -407,15 +493,18 @@ QVariantMap MapService::importGpx(const QString& filePath) {
                 currentEle = xml.readElementText().toDouble();
                 hasCurrentEle = true;
             } else if (nameTag == "time" && (inTrackPoint || inRoutePoint)) {
-                currentTime = QDateTime::fromString(xml.readElementText().trimmed(), Qt::ISODate);
-                hasCurrentTime = true;
+                currentTime = parseUtc(xml.readElementText());
+                hasCurrentTime = currentTime.isValid();
             }
         } else if (xml.isEndElement()) {
             QString endName = xml.name().toString();
             if (endName == "trkpt" || endName == "rtept") {
                 // 一个点结束, 入栈
                 points.append(currentPoint);
-                elevations.append(hasCurrentEle ? currentEle : 0);
+                // 没有 <ele> 就存 NaN, 落盘时整键不写. 原来缺高程填 0, stopTrack
+                // 会把这条读成"最低点 0 米"并把落差顶高一截 (同 [[no-fake-readout-rule]]).
+                elevations.append(hasCurrentEle ? currentEle
+                                                : std::numeric_limits<double>::quiet_NaN());
                 timestamps.append(hasCurrentTime ? currentTime : QDateTime());
                 hasAnyPoint = true;
                 if (endName == "trkpt") inTrackPoint = false;
@@ -432,48 +521,43 @@ QVariantMap MapService::importGpx(const QString& filePath) {
             QStringLiteral("GPX 文件无效或无轨迹点"), ctx));
     }
 
-    // 起始时间: 优先用顶层 <time>, 其次用第一个有时间的点, 再次用当前时间
+    // 起始时间: 顶层 <time>, 其次第一个带时间的点. 都没有就留 invalid ——
+    //   原来这里回落 currentDateTime(), 于是导入一条 2024 年的 GPX, 列表写的
+    //   "开始时间"是"这一刻", stopTrack 再用 now 收尾, 时长算成两年多.
     QDateTime startTime = trackStartTime;
-    if (!startTime.isValid()) {
-        for (int i = 0; i < timestamps.size(); i++) {
-            if (timestamps[i].isValid()) { startTime = timestamps[i]; break; }
-        }
-    }
-    if (!startTime.isValid()) {
-        startTime = QDateTime::currentDateTime();
-    }
-    // 填补没有时间的点
+    QDateTime endTime;
     for (int i = 0; i < timestamps.size(); i++) {
-        if (!timestamps[i].isValid()) {
-            timestamps[i] = startTime.addSecs(i * 5);
-        }
+        if (!timestamps[i].isValid()) continue;
+        if (!startTime.isValid()) startTime = timestamps[i];
+        endTime = timestamps[i];
     }
-    // 结束时间 = 最后一个点的时间
-    QDateTime endTime = timestamps.last().isValid() ? timestamps.last() : startTime;
-
-    // 创建轨迹
-    Track track;
-    track.id = trackId;
-    track.name = name;
-    track.startTime = startTime;
-    track.endTime = endTime;
-    track.points = points;
-    track.elevations = elevations;
-    track.source = "imported";
-    track.originalFormat = "gpx";
+    // 没有逐点时刻就整条留空, 不再 addSecs(i*5) 编一条 5 秒等距节拍 ——
+    //   getTrackStats 的速度就是段距离/段时刻差, 假节拍会把散步读成 8 km/h.
+    //   缺键的点在统计里按"无速度"处理, 这是诚实的空白而不是编出来的数字.
 
     // 写入文件
     QString pointsFile = m_storagePath + QString("/track_%1_points.json").arg(trackId);
     QJsonArray pointsArr;
+    int droppedBadCoord = 0;
+    int seq = 0;
     for (int i = 0; i < points.size(); ++i) {
+        // 坐标门见文件头的 coordSane()
+        const double lat = points[i].latitude();
+        const double lon = points[i].longitude();
+        if (!coordSane(lat, lon)) {
+            ++droppedBadCoord;
+            continue;
+        }
         QJsonObject p;
-        p["seq"] = i;
-        p["lat"] = points[i].latitude();
-        p["lon"] = points[i].longitude();
-        if (i < elevations.size()) {
+        p["seq"] = seq++;
+        p["lat"] = lat;
+        p["lon"] = lon;
+        if (i < elevations.size() && std::isfinite(elevations[i])) {
             p["elevation"] = elevations[i];
         }
-        p["timestamp"] = timestamps[i].toString(Qt::ISODate);
+        if (timestamps[i].isValid()) {
+            p["timestamp"] = timestamps[i].toString(Qt::ISODate);
+        }
         pointsArr.append(p);
     }
     QFile pf(pointsFile);
@@ -489,11 +573,10 @@ QVariantMap MapService::importGpx(const QString& filePath) {
         QJsonObject obj;
         obj["id"] = trackId;
         obj["name"] = name;
-        obj["startTime"] = startTime.toString(Qt::ISODate);
-        obj["endTime"] = "";
+        obj["startTime"] = startTime.isValid() ? startTime.toString(Qt::ISODate) : QString();
+        obj["endTime"] = QString();
         obj["source"] = "imported";
         obj["originalFormat"] = "gpx";
-        obj["frequency"] = 5;
         QFile tf(m_storagePath + QString("/track_%1.json").arg(trackId));
         if (tf.open(QIODevice::WriteOnly)) {
             tf.write(QJsonDocument(obj).toJson(QJsonDocument::Indented));
@@ -503,25 +586,15 @@ QVariantMap MapService::importGpx(const QString& filePath) {
 
     // 停止轨迹（计算统计）
     stopTrack(trackId);
+    // stopTrack 写的 endTime 是"停止的这一刻", 对导入的旧文件是假读数 → 按文件里的
+    //   末刻回填, 文件没给时刻就留空.
+    patchImportedEndTime(m_storagePath, trackId, endTime);
 
-    // 更新名称
-    QFile tf(m_storagePath + QString("/track_%1.json").arg(trackId));
-    if (tf.open(QIODevice::ReadOnly)) {
-        QJsonDocument doc = QJsonDocument::fromJson(tf.readAll());
-        tf.close();
-        QJsonObject obj = doc.object();
-        obj["name"] = name;
-        obj["source"] = "imported";
-        obj["originalFormat"] = "gpx";
-        if (tf.open(QIODevice::WriteOnly)) {
-            tf.write(QJsonDocument(obj).toJson(QJsonDocument::Indented));
-            tf.close();
-        }
-    }
-
-    emit trackImported(trackId, points.size());
+    emit trackImported(trackId, points.size() - droppedBadCoord);
     emit dataChanged();
-    Logger::info(QString("GPX imported: %1 points, name='%2'").arg(points.size()).arg(name));
+    Logger::info(QString("GPX imported: %1 points, name='%2', dropped=%3, timed=%4")
+                 .arg(points.size() - droppedBadCoord).arg(name)
+                 .arg(droppedBadCoord).arg(endTime.isValid() ? 1 : 0));
     return toQVariant(Ok(trackId));
 }
 
@@ -537,100 +610,255 @@ QVariantMap MapService::importKml(const QString& filePath) {
             QStringLiteral("无法打开 KML 文件: %1").arg(filePath), ctx));
     }
 
-    QXmlStreamReader xml(&file);
-    QString trackId;
-    QString name = "KML 导入";
-    QDateTime trackStartTime;
-    QDateTime pointTime;
-    QList<QGeoCoordinate> points;
-    QList<double> elevations;
-    QList<QDateTime> timestamps;
-    // 2026-09-15: 修复 - KML 通常结构: <Placemark><name>轨迹名</name><LineString><coordinates>...
-    // <TimeSpan><begin>...</begin></TimeSpan> 是时间
+    // 2026-10-27 #134 整体重写.
+    //   旧解析只认 <Placemark><LineString><coordinates>, 而两步路
+    //   (<Document id="TbuluKmlVersion2">) 的轨迹放在
+    //   <Folder id="TbuluTrackFolder"><Placemark><gx:Track> 里: 先写完全部
+    //   <gx:coord> ("lon lat alt" 空格分隔), 再写完全部 <when>. 手头 9 个两步路
+    //   真机导出文件的 <LineString> 数量全是 0 —— 于是每一步路的 KML 都从下面那个
+    //   points.isEmpty() 口子退回「KML 无轨迹点」, 轨迹根本进不了图 (#120 的一条真因).
+    //   LineString 那条路保留, Google Earth / 奥维交互式地图导的是这种.
+    //
+    //   三种口径同时修掉:
+    //     * 名称: <Document><name> 才是轨迹标题; 「轨迹片段1」是 Placemark 名,
+    //       原来每个 Placemark 的 <name> 都会覆盖 name, 最后一个读到的往往是
+    //       某个标注点, 列表里就变成用户看不懂的随机地名.
+    //     * 时刻: 原来无时间就 addSecs(i*5) 编一条 5 秒等距节拍. 而 getTrackStats
+    //       的速度 = 段距离 / 段时刻差, 于是 15.6 km / 7.2 h 的徒步被读成
+    //       "平均 8 km/h" (文件自己写的 SportAvgSpeed 是 0.5 m/s 量级).
+    //       现在用文件里的 <when>, 缺了就整点缺键, 不编.
+    //     * <when> 是 UTC ("…T07:54:59Z"), fromString 回来仍是 UTC; 落盘写的
+    //       ISO 串不带 Z, 读方按本地时间解 → 每条轨迹的时刻都差 8 小时, 必须
+    //       toLocalTime 后再写 (addTrackPoint 录的是本地墙钟, 两边要能比).
+    struct KmlPoint {
+        double lat = 0.0;
+        double lon = 0.0;
+        double alt = 0.0;
+        bool hasAlt = false;
+        QDateTime ts;                 // invalid = 文件没给这一帧的时刻
+    };
+
+    QList<KmlPoint> points;
+    int waypointCount = 0;   // 标注点 (<Point> 的 Placemark): 照片/文字, 本 App 不落盘
+    int droppedBadCoord = 0; // 越界或 (0,0) 哨兵, 不写进轨迹
+
+    QString docName;          // <Document><name> = 轨迹标题
+    QString segmentName;      // 第一个真带点的轨迹 Placemark 的 <name>
+    QString placemarkName;    // 当前 Placemark 的 <name>
+    bool fromGxTrack = false;      // 点来自 gx:Track (两步路) 还是 LineString (Google Earth/奥维)
+    QDateTime timeSpanBegin;  // <TimeSpan><begin> (Google Earth 风格)
+    qint64 beginMs = 0;       // Document <ExtendedData> 的 BeginTime (毫秒 epoch)
+    qint64 endMs = 0;
+    // 两步路在同一个属性表里写了自己算的爬升/下降 (藏龙涧那条: 445.0 / 529.0).
+    // NaN = 文件没给. 这两个数是用户在它 App 里看到的读数, 入库后由 stopTrack /
+    // getTrackStats 优先采用 —— 见 TrackMetrics.h 头注释里的对账实测.
+    double declaredGain = std::numeric_limits<double>::quiet_NaN();
+    double declaredLoss = std::numeric_limits<double>::quiet_NaN();
+
+    bool inDocument = false;
+    bool inFolder = false;
     bool inPlacemark = false;
+    bool inExtendedData = false;
     bool inLineString = false;
     bool inTimeSpan = false;
-    QGeoCoordinate currentPoint;
-    // 2026-09-21: 删 unused 警告. 之前 currentEle/hasCurrentEle/currentTime/
-    //   hasCurrentTime/hasAnyPoint 是计划做 per-point 跟踪时声明的, 后来改用
-    //   elevations/timestamps 列表追加, 这 4 个 var 再也没读过. 编译 -Werror 模式下
-    //   会变成 error, 先清理掉. hasAnyPoint 与下方 points.isEmpty() 重复, 一并删.
+    bool inTrack = false;
+    QString dataKey;                  // 当前 <Data name="..."> 的 name
+    QList<KmlPoint> trackCoords;      // 当前 gx:Track 内的 <gx:coord>
+    QList<QDateTime> trackTimes;      // 当前 gx:Track 内的 <when>
 
+    // gx:Track 结束 = 一个片段结束. coord 与 when 是两条平行列表, 按下标配对;
+    // when 少于 coord 时多出来的点没有时刻 (不编节拍).
+    auto flushSegment = [&]() {
+        for (int i = 0; i < trackCoords.size(); ++i) {
+            KmlPoint p = trackCoords[i];
+            if (i < trackTimes.size()) p.ts = trackTimes[i];
+            points.append(p);
+        }
+        if (!trackCoords.isEmpty()) {
+            fromGxTrack = true;
+            if (segmentName.isEmpty()) segmentName = placemarkName;
+        }
+        trackCoords.clear();
+        trackTimes.clear();
+    };
+
+    QXmlStreamReader xml(&file);
     while (!xml.atEnd()) {
         xml.readNext();
+        if (xml.hasError()) break;   // 尾部标签不规整也照已读到的点入库
         if (xml.isStartElement()) {
-            QString nameTag = xml.name().toString();
-            if (nameTag == "Placemark") {
+            const QString nameTag = xml.name().toString();
+            if (nameTag == "Document") {
+                inDocument = true;
+            } else if (nameTag == "Folder") {
+                inFolder = true;
+            } else if (nameTag == "Placemark") {
                 inPlacemark = true;
-            } else if (nameTag == "name" && inPlacemark) {
-                // 2026-09-15: 修复 - 读 Placemark 内的 <name>
-                QString txt = xml.readElementText().trimmed();
-                if (txt.length() > 0) name = txt;
+                placemarkName.clear();
+            } else if (nameTag == "name") {
+                // 两步路把标题写成 <name><![CDATA[2026-10-25 藏龙涧-…]]>, 后面
+                // <Folder><name>轨迹</name> 和每个 Placemark 的 <name> 都不是标题,
+                // 所以按容器分层收: Document 直属的第一个非空 name 收作 docName,
+                // Placemark 内的只留作片段名. 两者谁当轨迹名按线是哪来的分 (见下面).
+                const QString txt = xml.readElementText().trimmed();
+                if (!txt.isEmpty()) {
+                    if (inPlacemark) {
+                        if (placemarkName.isEmpty()) placemarkName = txt;
+                    } else if (!inFolder && inDocument && docName.isEmpty()) {
+                        docName = txt;
+                    }
+                }
+            } else if (nameTag == "ExtendedData") {
+                inExtendedData = true;
+            } else if (nameTag == "Data" && inExtendedData) {
+                dataKey = xml.attributes().value("name").toString();
+            } else if (nameTag == "value" && inExtendedData
+                       && !inPlacemark && !inTrack) {
+                // 只收 Document 层那份属性表. Placemark/gx:Track 里同名标签装的是
+                // 标注点照片信息和 GxTrackExtendedData (每点 speed,hr 一大串),
+                // 读它们既没用又要多吃几百 KB.
+                const QString txt = xml.readElementText().trimmed();
+                if (dataKey == "BeginTime") beginMs = txt.toLongLong();
+                else if (dataKey == "EndTime") endMs = txt.toLongLong();
+                else if (dataKey == "ElevationGain" || dataKey == "ElevationLoss") {
+                    bool ok = false;
+                    const double v = txt.toDouble(&ok);
+                    // 非数字或负数当"没给": 留 NaN, 让下游回落到自己算的平滑值
+                    if (ok && v >= 0.0) {
+                        if (dataKey == "ElevationGain") declaredGain = v;
+                        else declaredLoss = v;
+                    }
+                }
             } else if (nameTag == "TimeSpan") {
                 inTimeSpan = true;
             } else if (nameTag == "begin" && inTimeSpan) {
-                trackStartTime = QDateTime::fromString(xml.readElementText().trimmed(), Qt::ISODate);
+                timeSpanBegin = QDateTime::fromString(xml.readElementText().trimmed(), Qt::ISODate);
+                if (timeSpanBegin.isValid()) timeSpanBegin = timeSpanBegin.toLocalTime();
             } else if (nameTag == "LineString") {
                 inLineString = true;
-            } else if (nameTag == "coordinates" && inLineString) {
-                QString text = xml.readElementText();
-                // KML 坐标是 "lon,lat,alt" 用空格分隔多个点; 但 alt 字段可能没有 (lon,lat)
-                QStringList coords = text.split(QRegularExpression("[\\s]+"), Qt::SkipEmptyParts);
-                for (const QString& c : coords) {
-                    QStringList parts = c.split(',');
-                    if (parts.size() >= 2) {
-                        double lon = parts[0].toDouble();
-                        double lat = parts[1].toDouble();
-                        double alt = parts.size() >= 3 ? parts[2].toDouble() : 0;
-                        points.append(QGeoCoordinate(lat, lon));
-                        elevations.append(alt);
-                        timestamps.append(QDateTime());  // KML 默认无逐点时间
+            } else if (nameTag == "Track") {
+                // <gx:Track> 的本地名就是 "Track" (前缀 gx 不在 name() 里)
+                inTrack = true;
+                trackCoords.clear();
+                trackTimes.clear();
+            } else if (nameTag == "coord" && inTrack) {
+                const QStringList parts = xml.readElementText().trimmed()
+                    .split(QRegularExpression("[\\s]+"), Qt::SkipEmptyParts);
+                if (parts.size() >= 2) {
+                    KmlPoint p;
+                    p.lon = parts[0].toDouble();
+                    p.lat = parts[1].toDouble();
+                    if (parts.size() >= 3) {
+                        p.alt = parts[2].toDouble();
+                        p.hasAlt = true;
                     }
+                    trackCoords.append(p);
                 }
-            } else if (nameTag == "Point" && inPlacemark) {
-                // 单点 Placemark: 解析 <coordinates>
-                // (不进入 LineString 路径)
+            } else if (nameTag == "when" && inTrack) {
+                QDateTime t = QDateTime::fromString(xml.readElementText().trimmed(), Qt::ISODate);
+                if (t.isValid()) t = t.toLocalTime();
+                trackTimes.append(t);
+            } else if (nameTag == "Point" && inPlacemark && !inTrack) {
+                // 标注点 (起点/终点/拍照点). 本 App 的轨迹模型只有一条线, 没有
+                // 途经点字段, 所以这里只计数, 落盘后在日志里点名丢了多少个.
+                ++waypointCount;
+            } else if (nameTag == "coordinates" && inLineString) {
+                const QString text = xml.readElementText();
+                // KML 坐标是 "lon,lat,alt" 用空格分隔多个点; 但 alt 字段可能没有 (lon,lat)
+                const QStringList coords = text.split(QRegularExpression("[\\s]+"), Qt::SkipEmptyParts);
+                for (const QString& c : coords) {
+                    const QStringList parts = c.split(',');
+                    if (parts.size() < 2) continue;
+                    KmlPoint p;
+                    p.lon = parts[0].toDouble();
+                    p.lat = parts[1].toDouble();
+                    if (parts.size() >= 3) {
+                        p.alt = parts[2].toDouble();
+                        p.hasAlt = true;
+                    }
+                    p.ts = timeSpanBegin;
+                    points.append(p);
+                    // <name> 排在 <LineString> 前面, 此刻 placemarkName 已经是这条线的名字
+                    if (segmentName.isEmpty()) segmentName = placemarkName;
+                }
             }
         } else if (xml.isEndElement()) {
-            QString endName = xml.name().toString();
-            if (endName == "Placemark") inPlacemark = false;
+            const QString endName = xml.name().toString();
+            if (endName == "Document") inDocument = false;
+            else if (endName == "Folder") inFolder = false;
+            else if (endName == "Placemark") {
+                // 2026-10-27: 原来这里漏了未闭合片段. 现在 gx:Track 自己收尾, Placemark
+                // 结束只清当前名字.
+                inPlacemark = false;
+                placemarkName.clear();
+            }
+            else if (endName == "ExtendedData") { inExtendedData = false; dataKey.clear(); }
             else if (endName == "TimeSpan") inTimeSpan = false;
             else if (endName == "LineString") inLineString = false;
+            else if (endName == "Track" && inTrack) {
+                flushSegment();
+                inTrack = false;
+            }
         }
     }
     file.close();
+    if (inTrack) flushSegment();   // 文件被截断时, 已读到的片段别丢
+
+    // 坐标自检: 与 addTrackPoint 同一道门, 见 coordSane()
+    QList<KmlPoint> sane;
+    sane.reserve(points.size());
+    for (const KmlPoint& p : points) {
+        if (coordSane(p.lat, p.lon)) sane.append(p);
+        else ++droppedBadCoord;
+    }
+    points = sane;
 
     if (points.isEmpty()) {
         emit warningTriggered("KML 无轨迹点");
         return toQVariant(Err<QString>(
             ServiceErrorCode::ParseError,
-            QStringLiteral("KML 无轨迹点"), ctx));
+            QStringLiteral("KML 里没有可用的轨迹点 (既没有 gx:Track, 也没有 LineString)"),
+            ctx));
     }
 
-    // 起始时间: 优先用 <TimeSpan><begin>, 否则用当前时间
-    QDateTime startTime = trackStartTime;
-    if (!startTime.isValid()) {
-        startTime = QDateTime::currentDateTime();
-    }
-    // 填补无时间点
-    for (int i = 0; i < timestamps.size(); i++) {
-        if (!timestamps[i].isValid()) {
-            timestamps[i] = startTime.addSecs(i * 5);
-        }
-    }
-    QDateTime endTime = timestamps.last().isValid() ? timestamps.last() : startTime;
+    // 名称按线的来源分: 两步路的 Placemark 一律叫「轨迹片段1」, 真标题在
+    // <Document><name>; Google Earth/奥维的 Document 名是"我的地点"这类容器名,
+    // 标题在带线的那个 Placemark 上.
+    QString name;
+    if (fromGxTrack && !docName.isEmpty()) name = docName;
+    else if (!segmentName.isEmpty()) name = segmentName;
+    else name = docName;
+    if (name.isEmpty()) name = QStringLiteral("KML 导入");
 
-    trackId = generateId();
+    // 起止时间优先用逐点 <when> (它才是这条线真正走过的时间), 其次用两步路属性表
+    // 里的 BeginTime/EndTime 毫秒, 最后留空 —— 空串会被 getTrackStats 回落到
+    // 首末点时间, 而"导入的这一刻"写进 startTime 会读成一次 0 秒的徒步.
+    QDateTime firstTs, lastTs;
+    for (const KmlPoint& p : points) {
+        if (!p.ts.isValid()) continue;
+        if (!firstTs.isValid()) firstTs = p.ts;
+        lastTs = p.ts;
+    }
+    QDateTime startTime = firstTs;
+    if (!startTime.isValid() && beginMs > 0) startTime = QDateTime::fromMSecsSinceEpoch(beginMs);
+    if (!startTime.isValid()) startTime = timeSpanBegin;
+    QDateTime endTime = lastTs;
+    if (!endTime.isValid() && endMs > 0) endTime = QDateTime::fromMSecsSinceEpoch(endMs);
+
+    const QString trackId = generateId();
     QString pointsFile = m_storagePath + QString("/track_%1_points.json").arg(trackId);
     QJsonArray pointsArr;
     for (int i = 0; i < points.size(); ++i) {
-        QJsonObject p;
-        p["seq"] = i;
-        p["lat"] = points[i].latitude();
-        p["lon"] = points[i].longitude();
-        p["elevation"] = i < elevations.size() ? elevations[i] : 0;
-        p["timestamp"] = timestamps[i].toString(Qt::ISODate);
-        pointsArr.append(p);
+        const KmlPoint& p = points[i];
+        QJsonObject obj;
+        obj["seq"] = i;
+        obj["lat"] = p.lat;
+        obj["lon"] = p.lon;
+        // 没给高程就整键不写: 写 0 会被 stopTrack 读成"最低点 0 米", 还把
+        // elevationLoss 顶高一截 (见 [[no-fake-readout-rule]]).
+        if (p.hasAlt) obj["elevation"] = p.alt;
+        if (p.ts.isValid()) obj["timestamp"] = p.ts.toString(Qt::ISODate);
+        pointsArr.append(obj);
     }
     QFile pf(pointsFile);
     if (pf.open(QIODevice::WriteOnly)) {
@@ -638,25 +866,39 @@ QVariantMap MapService::importKml(const QString& filePath) {
         pf.close();
     }
 
-    stopTrack(trackId);
-
-    QFile tf(m_storagePath + QString("/track_%1.json").arg(trackId));
-    if (tf.open(QIODevice::ReadOnly)) {
-        QJsonDocument doc = QJsonDocument::fromJson(tf.readAll());
-        tf.close();
-        QJsonObject obj = doc.object();
+    // 2026-10-27: 原来这里先 stopTrack(trackId) 再去开 track_<id>.json 改名称 ——
+    //   那个文件此刻还不存在 (只有 _points.json), stopTrack 走 NotFound 直接返回,
+    //   距离/爬升/最高最低一个都没算, 名称那次 open 也失败, 于是导入成功的轨迹
+    //   在列表里既没有名字也没有统计. 顺序改成: 先落 meta → stopTrack 汇总 →
+    //   只回填 stopTrack 会覆盖掉的 endTime (它写的是"停止的这一刻").
+    {
+        QJsonObject obj;
+        obj["id"] = trackId;
         obj["name"] = name;
+        obj["startTime"] = startTime.isValid() ? startTime.toString(Qt::ISODate) : QString();
+        obj["endTime"] = QString();
         obj["source"] = "imported";
         obj["originalFormat"] = "kml";
+        // 文件自述的升降: 只在这一步抓下来, 后面两处读数 (列表/排序 与 概要面板)
+        // 都按"有自述用自述, 没有用平滑口径"的优先级取 —— 见 stopTrack.
+        if (std::isfinite(declaredGain)) obj["declaredElevationGainM"] = declaredGain;
+        if (std::isfinite(declaredLoss)) obj["declaredElevationLossM"] = declaredLoss;
+        QFile tf(m_storagePath + QString("/track_%1.json").arg(trackId));
         if (tf.open(QIODevice::WriteOnly)) {
             tf.write(QJsonDocument(obj).toJson(QJsonDocument::Indented));
             tf.close();
         }
     }
 
+    stopTrack(trackId);
+    // stopTrack 写的是"停止的这一刻", 导入的旧文件要按文件里的末刻回填
+    //   (文件既无 <when> 又无 EndTime 属性时留空, 不让人读成"刚走完").
+    patchImportedEndTime(m_storagePath, trackId, endTime);
+
     emit trackImported(trackId, points.size());
     emit dataChanged();
-    Logger::info(QString("KML imported: %1 points, name='%2'").arg(points.size()).arg(name));
+    Logger::info(QString("KML imported: %1 points, name='%2', waypoints=%3, dropped=%4")
+                 .arg(points.size()).arg(name).arg(waypointCount).arg(droppedBadCoord));
     return toQVariant(Ok(trackId));
 }
 
@@ -672,10 +914,25 @@ QVariantMap MapService::importCsv(const QString& filePath) {
             QStringLiteral("无法打开 CSV 文件: %1").arg(filePath), ctx));
     }
 
-    QList<QGeoCoordinate> points;
-    QList<double> elevations;
+    struct CsvPoint {
+        double lat = 0.0;
+        double lon = 0.0;
+        double alt = 0.0;
+        bool hasAlt = false;
+        QDateTime ts;                  // invalid = 这一行没给时刻
+    };
+    QList<CsvPoint> points;
     bool firstLine = true;
-    int latCol = -1, lonCol = -1, altCol = -1;
+    int latCol = -1, lonCol = -1, altCol = -1, timeCol = -1;
+
+    // 2026-10-27 #134: 表头里的 time 列此前被完全忽略, 而每一点落的却是
+    //   currentDateTime() —— 导入一条两年前的 CSV, 逐点时刻全是"这一刻",
+    //   getTrackStats 按时刻差算速度就全是 0. 现在按 GPX/KML 同一口径读:
+    //   文件带 UTC 串 (…Z) 就转成本地墙钟, 没这一列就整点缺键, 不编.
+    auto parseUtc = [](const QString& raw) {
+        QDateTime t = QDateTime::fromString(raw.trimmed(), Qt::ISODate);
+        return t.isValid() ? t.toLocalTime() : QDateTime();
+    };
 
     QTextStream in(&file);
     while (!in.atEnd()) {
@@ -688,7 +945,8 @@ QVariantMap MapService::importCsv(const QString& filePath) {
                 QString h = parts[i].trimmed().toLower();
                 if (h == "lat" || h == "latitude") latCol = i;
                 else if (h == "lon" || h == "lng" || h == "longitude") lonCol = i;
-                else if (h == "alt" || h == "altitude" || h == "ele") altCol = i;
+                else if (h == "alt" || h == "altitude" || h == "ele" || h == "elevation") altCol = i;
+                else if (h == "time" || h == "timestamp" || h == "datetime") timeCol = i;
             }
             firstLine = false;
             if (latCol < 0 || lonCol < 0) {
@@ -700,35 +958,55 @@ QVariantMap MapService::importCsv(const QString& filePath) {
             continue;
         }
 
-        if (parts.size() > std::max(latCol, lonCol)) {
-            double lat = parts[latCol].toDouble();
-            double lon = parts[lonCol].toDouble();
-            double alt = (altCol >= 0 && altCol < parts.size())
-                          ? parts[altCol].toDouble() : 0;
-            points.append(QGeoCoordinate(lat, lon));
-            elevations.append(alt);
+        if (parts.size() <= std::max(latCol, lonCol)) continue;
+        CsvPoint p;
+        p.lat = parts[latCol].toDouble();
+        p.lon = parts[lonCol].toDouble();
+        if (altCol >= 0 && altCol < parts.size() && !parts[altCol].trimmed().isEmpty()) {
+            p.alt = parts[altCol].toDouble();
+            p.hasAlt = true;
         }
+        if (timeCol >= 0 && timeCol < parts.size()) p.ts = parseUtc(parts[timeCol]);
+        points.append(p);
     }
     file.close();
+
+    int droppedBadCoord = 0;
+    QList<CsvPoint> sane;
+    sane.reserve(points.size());
+    for (const CsvPoint& p : points) {
+        if (coordSane(p.lat, p.lon)) sane.append(p);
+        else ++droppedBadCoord;
+    }
+    points = sane;
 
     if (points.isEmpty()) {
         emit warningTriggered("CSV 无有效数据");
         return toQVariant(Err<QString>(
             ServiceErrorCode::ParseError,
-            QStringLiteral("CSV 无有效数据"), ctx));
+            QStringLiteral("CSV 里没有可用的轨迹点"), ctx));
+    }
+
+    QDateTime firstTs, lastTs;
+    for (const CsvPoint& p : points) {
+        if (!p.ts.isValid()) continue;
+        if (!firstTs.isValid()) firstTs = p.ts;
+        lastTs = p.ts;
     }
 
     QString trackId = generateId();
     QString pointsFile = m_storagePath + QString("/track_%1_points.json").arg(trackId);
     QJsonArray pointsArr;
     for (int i = 0; i < points.size(); ++i) {
-        QJsonObject p;
-        p["seq"] = i;
-        p["lat"] = points[i].latitude();
-        p["lon"] = points[i].longitude();
-        p["elevation"] = i < elevations.size() ? elevations[i] : 0;
-        p["timestamp"] = QDateTime::currentDateTime().toString(Qt::ISODate);
-        pointsArr.append(p);
+        const CsvPoint& p = points[i];
+        QJsonObject obj;
+        obj["seq"] = i;
+        obj["lat"] = p.lat;
+        obj["lon"] = p.lon;
+        // 没有高程列 / 那一格空着 → 整键不写, 写 0 会被 stopTrack 读成"最低点 0 米"
+        if (p.hasAlt) obj["elevation"] = p.alt;
+        if (p.ts.isValid()) obj["timestamp"] = p.ts.toString(Qt::ISODate);
+        pointsArr.append(obj);
     }
     QFile pf(pointsFile);
     if (pf.open(QIODevice::WriteOnly)) {
@@ -736,25 +1014,32 @@ QVariantMap MapService::importCsv(const QString& filePath) {
         pf.close();
     }
 
-    stopTrack(trackId);
-
-    QFile tf(m_storagePath + QString("/track_%1.json").arg(trackId));
-    if (tf.open(QIODevice::ReadOnly)) {
-        QJsonDocument doc = QJsonDocument::fromJson(tf.readAll());
-        tf.close();
-        QJsonObject obj = doc.object();
+    // 2026-10-27 #134: 和 importGpx/importKml 同一处顺序缺陷 —— 原来先 stopTrack
+    //   再去开 track_<id>.json 补名称, 而那个文件此刻还不存在 (只写了 _points.json),
+    //   stopTrack 走 NotFound 直接返回: 距离/爬升一个没算, 名称/source 也没落盘,
+    //   导入"成功"的 CSV 轨迹在列表里是一行没有统计的空白.
+    {
+        QJsonObject obj;
+        obj["id"] = trackId;
         obj["name"] = "CSV 导入";
+        obj["startTime"] = firstTs.isValid() ? firstTs.toString(Qt::ISODate) : QString();
+        obj["endTime"] = QString();
         obj["source"] = "imported";
         obj["originalFormat"] = "csv";
+        QFile tf(m_storagePath + QString("/track_%1.json").arg(trackId));
         if (tf.open(QIODevice::WriteOnly)) {
             tf.write(QJsonDocument(obj).toJson(QJsonDocument::Indented));
             tf.close();
         }
     }
 
+    stopTrack(trackId);
+    patchImportedEndTime(m_storagePath, trackId, lastTs);
+
     emit trackImported(trackId, points.size());
     emit dataChanged();
-    Logger::info(QString("CSV imported: %1 points").arg(points.size()));
+    Logger::info(QString("CSV imported: %1 points, dropped=%2, timed=%3")
+                 .arg(points.size()).arg(droppedBadCoord).arg(lastTs.isValid() ? 1 : 0));
     return toQVariant(Ok(trackId));
 }
 
@@ -781,7 +1066,10 @@ QVariantMap MapService::exportTrackAsGpx(const QString& trackId, const QString& 
     xml.writeStartDocument();
     xml.writeStartElement("gpx");
     xml.writeAttribute("version", "1.1");
-    xml.writeAttribute("creator", "OutdoorSurvival 0.0.1");
+    // creator 必须跟着 APP_VERSION 走。2026-10-26 之前这里写死 "OutdoorSurvival 0.0.1",
+    // 于是 0.0.2 导出的 GPX 自称 0.0.1 —— 导出文件是会被拿去别的数据工具里对账的产物,
+    // 版本号写错等于给那份数据签了个错的时间戳。
+    xml.writeAttribute("creator", "OutdoorSurvival " APP_VERSION);
     xml.writeAttribute("xmlns", "http://www.topografix.com/GPX/1/1");
 
     xml.writeStartElement("trk");
