@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 project(OutdoorSurvival
-    VERSION 0.0.1
+    VERSION 0.0.3
     DESCRIPTION "荒野手册 - 中国户外生存离线助手"
     LANGUAGES CXX
 )
@@ -56,7 +56,11 @@ set(APP_VERSION "${PROJECT_VERSION}")
 set(APP_VERSION_MAJOR "${PROJECT_VERSION_MAJOR}")
 set(APP_VERSION_MINOR "${PROJECT_VERSION_MINOR}")
 set(APP_VERSION_PATCH "${PROJECT_VERSION_PATCH}")
-set(APP_VERSION_CODE 1)  # 用于商店版本号（每次发版递增）
+set(APP_VERSION_CODE 3)  # 用于商店版本号（每次发版递增）
+                         # 2026-10-26: 这里以前停在 1, 而真正装到机器上的 versionCode 由
+                         # android/app/build.gradle 决定 (build_apk.sh 会用仓库里那份覆盖
+                         # android-build/app/build.gradle), gradle 已经是 2。两边不同值不会
+                         # 让包出错, 但从模板 manifest 走的那条路会出 1 —— 对齐掉, 别留两份。
 set(APP_MIN_SDK_VERSION 24)
 set(APP_TARGET_SDK_VERSION 34)
 
@@ -77,8 +81,17 @@ find_package(Qt6 6.7 REQUIRED COMPONENTS
     Network
     Concurrent
     Xml
-    Charts  # 2026-09-14: P1 轨迹分析 (海拔/速度曲线)
 )
+# 2026-10-26 任务 #121 A25: 删除 Charts.
+#   它只被 TrackDetailPage 的两条曲线用, 而 QtCharts 创建 QChart 时要建图内标题
+#   (widgets 栈里的 QGraphicsTextItem), 本工程 main.cpp 只跑 QGuiApplication, 没有
+#   widget style → 真机一进轨迹分析页必崩 (8 份 dump 同一栈, 见 LineProfile.qml 头).
+#   曲线改 Canvas 自绘, 本目标也不再链 libQt6Charts / libQt6Widgets
+#   (2026-10-26 核过 build/release_arm64-v8a/.../link.txt: 两者都没了).
+#   ⚠ 但 APK 体积没因此变小: build_apk.sh 会把整个 Qt kit 的 libQt6*.so 无差别
+#   cp 进 jniLibs (见其 1059 行起, 当初是为了堵"缺 .so → 启动二次崩溃"), 所以
+#   libQt6Charts/Widgets 还躺在包里, 只是没人 dlopen 它. 要真删得单独改打包白名单
+#   并在真机验启动, 别顺手在这里加裁剪. 以后要图表请继续走自绘, 不要引回 Charts.
 
 qt_standard_project_setup(REQUIRES 6.5)
 
@@ -125,6 +138,10 @@ set(CORE_SOURCES
     src/core/ImageFetcherService.cpp
     # 2026-10-20: 电子罗盘 (丁骨架 ①营地/⑤求助 的朝向来源, QtSensors QCompass)
     src/core/CompassSensor.cpp
+    # 2026-10-28 (#154): 当前天气预报 (open-meteo 日预报 → 装备引擎的天气键).
+    #   2026-09-11 那种"漏加 .cpp 导致 vtable 缺失"的事故就出在头里有 Q_OBJECT 而实现没进
+    #   CORE_SOURCES, 这里一次把 .cpp 列上。
+    src/core/WeatherForecastService.cpp
 )
 
 set(COMMON_SOURCES
@@ -132,6 +149,8 @@ set(COMMON_SOURCES
     src/common/DbHelper.cpp
     # 2026-09-21: 阶段 L5.1 - QSettings 封装
     src/common/SettingsStore.cpp
+    # 2026-10-29 (#168 A44): 轨迹统计唯一定口径 (stopTrack 与 getTrackStats 共用)
+    src/common/TrackMetrics.cpp
 )
 
 set(LIFESAVER_SOURCES
@@ -197,6 +216,8 @@ set(PLATFORM_SOURCES
     # 平台适配
     src/platform/PlatformInterface.cpp
     src/platform/AndroidPlatform.cpp
+    # 2026-10-28 (#148): 本机轨迹文件扫描 (纯 Qt, 桌面单测同源直编)
+    src/platform/FileScanner.cpp
 )
 
 # 合并到 APP_SOURCES (保持原有 set 变量供下游引用, 不破坏调用方)
@@ -228,6 +249,8 @@ set(APP_HEADERS
     src/core/ImageFetcherService.h
     # 2026-10-20: 罗盘封装 (QCompass)
     src/core/CompassSensor.h
+    # 2026-10-28 (#154): 天气预报服务头 (有 Q_OBJECT, 漏进本列表 AUTOMOC 不生成 moc → 链接期 vtable 缺失)
+    src/core/WeatherForecastService.h
     # 2026-09-21 阶段 L2: Service 基类 (12 service 继承)
     src/common/ServiceBase.h
     # 2026-09-21 阶段 L4.2: Repository 接口
@@ -276,6 +299,7 @@ set(APP_HEADERS
     # 平台适配
     src/platform/PlatformInterface.h
     src/platform/AndroidPlatform.h
+    src/platform/FileScanner.h
 )
 
 # ============================================================================
@@ -409,12 +433,22 @@ qt_add_qml_module(${APP_NAME}
         qml/components/base/HoldConfirmRow.qml
         # 直角空心次级按钮 (32px 高), 与场卡同一套角; 主按钮仍是 PrimaryButton
         qml/components/base/OutlineButton.qml
+        # 2026-10-26 按钮体系定稿: ActionButton 是母版 (色口 + 文案 + 附注 + 按压态),
+        #   PrimaryButton / OutlineButton 已改成它的两个默认档; DialogFooter 是弹层
+        #   按钮排 (自带顶线与内距, 修掉 footer 不吃 Dialog.padding 的老根因).
+        qml/components/base/ActionButton.qml
+        qml/components/base/DialogFooter.qml
+        # 行内小方块动作 (分析/摘线/删除): 原来是 MapPage 的裸 Button、NavigationTab 的
+        # Rectangle+MouseArea、FieldGuideDetailPage 的 Rectangle+TapHandler 三份写法.
+        qml/components/base/IconActionCell.qml
         # 危险提示卡的 6px 斜纹边记 (③绳结详情的"常见错误" / 装备清单的"缺 N 项必备")
         qml/components/base/HazardBand.qml
         # 清单行的 15px 方角勾选块 (整行可点, 不用 Controls CheckBox)
         qml/components/base/CheckTick.qml
         # 档位梯 (绳结难度 3 格 / 野外生活难度 5 格 / 急救紧急度 5 格)
         qml/components/base/Ladder.qml
+        # 距离-数值 折线剖面 (轨迹分析的海拔/速度两条曲线) —— 取代 QtCharts, 见 #121 A25
+        qml/components/base/LineProfile.qml
         # 第 5 格「我」的根页 (装备/标注/收藏/轨迹/联系人/设置 入口)
         qml/pages/MePage.qml
 
@@ -436,6 +470,10 @@ qt_add_qml_module(${APP_NAME}
         qml/components/MapOverlay/MapInstrumentOverlay.qml
         qml/components/MapOverlay/MapBottomSheet.qml
         qml/components/MapOverlay/RouteSummaryPanel.qml  # 2026-09-15: 概览面板
+        # 2026-10-28 #156: 工作台两档改版共用件 —— 面板头 (标题+读数+搜索+收起) 与
+        #   底部动作带. 四个 Tab 各画一遍正是 pass6 收口点过的"同一形状五处"的坑.
+        qml/components/MapOverlay/SheetPanelHead.qml
+        qml/components/MapOverlay/SheetActionBand.qml
 
         # MapPage 专属组件
         qml/pages/MapPageComponents/RecordTab.qml
@@ -458,6 +496,8 @@ qt_add_qml_module(${APP_NAME}
         # equipment_* 被 EquipmentService 通过 :// 路径读取, 缺则模块全空
         assets/data/equipment_base.json
         assets/data/equipment_rules.json
+        # 2026-10-22: 省×月往年天气 (装备清单"按路线自动填天气")
+        assets/data/climate_normals.json
         # 2026-09-14: Material Icons 字体 (Google 官方, ~228KB)
         assets/fonts/MaterialIcons-Regular.ttf
 )
@@ -479,7 +519,6 @@ set(APP_LIBRARIES
     Qt6::Network
     Qt6::Concurrent
     Qt6::Xml
-    Qt6::Charts  # 2026-09-14: P1
 )
 
 if(USE_OPENCV)

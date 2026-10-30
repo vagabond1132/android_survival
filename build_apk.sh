@@ -246,6 +246,99 @@ if [ ! -f "$KEYSTORE_PATH" ]; then
 fi
 assert_file "$KEYSTORE_PATH" "签名 keystore"
 
+# ============================================================================
+# 版本号 (2026-10-30, 用户口径: 每一次出包自动 +1, 例 0.0.2 → 0.0.3)
+# ----------------------------------------------------------------------------
+# 版本号在项目里有 4 处, 历史上已经分叉过两次 (2026-10-26: 交付文件名永远写 v0.0.1,
+# 而包内 aapt 读出来是 0.0.2; 更早 GPX creator 写死 0.0.1), 所以:
+#   1) 这里把 4 处一次改齐, 不靠人记;
+#   2) STAGE 4 用 aapt 把 APK 里真正生效的 versionCode/versionName 读回来比对,
+#      对不上就拒绝把包放进 dist。
+# 单一来源是 CMakeLists.txt:
+#   project(... VERSION x.y.z)     -> APP_VERSION 宏 (C++ / GPX creator / 关于页)
+#   set(APP_VERSION_CODE N)        -> QT_ANDROID_VERSION_CODE
+#   android/AndroidManifest.xml    android:versionCode / android:versionName
+#   android/app/build.gradle       versionCode / versionName
+# 开关:
+#   VERSION_BUMP=0  本次不动版本号 (反复调试出包时用, 默认动)
+#   VERSION=1.2.3   显式指定 versionName (versionCode 仍 +1)
+# 失败回滚: 构建没成功就把 4 处改回原值 —— 版本号只在"真的出了一包"之后前进。
+# ============================================================================
+VER_CMAKE="$APP_DIR/CMakeLists.txt"
+VER_MANIFEST="$ANDROID_DIR/AndroidManifest.xml"
+VER_GRADLE="$ANDROID_DIR/app/build.gradle"
+
+CUR_VER=$(awk '/^project\(/{f=1} f{print} f&&/\)/{f=0}' "$VER_CMAKE" \
+    | grep -oE 'VERSION[[:space:]]+[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1 | awk '{print $2}')
+CUR_CODE=$(grep -oE 'set\(APP_VERSION_CODE[[:space:]]+[0-9]+' "$VER_CMAKE" | grep -oE '[0-9]+' | tail -1)
+[ -n "$CUR_VER" ]   || die "读不到 CMakeLists.txt 的 project VERSION"
+[ -n "$CUR_CODE" ]  || die "读不到 CMakeLists.txt 的 set(APP_VERSION_CODE ...)"
+case "$CUR_VER" in
+    *.*.*) ;;
+    *) die "CMakeLists.txt 的 VERSION 形状不对: '$CUR_VER' (期望 x.y.z)" ;;
+esac
+
+# 把 (version, versionCode) 写进 4 处; 幂等, 也是失败回滚用的反向操作
+# 关键: CMakeLists 的那条必须锁在 project() 块里 —— 文件里 336 行还有一条
+#   `VERSION 1.0` (qt_add_qml_module 的模块版本), 不限定范围会把它一起改掉。
+#   范围右端要写 `/^\)/`: sed -E 里裸 `)` 是分组元字符, 会报 "Unmatched ) or \)"。
+apply_version() {
+    local v="$1" c="$2"
+    sed -i -E "/^project\(/,/^\)/s/^([[:space:]]*)VERSION[[:space:]]+[0-9]+\.[0-9]+(\.[0-9]+)?$/\1VERSION ${v}/" "$VER_CMAKE"
+    sed -i -E "s/^([[:space:]]*)set\(APP_VERSION_CODE[[:space:]]+[0-9]+\)/\1set(APP_VERSION_CODE ${c})/" "$VER_CMAKE"
+    sed -i -E "s/android:versionCode=\"[0-9]+\"/android:versionCode=\"${c}\"/" "$VER_MANIFEST"
+    sed -i -E "s/android:versionName=\"[0-9][0-9.]*\"/android:versionName=\"${v}\"/" "$VER_MANIFEST"
+    sed -i -E "s/^([[:space:]]*)versionCode[[:space:]]+[0-9]+\$/\1versionCode ${c}/" "$VER_GRADLE"
+    sed -i -E "s/^([[:space:]]*)versionName[[:space:]]+\"[0-9][0-9.]*\"\$/\1versionName \"${v}\"/" "$VER_GRADLE"
+}
+
+if [ -n "${VERSION:-}" ]; then
+    NEW_VER="$VERSION"
+    NEW_CODE=$((CUR_CODE + 1))
+    log_info "版本号: 显式指定 VERSION=$NEW_VER, versionCode $CUR_CODE → $NEW_CODE"
+elif [ "${VERSION_BUMP:-1}" = "1" ]; then
+    NEW_VER=$(awk -v v="$CUR_VER" 'BEGIN{n=split(v,a,"."); a[n]=a[n]+1; printf "%d.%d.%d", a[1], a[2], a[n]}')
+    NEW_CODE=$((CUR_CODE + 1))
+    log_info "版本号: 自动 +1  $CUR_VER (code $CUR_CODE) → $NEW_VER (code $NEW_CODE)"
+else
+    NEW_VER="$CUR_VER"
+    NEW_CODE="$CUR_CODE"
+    log_info "版本号: VERSION_BUMP=0, 保持 $NEW_VER (code $NEW_CODE)"
+fi
+
+VERSION_DIRTY=0
+APK_DONE=0
+if [ "$NEW_VER" != "$CUR_VER" ] || [ "$NEW_CODE" != "$CUR_CODE" ]; then
+    apply_version "$NEW_VER" "$NEW_CODE"
+    VERSION_DIRTY=1
+    # 改完立刻自检: sed 静默失手 (0 处命中也返回 0) = 版本号又分叉, 正是这次要根治的
+    grep -qE "^[[:space:]]*VERSION[[:space:]]+${NEW_VER}\$" "$VER_CMAKE" \
+        || die "CMakeLists.txt 的 project VERSION 没写成 $NEW_VER"
+    grep -qE "^[[:space:]]*set\(APP_VERSION_CODE[[:space:]]+${NEW_CODE}\)" "$VER_CMAKE" \
+        || die "CMakeLists.txt 的 APP_VERSION_CODE 没写成 $NEW_CODE"
+    grep -qE "android:versionCode=\"${NEW_CODE}\"" "$VER_MANIFEST" \
+        || die "AndroidManifest 的 versionCode 没写成 $NEW_CODE"
+    grep -qE "android:versionName=\"${NEW_VER}\"" "$VER_MANIFEST" \
+        || die "AndroidManifest 的 versionName 没写成 $NEW_VER"
+    grep -qE "^[[:space:]]*versionCode[[:space:]]+${NEW_CODE}\$" "$VER_GRADLE" \
+        || die "app/build.gradle 的 versionCode 没写成 $NEW_CODE"
+    grep -qE "^[[:space:]]*versionName[[:space:]]+\"${NEW_VER}\"\$" "$VER_GRADLE" \
+        || die "app/build.gradle 的 versionName 没写成 $NEW_VER"
+    # 反向确认: QML 模块版本 (VERSION 1.0) 没被误改
+    grep -qE "^[[:space:]]*VERSION[[:space:]]+1\.0\$" "$VER_CMAKE" \
+        || die "CMakeLists.txt 里 qt_add_qml_module 的 VERSION 1.0 不见了 —— 版本号的 sed 打偏了"
+    log_info "  ✅ 4 处版本号已同步为 $NEW_VER / code $NEW_CODE"
+fi
+
+# 没出成包就把版本号改回去 (set -e 的退出、die 的 exit、裸 exit 1 都会走到这里)
+restore_version_on_exit() {
+    if [ "$VERSION_DIRTY" = "1" ] && [ "$APK_DONE" != "1" ]; then
+        apply_version "$CUR_VER" "$CUR_CODE"
+        echo "[WARN] 本次没出成包, 版本号已回滚到 $CUR_VER (code $CUR_CODE)"
+    fi
+}
+trap restore_version_on_exit EXIT
+
 stage_end
 
 # ============================================================================
@@ -1636,6 +1729,31 @@ else
 fi
 
 # ----------------------------------------------------------------------------
+# 版本号回验 (2026-10-30, 配合 STAGE 1 的"每次出包自动 +1")
+# 用 aapt 把 APK 里真正生效的 versionCode/versionName 读回来比对 —— 这才是设备上
+# PackageManager 看到的值。历史上这两份号分叉过 (交付文件名 v0.0.1 / 包内 0.0.2),
+# 只查源文件不够, 必须查产物。对不上就拒绝进 dist。
+# ----------------------------------------------------------------------------
+if [ -n "${NEW_CODE:-}" ]; then
+    AAPT_BIN="$ANDROID_SDK/build-tools/34.0.0/aapt"
+    if [ -x "$AAPT_BIN" ]; then
+        BADGING=$("$AAPT_BIN" dump badging "$APK_PATH" 2>/dev/null | head -1)
+        APK_VER=$(echo "$BADGING" | grep -oE "versionName='[^']*'" | head -1 | cut -d"'" -f2)
+        APK_CODE=$(echo "$BADGING" | grep -oE "versionCode='[^']*'" | head -1 | cut -d"'" -f2)
+        if [ "$APK_VER" = "$NEW_VER" ] && [ "$APK_CODE" = "$NEW_CODE" ]; then
+            log_info "✅ APK 版本回验通过: versionName=$APK_VER versionCode=$APK_CODE"
+        else
+            log_error "APK 版本号与本次期望不符: apk=('$APK_CODE','$APK_VER') 期望=('$NEW_CODE','$NEW_VER')"
+            log_error "  badging: $BADGING"
+            log_error "  → 说明 android/ 那几处版本号没传进 gradle, 或用了旧的 android-build 产物; 拒绝复制到 dist"
+            exit 1
+        fi
+    else
+        log_warn "aapt 未找到 ($AAPT_BIN), 跳过版本号回验"
+    fi
+fi
+
+# ----------------------------------------------------------------------------
 # 关键修复: APK 最终自检关卡
 # 原因: 之前 APK 装上后立刻崩, 原因之一就是 APK 内 0 个 .so. 这里在签名验证
 #       通过后、复制到 dist 前, 用 unzip -l 二次确认 .so 数量 > 0, 防止任何
@@ -1686,13 +1804,24 @@ if [ "$FINAL_FOUND" -eq 0 ]; then
 fi
 log_info "✅ APK 自检全部通过 (.so=$SO_COUNT_IN_APK, OutdoorSurvivalApp 存在)"
 
-# 提取 VERSION (从 project(... VERSION x.y.z ...) 行)
-APP_VERSION_STR=$(grep -m1 "^project(" "$APP_DIR/CMakeLists.txt" | grep -oE 'VERSION[[:space:]]+[0-9]+\.[0-9]+(\.[0-9]+)?' | awk '{print $2}')
-[ -z "$APP_VERSION_STR" ] && APP_VERSION_STR="0.0.1"
+# 提取 VERSION。CMakeLists 的 project() 是多行写法 (VERSION 独占一行), 所以必须取
+# project( 到第一个 ) 之间的整块文本。
+# 2026-10-26 的坑: 原来按单行 grep "^project(", 匹配到的那行没有 VERSION, 于是
+# APP_VERSION_STR 为空 → 落到 "0.0.1" 兜底, 交付文件名永远写 v0.0.1, 而包内
+# aapt2 dump badging 是 versionCode='2' versionName='0.0.2' —— 两份版本号分叉,
+# 且没有任何提示。兜底必须改成硬失败: 版本号写错比出不了包更难查。
+APP_VERSION_STR=$(awk '/^project\(/{f=1} f{print} f&&/\)/{f=0}' "$APP_DIR/CMakeLists.txt" \
+    | grep -oE 'VERSION[[:space:]]+[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1 | awk '{print $2}')
+if [ -z "$APP_VERSION_STR" ]; then
+    log_error "无法从 $APP_DIR/CMakeLists.txt 的 project() 块里解析 VERSION, 拒绝用兜底版本号出包"
+    exit 1
+fi
 # 关键: 用 APP_NAME_SAFE 而不是硬编码 "OutdoorSurvival", 与 CMakeLists.txt:40 保持一致
 APK_BASE_NAME="${APP_NAME_SAFE}-v${APP_VERSION_STR}-${BUILD_TYPE}-${TARGET_ABI}.apk"
 mkdir -p "$APP_DIR/dist"
 cp "$APK_PATH" "$APP_DIR/dist/$APK_BASE_NAME"
+# 包已落到 dist = 这次真的"出了一包", 版本号前进就此落定, EXIT trap 不再回滚
+APK_DONE=1
 
 log_info "=========================================="
 log_info "✅ APK 打包完成"

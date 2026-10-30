@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:versionCode="1"
-    android:versionName="0.0.1">
+    android:versionCode="3"
+    android:versionName="0.0.3">
 
     <!-- 网络权限（P2 联网识别） -->
     <uses-permission android:name="android.permission.INTERNET" />
@@ -18,6 +18,13 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="29" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <!-- 2026-10-28 (#148): 「导入外部轨迹」要能搜到微信等第三方 App 的下载目录 ——
+         那些 .kml/.gpx 落在 Android/data/<包名>/MicroMsg/Download 下, Android 11+
+         只有"所有文件访问"这一档特殊权限能枚举到. 这里只是声明能力, 不在启动时索取:
+         入口在导入弹窗里, 由用户点「开启全部文件访问」才会跳到系统设置页,
+         授权动作始终在用户手里 (与拨号长按门同一套口径). -->
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
 
     <!-- 位置（SOS、识别历史） -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
