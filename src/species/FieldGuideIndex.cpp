@@ -15,6 +15,23 @@
 
 namespace outdoor {
 
+namespace {
+
+// 2026-11-02: 同一份图鉴数据在启动时被解析 4 遍。
+//   Plant/Animal/Insect/Mushroom 4 个 Service 各持有一个 FieldGuideIndex **值成员**,
+//   各自对同一个 dataDir 调 loadAll()。实测 (emulator 0.0.5 x86_64, app_20261102.log):
+//     10:49:17.450 FieldGuideIndex: 323 plants, 131 animals, 107 insects, 67 mushrooms
+//     10:49:17.832 / 10:49:18.124 / 10:49:18.384   ← 同一行日志 1 秒内出现 4 次
+//   即 628 条 × 4 = 2512 次 parseEntity + 4 次 rebuildIndices, 占 App::initialize
+//   5.3 s 里约 1 s。改为按 dataDir 缓存首次成功解析的结果, 后 3 次直接拷贝
+//   (QList/QHash 是隐式共享, 拷贝是浅拷贝)。
+//   前提: 88 处 m_index.* 调用全是只读查询 (plants/animals/insects/mushrooms/
+//   getById/*Count), 没有任何 Service 往索引里写; 且全工程无 QThread, 4 次
+//   loadInitialData 都在主线程串行执行, 因此不需要加锁。
+QHash<QString, FieldGuideIndex> g_parsedIndexes;
+
+} // namespace
+
 FieldGuideIndex::FieldGuideIndex() = default;
 
 void FieldGuideIndex::clear() {
@@ -27,6 +44,11 @@ void FieldGuideIndex::clear() {
 }
 
 bool FieldGuideIndex::loadAll(const QString& dataDir) {
+    if (auto it = g_parsedIndexes.constFind(dataDir); it != g_parsedIndexes.constEnd()) {
+        *this = *it;
+        return true;
+    }
+
     clear();
 
     // 2026-09-23: 修 双斜杠路径 bug. dataDir 来自 AssetLoader::assetRoot(), 末尾已带 '/',
@@ -87,6 +109,8 @@ bool FieldGuideIndex::loadAll(const QString& dataDir) {
     Logger::info(QString("FieldGuideIndex: %1 plants, %2 animals, %3 insects, %4 mushrooms")
                      .arg(m_plants.size()).arg(m_animals.size())
                      .arg(m_insects.size()).arg(m_mushrooms.size()));
+    if (ok)
+        g_parsedIndexes.insert(dataDir, *this);
     return ok;
 }
 
