@@ -14,7 +14,6 @@
 namespace outdoor {
 
 class Config;
-class Logger;
 class Database;
 class ServiceRegistry;  // 2026-09-10: forward decl only, ServiceRegistry.h 不能在 App.h include
                        // 因为它链上触发 Qt 6.7 qobject.h 内 QDate/QUrl/QLocale type trait
@@ -97,7 +96,6 @@ private:
     bool initData();
 
     std::unique_ptr<Config> m_config;
-    std::unique_ptr<Logger> m_logger;
     std::unique_ptr<Database> m_database;
     std::unique_ptr<ServiceRegistry> m_services;  // 2026-09-10: 接管 14 个 service 所有权
     std::unique_ptr<PlatformInterface> m_platform;

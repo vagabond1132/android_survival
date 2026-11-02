@@ -84,16 +84,24 @@ int main(int argc, char* argv[]) {
     App& theApp = App::instance();
 
     // 关键: release 包 debuggable=false, run-as 不能用
-    // 写日志位置: 三个候选全试着打开, 谁写得进去用谁 (下面的循环只留 isOpen 的):
-    //   1. /sdcard/Android/data/<pkg>/files/stage0.log        (release 沙盒, adb pull 无权限)
-    //   2. /sdcard/Android/data/<pkg>.debug/files/stage0.log  (debug 包 —— build.gradle:104
-    //      有 applicationIdSuffix ".debug", 沙盒目录跟着变, 少这一条 debug 包就只剩 3 能写)
-    //   3. /data/local/tmp/stage0.log                          (全局可写, adb shell 可读)
+    // 写日志位置: 候选全试着打开, 谁写得进去用谁 (下面的循环只留 isOpen 的):
+    //   1. /data/data/<pkg>/files/stage0.log                       (内部沙盒 —— 实测可写:
+    //      Logger 就在它的等价路径 /data/user/0/<pkg>/files/ 下建出了 logs/)
+    //   2. /sdcard/Android/data/<pkg>/files/stage0.log        (release 沙盒, adb pull 无权限)
+    //   3. /sdcard/Android/data/<pkg>.debug/files/stage0.log  (debug 包 —— build.gradle:104
+    //      有 applicationIdSuffix ".debug", 沙盒目录跟着变)
+    //   4. /data/local/tmp/stage0.log                          (全局可写, adb shell 可读)
+    // 2026-11-02: 上面 2/3/4 在 x86_64 模拟器上实测全部打不开 —— find / 全盘搜 stage0*.log
+    //   零命中。根因不是权限而是目录压根不存在: /data/media/0/Android/data/ 里只有 3 个
+    //   Google 包, com.outdoor.survival 的外置沙盒从没被建出来, mkpath 也失败,
+    //   所以 2/3 连文件都没有; 4 在非 root 真机上同样不可写。
+    //   补 1 (内部沙盒, 已证实可写) 作首选; 但注意未 root 的真机 adb 读不到 /data/data,
+    //   真机侧的主通道仍是 logcat —— 下面的 handler 同时往 stderr 写, Qt 会把 stderr 转 logcat。
     // 包名一律从 CMake 的 APP_PACKAGE_NAME 宏取, 不在这里抄字面量 —— 同一个坑
     // AndroidPlatform.cpp:395 (openAppSettings) 已经踩过并改成运行时取 getPackageName,
-    // 但这里在 QGuiApplication 之前 (JNI activity 还不可用), 只能走编译期宏.
-    // 注意: QStandardPaths 需要 QGuiApplication 才能正确解析, 所以仍旧是拼绝对路径.
+    // 但这里在 QGuiApplication 之前 (JNI activity 还不可用), 只能走编译期宏。
     QStringList logPaths = {
+        QStringLiteral("/data/data/%1/files/stage0.log").arg(APP_PACKAGE_NAME),
         QStringLiteral("/sdcard/Android/data/%1/files/stage0.log").arg(APP_PACKAGE_NAME),
         QStringLiteral("/sdcard/Android/data/%1.debug/files/stage0.log").arg(APP_PACKAGE_NAME),
         QStringLiteral("/data/local/tmp/stage0.log")
@@ -182,7 +190,8 @@ int main(int argc, char* argv[]) {
 
     logToFile("=== STAGE 0: main entered ===");
     logToFile(QString("dataPath: %1").arg(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)));
-    logToFile(QString("log files opened: %1 / 2").arg(g_diagLogFiles.size()));
+    logToFile(QString("log files opened: %1 / %2")
+                  .arg(g_diagLogFiles.size()).arg(logPaths.size()));
 
     QGuiApplication app(argc, argv);
     logToFile("=== STAGE 0: QGuiApplication created ===");

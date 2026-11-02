@@ -165,20 +165,19 @@ void Logger::enforceTotalSize() {
         QDir::Files,
         QDir::Time);  // 升序,最老的在前
 
-    // 计算当前总大小
-    auto totalSize = [&]() -> qint64 {
-        qint64 t = 0;
-        for (const auto& fi : allFiles) t += fi.size();
-        return t;
-    };
+    // 2026-11-02: 之前循环里每轮都重跑一次 totalSize() 闭包(遍历全部 QFileInfo 再
+    //   stat 一遍), 是 O(n^2)。当时这条路径永远不热(App 没初始化单例, 见 App::initLogger);
+    //   接上文件日志后 writeToFile 每行都会调这里, 所以改成先算总量、删一个减一个。
+    qint64 total = 0;
+    for (const auto& fi : allFiles) total += fi.size();
 
-    // 主文件 + 所有 backup
-    // 从最老的开始删,直到 ≤ 1MB
+    // 从最老的开始删,直到 ≤ m_maxTotalSize
     for (const auto& fi : allFiles) {
-        if (totalSize() <= m_maxTotalSize) break;
+        if (total <= m_maxTotalSize) break;
         // 跳过当前正在写入的主文件(若 m_logPath 在列表中,跳过它)
         if (fi.absoluteFilePath() == m_logPath) continue;
-        QFile::remove(fi.absoluteFilePath());
+        const qint64 sz = fi.size();
+        if (QFile::remove(fi.absoluteFilePath())) total -= sz;
     }
 
     // 主文件超限不在这里处理: 由 writeToFile 写入前的 pos() 检查触发 rotate.

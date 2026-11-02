@@ -115,10 +115,12 @@ void App::shutdown() {
     m_database.reset();
     m_platform.reset();
     m_config.reset();
-    m_logger.reset();
 
     m_ready = false;
     emit readyChanged();
+
+    // 放在所有 reset 之后: 上面几个析构里的 Logger::warn/error 要先落盘, 再关文件
+    Logger::instance().shutdown();
 }
 
 QString App::dataPath() const {
@@ -129,8 +131,13 @@ QString App::dataPath() const {
 }
 
 bool App::initLogger() {
-    m_logger = std::make_unique<Logger>();
-    return m_logger->initialize(dataPath() + "/logs");
+    // 2026-11-02: 这里原本 new 了一个 App 私有的 Logger, 但全项目 240 处
+    // Logger::info/warn/error 静态便捷方法都走 Logger::instance() 那个单例 ——
+    // 单例的 m_logFile 永远没被 open, writeToFile 首行
+    // `if (!m_logFile.isOpen()) return;` 把每一条都静默丢掉。结果 release 包在设备上
+    // 只有 logcat, 落盘文件里只有 initialize() 自己写的 "Logger initialized" 一行。
+    // 必须初始化单例本身, 文件日志才接得上。
+    return Logger::instance().initialize(dataPath() + "/logs");
 }
 
 bool App::initConfig() {
