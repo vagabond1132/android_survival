@@ -658,24 +658,33 @@ Page {
     //             高德 / 天地图 (要 ?x=&y=&z= 查询串, 追加路径后 URL 非法).
     //   保留并实测可达 (简中网络, 2026-10-19 curl 全部 200 image/png):
     //     tile.openstreetmap.de / basemaps.cartocdn.com 三个图层.
+    //     ^^^ 这行到 2026-11-02 已经不作数了, CARTO 那三个见下面.
     //   想要卫星图: 需在自己 CDN 上铺一个 z/x/y → Esri z/y/x 的反向代理, 再回来加源.
+    //
+    // 2026-11-02 换源 (模拟器复核六项时撞出来的): CARTO 三个图层**全部失效**.
+    //   它现在对免费 rastertiles 强制要 API key, 但**不返回 4xx** —— 返回
+    //   HTTP 200 + image/png + 一张 2049 字节的 "API KEY REQUIRED /
+    //   carto.com/basemaps/apikey" 水印瓦片 (本机 curl 实测并肉眼看过那张图).
+    //   后果比"源挂了"更糟: _probeBaseMap 只看 tileProbe 的 Image.Ready,
+    //   200 即 _probeOk=true → failover 以为探过了, 永远停在水印源上, 用户看到
+    //   一张永久灰底带英文水印的地图, 且**没有任何报错提示**.
+    //   只要 0 号源不可达就会稳定落到这里 (模拟器 guest 网络受限, 实测就是这么中的).
+    //   → 三枚 CARTO 源摘掉. 「彩色路网」换成 2026-11-02 实测 200 / 32071 字节的
+    //     真瓦片源 tile.openstreetmap.fr/osmfr; 「浅色底图」「暗色底图」暂无免 key
+    //     且实测可达的等价替代 (opentopomap 连不上, Stadia/Thunderforest/MapTiler
+    //     一律要 key, Esri 是 z/y/x 顺序不兼容), 宁缺不滥 —— 留一个只会吐水印的源
+    //     在菜单里, 比少两个选项伤害大得多. 等拿到 CARTO key 再按原样加回.
     readonly property var _baseMaps: [
         { name: "标准地图",
-          // OSM 德国镜像, 带中文地名. 实测简中直连 200 (主站 tile.openstreetmap.org 超时).
+          // OSM 德国镜像, 带中文地名。2026-11-02 本机复测 z5/5/12 仍 200 / 25502 字节。
           host: "https://tile.openstreetmap.de/",
           copyright: "© OpenStreetMap contributors (tile.openstreetmap.de)" },
         { name: "彩色路网",
-          // CARTO Voyager: OSM 数据 + 彩色渲染, 户外看路/看水系够用.
-          host: "https://basemaps.cartocdn.com/rastertiles/voyager/",
-          copyright: "© OpenStreetMap contributors, © CARTO" },
-        { name: "浅色底图",
-          // CARTO Positron: 低饱和灰白, 叠轨迹/POI 时最不容易糊.
-          host: "https://basemaps.cartocdn.com/light_all/",
-          copyright: "© OpenStreetMap contributors, © CARTO" },
-        { name: "暗色底图",
-          // CARTO Dark Matter: 夜间模式省眼.
-          host: "https://basemaps.cartocdn.com/dark_all/",
-          copyright: "© OpenStreetMap contributors, © CARTO" },
+          // 原为 CARTO Voyager (见上, 已失效). osmfr 同为 OSM 数据 + 彩色渲染,
+          // 户外看路/看水系够用. 注意 openstreetmap.fr 是社区志愿者机器, 官方不
+          // 欢迎高频抓取 —— 它排在德国镜像之后, 只在 failover / 手动选时才会用到.
+          host: "https://a.tile.openstreetmap.fr/osmfr/",
+          copyright: "© OpenStreetMap contributors (tile.openstreetmap.fr)" },
         { name: "OSM 主站(需代理)",
           host: "https://tile.openstreetmap.org/",
           copyright: "© OpenStreetMap contributors" }
