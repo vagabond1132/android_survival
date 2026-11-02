@@ -110,7 +110,13 @@ wsl --install -d Ubuntu            # 起一个发行版并设好用户
 | systemd | 写 `/etc/wsl.conf` 的 `[boot] systemd=true` → `wsl --shutdown` | — |
 | Docker Engine | `bash /mnt/d/build_docker/app/tools/wsl_docker_setup.sh` | ≈ 3 min（Docker 29.9.2 + Compose v5.6.1 + containerd 2.4.2，storage=overlayfs） |
 | 镜像 | `docker compose -f docker-compose.yml -f docker-compose.wsl.yml build android-builder` | **≈ 50 min（一次性）** |
-| 出包 | `bash tools/wsl_build_apk.sh release arm64-v8a` | **冷 ≈ 22 min / 增量 ≈ 15–20 min** |
+| 出包 | `bash tools/wsl_build_apk.sh release arm64-v8a` | **冷 ≈ 22 min / 同 ABI 增量 ≈ 11 min / 换 ABI 后首次 ≈ 15 min** |
+
+> ⚠️ **"增量"有个前提：同一个 ABI 连续出**（2026-11-02 实测）。命名卷 `android-build` 里只有
+> 一份 `CMakeCache.txt`，上一次出的是 x86_64、这次出 arm64 时 ABI 不符，STAGE 2 会从
+> `The CXX compiler identification is Clang 17.0.2` 重新走一遍 configure，增量直接失效 ——
+> 0.0.4 那次因此是 **15m2s** 而不是 11 min。在两个 ABI 之间来回试，成本按全冷估更实在。
+> 详见 [09-讨论记录/12](../09-讨论记录/12-真机六项反馈与出包口径.md) §4.11。
 
 出包耗时拆解（0.0.3 那次）：STAGE 2 C++ 编译 12m14s → STAGE 3 androiddeployqt 14s +
 gradle assembleRelease 9m09s → STAGE 4 校验与落盘 ≈ 1min。
@@ -133,6 +139,45 @@ gradle assembleRelease 9m09s → STAGE 4 校验与落盘 ≈ 1min。
 
 另：`wsl.exe` 的管理类输出（`--list`、`--status`）是 UTF-16LE，Linux 侧命令输出是 UTF-8，
 不要对整条管道无脑 `iconv`，否则中文全成乱码。
+
+4. **换 ABI 首次出包会死在 STAGE 3，根因是 `--no-build` 不建工程骨架**（2026-11-02 实测）。
+   `androiddeployqt --no-build` 的 Qt 6.7 原文语义是 *"Do not build the package, it is useful
+   to just install a package previously built"* —— 它只把 `.so` 装进
+   `<output>/libs/<abi>/` 就返回，**不创建** `app/src/main/`、`res/values/libs.xml`。
+   `build/release_arm64-v8a/android-build/` 里那份骨架是更早某次**完整模式**生成后留在命名卷
+   `android-build` 里的，所以 arm64 一直"看起来没问题"；`release_x86_64/` 是新目录，STAGE 3
+   后半段每个 `cp` 都撞 `No such file or directory`，退出码 1 且日志只剩一行 cp 报错。
+   现在 `build_apk.sh` 的做法：缺 `res/values/libs.xml` 时先用 `--gradle` 完整模式引导一次，
+   并把 `gradlew` 临时换成 `exit 1` 的桩 —— androiddeployqt 先写完工程文件、最后才调 gradle，
+   桩让它 **≈20 秒**返回（不桩掉的话要付 5m38s 打一个我们并不用的 Qt 模板 debug 包），
+   随后预填步骤会用真的 exec-本地-gradle 脚本覆盖这个桩。另外补了三处 `mkdir -p`／播种：
+   `app/src/main/`、`app/src/main/java/`、以及把 Qt 写在**根** `res/` 的 `libs.xml` +
+   `qtprovider_paths.xml` 播种到 `app/src/main/res/`（AGP 只读 app 模块那份，缺了它 QtLoader
+   找不到 `qt_libs` 会启动即闪退）。实测 x86_64 增量出包 **6m37s**（STAGE 2 1m51s +
+   STAGE 3 4m38s + STAGE 4 6s）。
+
+5. **`qt_libs` 的「Core 排第一」不能写死 ABI**（2026-11-02 实测，x86_64 包装机即崩）。
+   STAGE 3 会按「Qt6Core → 项目主 lib → 其他字母序」重排 `app/src/main/res/values/libs.xml`
+   的 `qt_libs`。旧代码第二步判的是 `[ "$lib" = "libQt6Core_arm64-v8a" ]` —— 换 x86_64 时库名
+   是 `libQt6Core_x86_64`，**匹配不上就静默不钉位**，Core 掉进字母序变成第 4 个。后果不是
+   "顺序不好看"，是**启动必崩**：`Qt6ChartsQml/Charts/Concurrent` 先 `System.load`，链接器把
+   Core 当 `DT_NEEDED` 依赖映射进来，而 ART 只对 `System.load` **显式点名**的那个库调
+   `JNI_OnLoad` —— Core 那个负责设 `QJniEnvironment::s_javaVM` 的 `JNI_OnLoad` 就此被跳过，
+   轮到 Multimedia 的 `JNI_OnLoad` 里 `new QJniEnvironment` 直接空指针：
+
+   ```
+   signal 11 (SIGSEGV), Cause: null pointer dereference
+     #00 libQt6Core_x86_64.so  QJniEnvironment::getJniEnv()+38
+     #02 libQt6Multimedia_x86_64.so  JNI_OnLoad+118
+     ...  QtLoader.loadLibraryHelper → QtThread
+   ```
+
+   现在改成 `case "$lib" in libQt6Core_*)` 前缀匹配，并且**提到第 1 位**（必须抢在任何依赖
+   Core 的库前面，项目主 lib 也要排在 Core 之后），匹配不到就 `die` 而不是静默降级。
+   排查这条的入口：`aapt2 dump resources dist/<apk> | awk '/array\/qt_libs/{...}'` 能读到
+   **编译进 APK 的真实顺序**，和容器里 `libs.xml` 的源码顺序对照 —— 两者不一致就是 AGP/aapt
+   合并层在动它，别看源码猜。同文件另有一处 ABI 写死（NMEA plugin 的 SerialPort 检查）一并
+   换成 `$TARGET_ABI`。
 
 ### 3.2 macOS
 
@@ -689,6 +734,55 @@ docker build -f Dockerfile.android -t app-build . 2>&1 | tee build.txt
 ```
 
 如果**不是上述 4 个根因**(比如修改了 Qt 版本、换 NDK 版本、换了 host 系统), 需要先查 `build.txt` 看具体错误步号和报错文件, 再回到讨论记录文档定位修复方案。
+
+### Q15. 换一个 ABI 首次出包, STAGE 3 报 `cp: cannot create regular file '.../android-build/app/src/main/AndroidManifest.xml': No such file or directory`
+
+**根因**: `androiddeployqt --no-build` 只**安装依赖**、不**创建工程骨架**(见 §3.1.2 坑 4)。
+老 ABI 的 `android-build/` 目录里有历史完整模式生成的骨架, 所以同一套脚本在它身上跑得通;
+新 ABI 的 `release_<abi>/android-build/` 是空的, STAGE 3 后半段所有往 `app/...` 落文件的
+`cp` 全部失败。日志特征: androiddeployqt 那句 `Android package built successfully in 14 ms`
+照样打印(它只是算了个包名路径), 但 `find ... -name AndroidManifest.xml` 一行产物都没有。
+
+**自查命令**(容器内, 一眼看出骨架有没有):
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.wsl.yml run --rm android-builder \
+  bash -c 'O=/project/build/release_x86_64/android-build;
+           ls $O; echo "libs/*.so=$(find $O/libs -name "*.so" | wc -l)";
+           ls $O/res/values/libs.xml $O/app/src/main 2>&1'
+```
+
+`libs/*.so` 只有个位数(缺 Qt6* 全家桶) + 没有 `res/values/libs.xml` = 就是这个坑。
+
+**已修**: `build_apk.sh` 的 STAGE 3 加了"引导部署"分支(缺 `libs.xml` 时用 `--gradle` 完整模式
++ `gradlew` 桩, ≈20 秒)和三处目录兜底(`mkdir -p app/src/main`、`app/src/main/java`、把根
+`res/` 播种进 `app/src/main/res/`)。修完 x86_64 实测 6m37s 出包, STAGE 4 版本回验通过。
+
+### Q16. 装包成功、`am start` 后 splash 一闪就没, logcat 里 `SIGSEGV` 落在 `QJniEnvironment::getJniEnv()`
+
+**根因**: `qt_libs` 数组里 **Qt6Core 没排在最前**, 见 §3.1.2 坑 5。崩溃栈固定长这样:
+
+```
+#00 libQt6Core_<abi>.so  QJniEnvironment::getJniEnv()+38   (Cause: null pointer dereference)
+#01 libQt6Core_<abi>.so  QJniEnvironment::QJniEnvironment()+26
+#02 libQt6Multimedia_<abi>.so  JNI_OnLoad+118
+...  QtLoader.loadLibraryHelper → QtLoader.loadLibraries → QtThread
+```
+
+**自查命令**(Windows 侧, 直接读**编译进 APK 的**顺序, 别看容器里的源码 `libs.xml`):
+
+```bash
+D:/build_docker/android_sdk/build-tools/34.0.0/aapt2.exe dump resources dist/<apk>.apk \
+  | awk '/^ *resource 0x[0-9a-f]+ array\/qt_libs$/{f=1;next} f&&/^ *resource 0x/{exit} f{print}' \
+  | grep -oE "Qt6[A-Za-z0-9_-]*" | head -6
+```
+
+第 1 个不是 `Qt6Core_<abi>` = 就是这个坑。注意**同一个数组在源码 `libs.xml` 里可能有几十上百条、
+顺序也不同**: androiddeployqt 写的 `res/values/libs.xml`(根) 与 AGP 真正打进包的
+`app/src/main/res/values/libs.xml` 是两份文件, 只有后者生效。
+
+**已修**(2026-11-02): `build_apk.sh` 的重排步骤改成 `libQt6Core_*` 前缀匹配并置于第 1 位,
+匹配不到直接 `die`。
 
 ---
 
