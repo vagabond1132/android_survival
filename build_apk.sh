@@ -1326,7 +1326,10 @@ EOF
     )
     if [ "${ABI_TRIPLE_MACHINE[$ANDROID_LIB_DIR]}" ]; then
         NDK_TRIPLE="${ABI_TRIPLE_MACHINE[$ANDROID_LIB_DIR]%%:*}"
-        EXPECTED_MACHINE="${ABI_TRIPLE_MACHINE[$ANDROID_LIB_DIR]##*:}"
+        # 表里写 0x..., 但下面 python 用 struct.unpack('<H') 打印的是十进制.
+        # 2026-11-02 之前直接字符串比 "183" vs "0xB7" 恒假: 两段校验永远走 else,
+        # NDK 兜底复制是死代码, 且 "架构错, 手动覆盖" 那条 log 每次都是误报.
+        EXPECTED_MACHINE=$(( ${ABI_TRIPLE_MACHINE[$ANDROID_LIB_DIR]##*:} ))
         CANDIDATE="$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/$NDK_TRIPLE/libc++_shared.so"
         if [ -f "$CANDIDATE" ]; then
             MACHINE=$(python3 -c "
