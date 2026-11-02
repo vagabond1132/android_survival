@@ -195,13 +195,27 @@ gradle assembleRelease 9m09s → STAGE 4 校验与落盘 ≈ 1min。
 
    口径：这类"校验"必须**能打出判据值**（`machine=62`），只打 ✅/❌ 的校验等于没校验。
 
-7. **`build_apk.sh` 结尾打印的启动命令里的 activity 名是错的**（2026-11-02）。
+7. **`build_apk.sh` 结尾打印的启动命令里的 activity 名是错的**（2026-11-02，**代码已修**）。
    它写 `org.qtproject.qt.android.QtActivityBase`，照敲报 `Error type 3`。这个包的入口是
    `com.outdoor.survival/.MainActivity`。查真实入口别猜，问包管理器：
 
    ```bash
    adb shell cmd package resolve-activity --brief com.outdoor.survival
    ```
+
+   0.0.4 那轮只在文档里记了这条、没动代码，结果 0.0.5 的日志尾部**又原样打了一遍** ——
+   "文档记了、代码没改"的坑会自己复发。现在 `build_apk.sh:1916` 改成从刚打好的 APK 读
+   `aapt2 dump badging` 的 `launchable-activity`，读不到才退 `$APP_PACKAGE.MainActivity`。
+   两个实现细节：容器里 `aapt2` **不在 PATH 上**（`command -v aapt2` 空），必须有
+   `ls /opt/android-sdk/build-tools/*/aapt2` 这条 glob 兜底；Windows 侧则是
+   `aapt2.exe`，脚本里不能写死可执行名。
+
+   同一段还有个连带的恒假判断：`cmd package resolve-activity --brief` 回的是
+   **`包名/.类名` 简写**（`com.outdoor.survival/.MainActivity`），跟 badging 的全限定名
+   不是一个形状，直接 `[ "$ACTIVITY_INFO" = "$APP_PACKAGE/$APP_ACTIVITY" ]` 永远不相等，
+   于是这段"等 activity 注册"的轮询每次都白等满 15 秒再报超时。修法是把简写先展开成
+   全限定名再比。**判据**：轮询日志出现 `✅ activity 已注册 (waited 0~2s)` 才是真的通，
+   出现"注册超时"而 `pm path` 又非空，先怀疑字符串形状而不是设备。
 
 ### 3.2 macOS
 
@@ -624,23 +638,130 @@ adb install dist/OutdoorSurvival-v0.0.2-release-arm64-v8a.apk
 ### 12.3 启动与日志
 
 ```bash
-# 启动应用(Qt 6 的 Activity 是 org.qtproject.qt.android.bindings.QtActivity)
-adb shell am start -n com.outdoor.survival/org.qtproject.qt.android.bindings.QtActivity
+# 启动应用（2026-11-02 校准：以 APK 自己的 badging 为准）
+/opt/android-sdk/build-tools/*/aapt2 dump badging app.apk | grep launchable-activity
+#   → launchable-activity: name='com.outdoor.survival.MainActivity'
+adb shell am start -W -n com.outdoor.survival/.MainActivity
 
 # 实时日志
-adb logcat -s OutdoorSurvival:V
+adb logcat -s OutdoorSurvival:V OutdoorDiag:E
 
 # 完整抓取
 adb logcat > adb_log.txt
+
+# App 自己的落盘日志（Logger 链路，见 09-讨论记录/12 §4.13）
+adb shell 'ls -t /data/data/com.outdoor.survival/files/logs/app_*.log'
 ```
 
-> **注意**: 不要用 `com.outdoor.survival/.QtActivity` 启动 —— 清单中 Activity 名是全限定名 `org.qtproject.qt.android.bindings.QtActivity`,不是简写 `.QtActivity`(简写会被解析为 `com.outdoor.survival.QtActivity`,报 `Activity class does not exist`)。
+> **注意**: 启动入口是清单里注册的 `com.outdoor.survival.MainActivity`（Qt 6 的基类
+> `org.qtproject.qt.android.bindings.QtActivity` 是它的父类，不是 launcher entry）。本节
+> 原先写的 `.QtActivity` / `QtActivityBase` 两种都点不起来（报 `Activity class does not exist`），
+> 真机与模拟器实测均如此 —— `build_apk.sh` 出包尾部那条提示也已改成从 badging 现读，见
+> 09-讨论记录/12 §4.15 末段。
 
 ### 12.4 卸载
 
 ```bash
 adb uninstall com.outdoor.survival
 ```
+
+### 12.5 模拟器全功能走查：`tools/reg_sweep.sh`
+
+改完 UI 想"所有功能都过一遍"，靠人眼逐屏看不可复现，所以有一条脚本化的走查：
+Windows 侧 Git Bash + adb 打 x86_64 模拟器，产物落 `tmp_reg/<tag>/`。
+
+```bash
+# 用法：bash tools/reg_sweep.sh <tag> ["x y" | "x y 名字" ...]
+MSYS_NO_PATHCONV=1 PATH="/d/build_docker/android_sdk/platform-tools:$PATH" \
+  bash /d/build_docker/app/tools/reg_sweep.sh 005_paths \
+       "540 2210 goto_map" "675 2000 m_track"
+```
+
+三条可机读判据（**不是**"截图好看"）：
+
+| 判据 | 期望 | 拦的是什么 |
+|---|---|---|
+| 走查期间落盘日志里 `WARN/CRIT/FATAL` 的**增量** | 0 | 静默降级（Logger 链路见 12 §4.13） |
+| 每一步点击都要**换帧**；5 个根格截出 5 种画面 | 未换帧 0 / 5 种 | "没切页"与"没重绘"必须分开判（12 §4.18） |
+| 每张截图体积下限 `MIN_PNG`（默认 40000 B） | 0 张低于 | 黑屏 PNG 压出来 ~22 KB，真渲染 100 KB+ |
+
+两条铁律：
+
+1. **绝不点拨号 / SOS 长按 / 短信发送**。SOS 格只"进页面看一眼"就退回营地格（脚本里是
+   `band_sos` 之后紧跟一颗 `band_back`）。这一条只能由用户自己在真机上按。
+2. **跑走查时容器里不能有编译**。本机 8 逻辑核，容器一编译模拟器就饿死：实测
+   `EGL_emulation app_time_stats: avg=2338ms` + 整屏黑 + 截图 22 KB 全同，看起来像
+   "App 白屏 bug"，其实是抢不到 CPU。
+
+退出码：`0` 有效 / `2` 画面没切页 / `3` 疑似黑屏 / `4` 日志增量 < 1 KB（App 没在跑）。
+判据的成因与两轮改法记在 09-讨论记录/12 §4.17、§4.18。
+
+### 12.6 定点击坐标：用 `uiautomator dump`，不要扫像素
+
+§12.5 的脚本要的是"给一串坐标点下去"，而**坐标从哪来**这一轮才定下来。扫像素
+（PowerShell + System.Drawing 数某行的暗像素）在这台 AVD 上是废的：swiftshader 的撕裂楔形会把
+整块区域画花，扫出来的是**伪影的斜边**——想定位一颗按钮，扫到的是一条每行左端点线性右移的边
+（y=1628 起 x=692、y=1744 到 x=998），据此定坐标连偏三次（12 §4.19）。
+
+```bash
+MSYS_NO_PATHCONV=1 ADB=/d/build_docker/android_sdk/platform-tools/adb.exe
+$ADB shell uiautomator dump /sdcard/w.xml >/dev/null
+$ADB shell cat /sdcard/w.xml | tr '<' '\n' | grep -a VirtualChild \
+  | sed 's/.*content-desc="\([^"]*\)".*bounds="\(\[[0-9,]*\]\[[0-9,]*\)\)".*/\1 \2/'
+#   返回 [44,1899][285,1986]
+#   写进名册 [688,1627][1006,1747]
+```
+
+Qt 6 的 Quick Controls 会把 accessible 名字透出到 Android 无障碍树，`content-desc` 就是 QML 里
+的 `text`，`bounds` 是**设备像素**、与 `screencap` 同尺度，取矩形中心即可，第一枪就中。
+
+三个边界必须知道：
+
+1. **`TextField` 不进这棵树**（只有带名字的控件进），所以填输入框仍要估坐标；字段之间跳用
+   `adb shell input keyevent 61`（Tab），比每格重新估一次稳。
+2. **弹框开着时 dump 到的是 IME 压矮之后**的坐标。这反而是个免费判据：
+   `windowSoftInputMode="adjustResize"` 生效与否直接读得出来（同一颗按钮
+   y 1627..1747 → 1244..1364），比看截图准。
+3. `input text` 打不了中文，中文排版（如⑤联系人名片的换行与截断）在模拟器上判不了，仍等真机。
+4. **裸 `Text` 也不进这棵树** —— 只有可访问的控件（按钮、带 `content-desc` 的项）在里面。
+   实测「我」页滚到底，整棵树只剩 `[菜单]`、`[荒野手册]` 两枚（都在 header），页里的段头、
+   行标签、版本号一个都没有。所以**"文字压到吸底条上"这类版式 bug 不能用 dump 判**，
+   只能截图目视；dump 的用途限定在"给可点的东西定坐标"。
+   （SOS 页能测到「去添加」[184,1888][436,2008] 是因为它是 `Button`，不是 `Text`。）
+
+顺带一条：`console.log` 在 release 包里**只进 logcat**（`adb logcat -d | grep -a "\[map\]"`），
+不进 `/data/data/com.outdoor.survival/files/logs/app_*.log`；后者要 root 读，
+release 包不可 debug 所以 `run-as` 会报 `package not debuggable`。
+
+
+### 12.7 判"改法进没进包"：拆包数串，别看 `build/` 的时间戳
+
+出包后想确认某一行 QML 改动真的落进了 APK，**两条路都是错的**（2026-11-02 复核 0.0.5 时都撞过，
+详见 12 §4.21）：
+
+1. **看 `build/release_<abi>/` 里产物的 mtime** —— 那棵树是 Windows 侧的历史残留，本次构建的真实
+   产物不在那儿。实测：`MePage_qml.cpp` 显示 10-29，而源码是当天 13:07 改的；包内主 .so
+   9,233,472 B，树里 `stripped_native_libs/` 那份 9,132,040 B —— 根本不是同一份。据此会误判成
+   "增量没生效"。
+2. **对主 .so 直接 `grep` 明文** —— Qt 6 的 rcc 是**压缩**嵌进 `.so` 的，源码文本（含中文）
+   明文扫不到，`夜晚配色`、`离线数据已入库` 都返回 0；只有进了编译字节码**名字池**的标识符
+   （`bottomClearance`、`显示`）才明文命中。据此会误判成"包里没 QML"。
+
+**可用的做法**（脚本 `tools/apk_rcc_probe.py`）：从 APK 取出 `lib/arm64-v8a/libOutdoorSurvival*.so`，
+扫 zlib（`78 01/9C/DA`）与 zstd（`28 B5 2F FD`）魔数，逐块试解，在解压流里数 needle。
+本次 310 个候选块、36 块解出。**关键：要同时数"旧写法"**，只数新串不闭合 —— 缓存万一没重生成，
+旧串会照样在包里。合格的输出长这样：
+
+```
+新写法 parent && parent.height > 0      明文 0 + 解压 3 = 3     ← 三页各一处
+旧写法 Math.max(parent…800, 800)        明文 0 + 解压 0 = 0     ← 必须为 0
+新注释「不兜 800 的下限」                明文 0 + 解压 1 = 1
+```
+
+另外 `build_apk.sh` 自己有一道守卫会在 `.qml` 比 qmlcache 新时清缓存触发 `qmlcachegen` 重生成，
+日志里能看到 `检测到 .qml 比 qmlcache 新…` 和逐页的 `Generating .rcc/qmlcache/…`；
+**但它是自述，只能当旁证，判据仍以拆包数串为准。**
+
 
 ---
 
@@ -733,13 +854,18 @@ docker builder prune
 
 ### Q13. `adb shell am start` 报 `Activity class {com.outdoor.survival/com.outdoor.survival.QtActivity} does not exist`
 
-**根因**: Activity 名写错。清单里 Activity 是全限定名 `org.qtproject.qt.android.bindings.QtActivity`,简写 `.QtActivity` 会被解析为 `com.outdoor.survival.QtActivity`(不存在)。
+**根因**: Activity 名写错。简写 `.QtActivity` 会被解析为 `com.outdoor.survival.QtActivity`(不存在)。
 
-**解决**:
+**解决**（2026-11-02 校准，别再抄 `QtActivityBase` / `bindings.QtActivity`）:
 ```bash
-# 正确启动命令
-adb shell am start -n com.outdoor.survival/org.qtproject.qt.android.bindings.QtActivity
+# 以 APK 自己的 badging 为准
+/opt/android-sdk/build-tools/*/aapt2 dump badging app.apk | grep launchable-activity
+#   → launchable-activity: name='com.outdoor.survival.MainActivity'
+adb shell am start -W -n com.outdoor.survival/.MainActivity
 ```
+`org.qtproject.qt.android.bindings.QtActivity` 只是本项目 `MainActivity` 的**父类**，清单里注册的
+entry 是 `com.outdoor.survival.MainActivity`；本节旧版本给的两种全名都点不起来（真机 + 模拟器
+各取证一次）。`build_apk.sh` 出包尾部的启动提示也已改成现读 badging，见 09-讨论记录/12 §4.15 末段。
 
 ### Q14. `docker build` 报 `WrapQuick3DAssimp::WrapQuick3DAssimp target was not found` 或 `ioapi.c: undeclarated function 'fopen64'`
 
