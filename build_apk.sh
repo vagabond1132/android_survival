@@ -884,6 +884,51 @@ else:
     )
 
     # ----------------------------------------------------------------------------
+    # 关键: 换 ABI 首次构建要先"引导部署"一次 (2026-10-30 x86_64 踩坑)
+    # ----------------------------------------------------------------------------
+    # --no-build 的真实语义是 Qt 6.7 --help 里那句 "Do not build the package, it
+    # is useful to just install a package previously built" —— 它只把 .so 装进
+    # <output>/libs/<abi>/, **不创建** res/values/libs.xml 等工程文件.
+    # arm64-v8a 目录一直好用, 是因为它的骨架由更早某次完整模式生成后留在命名卷
+    # android-build 里; 换 ABI 时新目录什么都没有, STAGE 3 后半段每一步
+    # "覆盖 app/xxx、复制 Qt jar、复制 res" 全落空, cp 报
+    # "app/src/main/AndroidManifest.xml: No such file or directory", 退出码 1.
+    # 修法: 缺 libs.xml 时先用 --gradle 完整模式跑一次 androiddeployqt.
+    # 不想为引导付真 gradle 打包的代价 (实测 5m38s, 产出的是 Qt 模板 debug 包,
+    # 我们后面自己 assembleRelease): androiddeployqt 先写完工程文件、最后才调
+    # ./gradlew, 所以把 gradlew 临时换成"立刻失败"的桩, 引导 20 秒内返回;
+    # 紧随其后的预填步骤会用 exec-本地-gradle 的真脚本覆盖这个桩.
+    # 另外 androiddeployqt 见到 <output>/app/build.gradle 就认为"工程已存在"并跳过
+    # 创建, 所以要先清掉上次失败留下的半成品工程文件 —— 全都能重新生成,
+    # 但 libs/ 必须留着 (cmake --install 放进去的 .so 是它的输入).
+    # ----------------------------------------------------------------------------
+    QT_LIBS_XML="$BUILD_DIR/android-build/res/values/libs.xml"
+    if [ ! -f "$QT_LIBS_XML" ]; then
+        log_warn "Qt 部署产物缺失 (新 ABI 首次构建), 用 --gradle 完整模式引导部署"
+        mkdir -p "$BUILD_DIR/android-build"
+        rm -rf "$BUILD_DIR/android-build/app"
+        for stale in AndroidManifest.xml build.gradle settings.gradle local.properties; do
+            rm -f "$BUILD_DIR/android-build/$stale"
+        done
+        printf '#!/bin/sh\n# androiddeployqt 引导期占位: 让它的 gradle 步骤立刻失败\nexit 1\n' \
+            > "$BUILD_DIR/android-build/gradlew"
+        chmod +x "$BUILD_DIR/android-build/gradlew"
+        GEN_ARGS=("--gradle")
+        for arg in "${DEPLOY_ARGS[@]}"; do
+            [ "$arg" = "--no-build" ] || GEN_ARGS+=("$arg")
+        done
+        timeout 900 "$DEPLOY_TOOL" "${GEN_ARGS[@]}" \
+            > "$BUILD_DIR/androiddeployqt_bootstrap.log" 2>&1 || true
+        if [ ! -f "$QT_LIBS_XML" ]; then
+            log_error "引导部署失败: $QT_LIBS_XML 仍未生成"
+            log_info "androiddeployqt (--gradle) 输出尾部:"
+            tail -20 "$BUILD_DIR/androiddeployqt_bootstrap.log" 2>/dev/null
+            exit 1
+        fi
+        log_info "  ✅ 引导完成: $(find "$BUILD_DIR/android-build/libs" -name '*.so' 2>/dev/null | wc -l) 个 Qt .so + res/values/libs.xml"
+    fi
+
+    # ----------------------------------------------------------------------------
     # 关键: 在 androiddeployqt 运行之前预填 gradle wrapper, 让它走本地 gradle
     # 否则 androiddeployqt 内部会通过 wrapper 下载 gradle-8.3-bin.zip (断网失败)
     # 策略: 先建出 $BUILD_DIR/android-build/gradle/wrapper/ 骨架 + gradlew
@@ -975,7 +1020,7 @@ EOF
         exit 1
     }
 
-    log_info "✅ androiddeployqt 完成 (--no-build, 生成项目骨架)"
+    log_info "✅ androiddeployqt 完成 (--no-build, 只安装 Qt 依赖; 骨架由上一步引导或历史遗留提供)"
 
     # ============================================================================
     # 关键修复: 清理 Qt 模板生成 build.gradle 的 AGP 8.1+ 废弃选项
@@ -1027,6 +1072,9 @@ EOF
         log_info "  ✅ 覆盖 app/proguard-rules.pro (项目版本)"
     fi
     if [ -f "$APP_DIR/android/AndroidManifest.xml" ]; then
+        # 新 ABI 首次构建时 app/src/main/ 还不存在 (见上文"引导部署"注释), 必须先建目录,
+        # 否则 cp 直接报 No such file or directory 让整个 STAGE 3 失败.
+        mkdir -p "$BUILD_DIR/android-build/app/src/main"
         cp -f "$APP_DIR/android/AndroidManifest.xml" "$BUILD_DIR/android-build/AndroidManifest.xml"
         cp -f "$APP_DIR/android/AndroidManifest.xml" "$BUILD_DIR/android-build/app/src/main/AndroidManifest.xml"
         log_info "  ✅ 覆盖 AndroidManifest.xml (项目版本, 决定 applicationId)"
@@ -1036,7 +1084,10 @@ EOF
     SRC_JAVA_DIR="$APP_DIR/android/src"
     GEN_JAVA_DIR="$BUILD_DIR/android-build/app/src/main/java"
     if [ -d "$SRC_JAVA_DIR" ] && [ -n "$(ls -A "$SRC_JAVA_DIR" 2>/dev/null)" ]; then
-        cp -r "$SRC_JAVA_DIR/." "$GEN_JAVA_DIR/" 2>/dev/null
+        # 同样先建目录: 2>/dev/null 会吞掉 cp 的 "No such file or directory",
+        # 表现是 dex 里少了我们自己的 6 个 java 类, 要到启动期才炸.
+        mkdir -p "$GEN_JAVA_DIR"
+        cp -r "$SRC_JAVA_DIR/." "$GEN_JAVA_DIR/"
         log_info "  ✅ 复制项目 java 源: $(find "$GEN_JAVA_DIR" -name "*.java" 2>/dev/null | wc -l) 个 .java"
     fi
 
@@ -1074,6 +1125,21 @@ EOF
         log_info "  ✅ 复制 Qt jar 到 app/libs/: $QT_JARS_COPIED / 6"
     else
         log_warn "  ⚠️  $QT_JARS_DIR 不存在, 跳过 Qt jar 复制 (后续会因 dex 缺类崩溃)"
+    fi
+
+    # 关键: 把 Qt 生成的**根** res/ 播种进 app 模块 (新 ABI 首次构建时 app/src/main/res 是空的)
+    # ----------------------------------------------------------------------------
+    # androiddeployqt 把 libs.xml / qtprovider_paths.xml 写在 <output>/res/, 而 AGP 按
+    # android/app/build.gradle 的 res.srcDirs = ['src/main/res'] 只读 app 模块那份.
+    # arm64-v8a 目录里两份都有, 也是历史完整模式跑出来的副产品; 缺了 app 模块这份,
+    # QtLoader 找不到 qt_libs → 启动期 Resources$NotFoundException 闪退.
+    # 项目 android/res/values/ 里没有 libs.xml, 所以这里只能用 Qt 版, 不能用项目版覆盖.
+    # ----------------------------------------------------------------------------
+    if [ ! -f "$BUILD_DIR/android-build/app/src/main/res/values/libs.xml" ] \
+       && [ -f "$BUILD_DIR/android-build/res/values/libs.xml" ]; then
+        mkdir -p "$BUILD_DIR/android-build/app/src/main/res"
+        cp -rf "$BUILD_DIR/android-build/res/." "$BUILD_DIR/android-build/app/src/main/res/"
+        log_info "  ✅ 播种 app/src/main/res (Qt 版 libs.xml + qtprovider_paths.xml)"
     fi
 
     # 关键: 复制 res (不删 androiddeployqt 生成的 values/libs.xml, 含 qt_libs)
@@ -1232,8 +1298,8 @@ EOF
     #       但 aqt 装 qtlocation 时**不**自动装 qtserialport 模块 → 启动期 dlopen 报
     #       "libQt6SerialPort_arm64-v8a.so not found" → FATAL EXCEPTION (run.txt L1469)
     # 项目不用 NMEA 串口 GPS (用 Android QGeoPositionInfoSource), 主动删 NMEA plugin.
-    NMEA_PLUGIN="$AAR_LIBS_DIR/libplugins_position_qtposition_nmea_arm64-v8a.so"
-    if [ -f "$NMEA_PLUGIN" ] && [ ! -f "$AAR_LIBS_DIR/libQt6SerialPort_arm64-v8a.so" ]; then
+    NMEA_PLUGIN="$AAR_LIBS_DIR/libplugins_position_qtposition_nmea_${TARGET_ABI}.so"
+    if [ -f "$NMEA_PLUGIN" ] && [ ! -f "$AAR_LIBS_DIR/libQt6SerialPort_${TARGET_ABI}.so" ]; then
         rm -f "$NMEA_PLUGIN"
         log_warn "  🗑  删 NMEA plugin (缺 libQt6SerialPort, 项目用 Android Location API): $(basename $NMEA_PLUGIN)"
     fi
@@ -1345,23 +1411,30 @@ with open('$AAR_LIBS_DIR/libc++_shared.so', 'rb') as f:
     done
 
     # 关键: 按 Qt 依赖顺序排序
-    # 第一优先级: libOutdoorSurvival (项目主 lib, 必须最先 load)
-    # 第二优先级: libQt6Core (Qt 基础)
-    # 第三优先级: 其他 Qt 库 (按字母序, 但 libQt6Core 已经在前面)
+    # 第一优先级: libQt6Core —— 必须抢在任何依赖它的库前面. 若某个 Qt 模块先 load,
+    #   链接器会把 Core 当 DT_NEEDED 依赖映射进来, 而 ART 只对 System.load 显式点名的
+    #   那个库调 JNI_OnLoad, Core 的 JNI_OnLoad (它才设 s_javaVM) 就此被跳过,
+    #   后面任何模块的 JNI_OnLoad 里 new QJniEnvironment 都空指针段错误.
+    #   2026-11-02 x86_64 包实测: Core 落到第 4 位 → Charts 先 load → 崩在 Multimedia.
+    # 第二优先级: libOutdoorSurvival (项目主 lib)
+    # 第三优先级: 其他 Qt 库按字母序
     ORDERED_LIST=""
-    # 1) 项目主 lib
+    # 1) libQt6Core (后缀是 ABI, 不能写死 arm64-v8a)
     for lib in "${!ALL_LIBS[@]}"; do
-        if [[ "$lib" == OutdoorSurvival* ]]; then
-            ORDERED_LIST="${ORDERED_LIST}${lib};"
-            unset ALL_LIBS["$lib"]
-        fi
+        case "$lib" in
+            libQt6Core_*)
+                ORDERED_LIST="${ORDERED_LIST}${lib};"
+                unset ALL_LIBS["$lib"]
+                break
+                ;;
+        esac
     done
-    # 2) libQt6Core
+    [ -n "$ORDERED_LIST" ] || die "qt_libs 里找不到 libQt6Core_<abi>, 无法保证 Core 第一个 load"
+    # 2) 项目主 lib
     for lib in "${!ALL_LIBS[@]}"; do
-        if [ "$lib" = "libQt6Core_arm64-v8a" ]; then
+        if [[ "$lib" == ${APP_NAME_SAFE}* ]]; then
             ORDERED_LIST="${ORDERED_LIST}${lib};"
             unset ALL_LIBS["$lib"]
-            break
         fi
     done
     # 3) 其他 Qt 库按字母序
@@ -1369,7 +1442,7 @@ with open('$AAR_LIBS_DIR/libc++_shared.so', 'rb') as f:
         ORDERED_LIST="${ORDERED_LIST}${lib};"
     done
     QT_LIBS_LIST="${ORDERED_LIST%;}"
-    log_info "  qt_libs 包含 $(echo "$QT_LIBS_LIST" | tr ';' '\n' | wc -l) 个 .so (顺序: 项目主 lib → Qt6Core → 其他)"
+    log_info "  qt_libs 包含 $(echo "$QT_LIBS_LIST" | tr ';' '\n' | wc -l) 个 .so (顺序: Qt6Core → 项目主 lib → 其他)"
 
     # 关键: 覆盖生成 values/libs.xml (Androiddeployqt --no-build 模式不生成此文件)
     # ----------------------------------------------------------------------------

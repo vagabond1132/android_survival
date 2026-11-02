@@ -14,13 +14,16 @@
 #     bash -c "bash /mnt/d/build_docker/app/tools/wsl_build_apk.sh"
 #   全量重建加 CLEAN=1:
 #   ... -- bash -c "CLEAN=1 bash /mnt/d/build_docker/app/tools/wsl_build_apk.sh"
+#   出模拟器包 (不涨版本号, 镜像要先 FORCE_IMAGE=1 重建过):
+#   ... -- bash -c "ABI=x86_64 VERSION_BUMP=0 bash /mnt/d/build_docker/app/tools/wsl_build_apk.sh"
 #
 # 前置: tools/wsl_docker_setup.sh 已跑过 (docker-ce + compose 插件)。
 set -euo pipefail
 
 APP_DIR=${APP_DIR:-/mnt/d/build_docker/app}
-ABI=${ABI:-arm64-v8a}
-TYPE=${TYPE:-release}
+# 位置参数与环境变量都认: `wsl_build_apk.sh release x86_64` == `TYPE=release ABI=x86_64 ...`
+TYPE=${1:-${TYPE:-release}}
+ABI=${2:-${ABI:-arm64-v8a}}
 # 镜像构建 + C++ 编译都在容器里; 容器继承 compose 的 cpu 限制 (本机 nproc=8)
 # BUILD_JOBS 透传给 build_apk.sh; WSL 默认只给主机内存的一半 (本机 7.6G),
 # 并行开满 8 路 + gradle -Xmx2048m 有余量爆掉的风险, 所以默认收到 6。
@@ -43,8 +46,10 @@ fi
 
 echo "[2/3] 容器内打包 $TYPE / $ABI (BUILD_JOBS=$BUILD_JOBS, CLEAN=${CLEAN:-0})"
 set +e
+# VERSION_BUMP / VERSION 必须在这里透传进容器: 模拟器/x86_64 这种测试包不能占发布号,
+# 所以出 x86_64 包时要带 VERSION_BUMP=0 (build_apk.sh 的默认行为是每次出包 +1)。
 "${COMPOSE[@]}" run --rm android-builder bash -c \
-    "CLEAN=${CLEAN:-0} BUILD_JOBS=$BUILD_JOBS bash build_apk.sh $TYPE $ABI"
+    "CLEAN=${CLEAN:-0} BUILD_JOBS=$BUILD_JOBS VERSION_BUMP=${VERSION_BUMP:-1} ${VERSION:+VERSION=$VERSION} bash build_apk.sh $TYPE $ABI"
 RC=$?
 set -e
 

@@ -23,10 +23,13 @@ Write-Host "[2/4] 接受许可 (一次性)"
 Write-Host "  许可已接受"
 
 Write-Host "[3/4] 装包"
+# build-tools 不是可选的: mobile-use 的环境检查器把 aapt.exe 列为 required,
+# 缺它就没法把 AVD 认成可用 target (2026-10-30 check-mobile-environment.mjs 实测).
 $pkgs = @(
     'platform-tools',
     'emulator',
     'platforms;android-34',
+    'build-tools;34.0.0',
     'system-images;android-34;google_apis;x86_64'
 )
 foreach ($p in $pkgs) {
