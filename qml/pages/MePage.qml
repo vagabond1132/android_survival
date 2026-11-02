@@ -38,7 +38,10 @@ Page {
     Styles { id: styles; visible: false }
 
     title: "我"
-    height: Math.max(parent ? parent.height : 800, 800)
+    // 只防"parent 还没给高度"那一档塌陷, **不兜 800 的下限**: 内容区实际只有
+    //   728 逻辑 (1080x2340@440dpi 上 StackView 给的是 272..2142), 兜到 800 就让
+    //   Page 比视口高 72 逻辑, 多出来的那一截正好画在底部导航条上 (12 §4.20b)。
+    height: parent && parent.height > 0 ? parent.height : 800
     width: parent ? parent.width : 360
 
     background: Rectangle { color: CommonOptions.colorBg }
@@ -61,6 +64,9 @@ Page {
     ScrollView {
         anchors.fill: parent
         contentWidth: parent.width
+        // ScrollView 的视口 (Flickable) 默认不裁剪, 末段会直接画进底部导航条 (NavBands)
+        //   那一格里 —— 0.0.5 模拟器实测「显示」段头落在 y 2236-2268, 带区是 2142-2274。
+        clip: true
 
         ColumnLayout {
             width: parent.width

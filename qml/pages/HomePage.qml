@@ -34,7 +34,8 @@ Page {
     id: homePage
 
     title: "营地"
-    height: Math.max(parent ? parent.height : 800, 800)
+    // 不兜 800 下限: 内容区不足 800 逻辑时 Page 会比视口高, 多出来那一截画在底部导航条上 (12 §4.20b)
+    height: parent && parent.height > 0 ? parent.height : 800
     width: parent ? parent.width : 360
 
     background: Rectangle { color: CommonOptions.colorBg }
@@ -267,6 +268,7 @@ Page {
     ScrollView {
         anchors.fill: parent
         contentWidth: parent.width
+        clip: true                              // 同上: 视口默认不裁剪, 末段会画进底部导航条
 
         ColumnLayout {
             width: parent.width

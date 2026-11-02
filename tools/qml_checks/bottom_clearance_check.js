@@ -30,6 +30,11 @@
 //        高度从视口里扣掉, 判安全 (#156 设计口径: RecordTab "底部不留边距: 动作带就是
 //        这一档的收边"); 一旦它 anchors.bottom 逃出布局浮在视口上而同层没让位 → 报,
 //        这正是 #156 之前"抽屉常驻通栏盖住 SearchTab 末行"那一类, 改回去就是回归.
+// #158 (2026-11-02): 加第三遍 —— 视口 (ScrollView/ListView/GridView/Flickable) 必须
+//   `clip: true`. 0.0.5 模拟器走查看到 MePage 的「显示」段头渲染在 y 2236-2268, 落在
+//   底栏带 2142..2274 里 (字叠字). Qt 的视口默认不裁剪, 超出的一截照样画; MePage /
+//   HomePage / SOSPage 三个页级 ScrollView 漏了这条 (全树其余 15 处视口都有), 补上后
+//   按"零例外"口径钉死.
 const fs = require('fs'), path = require('path');
 const ROOT = process.argv[2] || path.resolve(__dirname, '../../qml');
 const GLOB = process.argv[3] || '';           // 可选: 只扫相对路径含这段的文件 (拿 fixture 反证用)
@@ -334,6 +339,52 @@ for (const { f, text } of CHECK) {
     }
 }
 
+// === 第三遍: 视口必须裁剪 (#158) ============================================
+// Qt 的 ScrollView/ListView/Flickable 视口默认不裁剪: 内容超出视口的那一段照样画出来,
+// 直接压在底部导航条 (NavBands) 那一格上. 0.0.5 模拟器实测 MePage 的「显示」段头落在
+// y 2236-2268, 而带区是 2142-2274 —— 字叠字. 让位 (bottomClearance) 管的是"末行被条
+// 盖住", 裁剪管的是"内容跑到条下面还接着画", 两回事, 都得守.
+// 全树 15 处视口现在都带 clip: true, 所以这条按最严口径 (一个例外都不留) 定下来.
+const CLIP_RE = /\b(ScrollView|ListView|GridView|Flickable)\s*\{/g;
+let viewports = 0;
+for (const { f, text } of CHECK) {
+    const toLine = makeToLine(text);
+    const rel = path.relative(ROOT, f).replace(/\\/g, '/');
+    let m;
+    CLIP_RE.lastIndex = 0;
+    while ((m = CLIP_RE.exec(text)) !== null) {
+        const open = text.indexOf('{', m.index);
+        const close = jsBody(text, open);
+        if (close < 0) continue;
+        viewports++;
+        if (!/\bclip\s*:\s*true/.test(ownProps(text.slice(open, close + 1)))) {
+            hits.push([rel, toLine(m.index),
+                       m[1] + ' 视口没有 clip: true, 超出视口的内容会画进底部导航条 (#158)']);
+        }
+        CLIP_RE.lastIndex = close;   // 只看这一层, 嵌套的视口由外层扫描自己那一段时命中
+    }
+}
+
+// === 第四遍: 页根不许用 Math.max 兜高度 (#158b) =============================
+// `height: Math.max(parent ? parent.height : 800, 800)` 的初衷是防"parent 还没给高度"
+// 的塌陷 (layout_collapse_check 那一类), 但兜底值 800 逻辑比**视口本身还高**:
+// 1080x2340@440dpi 上 StackView 只给到 779 逻辑, 于是 Page 比视口高 21 逻辑,
+// 视口裁剪救不了它 (裁剪的边界就是那个太高的视口), 多出来的一截正好压在底部导航条上。
+// 0.0.5 模拟器实测「显示」段头 y 2236-2268 / 带区 2142-2274, 加了 clip 也照叠 ——
+// 真凶是这三行 (HomePage / MePage / SOSPage), 已改成"只在 parent 没高度时兜底"。
+const FLOOR_RE = /^\s*height:\s*Math\.max\(\s*parent\b/;
+for (const { f, raw } of CHECK) {
+    if (!/\/pages\//.test('/' + path.relative(ROOT, f).replace(/\\/g, '/'))) continue;
+    const lines = raw.split('\n');
+    for (let i = 0; i < lines.length; ++i) {
+        if (FLOOR_RE.test(lines[i])) {
+            hits.push([path.relative(ROOT, f).replace(/\\/g, '/'), i + 1,
+                       '页根用 Math.max(parent.height, N) 兜高度: 视口不足 N 逻辑时整页比视口高, '
+                       + '多出来的一截画进底部导航条, clip 也救不了 (#158b)']);
+        }
+    }
+}
+
 // === 打印: 逐目录扫描数 (#157 ①, 反"静默 0 条") =============================
 const byDir = {};
 for (const { f } of CHECK) {
@@ -342,7 +393,7 @@ for (const { f } of CHECK) {
     byDir[d] = (byDir[d] || 0) + 1;
 }
 console.log('=== 吸底条让位: 底栏标记 ' + checked + ' 处 + 结构吸底条 ' + bars +
-            ' 处, 未让位 ' + hits.length + ' 处 ===');
+            ' 处, 视口 ' + viewports + ' 个, 未让位/未裁剪 ' + hits.length + ' 处 ===');
 console.log('扫描 .qml ' + texts.length + ' 个 (检查面 ' + CHECK.length + ' 个), 逐目录:');
 for (const d of Object.keys(byDir).sort()) console.log('  ' + d + ': ' + byDir[d] + ' 个');
 for (const [f, l, why] of hits) console.log(f + ':' + l + '  ' + why);
