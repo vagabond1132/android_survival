@@ -53,6 +53,8 @@ Dockerfile - 副本.*
 #   对下一个人没有可复现价值 —— 要看现场请重新跑构建, 不要靠历史转储.
 build.txt
 run.txt
+# tools/reg_sweep.sh 每轮覆盖的走查现场 (截图 + 日志增量), 同上: 要复现请重跑, 不入库.
+tmp_reg/
 
 # OS
 .DS_Store
