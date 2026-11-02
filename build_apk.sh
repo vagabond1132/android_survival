@@ -1913,7 +1913,19 @@ log_info "=========================================="
 APP_PACKAGE=$(grep -m1 'applicationId' "$APP_DIR/android/app/build.gradle" 2>/dev/null \
               | grep -oE '"[^"]+"' | head -1 | tr -d '"')
 [ -z "$APP_PACKAGE" ] && APP_PACKAGE="com.outdoor.survival"
-APP_ACTIVITY="org.qtproject.qt.android.QtActivityBase"
+# 2026-11-02: 这里原本写死 org.qtproject.qt.android.QtActivityBase —— 那是 Qt 模板基类,
+# 项目 android/src/main/java 里有子类 com.outdoor.survival.MainActivity, manifest 合并后
+# **唯一可启动的 Activity 是它**。照旧值执行 `am start` 会得到
+#   Error type 3: Activity class {...QtActivityBase} does not exist.
+# 而这段诊断紧接着抓的 run.txt 只有 launcher 的失败行, 看起来像"包坏了", 白白浪费一轮排查。
+# 现在直接从刚打好的 APK 里读 badging, 读不到再退回 MainActivity —— 都不再猜 Qt 基类。
+APP_ACTIVITY=""
+AAPT2_BIN=$(command -v aapt2 2>/dev/null || ls /opt/android-sdk/build-tools/*/aapt2 2>/dev/null | head -1)
+if [ -n "$AAPT2_BIN" ] && [ -f "$APK_PATH" ]; then
+    APP_ACTIVITY=$("$AAPT2_BIN" dump badging "$APK_PATH" 2>/dev/null \
+                  | grep -m1 -oE "launchable-activity: name='[^']+'" | grep -oE "'[^']+'" | tr -d "'")
+fi
+[ -z "$APP_ACTIVITY" ] && APP_ACTIVITY="$APP_PACKAGE.MainActivity"
 
 if command -v adb >/dev/null 2>&1 && adb get-state >/dev/null 2>&1; then
     log_info "💡 检测到 adb 设备, 自动执行启动诊断 → $APP_DIR/run.txt"
@@ -1931,7 +1943,13 @@ if command -v adb >/dev/null 2>&1 && adb get-state >/dev/null 2>&1; then
     WAIT_MAX=15
     while [ "$WAIT_SEC" -lt "$WAIT_MAX" ]; do
         ACTIVITY_INFO=$(adb shell cmd package resolve-activity --brief "$APP_PACKAGE" 2>/dev/null | tr -d '\r' | tail -1)
-        if [ "$ACTIVITY_INFO" = "$APP_PACKAGE/$APP_ACTIVITY" ]; then
+        # resolve-activity --brief 回的是「包名/.类名」简写, badging 给的是全限定类名,
+        # 两种形状直接比永远不相等 → 轮询每次都白等满 15s 再报"注册超时"。
+        # 统一展开成全限定名再与 APP_ACTIVITY 比。
+        case "$ACTIVITY_INFO" in
+            "$APP_PACKAGE/."*) ACTIVITY_INFO="$APP_PACKAGE.${ACTIVITY_INFO#"$APP_PACKAGE/."}" ;;
+        esac
+        if [ "$ACTIVITY_INFO" = "$APP_ACTIVITY" ]; then
             log_info "  ✅ activity 已注册 (waited ${WAIT_SEC}s): $ACTIVITY_INFO"
             break
         fi
