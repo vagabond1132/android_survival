@@ -2418,17 +2418,17 @@ Page {
     }
 
     // 底部 BottomSheet
+    // 2026-11-02 反馈①: 这张工作台从 Drawer 改成了普通 Item (原因见 MapBottomSheet.qml
+    //   开头那段 —— 底部 edge 的 Popup 矩形永远铺到窗口底, 会把 footer 那 48 逻辑的
+    //   导航条整个吃掉, 于是"卡片让位了、导航条点不动"). Item 版本贴的是**内容区**底,
+    //   内容区下沿本来就等于导航条上沿, 所以 anchors 现在既管绘制也管事件.
     MapBottomSheet {
         id: bottomSheet
-        // 2026-09-15: Drawer 不接受 anchors (Drawer/Popup 父容器已由 edge 自动贴底),
-        // 之前写 anchors.left/right/bottom 触发 "Cannot assign to non-existent property"
-        // 2026-10-23 真机 (A3): 这里原来还有一行 `y: parent.height - height`. 它是
-        //   QQuickPopup 关闭过渡要动的那个属性 —— 一旦在实例上写死, 声明式绑定优先级
-        //   高于过渡动画, 于是 bottomSheet.close() 只把 position 归零, 卡片纹丝不动
-        //   (真机点「目标」行两次取证: 地图居中了, 抽屉还占着 60% 屏). 手动下拉能关
-        //   是因为走的是 Drawer 自己的 drag, 不经过这条绑定. 贴底交给 edge: Qt.BottomEdge.
-        x: 0
-        width: parent ? parent.width : 360
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        // 压在地图瓦片与所有 MapQuickItem 之上, 但仍在 sheetHandle/errRow 之下 (它们 z 更高)
+        z: 900
 
         // 2026-10-16: 实时坐标改由这里绑 (mapPage 这个 id 在本文件可见).
         //   之前在 MapBottomSheet.qml 内部写 mapPage.currentLat 是跨文件 id 引用,
