@@ -179,6 +179,30 @@ gradle assembleRelease 9m09s → STAGE 4 校验与落盘 ≈ 1min。
    合并层在动它，别看源码猜。同文件另有一处 ABI 写死（NMEA plugin 的 SerialPort 检查）一并
    换成 `$TARGET_ABI`。
 
+6. **ELF 架构校验用十进制比 `0x…` 字符串，会恒假**（2026-11-02 实测，`build_apk.sh` ≈1327 行）。
+   `ABI_TRIPLE_MACHINE` 表里写的是 `0xB7` / `0x3e` 这种 16 进制串，而下面取 `e_machine`
+   （偏移 18 的 little-endian uint16）用的是 `struct.unpack('<H')`，打出来是**十进制**
+   （183 / 62）。`[ "$MACHINE" = "0xB7" ]` 于是永远为假 —— 三段后果：NDK 兜底 `cp` 是死代码、
+   两处校验永远走 else、而且**"架构错, 手动覆盖"那条 log 每次出包都在误报**。
+   误报比漏报更糟：看日志的人会长期以为包有问题。
+   修法是先归一进制再比：`EXPECTED_MACHINE=$(( ${…##*:} ))`（bash 的 `$(( 0xB7 ))` = 183）。
+   修完第一次看到真判绿：
+
+   ```
+   [查找] libc++_shared.so: …/x86_64-linux-android/libc++_shared.so (machine=62 ✅)
+   ✅ AGP 已注入 libc++_shared.so (machine=0x3e), 跳过手动 cp
+   ```
+
+   口径：这类"校验"必须**能打出判据值**（`machine=62`），只打 ✅/❌ 的校验等于没校验。
+
+7. **`build_apk.sh` 结尾打印的启动命令里的 activity 名是错的**（2026-11-02）。
+   它写 `org.qtproject.qt.android.QtActivityBase`，照敲报 `Error type 3`。这个包的入口是
+   `com.outdoor.survival/.MainActivity`。查真实入口别猜，问包管理器：
+
+   ```bash
+   adb shell cmd package resolve-activity --brief com.outdoor.survival
+   ```
+
 ### 3.2 macOS
 
 ```bash
