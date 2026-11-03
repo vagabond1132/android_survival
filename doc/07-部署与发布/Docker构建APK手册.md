@@ -554,10 +554,67 @@ Git Bash 还会把 `/project/...` 这类容器内绝对路径改写成 `C:/Progr
 > 最省事的写法：把出包命令和判据写在同一条后台命令里，例如
 > `... bash build_apk.sh release arm64-v8a > /tmp/b.log 2>&1; tail -20 /tmp/b.log; ls -la dist/`。
 
-**APK 大小**: 约 30-50 MB(Qt 运行时 + 应用代码 + 资源)。arm64 release 实测 ≈ 49.9 MB。
-体积**不能**用来验证"某个 Qt 组件删掉了没有"：`build_apk.sh` 会把整个 Qt kit 的
-`libQt6*.so` 无差别拷进 jniLibs，删掉 `find_package` 依赖只是让主二进制不再链它、运行时不再
-dlopen 它。要看真凭据查 `build/release_arm64-v8a/CMakeFiles/OutdoorSurvival.dir/link.txt`。
+**APK 大小**: arm64 release 在 2026-11-03 之前实测 ≈ 49.9 MB，之后 **≈ 33.5 MB**
+（0.0.6 = 35,148,762 B）—— 差的是 §9.1 那套剪枝砍掉的未使用 Qt 库。
+体积**不能**单独用来验证"某个 Qt 组件删掉了没有"（见 §9.1 末尾）；要看真凭据查
+`build/release_arm64-v8a/CMakeFiles/OutdoorSurvival.dir/link.txt`，以及包里的 `array/qt_libs`。
+
+### 9.1 Qt 库收集：四阶段口径（2026-11-03 改，包体 −30%）
+
+**改之前的行为**：`build_apk.sh` 对 Qt 库是**只加不删** —— androiddeployqt 的输出目录给什么就
+拷什么，再按 `import` 补插件、按 DT_NEEDED 补库。**没有一步往外删**，所以两个后果：
+① 整个 kit 的 `libQt6*.so`（Designer / Quick3D 全家 / 已删依赖的 Charts / Widgets …）原样进包，
+0.0.2～0.0.5 一直是 50 MB；② **增量树只增不减** —— 就算把名单收紧了，上一版遗留的 .so 还躺在
+`jniLibs/<abi>/` 里，第一次改完跑 x86_64 时日志"闭包补了 0 个"而 `jniLibs` 仍是 144 个就是这个现象。
+
+**改之后**是一条 `KEEP_SO` 关联数组贯穿四个阶段（都在 STAGE 3，`build_apk.sh`）：
+
+| 阶段 | 动作 | 失败即 die 的条件 |
+|---|---|---|
+| ① 权威集 | 拷 `androiddeployqt` 输出 `$BUILD_DIR/android-build/libs/<abi>` 下全部 .so，登记进 `KEEP_SO` | 该目录**一个 .so 都没有**（权威集空 = 后面无从判断，不能继续） |
+| ② import 反查 | `grep -rhoE "^[[:space:]]*import +[A-Za-z][A-Za-z0-9.]*" qml` 去重，把模块路径逐段解析成 `$QT_QPA/qml/<…>` 目录，其中插件 .so 全部登记进 `KEEP_SO` | 某个 `import Qt…` 在 kit 里**找不到对应模块目录/插件** —— 装上去就是整页白屏 |
+| ③ DT_NEEDED 闭包 | **只从 `KEEP_SO` 出发**做传递闭包（`readelf -d`），补 `libQt6*` / `libplugins_*` / `libqml_*` | — |
+| ④ 剪枝 + 断言 | 删 `jniLibs/<abi>/` 下不在 `KEEP_SO`、且不在 `libc++_shared.so / libssl_3.so / libcrypto_3.so` 白名单里的 .so；然后断言三件必需库仍在 | 剪完缺 `libQt6Core_<abi>.so` / `libplugins_platforms_qtforandroid_<abi>.so` / 项目主 lib |
+
+三条**必须记住**的口径：
+
+1. **闭包的种子不能是整棵树**。原来是从 `jniLibs/` 里所有 .so 出发求闭包，等于把上一版残留也当
+   种子，闭包会把它们需要的库再拉回来，剪枝就永远收敛不了。改成只从 `KEEP_SO` 出发之后，
+   同一棵树第二轮报 `剪枝合计: 删 0 个` —— **幂等**，这是剪枝正确的判据。
+2. **不信任 androiddeployqt 单一来源**。实测同一份源码、同一段调用，arm64 权威集 **79** 个、
+   x86_64 **101** 个，差 22 个；arm64 缺的里面要命的是
+   `libqml_QtQuick_Dialogs_qtquickdialogsplugin_<abi>.so` + 它的 `quickimpl` 插件 + QtQuick.Controls
+   基座插件，而 `qml/pages/MapPage.qml:23`、`qml/pages/FieldGuideImagePickPage.qml:32` 都写着
+   `import QtQuick.Dialogs`。**照① 直接出包 = 地图页整页白屏**，第一个 0.0.6 就是这么坏的。
+   ② + ③ 把它补回来（arm64 补 3 个插件、闭包再补 `Qt6QuickDialogs2 / QuickImpl / Utils` 三库）。
+   权威集为何随 ABI 变小**尚未查清**；口径是不靠解释、靠并集 + 两道 `die` 兜住 ——
+   **宁可出包失败，不出白屏包**。
+3. **`libc++_shared.so` / `libssl_3.so` / `libcrypto_3.so` 不参与 `KEEP_SO`**。它们是剪枝之后另外
+   拷进来的（OpenSSL 是 Qt Android 的 TLS 运行期 dlopen 后端，`QT_FEATURE_openssl_linked=OFF`，
+   DT_NEEDED 里看不见），也**不写进 `qt_libs`**；剪枝必须给它们开白名单，否则 TLS 直接失联。
+
+**实测数字**（都取自当轮日志，别混轮次，见 §12.8 的日志口径）：
+
+| | 权威集 | ②补 | ③补 | ④剪 | `jniLibs` | `qt_libs` | APK |
+|---|---|---|---|---|---|---|---|
+| x86_64 0.0.5 | 101 | — | 0 | 44 个 / 36 MB | 100 | 97 | 50,966,393 → **37,737,839** |
+| arm64 0.0.6 首轮（坏包） | 79 | 无② | 0 | 56 个 / 43 MB | 78 | 75 | 34,527,945（缺 Dialogs，已废弃） |
+| arm64 0.0.6 重建 | 79 | 3 | 3 | **0 个** | 84 | 81 | **35,148,762** |
+
+0.0.6 包里 84 个 .so = 未压缩 75.3 MB / 压缩后 28.3 MB；最大单库是
+`libplugins_multimedia_ffmpegmediaplugin_arm64-v8a.so` **15.72 MB**（`QtMultimedia` 摄像头链路真需要，
+**不是**裁剪候选），项目主 so 8.81 MB 排第二。
+
+**怎么验剪枝没剪坏**（体积不算证据）：
+- 包侧：`aapt dump --values resources dist/<apk>` 里数 `array/qt_libs` 的 `Count=`，
+  确认首项 `arm64-v8a;Qt6Core_arm64-v8a`、次项项目主 lib，并 grep 关键插件在不在
+  （`plugins_platforms_qtforandroid`、每个 `qml_Qt*_plugin`）；
+- 运行侧：`tools/reg_sweep.sh` 跑满（5 根格 5 种画面、WARN/CRIT/FATAL=0、日志增量 >1 KB），
+  再**逐个 `import` 的页面走一遍** —— 缺 QML 插件是**页级白屏**，不是启动崩溃，
+  只跑根格可能看不到（本轮 ② 之所以重要，就是因为坏包的根格照样能刷出来）。
+  **注意模拟器判不了全部**，arm64 真机仍需装机复核。
+- ⚠️ `aapt dump --values` 对 array 会打 `<bag>`，**必须连 `Count=` 和 `#N (Key=…)` 一起看**；
+  只 `grep -oE "arm64-v8a;…\.so"` 会抓到 0 条（本轮就这么误判过一次"qt_libs 是空的"）。
 
 ---
 
@@ -762,6 +819,32 @@ release 包不可 debug 所以 `run-as` 会报 `package not debuggable`。
 日志里能看到 `检测到 .qml 比 qmlcache 新…` 和逐页的 `Generating .rcc/qmlcache/…`；
 **但它是自述，只能当旁证，判据仍以拆包数串为准。**
 
+### 12.8 读构建日志：每个 ABI 只信它自己那一轮刚写出来的
+
+`build_apk.sh` 的日志按 ABI 分开写（`wsl_release_<abi>.log`），但**上一轮的日志不会被清掉**，
+`tail` / `grep` 很容易读到**混着旧内容**的一段。2026-11-03 就这么误判过一次：从日志里"看到"
+剪枝把项目主 lib、`qtforandroid` 平台插件、QtLocation 都删了，据此差点判"剪枝写错了、整轮回滚"。
+实际那段属于 **11-02 的 arm64 那轮（旧代码）**，当轮 arm64 日志里那三个文件一条都没被删。
+
+三条规矩：
+
+1. 读日志先看**时间戳 + ABI 标识**（`jniLibs/arm64-v8a/` vs `jniLibs/x86_64/`），对不上就当没看见；
+   更稳的办法是 `grep -nE "权威集|import 反查|闭包补|剪枝合计|认定需要|jniLibs/.*共|qt_libs 包含|保命断言"`
+   一次把当轮这几行全捞出来，它们**必须自洽**。0.0.6 重建轮自洽的部分（拆包实测可复算）：
+   `jniLibs` 84 = 包内 **81 个进 `qt_libs`**（`libQt6*` 31 + `libplugins_*` 29 + `libqml_*` 20 + 项目主
+   lib 1）+ **3 个不进 `qt_libs`** 的 `libc++_shared.so` / `libssl_3.so` / `libcrypto_3.so`。
+   **不对账的部分也记下来**：日志的 `KEEP_SO` 计数是 85，比包内 Qt 侧的 82（81 + 后来被删的 NMEA
+   插件）多 **3 个**，本轮没逐项对上是谁 —— 不影响包的正确性（断言与走查都过），但说明
+   **`KEEP_SO` 的计数不能直接当"包内 Qt 库数"引用**，要报数就报拆包数出来的那三个前缀。留作待查。
+2. **构建进行中不要编辑 `build_apk.sh`**。bash 是边读边执行，脚本中途被改会让解释器从错位处续读，
+   症状是一堆莫名其妙的语法/行为异常，比 bug 本身难查。本轮加"保命断言"就是加完立刻回滚、
+   等构建结束再重新加上。
+3. **断言/校验的文件名不要凭猜**。本轮在断言清单里写了 `libqml_Material_*`、
+   `libplugins_imageformats_svg`，都是猜的名字，真实名是
+   `libqml_QtQuick_Controls_Material_qtquickcontrols2materialstyleplugin_*`、
+   `libplugins_imageformats_qsvg_*` —— 猜错会报一堆假"缺失"，把注意力带偏。
+   先 `ls $QT_QPA/qml/…` 或从当轮 `jniLibs` 列一遍，再写判据。
+
 
 ---
 
@@ -803,6 +886,18 @@ adb logcat *:E
 # 2. 数据格式错误 → 用 JSON 工具验证
 # 3. Qt 库未链接 → 检查 CMakeLists.txt
 ```
+
+**先分清"整 app 白屏"和"某一个页白屏"** —— 两者根因不同（2026-11-03 实测）：
+
+| 现象 | 根因 | 查法 |
+|---|---|---|
+| 装完启动即崩 / splash 一闪就没 | `qt_libs` 里 Qt6Core 没排第 1（见 Q16）；或平台插件 `libplugins_platforms_qtforandroid_*` 缺 | 拆包看 `array/qt_libs` 首项；`build_apk.sh:1391-1396` 的保命断言本就该拦住 |
+| **根格能刷出来，只有某个页白屏** | 那个页 `import` 的 QML 模块**插件没进包** | 包内 `libqml_<模块名>_*` 在不在；`logcat` 里会有 `module "QtQuick.Dialogs" plugin not found` 一类 |
+
+第二行这档**只在点进那一页时才暴露**，所以模拟器跑根格走查（§12.5）判不出问题。0.0.6 第一个包就是
+这个：arm64 的 androiddeployqt 权威集比 x86_64 少 22 个库，其中含 `QtQuick.Dialogs` 的两个插件，
+而 `MapPage.qml:23`、`FieldGuideImagePickPage.qml:32` 都 import 它 → 地图页整页白屏。
+现在的口径是 **§9.1** 的四阶段收集 + 两道 `die`（import 有、kit 里没插件就禁止出包）。
 
 ### Q6. 高德/天地图底图加载失败
 
