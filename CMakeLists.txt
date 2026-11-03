@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 project(OutdoorSurvival
-    VERSION 0.0.5
+    VERSION 0.0.6
     DESCRIPTION "荒野手册 - 中国户外生存离线助手"
     LANGUAGES CXX
 )
@@ -56,7 +56,7 @@ set(APP_VERSION "${PROJECT_VERSION}")
 set(APP_VERSION_MAJOR "${PROJECT_VERSION_MAJOR}")
 set(APP_VERSION_MINOR "${PROJECT_VERSION_MINOR}")
 set(APP_VERSION_PATCH "${PROJECT_VERSION_PATCH}")
-set(APP_VERSION_CODE 5)  # 用于商店版本号（每次发版递增）
+set(APP_VERSION_CODE 6)  # 用于商店版本号（每次发版递增）
                          # 2026-10-26: 这里以前停在 1, 而真正装到机器上的 versionCode 由
                          # android/app/build.gradle 决定 (build_apk.sh 会用仓库里那份覆盖
                          # android-build/app/build.gradle), gradle 已经是 2。两边不同值不会
