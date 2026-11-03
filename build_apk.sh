@@ -1185,12 +1185,17 @@ EOF
     esac
     AAR_LIBS_DIR="$BUILD_DIR/android-build/app/src/main/jniLibs/$ANDROID_LIB_DIR"
     mkdir -p "$AAR_LIBS_DIR"
+    # KEEP_SO = 这一轮**认定为需要**的 .so 名单 (权威集 + 闭包补的 + 项目自己那份)。
+    # 结尾按它剪枝, 把增量树里上一轮无差别拷贝的残留删掉 —— 结果必须与树脏不脏无关,
+    # 否则"改了收集逻辑"只等于"不再新增", 老的 56 个还躺在原地, 包体一斤不减。
+    declare -A KEEP_SO
     # 复制项目 .so (CMake install 已经在 android-build/libs/<abi>/)
     if [ -f "$BUILD_DIR/android-build/libs/$ANDROID_LIB_DIR/lib${APP_NAME_SAFE}_${TARGET_ABI}.so" ]; then
         cp -f "$BUILD_DIR/android-build/libs/$ANDROID_LIB_DIR/lib${APP_NAME_SAFE}_${TARGET_ABI}.so" "$AAR_LIBS_DIR/"
+        KEEP_SO["lib${APP_NAME_SAFE}_${TARGET_ABI}.so"]=1
         log_info "  ✅ 复制项目 .so 到 jniLibs"
     fi
-    # 复制 Qt 自带 .so (从 androiddeployqt 输出 + QT_QPA)
+    # 复制 Qt 自带 .so (从 androiddeployqt 输出 + DT_NEEDED 传递闭包)
     # ----------------------------------------------------------------------------
     # 历史:
     #   - 之前只 find $QT_QPA/lib 复制 libQt6*.so + libplugins_*.so
@@ -1200,68 +1205,196 @@ EOF
     #   - 这些 .so 在 qt_libs 列表之外, 是 QML 引擎按需 dlopen 的, 缺失时 QML
     #     加载任意 module 都找不到插件 → loadQtLibraries 失败 → 错误对话框
     #     找不到 qt_error_loading_qt_libs 资源 → 二次崩溃 (run.txt 现象)
-    # 当前策略: 先 QT_QPA 补集 (split 模块如 Qt6Charts), 再 androiddeployqt 输出
-    #           覆盖 (androiddeployqt 是权威来源, 与项目具体 Qt 版本精确匹配)
+    #   - 2026-09 的解法是"把整个 kit 的 libQt6*.so 无差别拷进来"。代价: kit 顶层有 83 个,
+    #     项目实际只要 40 出头 —— Designer 8.5 MB / Quick3D 全家 5.4 MB / Charts 2.7 MB
+    #     (依赖早就删了) / Widgets 6.9 MB / Labs / ShaderTools / QmlCompiler / Test /
+    #     PrintSupport / WebView / Help / UiTools … 只是躺在 SDK 里被顺带走。
+    #     0.0.5 包内因此多塞 56 个 .so / 39.8 MB (未压缩), 见 doc 12 §4.21。
+    # 现在的策略: androiddeployqt 的输出是**权威集** (它按项目真实 import 扫出来的),
+    #   先整份收进来, 再沿 **DT_NEEDED 传递闭包**从 kit 补齐缺的依赖, 补不到就报。
+    #   闭包而不是名单: QML 插件是运行期 dlopen 的, 插件本身在权威集里, 但它 NEEDED 的
+    #   Qt 模块 lib 不一定在 —— 2026-09-09 踩过 "libQt6Quick3DSpatialAudio needs
+    #   libQt6Quick3D, 顶层没拷 → UnsatisfiedLinkError 闪退"。那种洞由闭包自动补,
+    #   不用靠"全拷一遍"兜。
     AAR_LIBS_SRC="$BUILD_DIR/android-build/libs/$ANDROID_LIB_DIR"
     QT_SO_COUNT=0
-    # 1) 先从 QT_QPA 补集 (androiddeployqt 没枚举的 Qt split 模块: libQt6Charts 等)
-    # 关键: 必须递归搜, 不限 maxdepth 1.
-    #   - 顶层 lib/ 含 libQt6Core / libQt6Gui / libQt6Qml / libQt6Quick 等核心 .so
-    #   - 子目录 qml/QtQuick3D/ 含 libQt6Quick3D_arm64-v8a.so, 它被
-    #     libQt6Quick3DSpatialAudio (顶层) 链式依赖. 如果不递归, qt_libs 里有
-    #     Quick3DSpatialAudio 但没 Quick3D → 启动期 dlopen Quick3DSpatialAudio
-    #     找不到 Quick3D → UnsatisfiedLinkError → 闪退 (run.txt 09-09 08:25:50.945
-    #     实际崩溃, 依赖链 libQt6Quick3DSpatialAudio_arm64-v8a.so needs libQt6Quick3D_arm64-v8a.so)
-    # 排除子目录:
-    #   - CMakefiles/ 含静态 lib 或 build 中间产物, 不是 .so 运行时依赖
-    #   - libexec/ pkgconfig/ .cmake 等都是元数据, 不是 .so
-    if [ -d "$QT_QPA/lib" ]; then
-        # 先找顶层 (主 lib)
-        QTPA_TOP_COUNT=$(find "$QT_QPA/lib" -maxdepth 1 -name "libQt6*.so" 2>/dev/null | wc -l)
-        if [ "$QTPA_TOP_COUNT" -gt 0 ]; then
-            find "$QT_QPA/lib" -maxdepth 1 -name "libQt6*.so" -exec cp -f {} "$AAR_LIBS_DIR/" \; 2>/dev/null
-        fi
-        # 再递归找子目录 (QML 插件模块, 如 QtQuick3D)
-        QTPA_REC_COUNT=$(find "$QT_QPA/lib" -mindepth 2 -name "libQt6*.so" \
-            -not -path "*/CMakefiles/*" \
-            -not -path "*/pkgconfig/*" \
-            -not -path "*/cmake/*" \
-            2>/dev/null | wc -l)
-        if [ "$QTPA_REC_COUNT" -gt 0 ]; then
-            find "$QT_QPA/lib" -mindepth 2 -name "libQt6*.so" \
-                -not -path "*/CMakefiles/*" \
-                -not -path "*/pkgconfig/*" \
-                -not -path "*/cmake/*" \
-                -exec cp -f {} "$AAR_LIBS_DIR/" \; 2>/dev/null
-        fi
-        QTPA_SO_COUNT=$((QTPA_TOP_COUNT + QTPA_REC_COUNT))
-        log_info "  ✅ 补集 QT_QPA/libQt6*.so: 顶层 $QTPA_TOP_COUNT + 子目录 $QTPA_REC_COUNT (如 libQt6Quick3D)"
-        QT_SO_COUNT=$QTPA_SO_COUNT
-    fi
-    # 关键补集: 搜 $QT_QPA/qml/ 下的 libQt6*.so
-    # 背景: Qt 6 Android 把一些 QML 模块 split 装到 $QT_QPA/qml/<ModuleName>/,
-    #       不在 $QT_QPA/lib/ 下. 例如 qtquick3d 的 libQt6Quick3D_arm64-v8a.so
-    #       可能落在 $QT_QPA/qml/QtQuick3D/. 必须在这里补集, 否则 SpatialAudio
-    #       链式依赖 Quick3D 还是找不到 → UnsatisfiedLinkError 闪退.
-    if [ -d "$QT_QPA/qml" ]; then
-        QML_REC_COUNT=$(find "$QT_QPA/qml" -name "libQt6*.so" 2>/dev/null | wc -l)
-        if [ "$QML_REC_COUNT" -gt 0 ]; then
-            find "$QT_QPA/qml" -name "libQt6*.so" -exec cp -f {} "$AAR_LIBS_DIR/" \; 2>/dev/null
-            log_info "  ✅ 补集 QT_QPA/qml/libQt6*.so: $QML_REC_COUNT 个 (如 libQt6Quick3D)"
-            QT_SO_COUNT=$((QT_SO_COUNT + QML_REC_COUNT))
-        fi
-    fi
-    # 2) 再用 androiddeployqt 输出覆盖 (含 libqml_*, libplugins_position_* 等)
-    #    androiddeployqt 是权威来源, 与项目 Qt 版本精确匹配, 同名 .so 覆盖 QT_QPA 的
+    # 1) 权威集: androiddeployqt 输出 (含 libqml_*/libplugins_qmltooling_*), 与项目 Qt 版本精确匹配
+    DEPLOYQT_SO_COUNT=0
     if [ -d "$AAR_LIBS_SRC" ]; then
-        DEPLOYQT_SO_COUNT=$(find "$AAR_LIBS_SRC" -maxdepth 1 -name "*.so" 2>/dev/null | wc -l)
-        if [ "$DEPLOYQT_SO_COUNT" -gt 0 ]; then
-            find "$AAR_LIBS_SRC" -maxdepth 1 -name "*.so" -exec cp -f {} "$AAR_LIBS_DIR/" \; 2>/dev/null
-            QT_SO_COUNT=$((QT_SO_COUNT + DEPLOYQT_SO_COUNT))
-            log_info "  ✅ 复制 androiddeployqt 输出 .so: $DEPLOYQT_SO_COUNT 个 (含 libqml_*/libplugins_qmltooling_*)"
-        fi
+        while IFS= read -r src_so; do
+            [ -f "$src_so" ] || continue
+            cp -f "$src_so" "$AAR_LIBS_DIR/" || continue
+            KEEP_SO["$(basename "$src_so")"]=1
+            DEPLOYQT_SO_COUNT=$((DEPLOYQT_SO_COUNT + 1))
+        done < <(find "$AAR_LIBS_SRC" -maxdepth 1 -name "*.so" 2>/dev/null)
     fi
-    log_info "  📊 jniLibs 复制阶段累计: $QT_SO_COUNT 个 .so"
+    if [ "$DEPLOYQT_SO_COUNT" -eq 0 ]; then
+        # 剪枝以这份名单为准, 名单空 = 会把 Qt 库全删光 → 出一个必崩的包。
+        # 到这里 android-build/libs/<abi>/ 连项目自己的 .so 都没有, 上一步已经废了。
+        die "androiddeployqt 输出目录里没有 .so: $AAR_LIBS_SRC —— 权威集为空, 无法安全收集/剪枝 Qt 库"
+    fi
+    log_info "  ✅ 复制 androiddeployqt 输出 .so: $DEPLOYQT_SO_COUNT 个 (权威集, 按项目 import 扫出)"
+
+    # 1b) 源码 import 反查: 项目 import 过的每个 QML 模块, 它的插件必须在集里
+    # ----------------------------------------------------------------------------
+    # 为什么还要这一道: androiddeployqt 的扫描结果**会随构建状态漂**, 不能当唯一依据。
+    #   2026-11-03 实测同一份源码两个 ABI 的权威集: x86_64 101 个 / arm64 79 个, 差 22 个,
+    #   其中 arm64 少了 libqml_QtQuick_Dialogs_qtquickdialogsplugin + 它的 quickimpl、
+    #   少了 QtQuick.Controls 基座插件、少了 Fusion/Imagine/Universal 样式与 LabsFolderListModel。
+    #   而 MapPage.qml:23 与 FieldGuideImagePickPage.qml:32 都写着 `import QtQuick.Dialogs` ——
+    #   插件不在包里, 运行期是 "module QtQuick.Dialogs is not installed", **整页加载失败**
+    #   (地图格白屏), 且 logcat 只有一行 import 错误。旧的"无差别拷 kit"歪打正着把这类洞
+    #   盖住了; 改成信权威集之后, 洞就露出来 —— 所以按源码 import 直接从 kit 点名补上。
+    # 只补"源码里真写过 import 的模块", 不递归整个 qml 树。补两层含义:
+    #   ① 前缀链 —— import QtQuick.Controls.Material 会带上 QtQuick、QtQuick.Controls、
+    #      …/Material 各自的插件 (子模块的运行期依赖就是它的命名前缀);
+    #   ② 叶子下钻一层 —— 6.7 的实现插件住在下一层 (Dialogs/quickimpl、Material/impl)。
+    #   单段模块名 (QtQuick / QtLocation / QtPositioning) 是命名空间根, 不钻, 否则把邻居全拖进来。
+    # 收完还有断言: 每个 import 的模块在 kit 里必须有插件, 没有就 die —— 宁可不出包。
+    IMPORT_ADDED=0
+    IMPORT_MISSING=""
+    QML_IMPORTS=$(grep -rhoE "^[[:space:]]*import +[A-Za-z][A-Za-z0-9.]*" "$APP_DIR/qml" 2>/dev/null \
+                  | awk '{print $2}' | sort -u)
+    # 把一个 .so 收进集 (已收过就不重复 log)
+    keep_so_add() {
+        local p="$1" why="$2" pbn
+        [ -f "$p" ] || return 0
+        pbn=$(basename "$p")
+        [ -n "${KEEP_SO[$pbn]:-}" ] && return 0
+        cp -f "$p" "$AAR_LIBS_DIR/" || return 0
+        KEEP_SO["$pbn"]=1
+        IMPORT_ADDED=$((IMPORT_ADDED + 1))
+        log_info "    + import 补插件: $pbn  ($why)"
+        return 0
+    }
+    for mod in $QML_IMPORTS; do
+        case "$mod" in Qt*) ;; *) continue ;; esac        # OutdoorSurvival 这种自有模块跳过
+        # 前缀链: QtQuick.Controls.Material → QtQuick / QtQuick.Controls / …Material
+        # 一个 QML 模块的运行期依赖就是它的命名前缀 (父模块插件不在 → 子模块加载即失败)。
+        prefix=""
+        for part in ${mod//./ }; do
+            prefix="${prefix:+$prefix/}$part"
+            mdir="$QT_QPA/qml/$prefix"
+            [ -d "$mdir" ] || continue
+            for p in "$mdir"/*.so; do keep_so_add "$p" "import $mod"; done
+        done
+        # 叶子模块再下钻一层: 6.7 的实现插件住在下一层 (Dialogs/quickimpl、Material/impl)。
+        # 单段模块名 (QtQuick / QtLocation) 是命名空间根, 下钻会把邻居全拖进来 → 不钻。
+        if [ "$mod" != "${mod%.*}" ]; then
+            for p in "$QT_QPA/qml/${mod//./\/}"/*/libqml_*.so; do
+                keep_so_add "$p" "import $mod 的实现插件"
+            done
+        fi
+        # 覆盖断言只看叶子自己有没有插件: 前缀链补上了但本模块没补上, 一样是白屏。
+        if [ ! -e "$QT_QPA/qml/${mod//./\/}" ] || [ -z "$(ls "$QT_QPA/qml/${mod//./\/}"/*.so 2>/dev/null)" ]; then
+            IMPORT_MISSING="$IMPORT_MISSING $mod"
+        fi
+    done
+    log_info "  import 反查补了 $IMPORT_ADDED 个 QML 插件 (源码 import 去重后 $(echo "$QML_IMPORTS" | wc -l) 条)"
+    if [ -n "$IMPORT_MISSING" ]; then
+        die "这些 import 的 QML 模块在 kit 里找不到插件:$IMPORT_MISSING —— 装上去就是整页白屏, 别出这个包"
+    fi
+
+    # 2) DT_NEEDED 传递闭包: 权威集里每个 .so 需要的 Qt 库, 缺就从 kit 补
+    #    建 kit 索引 (名字 → 路径)。同名多份时取第一个, plugins/ 与 lib/ 不重名。
+    declare -A KIT_SO
+    for kd in "$QT_QPA/lib" "$QT_QPA/qml" "$QT_QPA/plugins"; do
+        [ -d "$kd" ] || continue
+        while IFS= read -r kp; do
+            kbn=$(basename "$kp")
+            [ "${KIT_SO[$kbn]:-}" ] || KIT_SO["$kbn"]="$kp"
+        done < <(find "$kd" -name '*.so' 2>/dev/null)
+    done
+    log_info "  kit 索引: ${#KIT_SO[@]} 个 .so 可作补库来源"
+
+    # readelf: 容器里一般直接有; 没有就用 NDK 的 llvm-readelf
+    READBIN=$(command -v readelf 2>/dev/null || true)
+    if [ -z "$READBIN" ]; then
+        for r in "$ANDROID_NDK"/toolchains/llvm/prebuilt/*/bin/llvm-readelf; do
+            [ -x "$r" ] && READBIN="$r" && break
+        done
+    fi
+    [ -n "$READBIN" ] || die "找不到 readelf/llvm-readelf, 无法算 Qt .so 的 DT_NEEDED 闭包"
+
+    CLOSURE_ADDED=0
+    CLOSURE_MISSING=""
+    declare -A SEEN_SO
+    QUEUE=()
+    # 只从 KEEP_SO 播种: 目录里的上一轮残留不进队列, 也就不会被标成"已处理"而留下。
+    for bn in "${!KEEP_SO[@]}"; do
+        [ -f "$AAR_LIBS_DIR/$bn" ] && QUEUE+=("$AAR_LIBS_DIR/$bn")
+    done
+    while [ ${#QUEUE[@]} -gt 0 ]; do
+        CUR="${QUEUE[0]}"
+        if [ ${#QUEUE[@]} -gt 1 ]; then QUEUE=("${QUEUE[@]:1}"); else QUEUE=(); fi
+        [ -f "$CUR" ] || continue
+        CBN=$(basename "$CUR")
+        [ "${SEEN_SO[$CBN]:-}" ] && continue
+        SEEN_SO["$CBN"]=1
+        for ND in $("$READBIN" -d "$CUR" 2>/dev/null | grep -a -oE '\[lib[^]]*\.so\]' | tr -d '[]' || true); do
+            [ "${KEEP_SO[$ND]:-}" ] && continue
+            [ "${SEEN_SO[$ND]:-}" ] && continue
+            case "$ND" in
+                # 只补 Qt 自己的库; libc/libm/liblog/libEGL/libOpenSLES/libmediandk 等
+                # 是 Android 系统库, 本来就不该打包进 APK。
+                libQt6*|libplugins_*|libqml_*) ;;
+                *) continue ;;
+            esac
+            if [ -n "${KIT_SO[$ND]:-}" ]; then
+                cp -f "${KIT_SO[$ND]}" "$AAR_LIBS_DIR/" || continue
+                log_info "    + 闭包补库: $ND  (被 $CBN 需要)"
+                KEEP_SO["$ND"]=1
+                QUEUE+=("$AAR_LIBS_DIR/$ND")
+                CLOSURE_ADDED=$((CLOSURE_ADDED + 1))
+            else
+                CLOSURE_MISSING="$CLOSURE_MISSING $ND<=$CBN"
+            fi
+        done
+    done
+    log_info "  闭包补了 $CLOSURE_ADDED 个 Qt 库"
+    if [ -n "$CLOSURE_MISSING" ]; then
+        # 不 die: 项目主动不用的模块 (如 NMEA 串口 GPS 要 libQt6SerialPort, kit 里没装
+        # qtserialport) 也走这一档, 由后面"清理缺依赖的 Qt plugin"那段把插件删掉。
+        log_warn "  ⚠️  闭包里有补不到的 Qt 库:$CLOSURE_MISSING"
+        log_warn "     若这些是被某个 plugin 需要的, 那个 plugin 会在运行期 dlopen 失败 → 闪退;"
+        log_warn "     下面会删掉缺依赖的 plugin, 但请确认对应功能项目确实不用。"
+    fi
+
+    # 3) 剪枝: 目录里不在 KEEP_SO 的一律删掉
+    #    幂等保证 —— 增量构建时 jniLibs/<abi>/ 里可能是上一版脚本(无差别拷 kit 83 个)
+    #    留下的库, 光靠"这轮不再拷进来"减不掉重量, 必须显式删。
+    #    例外: libc++_shared.so 可能是 AGP 已注入的(下面只检测、不再 cp), 保命;
+    #          libssl_3/libcrypto_3 由下面 OpenSSL 段负责, 这里不掺和。
+    PRUNE_KEEP_OTHER=" libc++_shared.so libssl_3.so libcrypto_3.so "
+    PRUNED_COUNT=0
+    PRUNED_BYTES=0
+    while IFS= read -r stale_so; do
+        [ -f "$stale_so" ] || continue
+        sbn=$(basename "$stale_so")
+        [ "${KEEP_SO[$sbn]:-}" ] && continue
+        case "$PRUNE_KEEP_OTHER" in
+            *" $sbn "*) continue ;;
+        esac
+        ssize=$(stat -c %s "$stale_so" 2>/dev/null || echo 0)
+        rm -f "$stale_so"
+        PRUNED_COUNT=$((PRUNED_COUNT + 1))
+        PRUNED_BYTES=$((PRUNED_BYTES + ssize))
+        log_info "    ✂️  剪掉残留: $sbn ($(( (ssize + 524288) / 1048576 )) MB)"
+    done < <(find "$AAR_LIBS_DIR" -maxdepth 1 -name "*.so" 2>/dev/null | sort)
+    log_info "  ✂️  剪枝合计: 删 $PRUNED_COUNT 个 .so, 省 $((PRUNED_BYTES / 1048576)) MB 未压缩"
+    QT_SO_COUNT=${#KEEP_SO[@]}
+    log_info "  📊 本轮认定需要 (权威集 + import 插件 + 闭包 + 项目) 共 $QT_SO_COUNT 个 .so"
+    # 剪枝后三道保命断言 —— 少哪一个都是"装上就崩/白屏", 而且 logcat 基本不给线索:
+    #   Qt6Core      : qt_libs 首项, 其余 Qt 库全依赖它 (缺 → 启动期 UnsatisfiedLinkError)
+    #   平台插件      : QGuiApplication 起不来 (缺 → "This application failed to start")
+    #   项目主 lib    : 整个 App 的代码 (缺 → QtLoader 找不到入口)
+    for must in "libQt6Core_${TARGET_ABI}.so" \
+                "libplugins_platforms_qtforandroid_${TARGET_ABI}.so" \
+                "lib${APP_NAME_SAFE}_${TARGET_ABI}.so"; do
+        [ -f "$AAR_LIBS_DIR/$must" ] || \
+            die "剪枝后必需库没了: $must —— 权威集/import/闭包三路都没收到它, 别出这个包"
+    done
+    log_info "  ✅ 保命断言通过: Qt6Core + qtforandroid 平台插件 + 项目主 lib 都在"
 
     # 关键补集: Qt Android OpenSSL 3.x 运行库 (libcrypto_3.so + libssl_3.so)
     # ----------------------------------------------------------------------------
