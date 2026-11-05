@@ -22,6 +22,7 @@
 #include <algorithm>   // std::swap (contrastRatio)
 
 #include "src/core/CommonOptions.h"
+#include "src/equipment/EquipmentService.h"   // 2026-11-04 F1-2 取证：QStringList 形态也要在 QML 侧实测
 
 namespace {
 // 前缀符号用 QChar 码位写, 不把 emoji 直接抄进源文件 —— 那是本仓库踩过两次的坑
@@ -234,6 +235,71 @@ private slots:
         QVERIFY2(err.isEmpty(), qPrintable(QStringLiteral("QML 调用报错: %1").arg(err)));
         // 36.250..36.259 / 117.100..117.110 的框 → z≈15.42, 纬度中心被抽屉推南
         QCOMPARE(r.toString(), QStringLiteral("15.42@36.2514"));
+    }
+
+    // ===== C++ 列表返回值在 QML 侧的真实形态 (2026-11-04 F1-2 取证) =====
+    // 为什么要有这两条：FilterRow.comboRowCount (2026-10-29 A43 起) 认两种模型形态 ——
+    //   `comboModel.count` (ListModel) 与 `Array.isArray` (JS 数组)，都不认就返回 0，
+    //   而 2026-11-03 的 #40 又让下拉的**显示值**改走 textForRow(comboCurrentIndex)，
+    //   那条函数第一行就是 `if (n <= 0) return ""`。于是"模型来自 C++ invokable 的下拉框
+    //   整块空白"在 0.0.7 真机上成了可复现现象 (图鉴页月份框，见 09-讨论记录/13 §4.1)。
+    //   光看 `Q_INVOKABLE QVariantList monthOptions()` 这个签名猜不出它在 QML 侧长成什么样，
+    //   所以这里断言的是**量到的事实**（ isArray=false / length 可用 / 下标可取 / 没有 count），
+    //   而不是"希望它是什么"。哪天 Qt 改了转换规则，这两条会先炸。
+    void cpp_qvariantlist_is_wrapped_not_js_array_in_qml() {
+        CommonOptions c;
+        QQmlEngine engine;
+        engine.rootContext()->setContextProperty(QStringLiteral("opts"), &c);
+        QString err;
+        QCOMPARE(evalInQml(engine, QStringLiteral("1 + 1"), &err).toInt(), 2);
+        QVERIFY2(err.isEmpty(), qPrintable(QStringLiteral("QML 通道没打通: %1").arg(err)));
+        // ① Array.isArray 为假 —— 这就是 comboRowCount 算出 0 的那一步
+        QCOMPARE(evalInQml(engine, QStringLiteral("Array.isArray(opts.monthOptions())"), &err).toBool(), false);
+        // ② 但它**是**一个有 length 的列表 —— 修法因此只需让 rowCount 也认 length
+        QCOMPARE(evalInQml(engine, QStringLiteral("opts.monthOptions().length"), &err).toInt(), 13);
+        // ③ 没有 ListModel 的 count / get，所以也不是"长得像 ListModel"
+        QCOMPARE(evalInQml(engine, QStringLiteral("typeof opts.monthOptions().count"), &err).toString(),
+                 QStringLiteral("undefined"));
+        QCOMPARE(evalInQml(engine, QStringLiteral("typeof opts.monthOptions().get"), &err).toString(),
+                 QStringLiteral("undefined"));
+        // ④ 下标 + 键都读得到 —— textForRow 里 `m[i]` 那一支本来就是对的，错的是行数
+        QCOMPARE(evalInQml(engine, QStringLiteral("String(opts.monthOptions()[0].label)"), &err).toString(),
+                 QStringLiteral("全部"));
+        QCOMPARE(evalInQml(engine, QStringLiteral("String(opts.monthOptions()[7].label)"), &err).toString(),
+                 QStringLiteral("7月"));
+        // ⑤ 每次调用返回的是**新对象**（#40 把两处调用收成页内一个 readonly 属性的原因）
+        QCOMPARE(evalInQml(engine, QStringLiteral("opts.monthOptions() === opts.monthOptions()"), &err).toBool(), false);
+    }
+
+    void cpp_stringlist_is_wrapped_not_js_array_in_qml() {
+        // 同一条口径，换成 QStringList（RouteService.getAvailableProvinces /
+        //   getAvailableMonths / getAvailableNatures、TravelService 同族、
+        //   EquipmentService.climateProvinceNames、各 species service 的
+        //   getAvailableProvinces 全是这一型）。它决定的是"这个坑有几处"：
+        //   FilterRow 的 9 个调用方里 8 个的模型来自这两类型，不是 1 个。
+        outdoor::EquipmentService e;
+        QVERIFY2(e.initialize(), "climateProvinceNames 之前 initialize() 必须成功");
+        QQmlEngine engine;
+        engine.rootContext()->setContextProperty(QStringLiteral("svc"), &e);
+        QString err;
+        QCOMPARE(evalInQml(engine, QStringLiteral("1 + 1"), &err).toInt(), 2);
+        QCOMPARE(evalInQml(engine, QStringLiteral("Array.isArray(svc.climateProvinceNames())"), &err).toBool(), false);
+        QCOMPARE(evalInQml(engine, QStringLiteral("svc.climateProvinceNames().length"), &err).toInt(), 34);
+        QCOMPARE(evalInQml(engine, QStringLiteral("typeof svc.climateProvinceNames().count"), &err).toString(),
+                 QStringLiteral("undefined"));
+        QCOMPARE(evalInQml(engine, QStringLiteral("typeof svc.climateProvinceNames()[0]"), &err).toString(),
+                 QStringLiteral("string"));
+        // 顺带量 Array 方法在包装对象上到底有没有 —— SearchTab.qml:356 写的是
+        //   `Array.isArray(root.provinces) ? root.provinces.indexOf(...) : -1`，
+        //   那条守卫一旦为假就直接 -1，等于"省份永远匹配不上"。
+        const QVariant probe = evalInQml(engine, QStringLiteral(
+            "(function () {"
+            "  var m = svc.climateProvinceNames();"
+            "  return 'typeofIndexOf=' + typeof m.indexOf"
+            "       + ' | indexOf(山东)=' + String(m.indexOf('山东'))"
+            "       + ' | hasJoin=' + String(m.join === undefined ? 'noJoin' : 'join');"
+            "})()"), &err);
+        qInfo().noquote() << QStringLiteral("[F1-2 Array 方法在包装列表上] %1").arg(probe.toString());
     }
 
     void fit_edges_clamp_and_refuse() {
