@@ -44,6 +44,28 @@ RowLayout {
     property string comboTextRole: ""
     property string comboValueRole: ""
     property int comboCurrentIndex: 0
+    // 2026-11-03 真机 (F1 / 定律 L11): 下拉的**显示值**必须来自页面状态, 不能来自控件内部
+    //   那个 currentIndex。现场: 资源页省份选「北京」→ 月份选「7 月」，页头与列表确实按
+    //   7 月筛了 (31 条)，但月份框自己还写着「全部」—— 用户看到的控件说"没筛"，数据说"筛了"。
+    //   根因不在页面状态 (它是对的)，在 ComboBox 一旦被弹层提交就会自己接管 currentIndex，
+    //   声明式那条绑定随时可能不再回头 (同下面 A43 注释里"模型重建把内部 index 打回 -1"
+    //   是同一族问题)。所以这里给调用方一个**覆盖口**: 只要 comboDisplayText 非空，
+    //   框上写的就是它，控件内部状态再也顶不翻。留空 = 维持旧行为 (由 currentIndex 推)。
+    property string comboDisplayText: ""
+
+    // 2026-11-03 (F1 / L11): 从**声明式反查出来的 index** 取显示词，而不是从控件内部的
+    //   currentIndex 取。 comboModel 三种形态都要认：ListModel (get)、JS 数组 (下标)、
+    //   对象数组带 textRole (取键)。字符串数组没有 textRole 时整行就是显示词。
+    function textForRow(index) {
+        var m = filterRow.comboModel
+        if (!m) return ""
+        var n = filterRow.comboRowCount
+        if (n <= 0) return ""
+        var i = (index < 0 || index >= n) ? 0 : index
+        var row = (m.count !== undefined) ? m.get(i) : m[i]
+        if (row === undefined || row === null) return ""
+        return filterRow.comboTextRole !== "" ? String(row[filterRow.comboTextRole]) : String(row)
+    }
     // 2026-10-29 真机 (A43): ②资源切界门后省份框整块空白 (月份框正常) —— 差别只在省份
     //   传的是 ListModel 且页面会原地 clear()+append() 重建。ComboBox 在模型被清空那一刻
     //   会把内部 currentIndex 打回 -1, 而调用方给 comboCurrentIndex 求出来还是 0 —— 值没变
@@ -53,9 +75,19 @@ RowLayout {
     //   所以这里额外读一次"行数", 让 currentIndex 那条绑定必然跟着重建重跑一遍。
     //   ListModel 走 count, JS 数组 / QStringList 走 length (RouteList/TravelList/SearchTab
     //   那几个调用方传的是数组, 不能只认 count)。
+    // 2026-11-04 真机 + 容器量实 (F1-2): 上面这句口径没错, 但**代码写错了** —— 原来第二支是
+    //   `Array.isArray(comboModel) ? comboModel.length : 0`。C++ 的 Q_INVOKABLE QVariantList /
+    //   QStringList 跨到 QML 是**包装列表**: typeof=object、Array.isArray()===false、
+    //   .count/.get 都是 undefined, 只有 .length / [i] / indexOf / join 能用
+    //   (test_common_options.cpp 的 cpp_qvariantlist_is_wrapped_not_js_array_in_qml /
+    //    cpp_stringlist_is_wrapped_not_js_array_in_qml 两条槽各打一遍)。
+    //   于是 comboRowCount 走到最后的 0 支 → textForRow 的 `if (n <= 0) return ""` →
+    //   displayText 空 → 月份框整块空白。错的是"行数"这一支, 取行那一支 (m[i]) 一直是好的。
+    //   判据改成认 .length: 包装列表和真 JS 数组都有 length, 一支顶两支。
+    //   定律 L14, 门禁 tools/qml_checks/combo_shape_check.js。
     property int comboRowCount: !comboModel ? 0
                               : (comboModel.count !== undefined ? comboModel.count
-                                 : (Array.isArray(comboModel) ? comboModel.length : 0))
+                                 : (comboModel.length !== undefined ? comboModel.length : 0))
     // 2026-10-27 真机 (A38): 省份 33 项的下拉按 Material 默认取整列 contentHeight,
     //   比屏幕还高 → 底下几项滚不到。弹出层最多显示这么多行, 其余走 ListView 滚动。
     property int comboPopupMaxRows: 10
@@ -109,6 +141,10 @@ RowLayout {
             font.pixelSize: styles.fsMd
             topPadding: 0
             bottomPadding: 0
+            // 显示值口径见上面 comboDisplayText / textForRow 的注释 (F1 / L11)
+            displayText: filterRow.comboDisplayText.length > 0
+                         ? filterRow.comboDisplayText
+                         : filterRow.textForRow(filterRow.comboCurrentIndex)
             // 2026-10-23 真机 (#114 布局): 收起态外框吃的是 Material 默认的深描边,
             //   在一片 colorSurface 里像一块"被圈出来的错误". 全站描边口径是 hairline +
             //   colorDivider, 只有正在交互 (弹出中 / 拿到焦点) 才升成 colorText.

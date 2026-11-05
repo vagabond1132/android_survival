@@ -349,6 +349,19 @@ Item {
             // 2026-09-14 修: routeService.getAvailableProvinces() 已在
             // C++ 端 prepend "全部", 不要重复加 "(全部)"
             comboModel: root.provinces
+            // 2026-11-03 (L11): 下拉显示必须从 root.province 反查, 不能让控件内部的
+            //   currentIndex 当第二条真相来源 (真机 F1: 列表按状态筛了, 框还写着「全部」).
+            //   provinces[0] 是 C++ 端 prepend 的「全部」, 对应 province === "".
+            // 2026-11-04 (F1-2 / 定律 L14): 反查原来写 `Array.isArray(root.provinces) ? indexOf : -1`,
+            //   而 root.provinces 来自 routeService.getAvailableProvinces() —— QStringList 到 QML
+            //   是包装列表, Array.isArray 恒 false, 所以这支**永远 -1**, 选完省份框永远回显「全部」.
+            //   包装列表自己带 indexOf (容器实测 typeofIndexOf=function), 所以判"有没有这个方法",
+            //   不判"是不是 JS 数组".
+            comboCurrentIndex: {
+                var m = root.provinces
+                var i = (m && typeof m.indexOf === 'function') ? m.indexOf(root.province) : -1
+                return i > 0 ? i : 0
+            }
             onComboActivated: (index, value) => {
                 root.province = (index === 0) ? "" : value
             }
