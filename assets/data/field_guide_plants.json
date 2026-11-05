@@ -149,7 +149,6 @@
       ],
       "description": "中国北方春季最常见的野菜之一,江南亦食。全草入药,称'荠菜花'。可包饺子、馄饨、凉拌。",
       "source": "中国植物志·十字花科 / 野生蔬菜",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Capsella bursa-pastoris",
         "Capsella bursa",
@@ -287,7 +286,6 @@
       ],
       "description": "春季田野常见,叶基生莲座、花黄、折断有白浆。嫩叶可食,全草入药清热解毒,辨识度高。",
       "source": "中国植物志·菊科 / 药用植物学",
-      "reviewer": "XX(药用植物学)",
       "photo_sources": [
         "Taraxacum mongolicum",
         "蒲公英 plant"
@@ -392,7 +390,6 @@
       ],
       "description": "药食两用,清热解毒、凉血止血。北方夏季最常见野菜之一。",
       "source": "中国野菜图鉴 / 本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Portulaca oleracea",
         "马齿苋 plant"
@@ -508,7 +505,6 @@
       ],
       "description": "田间荒地常见,茎粗叶菱、花序密集成团。嫩茎叶焯水后滑嫩可食,含铁钙丰富。",
       "source": "中国植物志·苋科 / 野生蔬菜",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Amaranthus retroflexus",
         "反枝苋 plant"
@@ -593,7 +589,6 @@
       ],
       "description": "北方山区常见,花可制野菊米、清热茶。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Chrysanthemum indicum",
         "野菊花 plant"
@@ -687,7 +682,6 @@
       ],
       "description": "中国最危险的毒植物之一。剧毒,2-3 片叶即可致死。河南南部山区有分布,易与金银花混淆。",
       "source": "中国毒植物志 / 急救医学",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Gelsemium elegans",
         "钩吻(断肠草) plant"
@@ -786,7 +780,6 @@
       ],
       "description": "河南封丘、河北巨鹿、山东平邑为中国三大金银花产区。北方常见的药用植物。",
       "source": "中国野菜图鉴 / 本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Lonicera japonica",
         "金银花 plant"
@@ -888,7 +881,6 @@
       ],
       "description": "常见水生可食野菜,与毒芹极易混淆,务必认准清香味!",
       "source": "中国野菜图鉴 / 急救医学",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Oenanthe javanica",
         "水芹菜 plant"
@@ -982,7 +974,6 @@
       ],
       "description": "剧毒植物,含毒芹碱。北方水边、湿地常见,与水芹极易混淆。误食 30 分钟内可能致死。",
       "source": "中国毒植物志 / 急救医学",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Cicuta virosa",
         "毒芹 plant"
@@ -1073,7 +1064,6 @@
       ],
       "description": "全株有毒,含莨菪碱、东莨菪碱。儿童误食种子数粒即可中毒。北方荒地极常见。",
       "source": "中国毒植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Datura stramonium",
         "曼陀罗 plant"
@@ -1161,7 +1151,6 @@
       ],
       "description": "北方春芽名菜,营养价值高。山东、河南、河北南部最常见。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Toona sinensis",
         "香椿 plant"
@@ -1247,7 +1236,6 @@
       ],
       "description": "北方山区常见野菜,嫩茎叶可食。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Lactuca indica",
         "山莴苣 plant"
@@ -1335,7 +1323,6 @@
       ],
       "description": "北方最常见野菜之一。少数人食后光敏皮炎(灰菜过敏),初食少量试敏。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Chenopodium album",
         "灰灰菜 plant"
@@ -1424,7 +1411,6 @@
       ],
       "description": "常见药用植物,种子即车前子,中药。",
       "source": "本草纲目 / 中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Plantago asiatica",
         "车前草 plant"
@@ -1511,7 +1497,6 @@
       ],
       "description": "云贵川主菜,北方少食。鱼腥味明显,初次尝试需心理准备。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Houttuynia cordata",
         "鱼腥草 plant"
@@ -1596,7 +1581,6 @@
       ],
       "description": "含较多草酸,不宜大量食用,肾病、痛风患者忌食。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Rumex acetosa",
         "酸模 plant"
@@ -1687,7 +1671,6 @@
       ],
       "description": "北方常见的苦味野菜,焯水后口感清爽。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Sonchus oleraceus",
         "苦菜 plant"
@@ -1771,7 +1754,6 @@
       ],
       "description": "江浙春季名菜,北方黄河以南有分布。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Kalimeris indica",
         "马兰头 plant"
@@ -1851,7 +1833,6 @@
       ],
       "description": "北方荒地常见。果实看似无害,但种子含苍耳苷,毒性较强。",
       "source": "中国毒植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Xanthium strumarium",
         "苍耳 plant"
@@ -1934,7 +1915,6 @@
       ],
       "description": "根似人参,极易误食中毒。北方山区常见,根含商陆毒素。",
       "source": "中国毒植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Phytolacca acinosa",
         "商陆 plant"
@@ -2016,7 +1996,6 @@
       ],
       "description": "北方山区高海拔分布。剧毒,根含乌头碱,数克即可致死。中医附子须严格炮制。",
       "source": "中国毒植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Aconitum carmichaelii",
         "乌头 plant"
@@ -2091,7 +2070,6 @@
       ],
       "description": "山西吕梁、河北燕山有大量野生分布。营养价值极高。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Hippophae rhamnoides",
         "沙棘 plant"
@@ -2165,7 +2143,6 @@
       ],
       "description": "北方常见野果,橘红色聚花果甜糯可食。果、根、皮皆可入药。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Broussonetia papyrifera",
         "构树果 plant"
@@ -2246,7 +2223,6 @@
       ],
       "description": "常见野果,北方夏初应季。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Morus alba",
         "桑葚 plant"
@@ -2327,7 +2303,6 @@
       ],
       "description": "北方山区常见。杏仁分苦(药用)、甜(食用),苦杏仁含微量氰苷,儿童慎食。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Armeniaca sibirica",
         "山杏 plant"
@@ -2412,7 +2387,6 @@
       ],
       "description": "河南四大怀药之首。温县、武陟为道地产区。",
       "source": "本草纲目 / 中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Dioscorea opposita",
         "怀山药 plant"
@@ -2489,7 +2463,6 @@
       ],
       "description": "河南四大怀药之一。武陟温县为道地产区。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Chrysanthemum morifolium",
         "怀菊花 plant"
@@ -2563,7 +2536,6 @@
       ],
       "description": "河南四大怀药之一。温县、武陟为道地产区,称\"怀地黄\"。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Rehmannia glutinosa",
         "怀地黄 plant"
@@ -2632,7 +2604,6 @@
       ],
       "description": "河南四大怀药之一。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Achyranthes bidentata",
         "怀牛膝 plant"
@@ -2719,7 +2690,6 @@
       ],
       "description": "豫西山地产量很大。金黄连翘花是早春标志性景观。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Forsythia suspensa",
         "连翘 plant"
@@ -2804,7 +2774,6 @@
       ],
       "description": "北方常见药用植物,端午挂艾,艾灸用艾绒。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Artemisia argyi",
         "艾 plant"
@@ -2901,7 +2870,6 @@
       ],
       "description": "北方山区有分布,根可食可药用。极易与钩吻(断肠草)混淆!",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Pueraria lobata",
         "葛根 plant"
@@ -2970,7 +2938,6 @@
       ],
       "description": "北方山区野生中药材。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Ligusticum sinense",
         "藁本 plant"
@@ -3042,7 +3009,6 @@
       ],
       "description": "北方山区早春开花。全株有毒,尤其花蕾。",
       "source": "中国毒植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Daphne genkwa",
         "芫花 plant"
@@ -3119,7 +3085,6 @@
       ],
       "description": "北方庭院常见,叶似竹叶,花艳丽。全株剧毒,含强心苷。",
       "source": "中国毒植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Nerium indicum",
         "夹竹桃 plant"
@@ -3181,7 +3146,6 @@
       ],
       "description": "北方常见绿篱植物,常作庭院观赏。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Buxus sinica",
         "黄杨 plant"
@@ -3244,7 +3208,6 @@
       ],
       "description": "北方常见的观赏灌木,秋季红果累累。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Cotoneaster horizontalis",
         "栒子 plant"
@@ -3318,7 +3281,6 @@
       ],
       "description": "北方田边常见。中医常用药,生用剧毒,须严格炮制。",
       "source": "中国毒植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Pinellia ternata",
         "半夏 plant"
@@ -3389,7 +3351,6 @@
       ],
       "description": "北方山区野生中药。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Bistorta officinalis",
         "拳参 plant"
@@ -3460,7 +3421,6 @@
       ],
       "description": "北方常见中药,山西产\"晋远志\"道地。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Polygala tenuifolia",
         "远志 plant"
@@ -3529,7 +3489,6 @@
       ],
       "description": "河北、山西、内蒙古为防风主产区,称\"关防风\"。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Saposhnikovia divaricata",
         "防风 plant"
@@ -3600,7 +3559,6 @@
       ],
       "description": "北方山区常见藤本。根作威灵仙药用,生用刺激性强。",
       "source": "中国毒植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Clematis mandshurica",
         "东北铁线莲 plant"
@@ -3671,7 +3629,6 @@
       ],
       "description": "南方主产,北方少见但有引种。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Dipsacus asperoides",
         "续断 plant"
@@ -3745,7 +3702,6 @@
       ],
       "description": "北方山区常见的红色野果。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Thladiantha dubia",
         "赤瓟 plant"
@@ -3817,7 +3773,6 @@
       ],
       "description": "北方山区常见藤本。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Ampelopsis glandulosa",
         "蛇葡萄 plant"
@@ -3893,7 +3848,6 @@
       ],
       "description": "北方田野常见野菜,花似小西瓜,叶可食。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Hibiscus trionum",
         "野西瓜苗 plant"
@@ -3967,7 +3921,6 @@
       ],
       "description": "常见观赏花卉。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Portulaca grandiflora",
         "大花马齿苋 plant"
@@ -4041,7 +3994,6 @@
       ],
       "description": "山东是南沙参主产区。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Adenophora stricta",
         "沙参 plant"
@@ -4114,7 +4066,6 @@
       ],
       "description": "豫西伏牛山区有分布。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Angelica pubescens",
         "独活 plant"
@@ -4182,7 +4133,6 @@
       ],
       "description": "北方早春常见紫色小野花,全草入药。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Viola philippica",
         "紫花地丁 plant"
@@ -4252,7 +4202,6 @@
       ],
       "description": "北方高山区野生,珠芽(零余子)可食。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Bistorta vivipara",
         "珠芽蓼 plant"
@@ -4325,7 +4274,6 @@
       ],
       "description": "南方主产,北方不分布(此处仅示意南方分布)。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Amomum villosum",
         "砂仁 plant"
@@ -4401,7 +4349,6 @@
       ],
       "description": "莴苣的野生近缘种,北方田边常见。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Lactuca sativa var. ramosa",
         "Lactuca sativa",
@@ -4483,7 +4430,6 @@
       ],
       "description": "北方山区常见野菜,但有蜇毛,接触皮肤会引起剧烈刺痛红肿,采摘要戴手套。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Urtica fissa",
         "荨麻 plant"
@@ -4558,7 +4504,6 @@
       ],
       "description": "河北坝上、山西雁北有野生。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Elaeagnus angustifolia",
         "沙枣 plant"
@@ -4632,7 +4577,6 @@
       ],
       "description": "山西吕梁、河北燕山有大量野生。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Hippophae rhamnoides subsp. sinensis",
         "Hippophae rhamnoides",
@@ -4704,7 +4648,6 @@
       ],
       "description": "山东是南沙参主产区之一。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Adenophora tetraphylla",
         "轮叶沙参 plant"
@@ -4775,7 +4718,6 @@
       ],
       "description": "北方山区常见中药。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Aster tataricus",
         "紫菀 plant"
@@ -4853,7 +4795,6 @@
       ],
       "description": "北方山区常见,根可食可药用,韩国泡菜原料之一。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Platycodon grandiflorus",
         "桔梗 plant"
@@ -4935,7 +4876,6 @@
       ],
       "description": "山西、陕西的\"山丹丹花\"即此。鳞茎可食,花艳丽。",
       "source": "本草纲目 / 中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Lilium pumilum",
         "山丹(百合) plant"
@@ -5020,7 +4960,6 @@
       ],
       "description": "宁夏枸杞最著名,北方黄河流域也有野生。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Lycium chinense",
         "枸杞 plant"
@@ -5094,7 +5033,6 @@
       ],
       "description": "黄河以南常见,作庭院绿篱和药用。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Ligustrum lucidum",
         "女贞 plant"
@@ -5165,7 +5103,6 @@
       ],
       "description": "北方常见中药材。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Sanguisorba officinalis",
         "地榆 plant"
@@ -5243,7 +5180,6 @@
       ],
       "description": "北方山区野香草,可调料。",
       "source": "本草纲目 / 中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Thymus mongolicus",
         "百里香 plant"
@@ -5321,7 +5257,6 @@
       ],
       "description": "半夏近缘种,毒性类似。",
       "source": "中国毒植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Pinellia pedatisecta",
         "掌叶半夏 plant"
@@ -5390,7 +5325,6 @@
       ],
       "description": "北方高山区常见。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Bistorta alopecuroides",
         "狐尾蓼 plant"
@@ -5468,7 +5402,6 @@
       ],
       "description": "北方山区常见,药食两用。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Polygonatum sibiricum",
         "黄精 plant"
@@ -5551,7 +5484,6 @@
       ],
       "description": "北方山区常见,块茎可食。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Dioscorea oppositifolia",
         "野山药 plant"
@@ -5638,7 +5570,6 @@
       ],
       "description": "北方也有分布,中药威灵仙主要来源。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Clematis chinensis",
         "威灵仙 plant"
@@ -5723,7 +5654,6 @@
       ],
       "description": "北方常见,根即著名\"板蓝根\"。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Isatis indigotica",
         "菘蓝 plant"
@@ -5813,7 +5743,6 @@
       ],
       "description": "河南伏牛山、陕西秦岭有分布。",
       "source": "本草纲目 / 民间草药",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Gynostemma pentaphyllum",
         "绞股蓝 plant"
@@ -5893,7 +5822,6 @@
       ],
       "description": "曼陀罗的变种,毒性类似。",
       "source": "中国毒植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Datura innoxia",
         "毛曼陀罗 plant"
@@ -5967,7 +5895,6 @@
       ],
       "description": "华北南部常见,果有毒。",
       "source": "中国毒植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Melia azedarach",
         "苦楝 plant"
@@ -6041,7 +5968,6 @@
       ],
       "description": "北方 5 月标志性开花树,槐花可食(烙槐花饼)。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Robinia pseudoacacia",
         "刺槐 plant"
@@ -6124,7 +6050,6 @@
       ],
       "description": "中国乡土树种,北方常见行道树。花蕾、果实入药。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Styphnolobium japonicum",
         "槐树 plant"
@@ -6190,7 +6115,6 @@
       ],
       "description": "北方山区常见藤本。果美观但勿食。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Celastrus orbiculatus",
         "南蛇藤 plant"
@@ -6254,7 +6178,6 @@
       ],
       "description": "北方山区林下常见。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Botrychium ternatum",
         "阴地蕨 plant"
@@ -6318,7 +6241,6 @@
       ],
       "description": "北方黄土高原常见,民间草药。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Dicranostigma leptopodum",
         "秃疮花 plant"
@@ -6392,7 +6314,6 @@
       ],
       "description": "北方山区常见,黄色乳汁有毒。",
       "source": "中国毒植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Chelidonium majus",
         "白屈菜 plant"
@@ -6479,7 +6400,6 @@
       ],
       "description": "北方水边常见。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Cynanchum glaucescens",
         "白前 plant"
@@ -6557,7 +6477,6 @@
       ],
       "description": "北方常见药用植物。",
       "source": "本草纲目 / 中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Polygonum perfoliatum",
         "杠板归 plant"
@@ -6626,7 +6545,6 @@
       ],
       "description": "北方高山区野生。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Bistorta suffulta",
         "支柱蓼 plant"
@@ -6713,7 +6631,6 @@
       ],
       "description": "北方常见香料蔬菜,种子即小茴香。",
       "source": "本草纲目 / 中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Foeniculum vulgare",
         "茴香 plant"
@@ -6792,7 +6709,6 @@
       ],
       "description": "北方常见香料。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Anethum graveolens",
         "莳萝 plant"
@@ -6868,7 +6784,6 @@
       ],
       "description": "常见蔬菜调味品。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Coriandrum sativum",
         "芫荽 plant"
@@ -6947,7 +6862,6 @@
       ],
       "description": "常见药用蔬菜。",
       "source": "本草纲目 / 中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Perilla frutescens",
         "紫苏 plant"
@@ -7034,7 +6948,6 @@
       ],
       "description": "北方常见,水边湿地多。",
       "source": "本草纲目 / 中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Mentha haplocalyx",
         "薄荷 plant"
@@ -7106,7 +7019,6 @@
       ],
       "description": "北方有野生或逸生,我国严格管控。",
       "source": "中国毒植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Cannabis sativa",
         "大麻 plant"
@@ -7189,7 +7101,6 @@
       ],
       "description": "北方常见的野生莴苣。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Lactuca serriola",
         "野莴苣 plant"
@@ -7275,7 +7186,6 @@
       ],
       "description": "与荠菜易混,但花黄色不同。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Rorippa indica",
         "蔊菜 plant"
@@ -7355,7 +7265,6 @@
       ],
       "description": "常见野菜,与毒芹易混但毒芹无毛。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Daucus carota",
         "野胡萝卜 plant"
@@ -7420,7 +7329,6 @@
       ],
       "description": "叶形奇特的观赏灌木,南方多。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Ilex cornuta",
         "构骨 plant"
@@ -7485,7 +7393,6 @@
       ],
       "description": "北方常见观赏灌木。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Viburnum dilatatum",
         "荚蒾 plant"
@@ -7551,7 +7458,6 @@
       ],
       "description": "北方常见观赏灌木。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Cotoneaster acutifolius",
         "灰栒子 plant"
@@ -7623,7 +7529,6 @@
       ],
       "description": "花艳丽但全株有毒。",
       "source": "中国毒植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Buddleja lindleyana",
         "醉鱼草 plant"
@@ -7714,7 +7619,6 @@
       ],
       "description": "全国常见水生蔬菜,根茎可食。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Nelumbo nucifera",
         "莲藕 plant"
@@ -7800,7 +7704,6 @@
       ],
       "description": "南方冬季常见水生蔬菜。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Eleocharis dulcis",
         "荸荠 plant"
@@ -7884,7 +7787,6 @@
       ],
       "description": "南方春季最常见山野菜之一。需焯水去草酸。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Phyllostachys edulis",
         "竹笋 plant"
@@ -7964,7 +7866,6 @@
       ],
       "description": "云南/贵州春季山菜之王。**注意:长期大量食用可能致癌(PTA 物质),建议偶尔食用**。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Pteridium aquilinum",
         "蕨菜 plant"
@@ -8035,7 +7936,6 @@
       ],
       "description": "中国传统酱菜原料。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Stachys sieboldii",
         "草石蚕 plant"
@@ -8116,7 +8016,6 @@
       ],
       "description": "春季常见野菜,南北皆有。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Brassica rapa",
         "野油菜 plant"
@@ -8195,7 +8094,6 @@
       ],
       "description": "与毒芹易混,务必确认清香味!",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Apium graveolens",
         "野芹菜(旱芹) plant"
@@ -8286,7 +8184,6 @@
       ],
       "description": "古时\"葵\"即此。北方常见。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Malva verticillata",
         "野葵 plant"
@@ -8379,7 +8276,6 @@
       ],
       "description": "南方常见,采摘时小心刺。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Amaranthus spinosus",
         "刺苋 plant"
@@ -8461,7 +8357,6 @@
       ],
       "description": "南方常见蕨类野菜。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Pteris vittata",
         "蕨 plant"
@@ -8548,7 +8443,6 @@
       ],
       "description": "南方沿海常见,根曾用作捕鱼毒药。",
       "source": "中国毒植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Derris trifoliata",
         "鱼藤 plant"
@@ -8639,7 +8533,6 @@
       ],
       "description": "南方夏季家常菜,北方少见。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Ipomoea aquatica",
         "蕹菜 plant"
@@ -8735,7 +8628,6 @@
       ],
       "description": "南方主食之一。生食剧毒(草酸钙针晶),必须煮熟。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Colocasia esculenta",
         "芋头 plant"
@@ -8819,7 +8711,6 @@
       ],
       "description": "常见食用坚果,药食两用。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Nelumbo nucifera",
         "莲子 plant"
@@ -8903,7 +8794,6 @@
       ],
       "description": "北方田野小野瓜,部分苦味变种不宜多食。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Cucumis melo var. flexuosus",
         "Cucumis melo",
@@ -8998,7 +8888,6 @@
       ],
       "description": "野生山楂,比家种酸,药用价值高。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Crataegus cuneata",
         "野山楂 plant"
@@ -9065,7 +8954,6 @@
       ],
       "description": "中药,种子入药。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Malva verticillata",
         "冬葵果 plant"
@@ -9138,7 +9026,6 @@
       ],
       "description": "常见水边植物,根茎可入药(芦根)。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Phragmites australis",
         "芦苇 plant"
@@ -9220,7 +9107,6 @@
       ],
       "description": "南方常见中药,清心火。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Lophatherum gracile",
         "淡竹叶 plant"
@@ -9303,7 +9189,6 @@
       ],
       "description": "南方常见观赏植物,种子剧毒,儿童误食风险高。",
       "source": "中国毒植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Abrus precatorius",
         "相思豆(补充) plant"
@@ -9398,7 +9283,6 @@
       ],
       "description": "观赏兼药用,中药\"宣木瓜\"来源。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Chaenomeles speciosa",
         "贴梗海棠 plant"
@@ -9502,7 +9386,6 @@
       ],
       "description": "花王牡丹,灌木、二回三出复叶、花大色艳。根皮入药名丹皮,清热凉血;观赏药用两相宜。",
       "source": "中国植物志·毛茛科 / 药用植物学",
-      "reviewer": "XX(药用植物学)",
       "photo_sources": [
         "Paeonia suffruticosa",
         "牡丹 plant"
@@ -9568,7 +9451,6 @@
       ],
       "description": "南方热带引种,天然杀虫植物。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Azadirachta indica",
         "印楝(参考) plant"
@@ -9643,7 +9525,6 @@
       ],
       "description": "南方热带野果,小心刺。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Opuntia dillenii",
         "仙人掌 plant"
@@ -9721,7 +9602,6 @@
       ],
       "description": "黄河流域主产,陕西临潼最有名。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Punica granatum",
         "石榴 plant"
@@ -9802,7 +9682,6 @@
       ],
       "description": "怀山药为河南道地药材。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Dioscorea polystachya",
         "山药(薯蓣) plant"
@@ -9884,7 +9763,6 @@
       ],
       "description": "传统治黄疸要药,北方春季采。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Artemisia capillaris",
         "茵陈 plant"
@@ -9956,7 +9834,6 @@
       ],
       "description": "常用中药,果皮/根/种子皆入药。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Trichosanthes kirilowii",
         "瓜蒌 plant"
@@ -10040,7 +9917,6 @@
       ],
       "description": "中药白芍主来源,也是观赏名花。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Paeonia lactiflora",
         "芍药 plant"
@@ -10121,7 +9997,6 @@
       ],
       "description": "中国特有经济植物,皮叶入药。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Eucommia ulmoides",
         "杜仲 plant"
@@ -10203,7 +10078,6 @@
       ],
       "description": "南方名贵中药,皮花皆入药。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Houpoea officinalis",
         "厚朴 plant"
@@ -10272,7 +10146,6 @@
       ],
       "description": "秦巴山区常见藤本,叶背面白。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Celastrus hypoleucus",
         "绵藤 plant"
@@ -10357,7 +10230,6 @@
       ],
       "description": "传统中药,散寒止痛要药。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Tetradium ruticarpum",
         "吴茱萸 plant"
@@ -10440,7 +10312,6 @@
       ],
       "description": "南方常见芳香药用植物。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Pogostemon cablin",
         "广藿香 plant"
@@ -10516,7 +10387,6 @@
       ],
       "description": "南方中药,断茎出红汁而得名。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Spatholobus suberectus",
         "鸡血藤 plant"
@@ -10589,7 +10459,6 @@
       ],
       "description": "青藏高原名贵中药,海拔 3000-5000m 才有。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Ophiocordyceps sinensis",
         "冬虫夏草(寄主) plant"
@@ -10656,7 +10525,6 @@
       ],
       "description": "藏药,高原标志性植物。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Rheum nobile",
         "藏大黄 plant"
@@ -10727,7 +10595,6 @@
       ],
       "description": "天山雪莲是国家二级保护植物,**严禁采挖**,仅作信息展示。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Saussurea involucrata",
         "雪莲 plant"
@@ -10795,7 +10662,6 @@
       ],
       "description": "藏药,名贵。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Picrorhiza kurroa",
         "胡黄连 plant"
@@ -10866,7 +10732,6 @@
       ],
       "description": "重要藏药,北方用量大。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Rheum palmatum",
         "大黄 plant"
@@ -10957,7 +10822,6 @@
       ],
       "description": "北方/西北草原常见毒草。",
       "source": "中国毒植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Stellera chamaejasme",
         "狼毒 plant"
@@ -11030,7 +10894,6 @@
       ],
       "description": "西北荒漠名贵中药。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Cynomorium coccineum",
         "锁阳 plant"
@@ -11103,7 +10966,6 @@
       ],
       "description": "沙漠人参,国家二级保护,严禁采挖。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Cistanche deserticola",
         "肉苁蓉 plant"
@@ -11174,7 +11036,6 @@
       ],
       "description": "青藏高原草甸主要建群种。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Kobresia pygmaea",
         "高山嵩草 plant"
@@ -11239,7 +11100,6 @@
       ],
       "description": "高原名花,藏药植物,严禁采挖。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Meconopsis",
         "绿绒蒿 plant"
@@ -11319,7 +11179,6 @@
       ],
       "description": "西北常见香料。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Carum carvi",
         "藏茴香 plant"
@@ -11389,7 +11248,6 @@
       ],
       "description": "高原毒草,与曼陀罗同科。",
       "source": "中国毒植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Przewalskia tangutica",
         "马尿泡 plant"
@@ -11477,7 +11335,6 @@
       ],
       "description": "北方荒地常见野菜,可作包子馅。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Salsola collina",
         "猪毛菜 plant"
@@ -11569,7 +11426,6 @@
       ],
       "description": "宁夏中宁为道地产区,品质最优。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Lycium barbarum",
         "宁夏枸杞 plant"
@@ -11654,7 +11510,6 @@
       ],
       "description": "重要中药,北方常见。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Ephedra sinica",
         "麻黄 plant"
@@ -11748,7 +11603,6 @@
       ],
       "description": "北方名果,新疆/黄河流域主产区。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Ziziphus jujuba",
         "枣 plant"
@@ -11819,7 +11673,6 @@
       ],
       "description": "高原沙棘,维 C 含量比平原高 2-3 倍。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Hippophae tibetana",
         "西藏沙棘 plant"
@@ -11889,7 +11742,6 @@
       ],
       "description": "川贝为名贵中药,川贝母为上品。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Fritillaria cirrhosa",
         "川贝母 plant"
@@ -11961,7 +11813,6 @@
       ],
       "description": "高原抗缺氧名药,常用于进藏前服用。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Rhodiola rosea",
         "红景天 plant"
@@ -12043,7 +11894,6 @@
       ],
       "description": "北方荒地常见毒草,药用需严格炮制。",
       "source": "中国毒植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Euphorbia kansui",
         "甘遂 plant"
@@ -12128,7 +11978,6 @@
       ],
       "description": "南方夏秋季山菜。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Phyllostachys",
         "夏竹笋 plant"
@@ -12202,7 +12051,6 @@
       ],
       "description": "南方热带特有,但**WHO 1 类致癌物**,本书只作信息展示,不推荐食用。",
       "source": "本草纲目 / WHO 致癌物清单",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Areca catechu",
         "槟榔 plant"
@@ -12273,7 +12121,6 @@
       ],
       "description": "广西特产,天然代糖。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Siraitia grosvenorii",
         "罗汉果 plant"
@@ -12347,7 +12194,6 @@
       ],
       "description": "湖南张家界名产,黄酮含量高。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Ampelopsis grossedentata",
         "显齿蛇葡萄 plant"
@@ -12421,7 +12267,6 @@
       ],
       "description": "九大仙草之首,名贵,野生受保护。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Dendrobium officinale",
         "铁皮石斛 plant"
@@ -12507,7 +12352,6 @@
       ],
       "description": "南方常见大型毒草,叶大易识别。",
       "source": "中国毒植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Macleaya cordata",
         "博落回 plant"
@@ -12578,7 +12422,6 @@
       ],
       "description": "世界最毒树,云南西双版纳有,严禁触碰。",
       "source": "中国毒植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Antiaris toxicaria",
         "见血封喉 plant"
@@ -12657,7 +12500,6 @@
       ],
       "description": "南方常见,果有毒,叶药用。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Camptotheca acuminata",
         "喜树 plant"
@@ -12733,7 +12575,6 @@
       ],
       "description": "中国古老树种,白果药用,**生食剧毒**。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Ginkgo biloba",
         "银杏 plant"
@@ -12817,7 +12658,6 @@
       ],
       "description": "南方常见白花曼陀罗,比紫花毒性更强。",
       "source": "中国毒植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Datura metel",
         "洋金花 plant"
@@ -12898,7 +12738,6 @@
       ],
       "description": "北方野生中药。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Ligusticum jeholense",
         "辽藁本 plant"
@@ -12966,7 +12805,6 @@
       ],
       "description": "中药三棱来源之一。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Sparganium stoloniferum",
         "黑三棱 plant"
@@ -13038,7 +12876,6 @@
       ],
       "description": "广东阳春为道地产区。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Amomum villosum",
         "阳春砂仁 plant"
@@ -13124,7 +12961,6 @@
       ],
       "description": "南方主产秋果,陈皮(橘皮)也是常用中药。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Citrus reticulata",
         "橘 plant"
@@ -13209,7 +13045,6 @@
       ],
       "description": "南方常见野果,江浙民间用叶制乌饭。",
       "source": "中国野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Vaccinium bracteatum",
         "南烛 plant"
@@ -13290,7 +13125,6 @@
       ],
       "description": "东北名贵中药,皮黄。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Phellodendron amurense",
         "黄柏 plant"
@@ -13370,7 +13204,6 @@
       ],
       "description": "陕西韩城为道地产区,川菜灵魂。",
       "source": "本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Zanthoxylum bungeanum",
         "花椒 plant"
@@ -13449,7 +13282,6 @@
       ],
       "description": "种子含蓖麻毒素(ricin),2-3 粒即可致死儿童,是北方农村最常见的致命植物。",
       "source": "中国植物志 / 中国有毒植物",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Ricinus communis",
         "Ricinus communis",
@@ -13526,7 +13358,6 @@
       ],
       "description": "华北山区最危险植物之一:含藜芦碱,常被误当\"野葱\"误食致死,数克根即可致命。",
       "source": "中国植物志 / 中国有毒植物",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Veratrum nigrum",
         "Veratrum nigrum",
@@ -13602,7 +13433,6 @@
       ],
       "description": "含木藜芦毒素,误食花或叶致呕吐、血压下降、呼吸抑制,民间也称\"羊不食草\"。",
       "source": "中国植物志 / 中国有毒植物",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Rhododendron molle",
         "Rhododendron molle",
@@ -13677,7 +13507,6 @@
       ],
       "description": "含石蒜碱,鳞茎误当野蒜食用致呕吐、腹泻,严重可致中枢麻痹。",
       "source": "中国植物志 / 中国有毒植物",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Lycoris radiata",
         "Lycoris radiata",
@@ -13745,7 +13574,6 @@
       ],
       "description": "含强心苷,误食致心律失常,是著名强心药原植物,亦是危险毒草。",
       "source": "中国植物志 / 中国有毒植物",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Digitalis purpurea",
         "Digitalis purpurea",
@@ -13826,7 +13654,6 @@
       ],
       "description": "未成熟青果与枝叶含龙葵碱(茄碱),误食致呕吐腹泻;成熟黑果少量无碍但不宜多食。",
       "source": "中国植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Solanum nigrum",
         "Solanum nigrum",
@@ -13905,7 +13732,6 @@
       ],
       "description": "白色乳汁对皮肤黏膜有强刺激性,入眼可致严重损伤,根入药需炮制。",
       "source": "中国植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Euphorbia pekinensis",
         "Euphorbia pekinensis",
@@ -13975,7 +13801,6 @@
       ],
       "description": "含马兜铃酸,有明确肾毒性与致癌性,多国禁用;北方山区可见其野生种。",
       "source": "中国植物志 / 中国有毒植物",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Aristolochia debilis",
         "Aristolochia debilis",
@@ -14053,7 +13878,6 @@
       ],
       "description": "块茎含草酸钙针晶与刺激性毒蛋白,生食致口舌灼痛、肿胀、呼吸困难,必须炮制。",
       "source": "中国植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Arisaema erubescens",
         "Arisaema erubescens",
@@ -14125,7 +13949,6 @@
       ],
       "description": "荚果含皂苷,可作洗涤剂,但种子与荚误食致呕吐腹泻;民间常用于洗头洗衣。",
       "source": "中国植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Gleditsia sinensis",
         "Gleditsia sinensis",
@@ -14196,7 +14019,6 @@
       ],
       "description": "花与种子含紫藤苷,误食致呕吐腹痛;庭院常见,儿童易误食种子。",
       "source": "中国植物志 / 中国有毒植物",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Wisteria sinensis",
         "Wisteria sinensis",
@@ -14273,7 +14095,6 @@
       ],
       "description": "华北最重要的道地药材之一,承德黄芩质量最佳;根可代茶,过量苦寒伤胃。",
       "source": "中国植物志 / 本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Scutellaria baicalensis",
         "Scutellaria baicalensis",
@@ -14347,7 +14168,6 @@
       ],
       "description": "\"上党\"即今山西长治,党参因此得名;北方山区常见,根部为常用补益药。",
       "source": "中国植物志 / 本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Codonopsis pilosula",
         "Codonopsis pilosula",
@@ -14422,7 +14242,6 @@
       ],
       "description": "山西恒山、内蒙古为主要产区;北方炖汤常用药材,补气经典。",
       "source": "中国植物志 / 本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Astragalus membranaceus",
         "Astragalus membranaceus",
@@ -14499,7 +14318,6 @@
       ],
       "description": "北方田野极常见,妇科要药;嫩苗亦可作野菜,但花期后纤维粗不宜食。",
       "source": "中国植物志 / 本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Leonurus japonicus",
         "Leonurus japonicus",
@@ -14574,7 +14392,6 @@
       ],
       "description": "华北夏日常见\"凉茶\"原料,果穗入药;夏至后即枯萎故名夏枯草。",
       "source": "中国植物志 / 本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Prunella vulgaris",
         "Prunella vulgaris",
@@ -14654,7 +14471,6 @@
       ],
       "description": "北方道地药材,\"北柴胡\"为药典正品;叶细线形是识别要点。",
       "source": "中国植物志 / 本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Bupleurum chinense",
         "Bupleurum chinense",
@@ -14728,7 +14544,6 @@
       ],
       "description": "\"十方九草\",最常用中药之一;内蒙古、山西为北方主产,根可含服。",
       "source": "中国植物志 / 本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Glycyrrhiza uralensis",
         "Glycyrrhiza uralensis",
@@ -14802,7 +14617,6 @@
       ],
       "description": "北方山地藤本,果实兼具酸甘苦辛咸五味故名;果穗鲜红,常被误采误食。",
       "source": "中国植物志 / 本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Schisandra chinensis",
         "Schisandra chinensis",
@@ -14903,7 +14717,6 @@
       ],
       "description": "山坡灌丛常见小灌木,花黄白蝶形成串、根极苦。根入药清热燥湿,苦参碱有毒性须遵医嘱。",
       "source": "中国植物志·豆科 / 药用植物学",
-      "reviewer": "XX(药用植物学)",
       "photo_sources": [
         "Sophora flavescens",
         "Sophora flavescens",
@@ -14980,7 +14793,6 @@
       ],
       "description": "北方常见,日本\"牛蒡\"即其根;种子(牛蒡子)为常用中药,叶背灰白是识别要点。",
       "source": "中国植物志 / 本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Arctium lappa",
         "Arctium lappa",
@@ -15052,7 +14864,6 @@
       ],
       "description": "\"妇科圣药\";北方高海拔栽培,根香气浓郁,炖汤常用。",
       "source": "中国植物志 / 本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Angelica sinensis",
         "Angelica sinensis",
@@ -15124,7 +14935,6 @@
       ],
       "description": "\"蚕羌\"因根茎环节如蚕得名;北方高山寒湿地区常用解表药。",
       "source": "中国植物志 / 本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Notopterygium incisum",
         "Notopterygium incisum",
@@ -15200,7 +15010,6 @@
       ],
       "description": "山东为道地产区;根砖红故称丹参,心血管常用药。",
       "source": "中国植物志 / 本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Salvia miltiorrhiza",
         "Salvia miltiorrhiza",
@@ -15280,7 +15089,6 @@
       ],
       "description": "河北安国为道地产区;采挖时务必与剧毒毒芹区分,后者根茎有横隔。",
       "source": "中国植物志 / 本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Angelica dahurica",
         "Angelica dahurica",
@@ -15354,7 +15162,6 @@
       ],
       "description": "华北干旱山坡常见中药材;叶似韭但硬,采药时勿与野韭混淆。",
       "source": "中国植物志 / 本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Anemarrhena asphodeloides",
         "Anemarrhena asphodeloides",
@@ -15433,7 +15240,6 @@
       ],
       "description": "北方山区\"托盘儿\",酸甜可口;果未全熟晒干入药名\"覆盆子\"。",
       "source": "中国植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Rubus idaeus",
         "Rubus idaeus",
@@ -15514,7 +15320,6 @@
       ],
       "description": "山东平阴为中国玫瑰之乡;花可制玫瑰花茶、玫瑰酱,秋果可食。",
       "source": "中国植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Rosa rugosa",
         "Rosa rugosa",
@@ -15593,7 +15398,6 @@
       ],
       "description": "北方山区\"刺拐棒\",嫩叶是著名山野菜\"五加皮茶\";果黑可少量食用。",
       "source": "中国植物志 / 本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Eleutherococcus senticosus",
         "Eleutherococcus senticosus",
@@ -15671,7 +15475,6 @@
       ],
       "description": "北方山地常见;红果极酸可食,根为\"三颗针\"药材(含小檗碱)。",
       "source": "中国植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Berberis amurensis",
         "Berberis amurensis",
@@ -15746,7 +15549,6 @@
       ],
       "description": "华北特色野生果品,抗旱耐瘠薄;果实酸甜并富含钙,故称\"钙果\"。",
       "source": "中国植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Cerasus humilis",
         "Cerasus humilis",
@@ -15823,7 +15625,6 @@
       ],
       "description": "北方山地秋果,果小酸甜,可制果酱果酒;为苹果砧木重要亲本。",
       "source": "中国植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Malus baccata",
         "Malus baccata",
@@ -15900,7 +15701,6 @@
       ],
       "description": "北方\"红姑娘\",橘红包裹果实如灯笼;成熟果味酸甜可食,宿萼可入药。",
       "source": "中国植物志 / 本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Physalis alkekengi",
         "Physalis alkekengi",
@@ -15990,7 +15790,6 @@
       ],
       "description": "北方山地\"山韭菜\",味浓可包饺子;采挖时必须闻气味,严防误采剧毒藜芦。",
       "source": "中国植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Allium ramosum",
         "Allium ramosum",
@@ -16078,7 +15877,6 @@
       ],
       "description": "北方春季最常见的野菜之一\"小根蒜\";鳞茎是中药薤白,采挖务必闻味辨毒。",
       "source": "中国植物志 / 本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Allium macrostemon",
         "Allium macrostemon",
@@ -16157,7 +15955,6 @@
       ],
       "description": "北方\"扫帚菜\",嫩苗是常见野菜(包饺子),老株可扎扫帚,果实为中药。",
       "source": "中国植物志 / 本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Kochia scoparia",
         "Kochia scoparia",
@@ -16234,7 +16031,6 @@
       ],
       "description": "渤海湾滩涂\"黄须菜/红海滩\";嫩苗焯水可拌食,秋后整片变红成景观。",
       "source": "中国植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Suaeda salsa",
         "Suaeda salsa",
@@ -16314,7 +16110,6 @@
       ],
       "description": "北方春季\"苜蓿芽\",嫩苗清香可炒食;是重要牧草,野生野化极普遍。",
       "source": "中国植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Medicago sativa",
         "Medicago sativa",
@@ -16389,7 +16184,6 @@
       ],
       "description": "北方山野与庭院常见,花形秀丽;全草可入药名\"瞿麦\"(石竹科)。",
       "source": "中国植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Dianthus chinensis",
         "Dianthus chinensis",
@@ -16462,7 +16256,6 @@
       ],
       "description": "北方庭院常见蓝紫色蝶形花;根茎有毒只作外用药,严禁误食。",
       "source": "中国植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Iris tectorum",
         "Iris tectorum",
@@ -16548,7 +16341,6 @@
       ],
       "description": "\"忘忧草\"即萱草;其近缘黄花菜花蕾为常见干菜,但鲜品含毒须晒干或煮熟。",
       "source": "中国植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Hemerocallis fulva",
         "Hemerocallis fulva",
@@ -16626,7 +16418,6 @@
       ],
       "description": "华北庭院常见橙红色喇叭花;花为中药凌霄花,但一般不作食用。",
       "source": "中国植物志 / 本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Campsis grandiflora",
         "Campsis grandiflora",
@@ -16707,7 +16498,6 @@
       ],
       "description": "北方春季最常见的芳香花木,心形叶+圆锥紫花是识别要点;注意与有毒曼陀罗区分。",
       "source": "中国植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Syringa oblata",
         "Syringa oblata",
@@ -16788,7 +16578,6 @@
       ],
       "description": "华北山地常见有毒灌木,果实似\"桑葚\"易被儿童误食,马桑毒素可致抽搐。",
       "source": "中国植物志 / 中国有毒植物",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Coriaria nepalensis",
         "Coriaria nepalensis",
@@ -16872,7 +16661,6 @@
       ],
       "description": "北方早春开蓝紫花的毛茛科草本,根入药(须遵医嘱);鲜株含原白头翁素,刺激性强。",
       "source": "中国植物志 / 中国有毒植物",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Pulsatilla chinensis",
         "Pulsatilla chinensis",
@@ -16955,7 +16743,6 @@
       ],
       "description": "栽培作物逸生。全株含尼古丁,叶片误食可致中毒,儿童尤须提防。",
       "source": "中国植物志 / 中国有毒植物",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Nicotiana tabacum",
         "Nicotiana tabacum",
@@ -17043,7 +16830,6 @@
       ],
       "description": "北方林下常见观赏兼有毒植物,含铃兰毒苷等强心苷,全株有毒,红色浆果尤易误食。",
       "source": "中国植物志 / 中国有毒植物",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Convallaria majalis",
         "Convallaria majalis",
@@ -17124,7 +16910,6 @@
       ],
       "description": "混生于北方麦田的毒草,种子含麦仙翁皂苷,随粮食混入可致中毒。",
       "source": "中国植物志 / 中国有毒植物",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Agrostemma githago",
         "Agrostemma githago",
@@ -17206,7 +16991,6 @@
       ],
       "description": "华中山地草甸常见蓝紫花,含翠雀碱(乌头碱类),全株剧毒,与乌头同科同毒理。",
       "source": "中国植物志 / 中国有毒植物",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Delphinium grandiflorum",
         "Delphinium grandiflorum",
@@ -17289,7 +17073,6 @@
       ],
       "description": "含阿托品、东莨菪碱,极毒。黑色大浆果酷似可食浆果,是北方最易误食的致命植物之一。",
       "source": "中国植物志 / 中国有毒植物",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Atropa belladonna",
         "Atropa belladonna",
@@ -17374,7 +17157,6 @@
       ],
       "description": "北方常见唇形科草药,穗状花序+羽状裂叶是识别要点,药用为主。",
       "source": "中国植物志 / 本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Schizonepeta tenuifolia",
         "Schizonepeta tenuifolia",
@@ -17457,7 +17239,6 @@
       ],
       "description": "北方山地常见鸢尾科植物,橙红花有暗斑,根茎为中药射干。",
       "source": "中国植物志 / 本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Belamcanda chinensis",
         "Belamcanda chinensis",
@@ -17540,7 +17321,6 @@
       ],
       "description": "东北与华北林下阴湿处常见,心形叶+紫褐钟状花贴地是识别要点。含马兜铃酸,须谨慎。",
       "source": "中国植物志 / 本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Asarum heterotropoides",
         "Asarum heterotropoides",
@@ -17616,7 +17396,6 @@
       ],
       "description": "北方山地有分布,褐紫色花+粗大黑色根是特征,根为清热药玄参。",
       "source": "中国植物志 / 本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Scrophularia ningpoensis",
         "Scrophularia ningpoensis",
@@ -17699,7 +17478,6 @@
       ],
       "description": "北方山地草甸常见高大毛茛科草本,大型三出复叶+穗状白花,根茎为中药升麻。",
       "source": "中国植物志 / 本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Cimicifuga dahurica",
         "Cimicifuga dahurica",
@@ -17783,7 +17561,6 @@
       ],
       "description": "兰科腐生植物,无绿叶、靠共生蜜环菌供养。北方高山林下有分布,块茎名贵中药。",
       "source": "中国植物志 / 本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Gastrodia elata",
         "Gastrodia elata",
@@ -17867,7 +17644,6 @@
       ],
       "description": "五加科名贵药材。野生资源濒危,属国家重点保护,野外遇到只可观察不可采挖。",
       "source": "中国植物志 / 本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Panax ginseng",
         "Panax ginseng",
@@ -17951,7 +17727,6 @@
       ],
       "description": "青蒿素的植物来源。北方荒地常见,叶细裂、气味浓烈,与艾同属但叶形迥异。",
       "source": "中国植物志 / 本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Artemisia annua",
         "Artemisia annua",
@@ -18028,7 +17803,6 @@
       ],
       "description": "北方山地有分布,根含紫草素呈紫红色,是重要的凉血药与天然红色染料。",
       "source": "中国植物志 / 本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Lithospermum erythrorhizon",
         "Lithospermum erythrorhizon",
@@ -18105,7 +17879,6 @@
       ],
       "description": "苋科药材,茎四棱、花成球簇是识别要点,根与怀牛膝同为重要活血药。",
       "source": "中国植物志 / 本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Cyathula officinalis",
         "Cyathula officinalis",
@@ -18181,7 +17954,6 @@
       ],
       "description": "北方早春开紫红花的罂粟科草本,块茎为著名止痛药延胡索(元胡)。",
       "source": "中国植物志 / 本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Corydalis yanhusuo",
         "Corydalis yanhusuo",
@@ -18265,7 +18037,6 @@
       ],
       "description": "北方山地秋季开深蓝色钟状花,极醒目。根极苦,是清热燥湿要药龙胆草。",
       "source": "中国植物志 / 本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Gentiana scabra",
         "Gentiana scabra",
@@ -18347,7 +18118,6 @@
       ],
       "description": "北方路边伏地小草,节间有托叶鞘是蓼科特征。嫩苗可食,亦入药。",
       "source": "中国植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Polygonum aviculare",
         "Polygonum aviculare",
@@ -18429,7 +18199,6 @@
       ],
       "description": "北方墙角路边常见三叶小草,叶味酸。可少量鲜食调味,但草酸多不宜多食。",
       "source": "中国植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Oxalis corniculata",
         "Oxalis corniculata",
@@ -18516,7 +18285,6 @@
       ],
       "description": "华北早春常见野菜,叶背白毛是其标识。焯水后炒食或做馅,苦味较重。",
       "source": "中国植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Hemistepta lyrata",
         "Hemistepta lyrata",
@@ -18604,7 +18372,6 @@
       ],
       "description": "北方田野最常见带刺野草,俗称\"小蓟\"。嫩叶焯水可食,全草为止血药。",
       "source": "中国植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Cirsium setosum",
         "Cirsium setosum",
@@ -18691,7 +18458,6 @@
       ],
       "description": "北方最普遍的苦味野菜,与苦菜、苦苣菜常混称。嫩叶蘸酱或焯拌均可。",
       "source": "中国植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Ixeris denticulata",
         "Ixeris denticulata",
@@ -18770,7 +18536,6 @@
       ],
       "description": "北方山坡带刺藤本,叶有弧形脉是识别要点。春季嫩芽焯水可食,根茎入药。",
       "source": "中国植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Smilax china",
         "Smilax china",
@@ -18856,7 +18621,6 @@
       ],
       "description": "\"刺嫩芽\"是北方春季最受欢迎的山野菜之一,嫩芽紫红、味清香。枝上多刺须防扎。",
       "source": "中国植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Aralia elata",
         "Aralia elata",
@@ -18932,7 +18696,6 @@
       ],
       "description": "北方村旁常见逸生植物,地上似小向日葵,地下块茎即\"洋姜\",腌渍风味极佳。",
       "source": "中国植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Helianthus tuberosus",
         "Helianthus tuberosus",
@@ -19019,7 +18782,6 @@
       ],
       "description": "北方高山与针叶林下野生蓝莓,蓝黑浆果有白霜。秋季成熟,酸甜可口。",
       "source": "中国植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Vaccinium uliginosum",
         "Vaccinium uliginosum",
@@ -19102,7 +18864,6 @@
       ],
       "description": "北方林下灌木,掌状裂叶+成串红色浆果。果味偏酸,宜制酱或泡酒。",
       "source": "中国植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Ribes manshuricum",
         "Ribes manshuricum",
@@ -19188,7 +18949,6 @@
       ],
       "description": "北方山地小乔木,早春金黄先花后叶,秋结红色核果。果肉为名药山萸肉。",
       "source": "中国植物志 / 本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Cornus officinalis",
         "Cornus officinalis",
@@ -19265,7 +19025,6 @@
       ],
       "description": "所谓\"果实\"实为扭曲膨大的肉质果柄,霜后味甜如枣。北方村旁常见,种子可解酒。",
       "source": "中国植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Hovenia dulcis",
         "Hovenia dulcis",
@@ -19352,7 +19111,6 @@
       ],
       "description": "北方野生梨,叶缘刺芒齿是识别要点。果酸硬,须放置后熟变软才香甜。",
       "source": "中国植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Pyrus ussuriensis",
         "Pyrus ussuriensis",
@@ -19438,7 +19196,6 @@
       ],
       "description": "山地林缘小乔木,羽状复叶+成簇红果。秋日红果缀满枝头,是北方山区醒目的秋色。",
       "source": "中国植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Sorbus pohuashanensis",
         "Sorbus pohuashanensis",
@@ -19516,7 +19273,6 @@
       ],
       "description": "北方秋季最常见花卉,亦药食两用。菊花茶用花须选食用栽培品种,观赏菊勿入口。",
       "source": "中国植物志 / 本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Chrysanthemum morifolium",
         "Chrysanthemum morifolium",
@@ -19592,7 +19348,6 @@
       ],
       "description": "北方庭院阴湿处常见,心形大叶+夜晚开放的白香花是特征。花可药用,不宜当菜。",
       "source": "中国植物志 / 本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Hosta plantaginea",
         "Hosta plantaginea",
@@ -19670,7 +19425,6 @@
       ],
       "description": "北方常见绿篱花木,朝开暮落。鲜花可焯拌或入药,须确认无农药污染。",
       "source": "中国植物志 / 本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Hibiscus syriacus",
         "Hibiscus syriacus",
@@ -19757,7 +19511,6 @@
       ],
       "description": "北方山区与城市常见行道树,夏季满树金黄,秋结红色\"灯笼\"果,极醒目。",
       "source": "中国植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Koelreuteria paniculata",
         "Koelreuteria paniculata",
@@ -19834,7 +19587,6 @@
       ],
       "description": "北方夏季开粉红绒球花的行道树,羽叶入夜闭合是特征。花与树皮为安神药。",
       "source": "中国植物志 / 本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Albizia julibrissin",
         "Albizia julibrissin",
@@ -19912,7 +19664,6 @@
       ],
       "description": "北方湿地水边常见,紫红色穗状花序成片极美。嫩苗可焯食,全草入药。",
       "source": "中国植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Lythrum salicaria",
         "Lythrum salicaria",
@@ -20005,7 +19756,6 @@
       ],
       "description": "北方山地与庭院常见常绿乔木,扁平小枝是识别要点。种子(柏子仁)为安神药。",
       "source": "中国植物志 / 本草纲目",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Platycladus orientalis",
         "Platycladus orientalis",
@@ -20106,7 +19856,6 @@
       ],
       "description": "剧毒伞形科植物,含毒芹碱,误食数小时即致呼吸麻痹。茎上紫斑是重要识别点,严禁采食。",
       "source": "中国毒植物志 / 急救医学",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Conium maculatum",
         "Conium maculatum",
@@ -20198,7 +19947,6 @@
       ],
       "description": "华北山地常见毛茛科草本,花如白雾。全株含小檗碱类生物碱,有小毒,可药用但不可随意采食。",
       "source": "中国植物志 / 中国毒植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Thalictrum aquilegifolium",
         "Thalictrum aquilegifolium",
@@ -20298,7 +20046,6 @@
       ],
       "description": "华北湿地常见茄科藤本,红果诱人但含龙葵碱。易与可食果实混淆,严禁采食。",
       "source": "中国毒植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Solanum dulcamara",
         "Solanum dulcamara",
@@ -20392,7 +20139,6 @@
       ],
       "description": "华北田野常见大戟科草本,白色乳汁刺激性极强。皮肤接触即红肿起疱,须戴手套处理。",
       "source": "中国毒植物志 / 中国植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Euphorbia lathyris",
         "Euphorbia lathyris",
@@ -20482,7 +20228,6 @@
       ],
       "description": "华北村边荒地杂草,气味浓烈可作驱虫药,但含驱蛔素有毒,不可当野菜食用。",
       "source": "中国植物志 / 中国毒植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Dysphania ambrosioides",
         "Dysphania ambrosioides",
@@ -20575,7 +20320,6 @@
       ],
       "description": "含吡咯里西啶生物碱的豆科植物,对肝脏有慢性毒性。荚果似豆但不可食,严禁采集。",
       "source": "中国毒植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Crotalaria pallida",
         "Crotalaria pallida",
@@ -20665,7 +20409,6 @@
       ],
       "description": "华北山地早春开花毛茛科草本,含白头翁素,新鲜时刺激性强。花美但全株有小毒,不可采食。",
       "source": "中国植物志 / 中国毒植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Anemone cathayensis",
         "Anemone cathayensis",
@@ -20755,7 +20498,6 @@
       ],
       "description": "北方高山湿地成片开花的毛茛科草本,金花灿烂。含原白头翁素,新鲜时刺激有毒,须煮沸后毒性减弱但仍不宜食用。",
       "source": "中国植物志 / 中国毒植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Caltha palustris",
         "Caltha palustris",
@@ -20851,7 +20593,6 @@
       ],
       "description": "南方常见园林植物,北方亦有栽培。全株含强心苷,误食数粒种子即可致死,严禁采食或药用。",
       "source": "中国毒植物志 / 急救医学",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Cascabela thevetia",
         "Cascabela thevetia",
@@ -20944,7 +20685,6 @@
       ],
       "description": "华北山地剧毒毛茛科草本,块根含乌头碱,民间泡酒误用致死案例多。花美切勿采食。",
       "source": "中国毒植物志 / 急救医学",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Aconitum kusnezoffii",
         "Aconitum kusnezoffii",
@@ -21037,7 +20777,6 @@
       ],
       "description": "含强心苷与乳汁的萝藦科植物,花色艳丽常被栽培。全株有毒,乳汁入眼刺痛,勿采食。",
       "source": "中国毒植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Asclepias curassavica",
         "Asclepias curassavica",
@@ -21132,7 +20871,6 @@
       ],
       "description": "华北湿地常见小草本,为清热解毒中药(治蛇伤)。含山梗菜碱,生用有小毒,须遵医嘱。",
       "source": "中国植物志 / 中药学",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Lobelia chinensis",
         "Lobelia chinensis",
@@ -21226,7 +20964,6 @@
       ],
       "description": "华北山地常见菊科药材,根茎为燥湿健脾要药。药后残茎有结节,可采摘但须遵医嘱使用。",
       "source": "中国植物志 / 中国药典",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Atractylodes lancea",
         "Atractylodes lancea",
@@ -21318,7 +21055,6 @@
       ],
       "description": "华北山地常用安神药材,根有浓烈缬草气味。民间用于安神助眠,须遵医嘱使用。",
       "source": "中国植物志 / 中药学",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Valeriana officinalis",
         "Valeriana officinalis",
@@ -21413,7 +21149,6 @@
       ],
       "description": "华北山坡常见草本科药用植物,俗称圣约翰草。叶片对光可见透亮腺点是识别要点。",
       "source": "中国植物志 / 中药学",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Hypericum perforatum",
         "Hypericum perforatum",
@@ -21508,7 +21243,6 @@
       ],
       "description": "全国田野常见的清热解毒药草,穗状花序细长如鞭。民间用于蛇伤、消肿,须遵医嘱。",
       "source": "中国植物志 / 中药学",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Verbena officinalis",
         "Verbena officinalis",
@@ -21603,7 +21337,6 @@
       ],
       "description": "华北林缘常见止血药草,羽状复叶大小叶相间。民间称\"脱力草\",可补虚止血,须遵医嘱。",
       "source": "中国植物志 / 中药学",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Agrimonia pilosa",
         "Agrimonia pilosa",
@@ -21697,7 +21430,6 @@
       ],
       "description": "华北湿地常见蕨类,茎如节节草。为清热利尿药材,但含问荆碱,不可长期服用,须遵医嘱。",
       "source": "中国植物志 / 中药学",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Equisetum arvense",
         "Equisetum arvense",
@@ -21792,7 +21524,6 @@
       ],
       "description": "华北沙地路旁常见刺果草本,果实硬刺扎脚。为平肝明目药材,须遵医嘱使用。",
       "source": "中国植物志 / 中药学",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Tribulus terrestris",
         "Tribulus terrestris",
@@ -21886,7 +21617,6 @@
       ],
       "description": "全国田野常见伞形科药材,果实为燥湿杀虫要药\"蛇床子\"。形态易与毒芹混淆,食用须格外谨慎。",
       "source": "中国植物志 / 中药学",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Cnidium monnieri",
         "Cnidium monnieri",
@@ -21978,7 +21708,6 @@
       ],
       "description": "华北山地轮叶草本药材,民间称\"斩龙剑\"。全草祛风湿、解蛇毒,须遵医嘱。",
       "source": "中国植物志 / 中药学",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Veronicastrum sibiricum",
         "Veronicastrum sibiricum",
@@ -22075,7 +21804,6 @@
       ],
       "description": "华北早春田野常见十字花科小野菜,嫩苗有辣椒般辛味,是春荒野菜之一。焯水后凉拌。",
       "source": "中国植物志 / 救荒本草",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Lepidium apetalum",
         "Lepidium apetalum",
@@ -22172,7 +21900,6 @@
       ],
       "description": "华北草地常见的三叶草,嫩叶与白花可食。少量生食即可,量大宜焯熟去氰苷。",
       "source": "中国植物志 / 救荒本草",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Trifolium repens",
         "Trifolium repens",
@@ -22272,7 +21999,6 @@
       ],
       "description": "华北湿地常见野菜,叶如竹叶、花似蓝蝶。嫩茎叶可炒食或做汤,亦为清热解毒中药。",
       "source": "中国植物志 / 野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Commelina communis",
         "Commelina communis",
@@ -22367,7 +22093,6 @@
       ],
       "description": "华北麦田早春常见小野菜,蓝花成片如星。嫩苗可焯水凉拌,是春季应时野菜。",
       "source": "中国植物志 / 野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Veronica polita",
         "Veronica polita",
@@ -22465,7 +22190,6 @@
       ],
       "description": "华北林下林缘常见唇形科野菜,嫩茎叶有清香,花可做汤。与益母草同科,可作春季疏野菜。",
       "source": "中国植物志 / 野菜图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Lamium barbatum",
         "Lamium barbatum",
@@ -22577,7 +22301,6 @@
       ],
       "description": "全国田垄阴湿处极常见的春野菜(\"鹅儿肠\"),嫩苗柔嫩味鲜。含皂苷,焯水后炒食为佳。",
       "source": "中国植物志 / 救荒本草",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Stellaria media",
         "Stellaria media",
@@ -22675,7 +22398,6 @@
       ],
       "description": "华北早春阴湿处小野菜,味似荠菜而清香。嫩苗可凉拌、做汤,是常见春荒野菜。",
       "source": "中国植物志 / 救荒本草",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Cardamine hirsuta",
         "Cardamine hirsuta",
@@ -22798,7 +22520,6 @@
       ],
       "description": "华北湿地湖滩常见菊科野菜,早春嫩茎清香脆嫩,是\"芦蒿\"正宗来源。炒食或焯后凉拌。",
       "source": "中国植物志·菊科 / 野生蔬菜",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Artemisia selengensis",
         "Artemisia selengensis",
@@ -22895,7 +22616,6 @@
       ],
       "description": "全国林下常见\"假草莓\",花黄果红。果虽可食但寡味,且有小毒,不可当野草莓大量采食。",
       "source": "中国植物志 / 中国毒植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Potentilla indica",
         "Potentilla indica",
@@ -22990,7 +22710,6 @@
       ],
       "description": "华北山坡常见带刺野果,红果酸甜。茎上倒钩刺扎手,采时戴手套,盐水泡后再食。",
       "source": "中国植物志 / 野菜野果图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Rubus parvifolius",
         "Rubus parvifolius",
@@ -23088,7 +22807,6 @@
       ],
       "description": "华北林缘常见药用灌木,红色浆果须熟透方可制酱。生果含氰苷,采食须谨慎。",
       "source": "中国植物志 / 中药学",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Sambucus williamsii",
         "Sambucus williamsii",
@@ -23182,7 +22900,6 @@
       ],
       "description": "华北村旁常见乔木,叶基三出脉是识别要点。秋季核果成熟微甜可食,亦可作行道树。",
       "source": "中国植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Celtis sinensis",
         "Celtis sinensis",
@@ -23274,7 +22991,6 @@
       ],
       "description": "北方山地湿生忍冬科野果,蓝黑果覆白粉,酸甜富含花青素。是著名寒地\"蓝靛果\"资源。",
       "source": "中国植物志 / 野菜野果图鉴",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Lonicera caerulea",
         "Lonicera caerulea",
@@ -23357,7 +23073,6 @@
       ],
       "description": "华北山地与园林常见观赏灌木,夏开粉色花串。是北方优良乡土花灌木。",
       "source": "中国植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Spiraea salicifolia",
         "Spiraea salicifolia",
@@ -23440,7 +23155,6 @@
       ],
       "description": "华北山地野生并广植庭园的著名春花灌木,花如锦带。花色随开放由白转粉,观赏价值高。",
       "source": "中国植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Weigela florida",
         "Weigela florida",
@@ -23525,7 +23239,6 @@
       ],
       "description": "华北山地野生并广泛栽培的春季观花灌木,绿色细枝与金花相映成趣,尤重瓣者观赏期长。",
       "source": "中国植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Kerria japonica",
         "Kerria japonica",
@@ -23611,7 +23324,6 @@
       ],
       "description": "华北常见绿化观赏树种,新叶鲜红、冬季红果。为城市与山地绿化主力,花有特殊气味。",
       "source": "中国植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Photinia serratifolia",
         "Photinia serratifolia",
@@ -23695,7 +23407,6 @@
       ],
       "description": "华北山地原产的传统名花,花白清香。因花形似梅花、产自北方而得名,是优良的乡土观赏灌木。",
       "source": "中国植物志",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Philadelphus pekinensis",
         "Philadelphus pekinensis",
@@ -23789,8 +23500,8 @@
         "flower"
       ],
       "description": "华北山地常见铁线莲,藤细如丝、花白生棉毛。全株含刺激性原白头翁素,误食致口舌灼痛,勿采食。",
-      "source": "中国植物志·毛茛科 / 有毒植物学",
-      "reviewer": "XX(植物学)"
+      "source": "中国植物志·毛茛科 / 有毒植物学"
+
     },
     {
       "id": "plant_euphorbia_helio",
@@ -23886,7 +23597,6 @@
       ],
       "description": "田间荒地极常见,茎顶五枝如云、折断流白浆。全株有毒,白浆刺激性大,勿采食、勿使入眼。",
       "source": "中国植物志·大戟科 / 有毒植物学",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Euphorbia helioscopia",
         "泽漆 plant"
@@ -23979,8 +23689,8 @@
         "flower"
       ],
       "description": "溪边湿地常见毛茛,花黄如金、叶如虎爪。全株含原白头翁素,误食致口舌灼痛,民间\"发泡\"用其汁极危险。",
-      "source": "中国植物志·毛茛科 / 有毒植物学",
-      "reviewer": "XX(植物学)"
+      "source": "中国植物志·毛茛科 / 有毒植物学"
+
     },
     {
       "id": "plant_physochlaina",
@@ -24081,7 +23791,6 @@
       ],
       "description": "含莨菪碱的剧毒植物,全株黏臭、花黄绿有紫脉。误食致瞳孔散大、狂躁昏迷,严禁采食。",
       "source": "中国植物志·茄科 / 有毒植物学",
-      "reviewer": "XX(植物学)",
       "photo_sources": [
         "Hyoscyamus niger",
         "天仙子 plant"
@@ -24172,8 +23881,8 @@
         "flower"
       ],
       "description": "雨后成片开白花的韭兰,叶似细葱极易误认。鳞茎含石蒜碱,切勿当葱蒜采食。",
-      "source": "中国植物志·石蒜科 / 有毒植物学",
-      "reviewer": "XX(植物学)"
+      "source": "中国植物志·石蒜科 / 有毒植物学"
+
     },
     {
       "id": "plant_narcissus",
@@ -24258,8 +23967,8 @@
         "flower"
       ],
       "description": "春节常见水仙,鳞茎形似蒜头,含石蒜碱。误食致呕吐腹泻,切勿与蒜头混淆食用。",
-      "source": "中国植物志·石蒜科 / 有毒植物学",
-      "reviewer": "XX(植物学)"
+      "source": "中国植物志·石蒜科 / 有毒植物学"
+
     },
     {
       "id": "plant_erythrina",
@@ -24343,8 +24052,8 @@
         "flower"
       ],
       "description": "庭园观赏乔木,花红似象牙、种子鲜红诱人却含毒。勿捡食其红色种子,以免中毒。",
-      "source": "中国植物志·豆科 / 有毒植物学",
-      "reviewer": "XX(植物学)"
+      "source": "中国植物志·豆科 / 有毒植物学"
+
     },
     {
       "id": "plant_croton",
@@ -24430,8 +24139,8 @@
         "fruit"
       ],
       "description": "药圃栽培的小乔木,种子含剧毒巴豆油,2-3 粒即可致剧烈腹泻脱水。严禁采食或自行药用。",
-      "source": "中国植物志·大戟科 / 有毒植物学",
-      "reviewer": "XX(植物学)"
+      "source": "中国植物志·大戟科 / 有毒植物学"
+
     },
     {
       "id": "plant_jatropha",
@@ -24515,8 +24224,8 @@
         "fruit"
       ],
       "description": "常见能源树种,种子形似坚果却含毒蛋白。误食致呕吐脱水,严禁当坚果食用。",
-      "source": "中国植物志·大戟科 / 有毒植物学",
-      "reviewer": "XX(植物学)"
+      "source": "中国植物志·大戟科 / 有毒植物学"
+
     },
     {
       "id": "plant_aleurites",
@@ -24603,8 +24312,8 @@
         "fruit"
       ],
       "description": "产桐油的乔木,果似青桐子。桐油有毒不可食用,误食致剧烈吐泻,勿与食用油混淆。",
-      "source": "中国植物志·大戟科 / 有毒植物学",
-      "reviewer": "XX(植物学)"
+      "source": "中国植物志·大戟科 / 有毒植物学"
+
     },
     {
       "id": "plant_daphniphyllum",
@@ -24688,8 +24397,8 @@
         "fruit"
       ],
       "description": "南方山地常绿小乔木,叶簇生枝顶、果蓝黑成串。全株有毒,野果不可采食。",
-      "source": "中国植物志·交让木科 / 有毒植物学",
-      "reviewer": "XX(植物学)"
+      "source": "中国植物志·交让木科 / 有毒植物学"
+
     },
     {
       "id": "plant_lonicera_maackii",
@@ -24776,8 +24485,8 @@
         "fruit"
       ],
       "description": "北方公园灌丛常见,花白黄成对、浆果鲜红诱人。浆果有毒,勿采食,尤须看护儿童。",
-      "source": "中国植物志·忍冬科 / 有毒植物学",
-      "reviewer": "XX(植物学)"
+      "source": "中国植物志·忍冬科 / 有毒植物学"
+
     },
     {
       "id": "plant_agastache",
@@ -24860,8 +24569,8 @@
         "flower"
       ],
       "description": "芳香草本,叶对生、气味浓烈,为解暑化湿常用药。野外可辨识,采作解暑用须认准特征。",
-      "source": "中国植物志·唇形科 / 药用植物学",
-      "reviewer": "XX(药用植物学)"
+      "source": "中国植物志·唇形科 / 药用植物学"
+
     },
     {
       "id": "plant_rehmannia",
@@ -24943,8 +24652,8 @@
         "flower"
       ],
       "description": "著名滋阴药,叶基生成莲座、全株白毛、花紫红筒状。根入药,野外辨识须见花叶全套特征。",
-      "source": "中国植物志·玄参科 / 药用植物学",
-      "reviewer": "XX(药用植物学)"
+      "source": "中国植物志·玄参科 / 药用植物学"
+
     },
     {
       "id": "plant_achyranthes",
@@ -25024,8 +24733,8 @@
         "whole"
       ],
       "description": "根入药的苋科草本,茎节膨大如牛膝是识别关键。为活血祛瘀常用药,采根须遵医嘱。",
-      "source": "中国植物志·苋科 / 药用植物学",
-      "reviewer": "XX(药用植物学)"
+      "source": "中国植物志·苋科 / 药用植物学"
+
     },
     {
       "id": "plant_imperata",
@@ -25107,8 +24816,8 @@
         "whole"
       ],
       "description": "常见茅草,根茎白色有节、味甜,民间野外可嚼取甜并应急止血。根入药为清热利尿要药。",
-      "source": "中国植物志·禾本科 / 药用植物学",
-      "reviewer": "XX(药用植物学)"
+      "source": "中国植物志·禾本科 / 药用植物学"
+
     },
     {
       "id": "plant_plantago",
@@ -25190,8 +24899,8 @@
         "whole"
       ],
       "description": "路旁极常见,叶基生有弧形脉、抽细长穗。全草入药清热利尿,野外辨识度高,踩踏处多有。",
-      "source": "中国植物志·车前科 / 药用植物学",
-      "reviewer": "XX(药用植物学)"
+      "source": "中国植物志·车前科 / 药用植物学"
+
     },
     {
       "id": "plant_dioscorea",
@@ -25272,8 +24981,8 @@
         "whole"
       ],
       "description": "即山药野生种,藤右旋、叶腋生黑色零余子。根入药健脾益肺,采掘须认准叶形,勿误挖毒薯。",
-      "source": "中国植物志·薯蓣科 / 药用植物学",
-      "reviewer": "XX(药用植物学)"
+      "source": "中国植物志·薯蓣科 / 药用植物学"
+
     },
     {
       "id": "plant_vitex",
@@ -25354,8 +25063,8 @@
         "leaf"
       ],
       "description": "北方山坡常见灌木,掌状复叶 5 小叶、花淡紫。叶果入药止咳化痰,亦为荆条蜜源。",
-      "source": "中国植物志·马鞭草科 / 药用植物学",
-      "reviewer": "XX(药用植物学)"
+      "source": "中国植物志·马鞭草科 / 药用植物学"
+
     },
     {
       "id": "plant_astragalus_membranaceus",
@@ -25435,8 +25144,8 @@
         "flower"
       ],
       "description": "名贵补气药原植物,羽状复叶小叶多、花淡黄成串。根长而甜,入药补气固表,采挖须遵医嘱。",
-      "source": "中国植物志·豆科 / 药用植物学",
-      "reviewer": "XX(药用植物学)"
+      "source": "中国植物志·豆科 / 药用植物学"
+
     },
     {
       "id": "plant_pueraria",
@@ -25518,8 +25227,8 @@
         "flower"
       ],
       "description": "常见缠绕藤本,三出复叶、花紫红、块根肥大含淀粉。根入药解肌退热,可制葛粉充饥。",
-      "source": "中国植物志·豆科 / 药用植物学",
-      "reviewer": "XX(药用植物学)"
+      "source": "中国植物志·豆科 / 药用植物学"
+
     },
     {
       "id": "plant_vitis",
@@ -25623,7 +25332,6 @@
       ],
       "description": "华北山林木质藤本,卷须缠绕、果成串紫黑。果酸甜可食亦可酿酒,采时认准卷须以免误采毒果。",
       "source": "中国植物志·葡萄科 / 野生果树",
-      "reviewer": "XX(果树学)",
       "photo_sources": [
         "Vitis amurensis",
         "山葡萄 plant"
@@ -25716,8 +25424,8 @@
         "fruit"
       ],
       "description": "山坡灌丛常见,茎有倒刺、果为红色聚合果。初夏成熟味酸甜,采时戴手套防刺。",
-      "source": "中国植物志·蔷薇科 / 野生果树",
-      "reviewer": "XX(果树学)"
+      "source": "中国植物志·蔷薇科 / 野生果树"
+
     },
     {
       "id": "plant_actinidia",
@@ -25818,7 +25526,6 @@
       ],
       "description": "北方山林大藤本,果绿色无毛、味甜多汁、维C 极高。秋季果软时采摘鲜食最佳。",
       "source": "中国植物志·猕猴桃科 / 野生果树",
-      "reviewer": "XX(果树学)",
       "photo_sources": [
         "Actinidia arguta",
         "软枣猕猴桃 plant"
@@ -25931,7 +25638,6 @@
       ],
       "description": "北方山地乔木,叶羽状深裂、枝有刺、果红有白点。果酸甜可食,助消化,亦为常用中药。",
       "source": "中国植物志·蔷薇科 / 野生果树",
-      "reviewer": "XX(果树学)",
       "photo_sources": [
         "Crataegus pinnatifida",
         "山楂 plant"
@@ -26044,7 +25750,6 @@
       ],
       "description": "北方山坡极常见灌木,枝有刺、果小酸甜。果可食,核仁入药名酸枣仁,安神助眠。",
       "source": "中国植物志·鼠李科 / 野生果树",
-      "reviewer": "XX(果树学)",
       "photo_sources": [
         "Ziziphus jujuba var. spinosa",
         "Ziziphus jujuba",
@@ -26155,7 +25860,6 @@
       ],
       "description": "北方林下常见;关键区分蛇莓(花黄、果面红点凸起,不可食)与本种(花白、果香)。",
       "source": "中国植物志·蔷薇科 / 野生果树",
-      "reviewer": "XX(果树学)",
       "photo_sources": [
         "Fragaria vesca",
         "野草莓 plant"
@@ -26247,8 +25951,8 @@
         "fruit"
       ],
       "description": "北方山地乔木,树皮光滑紫红、春先开花。果小肉薄可食果肉,核仁入药但含苷须炮制,勿生食。",
-      "source": "中国植物志·蔷薇科 / 野生果树",
-      "reviewer": "XX(果树学)"
+      "source": "中国植物志·蔷薇科 / 野生果树"
+
     },
     {
       "id": "plant_cerasus",
@@ -26335,8 +26039,8 @@
         "fruit"
       ],
       "description": "山林乔木,春开白花、初夏结小红果。果酸甜可食,采时认准味甜者,苦味野樱勿食。",
-      "source": "中国植物志·蔷薇科 / 野生果树",
-      "reviewer": "XX(果树学)"
+      "source": "中国植物志·蔷薇科 / 野生果树"
+
     },
     {
       "id": "plant_potentilla_chin",
@@ -26442,7 +26146,6 @@
       ],
       "description": "山坡荒地常见,羽状复叶、叶背白绵毛、花黄。嫩叶焯水可食,根亦可煮食,微苦败火。",
       "source": "中国植物志·蔷薇科 / 野生蔬菜",
-      "reviewer": "XX(园艺学)",
       "photo_sources": [
         "Potentilla chinensis",
         "委陵菜 plant"
@@ -26534,8 +26237,8 @@
         "whole"
       ],
       "description": "池沼沟渠水生草本,叶基生卵形、花白成圆锥序。嫩叶焯水可食,球茎入药利水渗湿。",
-      "source": "中国植物志·泽泻科 / 野生蔬菜",
-      "reviewer": "XX(园艺学)"
+      "source": "中国植物志·泽泻科 / 野生蔬菜"
+
     },
     {
       "id": "plant_typha",
@@ -26623,8 +26326,8 @@
         "whole"
       ],
       "description": "池沼河滩常见,叶狭长直立、顶生蒲棒。春季嫩芽即\"蒲菜\"可炒食,根茎含淀粉可煮食充饥。",
-      "source": "中国植物志·香蒲科 / 野生蔬菜",
-      "reviewer": "XX(园艺学)"
+      "source": "中国植物志·香蒲科 / 野生蔬菜"
+
     },
     {
       "id": "plant_rhododendron",
@@ -26710,8 +26413,8 @@
         "flower"
       ],
       "description": "北方山地杜鹃花,花白而密、叶片革质。全株含梫木毒素,严禁采食,连其花蜜亦可致中毒。",
-      "source": "中国植物志·杜鹃花科 / 有毒植物学",
-      "reviewer": "XX(植物学)"
+      "source": "中国植物志·杜鹃花科 / 有毒植物学"
+
     },
     {
       "id": "plant_lagerstroemia",
@@ -26791,8 +26494,8 @@
         "flower"
       ],
       "description": "庭院公园常见观赏树,树皮光滑剥落、花皱缩如纸,花期长达百日故名\"百日红\"。以观赏为主。",
-      "source": "中国植物志·千屈菜科 / 园林观赏",
-      "reviewer": "XX(园林学)"
+      "source": "中国植物志·千屈菜科 / 园林观赏"
+
     }
   ]
 }

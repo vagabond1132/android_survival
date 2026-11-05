@@ -287,8 +287,9 @@ QVariantMap KnotService::markLearned(const QString& id) {
     const char* ctx = "KnotService::markLearned";
 
     if (!m_knots.contains(id)) {
+        Logger::warn(QString("%1: 目录里没有这个绳结: %2").arg(ctx, id));
         return toQVariant(Err<bool>(ServiceErrorCode::NotFound,
-                                      QStringLiteral("绳结不存在: %1").arg(id), ctx));
+                                      QStringLiteral("这个绳结在目录里没有"), ctx));
     }
     if (auto e = dbOpenCheck(m_db, Database::Name::Survival, ctx)) return *e;
 
@@ -305,7 +306,7 @@ QVariantMap KnotService::markLearned(const QString& id) {
     if (rc != DmlResult::Ok && rc != DmlResult::AlreadyExists) {
         // 失败已由 DbHelper log, 此处返回 Err
         return toQVariant(Err<bool>(ServiceErrorCode::DbError,
-                                      QStringLiteral("knot_progress 写入失败"), ctx));
+                                      QStringLiteral("这个绳结的进度没记到本机"), ctx));
     }
 
     emit progressChanged();

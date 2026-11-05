@@ -68,7 +68,6 @@
       ],
       "description": "中国南方最危险的毒蛇之一。神经毒素，一次排毒可致数人死亡。常夜间活动于水边、稻田附近。",
       "source": "中国蛇类志 / 中国毒蛇数据库",
-      "reviewer": "XX 教授（动物学）",
       "photo_sources": [
         "Bungarus multicinctus",
         "银环蛇 plant"
@@ -134,7 +133,6 @@
       ],
       "description": "中国长江以南最常见的剧毒蛇之一。血液毒素为主，含神经毒素。排毒量大，攻击距离可达体长 1/3-1/2。",
       "source": "中国蛇类志",
-      "reviewer": "XX 教授（动物学）",
       "photo_sources": [
         "Deinagkistrodon acutus",
         "五步蛇（尖吻蝮） plant"
@@ -203,7 +201,6 @@
       ],
       "description": "中国南方常见剧毒蛇。被激怒时会直立颈部扩张呈眼镜状，故名眼镜蛇。混合毒素（神经毒+细胞毒）。",
       "source": "中国蛇类志",
-      "reviewer": "XX 教授（动物学）",
       "photo_sources": [
         "Naja atra",
         "舟山眼镜蛇 plant"
@@ -268,7 +265,6 @@
       ],
       "description": "世界最大毒蛇。一次排毒量可杀死 20+ 人。性格凶猛，会主动追击。南方山区极危险。",
       "source": "中国蛇类志",
-      "reviewer": "XX 教授（动物学）",
       "photo_sources": [
         "Ophiophagus hannah",
         "眼镜王蛇 plant"
@@ -338,7 +334,6 @@
       ],
       "description": "中国常见毒蛇，分布广。因通体翠绿，常伪装于竹林和灌木丛中不易发现。血液毒素为主。",
       "source": "中国蛇类志",
-      "reviewer": "XX 教授（动物学）",
       "photo_sources": [
         "Trimeresurus stejnegeri",
         "竹叶青 plant"
@@ -403,7 +398,6 @@
       ],
       "description": "中国北方最常见的毒蛇。血液毒素为主。中国北方徒步、露营时需特别注意。",
       "source": "中国蛇类志",
-      "reviewer": "XX 教授（动物学）",
       "photo_sources": [
         "Gloydius brevicaudus",
         "短尾蝮 plant"
@@ -471,7 +465,6 @@
       ],
       "description": "南方山区常见毒蛇。头形似烙铁而得名。血液毒素强，攻击性强。",
       "source": "中国蛇类志",
-      "reviewer": "XX 教授（动物学）",
       "photo_sources": [
         "Protobothrops mucrosquamatus",
         "原矛头蝮（烙铁头） plant"
@@ -534,7 +527,6 @@
       ],
       "description": "华南地区常见毒蛇。唇部白色是主要识别特征。血液毒素为主。",
       "source": "中国蛇类志",
-      "reviewer": "XX 教授（动物学）",
       "photo_sources": [
         "Trimeresurus albolabris",
         "白唇竹叶青 plant"
@@ -594,7 +586,6 @@
       ],
       "description": "南方山区剧毒蛇。凝血障碍严重，伤口出血不止。需立即就医。",
       "source": "中国蛇类志",
-      "reviewer": "XX 教授（动物学）",
       "photo_sources": [
         "Daboia siamensis",
         "圆斑蝰 plant"
@@ -649,7 +640,6 @@
       ],
       "description": "国内最常见的蛇之一。曾被认为无毒，现证实为有毒蛇（达氏腺毒素）。多数咬伤症状轻微，少数严重。",
       "source": "中国蛇类志",
-      "reviewer": "XX 教授（动物学）",
       "photo_sources": [
         "Rhabdophis tigrinus",
         "虎斑颈槽蛇 plant"
@@ -706,7 +696,6 @@
       ],
       "description": "中国最危险的毒蘑菇之一。通体白色，伪装性强。致死率高达 90% 以上。常被误认为可食用的白色蘑菇。",
       "source": "中国真菌志 / 中国疾控中心",
-      "reviewer": "XX 教授（真菌学）",
       "photo_sources": [
         "Amanita verna",
         "致命白毒伞 plant"
@@ -763,7 +752,6 @@
       ],
       "description": "中国南方常见毒蘑菇，致死率高。因受伤变红的特征曾被误认为可食。",
       "source": "中国真菌志",
-      "reviewer": "XX 教授（真菌学）",
       "photo_sources": [
         "Russula subnigricans",
         "亚稀褶红菇 plant"
@@ -818,7 +806,6 @@
       ],
       "description": "剧毒鹅膏属蘑菇之一。含鹅膏毒素，破坏肝细胞。致死率极高。",
       "source": "中国真菌志",
-      "reviewer": "XX 教授（真菌学）",
       "photo_sources": [
         "Amanita subjunquillea",
         "黄盖鹅膏 plant"
@@ -875,7 +862,6 @@
       ],
       "description": "中国南方常见毒蘑菇。菌褶变绿是识别特征。毒性较轻，但常被误食。",
       "source": "中国真菌志",
-      "reviewer": "XX 教授（真菌学）",
       "photo_sources": [
         "Chlorophyllum molybdites",
         "大青褶伞 plant"
@@ -933,7 +919,6 @@
       ],
       "description": "中国最危险的毒植物之一。全株剧毒，常与金银花混淆导致中毒。每年南方均有中毒事件报道。",
       "source": "中国植物志",
-      "reviewer": "XX 教授（植物学）",
       "photo_sources": [
         "Gelsemium elegans",
         "钩吻（断肠草） plant"
@@ -986,7 +971,6 @@
       ],
       "description": "中国常见剧毒植物。全株有毒，果实易被儿童误食。",
       "source": "中国植物志",
-      "reviewer": "XX 教授（植物学）",
       "photo_sources": [
         "Datura stramonium",
         "曼陀罗 plant"
@@ -1049,7 +1033,6 @@
       ],
       "description": "中国南方常见的观赏植物。全株有毒，含有强心苷类毒素。北方少见，南方多见。",
       "source": "中国植物志",
-      "reviewer": "XX 教授（植物学）",
       "photo_sources": [
         "Nerium oleander",
         "夹竹桃 plant"
@@ -1123,7 +1106,6 @@
       ],
       "description": "极易与可食水芹、芹菜混淆。剧毒，全株含毒芹毒素。致死率极高。",
       "source": "中国植物志",
-      "reviewer": "XX 教授（植物学）",
       "photo_sources": [
         "Cicuta virosa",
         "毒芹 plant"
@@ -1175,7 +1157,6 @@
       ],
       "description": "根部酷似人参，常被误食。紫红色根有毒（白色根较安全）。中国山区常见。",
       "source": "中国植物志",
-      "reviewer": "XX 教授（植物学）",
       "photo_sources": [
         "Phytolacca acinosa",
         "商陆 plant"
@@ -1236,7 +1217,6 @@
       ],
       "description": "常见观赏植物。果实有轻微毒性，误食后症状轻微。",
       "source": "中国植物志",
-      "reviewer": "XX 教授（植物学）",
       "photo_sources": [
         "Rhodotypos scandens",
         "鸡麻 plant"
@@ -1294,7 +1274,6 @@
       ],
       "description": "中国山区林区最危险的虫媒。可传播森林脑炎、莱姆病等严重疾病。每年 4-10 月活跃，叮咬后不可硬拽。",
       "source": "中国疾控中心",
-      "reviewer": "XX 主任医师（感染科）",
       "photo_sources": [
         "Ixodidae",
         "蜱虫 plant"
@@ -1350,7 +1329,6 @@
       ],
       "description": "中国常见危险蜂类。秋季活跃，攻击性强。过敏体质被蛰可致过敏性休克死亡。",
       "source": "中国疾控中心",
-      "reviewer": "XX 主任医师",
       "photo_sources": [
         "Vespa",
         "胡蜂（虎头蜂） plant"
@@ -1414,7 +1392,6 @@
       ],
       "description": "中国南方山区常见。叮咬时无痛，吸附后吸血。不可硬拽（会留下吸盘）。",
       "source": "中国疾控中心",
-      "reviewer": "XX 主任医师",
       "photo_sources": [
         "Haemadipsa",
         "蚂蟥（山蛭） plant"
@@ -1479,7 +1456,6 @@
       ],
       "description": "中国南方近年入侵物种。攻击性强，蛰伤后剧烈疼痛和脓疱。过敏者可致死。",
       "source": "中国疾控中心",
-      "reviewer": "XX 主任医师",
       "photo_sources": [
         "Solenopsis invicta",
         "红火蚁 plant"
@@ -1535,7 +1511,6 @@
       ],
       "description": "中国常见节肢动物。山区、潮湿处多见。咬伤后剧痛但不致命。",
       "source": "中国疾控中心",
-      "reviewer": "XX 主任医师",
       "photo_sources": [
         "Scolopendromorpha",
         "蜈蚣 plant"
@@ -1588,7 +1563,6 @@
       ],
       "description": "中国西北、华北常见。蛰伤后剧痛，多数不致命，少数过敏者严重。",
       "source": "中国疾控中心",
-      "reviewer": "XX 主任医师",
       "photo_sources": [
         "Scorpiones",
         "蝎子 plant"
@@ -1655,7 +1629,6 @@
       ],
       "description": "中国南方常见。体液含强酸性毒素，接触皮肤后引起线性皮炎。不要拍打！",
       "source": "中国疾控中心",
-      "reviewer": "XX 主任医师",
       "photo_sources": [
         "Paederus",
         "毒隐翅虫 plant"
@@ -1725,7 +1698,6 @@
       ],
       "description": "中国南方重要病媒生物。传播登革热、寨卡等疾病。白天活跃，防蚊很重要。",
       "source": "中国疾控中心",
-      "reviewer": "XX 主任医师",
       "photo_sources": [
         "Aedes",
         "伊蚊（登革热传播） plant"
@@ -1774,7 +1746,6 @@
       ],
       "description": "中国山区常见大型野生动物。具攻击性，受伤或带崽的母猪尤其危险。可造成严重撕裂伤。",
       "source": "中国动物志",
-      "reviewer": "XX 教授（动物学）",
       "photo_sources": [
         "Sus scrofa",
         "野猪 plant"
@@ -1847,7 +1818,6 @@
       ],
       "description": "中国保护动物。受伤或带崽时极具攻击性。遭遇后应缓慢后退，不要奔跑。",
       "source": "中国动物志",
-      "reviewer": "XX 教授（动物学）",
       "photo_sources": [
         "Ursus thibetanus",
         "黑熊 plant"
@@ -1907,7 +1877,6 @@
       ],
       "description": "中国西部高原常见。是鼠疫的主要宿主！严禁接触、喂食或靠近尸体。腺鼠疫致死率极高。",
       "source": "中国疾控中心 / 动物志",
-      "reviewer": "XX 主任医师（感染科）",
       "photo_sources": [
         "Marmota",
         "旱獭 plant"
@@ -1965,7 +1934,6 @@
       ],
       "description": "种子鲜艳美丽，常被误作装饰品。但含剧毒蛋白质（相思豆毒素）。1-2 颗即可致死。",
       "source": "中国植物志",
-      "reviewer": "XX 教授（植物学）",
       "photo_sources": [
         "Abrus precatorius",
         "相思豆 plant"
@@ -2022,7 +1990,6 @@
       ],
       "description": "中国西部高山常见剧毒植物。全株剧毒，特别是根部。古代著名毒药（'鸩毒'）。",
       "source": "中国植物志",
-      "reviewer": "XX 教授（植物学）",
       "photo_sources": [
         "Aconitum",
         "乌头 plant"

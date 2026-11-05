@@ -110,7 +110,6 @@
       ],
       "description": "北方 4-10 月高发。SFTS(发热伴血小板减少综合征)主要传播媒介,致死率 10-30%。",
       "source": "中国媒介生物学 / 传染病学",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Haemaphysalis longicornis",
         "蜱虫 insect"
@@ -207,7 +206,6 @@
       ],
       "description": "7-9 月活动高峰。毒性比蜜蜂强 5-10 倍。北方山区秋季多发。",
       "source": "中国昆虫志",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Vespa mandarinia",
         "胡蜂(虎头蜂) insect"
@@ -317,7 +315,6 @@
       ],
       "description": "华北大型蜈蚣,藏于石缝砖隙,夜出捕食。咬伤剧痛红肿,翻石搬物须戴手套。",
       "source": "中国动物志·多足纲 / 急救医学",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Scolopendra subspinipes",
         "少棘蜈蚣 insect"
@@ -429,7 +426,6 @@
       ],
       "description": "华北干旱山地常见蝎子,白天藏石缝,夜间捕猎。蛰伤剧痛,夜宿须检查鞋袜被褥。",
       "source": "中国动物志·蛛形纲 / 急救医学",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Mesobuthus martensii",
         "东亚钳蝎 insect"
@@ -509,7 +505,6 @@
       ],
       "description": "体液含毒隐翅虫素,接触皮肤引起急性皮炎。夏秋季多。",
       "source": "中国昆虫志",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Paederus fuscipes",
         "毒隐翅虫 insect"
@@ -590,7 +585,6 @@
       ],
       "description": "中国入侵物种,河南南部有零星分布。被咬后脓疱难愈。",
       "source": "中国入侵物种名录",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Solenopsis invicta",
         "红火蚁 insect"
@@ -672,7 +666,6 @@
       ],
       "description": "登革热、寨卡病毒媒介。河南豫南有分布。",
       "source": "中国媒介生物学",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Aedes albopictus",
         "白纹伊蚊 insect"
@@ -760,7 +753,6 @@
       ],
       "description": "北方最常见的蚊子,乙脑病毒媒介。",
       "source": "中国媒介生物学",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Culex pipiens pallens",
         "Culex pipiens",
@@ -827,7 +819,6 @@
       ],
       "description": "卫生条件差时多见,战乱时大流行。",
       "source": "中国医学昆虫学",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Pediculus humanus corporis",
         "Pediculus humanus",
@@ -907,7 +898,6 @@
       ],
       "description": "恙虫病媒介,北方夏季草地多。",
       "source": "中国媒介生物学",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Trombiculidae",
         "恙螨 insect"
@@ -979,7 +969,6 @@
       ],
       "description": "北方稻田、池塘常见。",
       "source": "中国无脊椎动物志",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Whitmania pigra",
         "水蛭 insect"
@@ -1043,7 +1032,6 @@
       ],
       "description": "山东、河北沿海有分布。游泳时避开。",
       "source": "中国海洋生物",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Rhopilema esculentum",
         "海蜇(罕见) insect"
@@ -1107,7 +1095,6 @@
       ],
       "description": "常见家居害虫。",
       "source": "中国卫生害虫",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Periplaneta americana",
         "蟑螂 insect"
@@ -1178,7 +1165,6 @@
       ],
       "description": "北方夏季牧场、畜舍多见。",
       "source": "中国昆虫志",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Tabanus",
         "虻 insect"
@@ -1249,7 +1235,6 @@
       ],
       "description": "溪流边多,成群叮咬。",
       "source": "中国昆虫志",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Simuliidae",
         "蚋 insect"
@@ -1329,7 +1314,6 @@
       ],
       "description": "比蚊子还小,北方夏季多见。",
       "source": "中国昆虫志",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Ceratopogonidae",
         "蠓 insect"
@@ -1409,7 +1393,6 @@
       ],
       "description": "北方夏季常见。俗称\"洋辣子\",触碰后剧痛。",
       "source": "中国昆虫志",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Euproctis",
         "刺毛虫 insect"
@@ -1479,7 +1462,6 @@
       ],
       "description": "林业害虫,但不伤人。",
       "source": "中国昆虫志",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Anoplophora",
         "天牛 insect"
@@ -1548,7 +1530,6 @@
       ],
       "description": "农业害虫,北方偶见,不伤人。",
       "source": "中国昆虫志",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Locusta migratoria",
         "东亚飞蝗 insect"
@@ -1619,7 +1600,6 @@
       ],
       "description": "有益昆虫,处理粪便。",
       "source": "中国昆虫志",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Scarabaeidae",
         "粪金龟 insect"
@@ -1689,7 +1669,6 @@
       ],
       "description": "捕食蚜虫有益。",
       "source": "中国昆虫志",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Harmonia axyridis",
         "异色瓢虫 insect"
@@ -1760,7 +1739,6 @@
       ],
       "description": "捕食蚊虫有益。",
       "source": "中国昆虫志",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Anax parthenope",
         "蜻蜓 insect"
@@ -1831,7 +1809,6 @@
       ],
       "description": "常见夏季鸣虫,幼虫(蝉猴)可食。",
       "source": "中国昆虫志",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Cryptotympana atrata",
         "蚱蝉 insect"
@@ -1903,7 +1880,6 @@
       ],
       "description": "常见家居虫,不主动咬人。",
       "source": "中国昆虫志",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Forficulidae",
         "蠼螋 insect"
@@ -1983,7 +1959,6 @@
       ],
       "description": "新疆、内蒙荒漠蛛类。神经毒素作用迅速,螯伤后常见剧烈肌痉挛。",
       "source": "中国动物志·蛛形纲",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Latrodectus tredecimguttatus",
         "Latrodectus tredecimguttatus",
@@ -2075,7 +2050,6 @@
       ],
       "description": "华北草丛常见游猎蛛。常藏于树叶卷折处,翻动时易被螯伤,局部症状明显。",
       "source": "中国动物志·蛛形纲",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Cheiracanthium",
         "黑慈蛛(红螯蛛) insect"
@@ -2185,7 +2159,6 @@
       ],
       "description": "华北草地优势蜱种,SFTS 主要媒介之一。5-8 月高发,须重点防范。",
       "source": "中国媒介生物学",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Haemaphysalis longicornis",
         "Haemaphysalis longicornis",
@@ -2286,7 +2259,6 @@
       ],
       "description": "营地在禽舍、畜圈或鸟巢附近时常见。夜间吸血致成片丘疹,剧痒数日。",
       "source": "中国媒介生物学",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Dermanyssus gallinae",
         "Dermanyssus gallinae",
@@ -2387,7 +2359,6 @@
       ],
       "description": "华北最常见黄蜂,营巢于树洞或屋檐。被激惹后群起攻击,过敏体质须格外警惕。",
       "source": "中国动物志·昆虫纲",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Vespula vulgaris",
         "Vespula vulgaris",
@@ -2468,7 +2439,6 @@
       ],
       "description": "华北常见土栖蚁类。受惊后喷蚁酸叮咬,一般不构成严重威胁。",
       "source": "中国动物志·昆虫纲",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Lasius niger",
         "Lasius niger",
@@ -2555,7 +2525,6 @@
       ],
       "description": "华北沙地小路常见捕食性甲虫,喜在人行小径上伏击昆虫,故名\"拦路虎\"。",
       "source": "中国动物志·昆虫纲",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Cicindela chinensis",
         "Cicindela chinensis",
@@ -2648,7 +2617,6 @@
       ],
       "description": "含斑蝥素(芫菁素),接触皮肤可造成水疱性皮炎。华北农田与荒地多见。",
       "source": "中国动物志·昆虫纲",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Epicauta chinensis",
         "Epicauta chinensis",
@@ -2736,7 +2704,6 @@
       ],
       "description": "华北土墙与老屋常见拟步甲。受扰时分泌臭味液体,体液对少数人可致皮炎。",
       "source": "中国动物志·昆虫纲",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Blaps chinensis",
         "Blaps chinensis",
@@ -2831,7 +2798,6 @@
       ],
       "description": "华北草地最常见蚱蜢。跳跃力强,可食用(去翅足),无毒性。",
       "source": "中国动物志·昆虫纲",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Acrida cinerea",
         "Acrida cinerea",
@@ -2919,7 +2885,6 @@
       ],
       "description": "华北室内常见蜚蠊。体表携带病原,分泌物可致敏。野外营地垃圾需及时清理。",
       "source": "中国动物志·昆虫纲",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Periplaneta australasiae",
         "Periplaneta australasiae",
@@ -3004,7 +2969,6 @@
       ],
       "description": "华北草丛常见螳螂,捕食害虫。前足镰刀内有刺,抓握时可能划伤皮肤。",
       "source": "中国动物志·昆虫纲",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Mantis religiosa",
         "Mantis religiosa",
@@ -3085,7 +3049,6 @@
       ],
       "description": "我国中部至南方室内半翅目吸血昆虫,有传播美洲锥虫病之潜在风险。",
       "source": "中国媒介生物学",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Triatoma rubrofasciata",
         "Triatoma rubrofasciata",
@@ -3183,7 +3146,6 @@
       ],
       "description": "华北疟疾媒介按蚊。黄昏后活动最盛,水边营地须重点防蚊。",
       "source": "中国媒介生物学 / 传染病学",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Anopheles sinensis",
         "Anopheles sinensis",
@@ -3282,7 +3244,6 @@
       ],
       "description": "华北水边斑虻,吸血性强,叮刺伤口疼痛明显。白天山林湿地活动需防范。",
       "source": "中国媒介生物学",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Chrysops sinensis",
         "Chrysops sinensis",
@@ -3367,7 +3328,6 @@
       ],
       "description": "华北最大蜻蜓之一,池沼与溪流常见。捕食蚊蝇,对人完全无害。",
       "source": "中国动物志·昆虫纲",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Anax parthenope",
         "Anax parthenope",
@@ -3468,7 +3428,6 @@
       ],
       "description": "俗称\"洋辣子\"。毒毛接触皮肤引起剧烈灼痛与条状红肿,华北夏秋高发。",
       "source": "中国动物志·昆虫纲",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Monema flavescens",
         "Monema flavescens",
@@ -3566,7 +3525,6 @@
       ],
       "description": "华北山地草甸常见大型蜂类,体被浓毛。尾针可多次蛰刺,过敏者须警惕。",
       "source": "中国动物志·昆虫纲",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Bombus ignitus",
         "Bombus ignitus",
@@ -3644,7 +3602,6 @@
       ],
       "description": "华北花园常见独居蜂,以叶片包裹巢室育幼,形成植物叶缘的圆形缺口。基本无害。",
       "source": "中国动物志·昆虫纲",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Megachile nipponica",
         "Megachile nipponica",
@@ -3739,7 +3696,6 @@
       ],
       "description": "华北体型最大的蜂类之一,体黑亮如铁。钻木筑巢,受扰时可蛰。",
       "source": "中国动物志·昆虫纲",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Xylocopa appendiculata",
         "Xylocopa appendiculata",
@@ -3838,7 +3794,6 @@
       ],
       "description": "华北常见大型胡蜂,攻击性强。惊动蜂巢会群体追击,须迅速离开并遮挡头面。",
       "source": "中国动物志·昆虫纲",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Vespa velutina",
         "Vespa velutina",
@@ -3935,7 +3890,6 @@
       ],
       "description": "华北屋檐灌丛最常见的中型马蜂,巢如纸伞。受扰后群起攻击,勿惊动。",
       "source": "中国动物志·昆虫纲",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Polistes rothneyi",
         "Polistes rothneyi",
@@ -4023,7 +3977,6 @@
       ],
       "description": "华北常见独居蜂,用泥土造壶状巢并捕猎毛虫储粮。性情温和,基本不攻击人。",
       "source": "中国动物志·昆虫纲",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Eumenes decoratus",
         "Eumenes decoratus",
@@ -4112,7 +4065,6 @@
       ],
       "description": "华北宠物常见寄生蚤,寄主死后可叮咬人。叮咬处成串剧痒,须防继发感染。",
       "source": "中国动物志·昆虫纲",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Ctenocephalides felis",
         "Ctenocephalides felis",
@@ -4200,7 +4152,6 @@
       ],
       "description": "华北沿海夏秋偶见大型水母,群体搁浅时勿裸手接触。蛰伤须用海水冲洗并及时就医。",
       "source": "中国动物志·刺胞动物门 / 急救医学",
-      "reviewer": "XX(无脊椎动物学)",
       "photo_sources": [
         "Nemopilema nomurai",
         "Nemopilema nomurai",
@@ -4298,7 +4249,6 @@
       ],
       "description": "华北最常见的大型蚂蚁,体黑亮。受扰时喷蚁酸并叮咬,一般无重害。",
       "source": "中国动物志·昆虫纲",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Camponotus japonicus",
         "Camponotus japonicus",
@@ -4390,7 +4340,6 @@
       ],
       "description": "华北林间屋檐最常见的大型结网蛛,网径可超 1m。捕食飞虫,对人无害。",
       "source": "中国动物志·蛛形纲",
-      "reviewer": "XX(无脊椎动物学)",
       "photo_sources": [
         "Araneus ventricosus",
         "Araneus ventricosus",
@@ -4488,7 +4437,6 @@
       ],
       "description": "华北松林常见大毛虫,毒毛随风飘散。接触后剧痒,须用胶带粘除毒毛而非抓挠。",
       "source": "中国动物志·昆虫纲",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Dendrolimus punctatus",
         "Dendrolimus punctatus",
@@ -4585,7 +4533,6 @@
       ],
       "description": "华北林下大型步甲,体泛金属光泽。受扰从腹端喷射刺激性液体,勿徒手抓取。",
       "source": "中国动物志·昆虫纲",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Carabus smaragdinus",
         "Carabus smaragdinus",
@@ -4666,7 +4613,6 @@
       ],
       "description": "华北池塘常见大型水生甲虫,可食用(龙虱)。捞取时前足夹人较疼,须防伤口感染。",
       "source": "中国动物志·昆虫纲",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Cybister japonicus",
         "Cybister japonicus",
@@ -4763,7 +4709,6 @@
       ],
       "description": "华北牧场常见吸血蝇,外形似家蝇但口器如针可叮人。叮咬刺痛,驱蚊剂有效。",
       "source": "中国动物志·昆虫纲",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Stomoxys calcitrans",
         "Stomoxys calcitrans",
@@ -4850,7 +4795,6 @@
       ],
       "description": "华北腐败物常见大型绿蝇。不叮人但污染食物、伤口可致蝇蛆病,野外须密封食物。",
       "source": "中国动物志·昆虫纲",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Chrysomya megacephala",
         "Chrysomya megacephala",
@@ -4943,7 +4887,6 @@
       ],
       "description": "华北池沼最常见的中型蜻蜓,雄虫体覆白粉。大量捕食蚊蝇,对人完全无害。",
       "source": "中国动物志·昆虫纲",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Orthetrum albistylum",
         "Orthetrum albistylum",
@@ -5036,7 +4979,6 @@
       ],
       "description": "华北灌丛常见大型螳螂,前足基节有黄白斑。捕食害虫的益虫,无毒,夹人不重。",
       "source": "中国动物志·昆虫纲",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Hierodula patellifera",
         "Hierodula patellifera",
@@ -5143,7 +5085,6 @@
       ],
       "description": "北方林区重要病媒蜱,背有银白花纹。叮咬无痛易忽略,须用镊子贴近皮肤垂直拔出。",
       "source": "中国动物志·蜱螨亚纲 / 急救医学",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Dermacentor silvarum",
         "Dermacentor silvarum",
@@ -5239,7 +5180,6 @@
       ],
       "description": "华北落叶石下常见小型蜈蚣,体黄褐、步足 15 对。咬伤较轻但仍刺痛,翻杂物宜戴手套。",
       "source": "中国动物志·多足纲",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Lithobius",
         "石蜈蚣 insect"
@@ -5338,7 +5278,6 @@
       ],
       "description": "华北潮湿处常见隐翅虫,体液含隐翅虫素。落在身上切勿拍打,以免毒液扩散致条状皮炎。",
       "source": "中国动物志·鞘翅目 / 急救医学",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Philonthus",
         "大隐翅虫 insect"
@@ -5437,7 +5376,6 @@
       ],
       "description": "华北湖沼稻田常见大型水蛭,吸附皮肤无痛吸血。伤口渗血久,取下勿硬拽应拍打或撒盐。",
       "source": "中国动物志·环节动物门",
-      "reviewer": "XX(无脊椎动物学)",
       "photo_sources": [
         "Whitmania pigra",
         "Whitmania pigra",
@@ -5547,7 +5485,6 @@
       ],
       "description": "寄生于人头发的虱,叮咬致头剧痒。人群密集宿营易传播,不共用帽梳、勤洗枕巾可预防。",
       "source": "中国动物志·虱目 / 急救医学",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Pediculus humanus capitis",
         "Pediculus humanus",
@@ -5657,7 +5594,6 @@
       ],
       "description": "寄生于人及家畜的跳蚤,叮咬致成串剧痒红斑。为鼠疫等疾病的潜在媒介,野外远离鼠洞。",
       "source": "中国动物志·蚤目 / 急救医学",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Pulex irritans",
         "Pulex irritans",
@@ -5757,7 +5693,6 @@
       ],
       "description": "在皮肤角质层掘隧道的寄生螨,致疥疮、夜间奇痒。接触传染性强,分用被褥可预防。",
       "source": "中国动物志·蜱螨亚纲 / 急救医学",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Sarcoptes scabiei",
         "Sarcoptes scabiei",
@@ -5855,7 +5790,6 @@
       ],
       "description": "室内常见致敏螨,以人体皮屑为食。吸入其排泄物可致过敏性鼻炎与哮喘,过敏者须远离积尘。",
       "source": "中国动物志·蜱螨亚纲 / 急救医学",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Dermatophagoides",
         "屋尘螨 insect"
@@ -5952,7 +5886,6 @@
       ],
       "description": "近岸常见半透明水母,伞似满月。触手刺细胞蛰伤灼痛,海中遇之勿徒手拨弄。",
       "source": "中国动物志·腔肠动物门 / 急救医学",
-      "reviewer": "XX(无脊椎动物学)",
       "photo_sources": [
         "Aurelia aurita",
         "Aurelia aurita",
@@ -6051,7 +5984,6 @@
       ],
       "description": "华北污水畜舍附近常见蚊种,昼夜凶猛叮人。可传播乙脑,野外须防蚊、用蚊帐。",
       "source": "中国动物志·双翅目 / 急救医学",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Armigeres subalbatus",
         "Armigeres subalbatus",
@@ -6152,7 +6084,6 @@
       ],
       "description": "外来入侵害虫,幼虫结网幕群食树叶,体毛有毒性。树下经过勿触碰虫体,以免毒毛皮炎。",
       "source": "中国动物志·鳞翅目 / 急救医学",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Hyphantria cunea",
         "Hyphantria cunea",
@@ -6250,7 +6181,6 @@
       ],
       "description": "北方落叶阔叶树常见毛虫,幼虫在树杈结白色\"天幕\"丝网群居。毒毛致皮炎,勿徒手触碰。",
       "source": "中国动物志·鳞翅目 / 急救医学",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Malacosoma neustria",
         "Malacosoma neustria",
@@ -6346,7 +6276,6 @@
       ],
       "description": "华北常见大型螳螂,前足如大刀捕食昆虫。农林益虫,被捉时前足刺可划伤手,轻放即可。",
       "source": "中国动物志·螳螂目",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Tenodera sinensis",
         "Tenodera sinensis",
@@ -6437,7 +6366,6 @@
       ],
       "description": "华北水边初秋常见蜻蜓,雄虫通体橙红似火。飞行敏捷捕食蚊虫,是著名益虫。",
       "source": "中国动物志·蜻蜓目",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Sympetrum imitens",
         "Sympetrum imitens",
@@ -6535,7 +6463,6 @@
       ],
       "description": "华北草地农田最常见游猎蛛,背有星斑、不结网善奔跑。捕食害虫,对人咬伤轻微。",
       "source": "中国动物志·蛛形纲",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Pardosa astrigera",
         "Pardosa astrigera",
@@ -6632,7 +6559,6 @@
       ],
       "description": "华北草丛常见结网蛛,在草间结漏斗状平网捕虫。网口隐蔽,探草丛宜注意,勿徒手入网。",
       "source": "中国动物志·蛛形纲",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Agelena labyrinthica",
         "Agelena labyrinthica",
@@ -6750,7 +6676,6 @@
       ],
       "description": "中国本土野生蜜蜂,常于树洞岩缝筑巢。蜇伤锐痛,蜂群受扰时攻击性强,野外勿捅野蜂窝。",
       "source": "中国动物志·膜翅目 / 急救医学",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Apis cerana",
         "Apis cerana",
@@ -6847,7 +6772,6 @@
       ],
       "description": "最常见的室内害虫,前胸两条黑纵纹是识别点。污染食物、致敏致喘,野外营地须密封食物。",
       "source": "中国动物志·蜚蠊目",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Blattella germanica",
         "Blattella germanica",
@@ -6955,7 +6879,6 @@
       ],
       "description": "最常见的卫生害虫,胸背 4 纵纹是识别点。虽不叮咬,但污染食物传播肠道病,须防蝇加盖。",
       "source": "中国动物志·双翅目 / 急救医学",
-      "reviewer": "XX(昆虫学)",
       "photo_sources": [
         "Musca domestica",
         "Musca domestica",
@@ -7052,8 +6975,8 @@
         "whole"
       ],
       "description": "华北最常见大型凤蝶,翅黄绿有黑斑、后翅有尾突。飞行迅捷,夏季在花椒柑橘树叶产卵。",
-      "source": "中国蝴蝶图鉴",
-      "reviewer": "XX(昆虫学)"
+      "source": "中国蝴蝶图鉴"
+
     },
     {
       "id": "insect_pieris_rapae",
@@ -7141,8 +7064,8 @@
         "whole"
       ],
       "description": "华北最习见的白色蝴蝶,幼虫即菜青虫。翅白、前翅顶有黑斑,常成群飞舞于菜地草地。",
-      "source": "中国蝴蝶图鉴",
-      "reviewer": "XX(昆虫学)"
+      "source": "中国蝴蝶图鉴"
+
     },
     {
       "id": "insect_colias_erate",
@@ -7228,8 +7151,8 @@
         "whole"
       ],
       "description": "华北草地常见黄色粉蝶,翅面黄橙、翅缘黑带。飞行活泼,喜访豆科花草,是豆科植物传粉者。",
-      "source": "中国蝴蝶图鉴",
-      "reviewer": "XX(昆虫学)"
+      "source": "中国蝴蝶图鉴"
+
     },
     {
       "id": "insect_vanessa_indica",
@@ -7315,8 +7238,8 @@
         "whole"
       ],
       "description": "华北常见蛱蝶,翅面橙红带黑斑、反面似枯叶。善访花吸蜜,秋季常大量聚集于花丛。",
-      "source": "中国蝴蝶图鉴",
-      "reviewer": "XX(昆虫学)"
+      "source": "中国蝴蝶图鉴"
+
     },
     {
       "id": "insect_lycaena_phlaeas",
@@ -7402,8 +7325,8 @@
         "whole"
       ],
       "description": "华北小型灰蝶,翅面橙红带黑点、缘毛橙红,色彩艳丽。飞行低缓,喜栖低矮草地。",
-      "source": "中国蝴蝶图鉴",
-      "reviewer": "XX(昆虫学)"
+      "source": "中国蝴蝶图鉴"
+
     },
     {
       "id": "insect_sphinx_ligustri",
@@ -7489,8 +7412,8 @@
         "whole"
       ],
       "description": "华北大型天蛾,前翅有黑横带、腹部粉红黑纹。体粗壮、飞行迅捷如鸟,傍晚活跃访花吸蜜。",
-      "source": "中国蛾类图鉴",
-      "reviewer": "XX(昆虫学)"
+      "source": "中国蛾类图鉴"
+
     },
     {
       "id": "insect_ampelophaga",
@@ -7576,8 +7499,8 @@
         "whole"
       ],
       "description": "华北常见天蛾,前翅黄褐有纵纹、能悬停空中吸蜜,常被误认作小蜂鸟。傍晚活跃于花丛。",
-      "source": "中国蛾类图鉴",
-      "reviewer": "XX(昆虫学)"
+      "source": "中国蛾类图鉴"
+
     },
     {
       "id": "insect_acherontia_styx",
@@ -7664,8 +7587,8 @@
         "whole"
       ],
       "description": "华北著名\"鬼脸天蛾\",胸背有骷髅形斑纹、受扰能发声。嗜食蜂蜜,夜间常飞入蜂箱盗蜜。",
-      "source": "中国蛾类图鉴",
-      "reviewer": "XX(昆虫学)"
+      "source": "中国蛾类图鉴"
+
     },
     {
       "id": "insect_deilephila_elpenor",
@@ -7750,8 +7673,8 @@
         "whole"
       ],
       "description": "华北色彩艳丽的粉红色天蛾,翅面绿带粉红相间。夜间活动访花,幼虫食凤仙花等植物叶片。",
-      "source": "中国蛾类图鉴",
-      "reviewer": "XX(昆虫学)"
+      "source": "中国蛾类图鉴"
+
     },
     {
       "id": "insect_coccinella_septempunctata",
@@ -7838,8 +7761,8 @@
         "whole"
       ],
       "description": "华北农田最著名的益虫,红底七黑斑是经典形象。成虫幼虫均捕食蚜虫,是生物防治的明星物种。",
-      "source": "中国动物志·鞘翅目",
-      "reviewer": "XX(昆虫学)"
+      "source": "中国动物志·鞘翅目"
+
     },
     {
       "id": "insect_propylaea_japonica",
@@ -7925,8 +7848,8 @@
         "whole"
       ],
       "description": "华北农田常见小型益虫,体背黄底黑纹如龟甲。捕食棉蚜麦蚜,是棉粮作物的重要天敌昆虫。",
-      "source": "中国动物志·鞘翅目",
-      "reviewer": "XX(昆虫学)"
+      "source": "中国动物志·鞘翅目"
+
     },
     {
       "id": "insect_dorcus_hopei",
@@ -8015,8 +7938,8 @@
         "whole"
       ],
       "description": "华北著名大型甲虫,雄虫有发达如锹的大颚。栖阔叶林朽木,夜间趋光,是儿童喜爱的\"夹夹虫\"。",
-      "source": "中国动物志·鞘翅目",
-      "reviewer": "XX(昆虫学)"
+      "source": "中国动物志·鞘翅目"
+
     },
     {
       "id": "insect_holotrichia_diomphalia",
@@ -8104,8 +8027,8 @@
         "whole"
       ],
       "description": "华北夏夜常见金龟子,体黑褐、趋光撞灯。幼虫(蛴螬)是农田地下害虫,成虫则常被误作\"瞎撞子\"。",
-      "source": "中国动物志·鞘翅目",
-      "reviewer": "XX(昆虫学)"
+      "source": "中国动物志·鞘翅目"
+
     },
     {
       "id": "insect_protaetia_brevitarsis",
@@ -8190,8 +8113,8 @@
         "whole"
       ],
       "description": "华北花丛常见花金龟,体背铜绿黑、缀不规则白斑。昼间访花吸蜜,受惊常坠地装死。",
-      "source": "中国动物志·鞘翅目",
-      "reviewer": "XX(昆虫学)"
+      "source": "中国动物志·鞘翅目"
+
     },
     {
       "id": "insect_anomala_corpulenta",
@@ -8278,8 +8201,8 @@
         "whole"
       ],
       "description": "华北最常见金龟子之一,体背铜绿金属光。成虫夜行趋光啃食果叶,幼虫(蛴螬)为地下害虫。",
-      "source": "中国动物志·鞘翅目",
-      "reviewer": "XX(昆虫学)"
+      "source": "中国动物志·鞘翅目"
+
     },
     {
       "id": "insect_colletes",
@@ -8369,8 +8292,8 @@
         "whole"
       ],
       "description": "华北草地沙坡常见独居蜂,体多绒毛、在土中筑巢。是早春植物重要传粉者,性情温和少蜇人。",
-      "source": "中国动物志·膜翅目",
-      "reviewer": "XX(昆虫学)"
+      "source": "中国动物志·膜翅目"
+
     },
     {
       "id": "insect_anthophora",
@@ -8460,8 +8383,8 @@
         "whole"
       ],
       "description": "华北花丛常见大型独居蜂,体多绒毛、飞行迅捷可悬停。在土坡筑巢,是重要的野生传粉昆虫。",
-      "source": "中国动物志·膜翅目",
-      "reviewer": "XX(昆虫学)"
+      "source": "中国动物志·膜翅目"
+
     },
     {
       "id": "insect_tetramorium",
@@ -8548,8 +8471,8 @@
         "whole"
       ],
       "description": "华北路旁石缝最常见的小黑蚁,常沿固定路径成群往返。分布于城镇乡野,一般不主动叮咬人。",
-      "source": "中国动物志·膜翅目",
-      "reviewer": "XX(昆虫学)"
+      "source": "中国动物志·膜翅目"
+
     },
     {
       "id": "insect_polyrhachis",
@@ -8638,8 +8561,8 @@
         "whole"
       ],
       "description": "华北南部树栖蚂蚁,体背有棘刺、能吐丝将枝叶黏成巢。受扰分泌蚁酸蜇咬,勿掏树上蚁巢。",
-      "source": "中国动物志·膜翅目",
-      "reviewer": "XX(昆虫学)"
+      "source": "中国动物志·膜翅目"
+
     },
     {
       "id": "insect_crocothemis_servilia",
@@ -8726,8 +8649,8 @@
         "whole"
       ],
       "description": "华北水边常见蜻蜓,雄虫通体鲜红醒目。飞行敏捷捕食蚊蝇,是湿地生态的益虫。",
-      "source": "中国动物志·蜻蜓目",
-      "reviewer": "XX(昆虫学)"
+      "source": "中国动物志·蜻蜓目"
+
     },
     {
       "id": "insect_ischnura",
@@ -8813,8 +8736,8 @@
         "whole"
       ],
       "description": "华北水边常见的\"豆娘\",体细长、停栖时翅合拢于背。飞姿轻柔,捕食小蚊虫,是湿地指示物种。",
-      "source": "中国动物志·蜻蜓目",
-      "reviewer": "XX(昆虫学)"
+      "source": "中国动物志·蜻蜓目"
+
     },
     {
       "id": "insect_dolomedes",
@@ -8907,8 +8830,8 @@
         "whole"
       ],
       "description": "华北水边的大型游猎蛛,体扁平足长、能凭借水面张力在水上疾行捕食。毒液弱,一般不伤人。",
-      "source": "中国动物志·蛛形纲",
-      "reviewer": "XX(昆虫学)"
+      "source": "中国动物志·蛛形纲"
+
     },
     {
       "id": "insect_calliphora",
@@ -9003,8 +8926,8 @@
         "whole"
       ],
       "description": "华北常见大型蝇类,体背金属蓝绿光泽、嗜腐肉粪便。污染食物传播肠道传染病,须加盖防蝇。",
-      "source": "中国动物志·双翅目",
-      "reviewer": "XX(昆虫学)"
+      "source": "中国动物志·双翅目"
+
     },
     {
       "id": "insect_sarcophaga",
@@ -9097,8 +9020,8 @@
         "whole"
       ],
       "description": "华北常见大型蝇类,体灰黑有纵纹与棋盘斑,直接产幼虫(蛆)于腐物。须严防污染食物。",
-      "source": "中国动物志·双翅目",
-      "reviewer": "XX(昆虫学)"
+      "source": "中国动物志·双翅目"
+
     },
     {
       "id": "insect_halyomorpha",
@@ -9190,8 +9113,8 @@
         "whole"
       ],
       "description": "华北著名\"臭屁虫\",体盾形、受扰分泌恶臭液体。秋季常成群飞入民居越冬,臭液溅眼须及时冲洗。",
-      "source": "中国动物志·半翅目",
-      "reviewer": "XX(昆虫学)"
+      "source": "中国动物志·半翅目"
+
     },
     {
       "id": "insect_aphis",
@@ -9279,8 +9202,8 @@
         "whole"
       ],
       "description": "华北农田园林最常见害虫,体小软、成群聚于嫩芽叶背吸汁。分泌蜜露污染叶片,是瓢虫等益虫的食料。",
-      "source": "中国动物志·半翅目",
-      "reviewer": "XX(昆虫学)"
+      "source": "中国动物志·半翅目"
+
     },
     {
       "id": "insect_chironomus",
@@ -9367,8 +9290,8 @@
         "whole"
       ],
       "description": "华北水边常见\"不咬人的蚊\",成虫口器退化不吸血,幼虫(血虫)栖水底。傍晚成群飞舞,易误吸入口鼻。",
-      "source": "中国动物志·双翅目",
-      "reviewer": "XX(昆虫学)"
+      "source": "中国动物志·双翅目"
+
     },
     {
       "id": "insect_gtampsocleis",
@@ -9455,8 +9378,8 @@
         "whole"
       ],
       "description": "华北著名鸣虫\"蝈蝈\",体绿或褐、触角细长,雄虫夏秋鸣叫响亮。民间常笼养听鸣,啃食植物叶片。",
-      "source": "中国动物志·直翅目",
-      "reviewer": "XX(昆虫学)"
+      "source": "中国动物志·直翅目"
+
     },
     {
       "id": "insect_gryllus",
@@ -9543,8 +9466,8 @@
         "whole"
       ],
       "description": "华北常见鸣虫\"蛐蛐\",体黑褐、夜鸣于墙根草丛。民间有斗蟋传统,一般不咬人。",
-      "source": "中国动物志·直翅目",
-      "reviewer": "XX(昆虫学)"
+      "source": "中国动物志·直翅目"
+
     },
     {
       "id": "insect_apriona",
@@ -9632,8 +9555,8 @@
         "whole"
       ],
       "description": "华北果园常见蛀干害虫,体黑褐密被黄褐绒毛、前胸两侧有刺突。幼虫蛀食桑树果树枝干,危害严重。",
-      "source": "中国动物志·鞘翅目",
-      "reviewer": "XX(昆虫学)"
+      "source": "中国动物志·鞘翅目"
+
     }
   ]
 }

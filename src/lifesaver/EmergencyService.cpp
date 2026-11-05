@@ -172,15 +172,17 @@ QVariantMap EmergencyService::deleteContact(int index) {
     // 2026-09-21: getContacts 切 Result, 从 .value 解出 list
     QVariantList list = getContacts().value("value").toList();
     if (index < 0 || index >= list.size()) {
+        Logger::warn(QString("%1: 索引越界 index=%2 size=%3").arg(ctx).arg(index).arg(list.size()));
         return fail(ServiceErrorCode::InvalidArgument,
-                    QStringLiteral("索引越界 (index=%1, size=%2)").arg(index).arg(list.size()),
+                    QStringLiteral("这一条已经不在名单里了，请退回列表重进"),
                     ctx);
     }
 
     int id = list[index].toMap()["id"].toInt();
     if (id <= 0) {
+        Logger::warn(QString("%1: 联系人记录没有有效主键 index=%2").arg(ctx).arg(index));
         return fail(ServiceErrorCode::NotFound,
-                    QStringLiteral("联系人 id 无效"), ctx);
+                    QStringLiteral("这一位联系人在本机读不到了"), ctx);
     }
 
     // 2026-09-21 阶段 L2.2: 切 DbHelper::execDmlPositional
@@ -206,15 +208,17 @@ QVariantMap EmergencyService::updateContact(int index, const QString& name,
     // 2026-09-21: getContacts 切 Result, 从 .value 解出 list
     QVariantList list = getContacts().value("value").toList();
     if (index < 0 || index >= list.size()) {
+        Logger::warn(QString("%1: 索引越界 index=%2 size=%3").arg(ctx).arg(index).arg(list.size()));
         return fail(ServiceErrorCode::InvalidArgument,
-                    QStringLiteral("索引越界 (index=%1, size=%2)").arg(index).arg(list.size()),
+                    QStringLiteral("这一条已经不在名单里了，请退回列表重进"),
                     ctx);
     }
 
     int id = list[index].toMap()["id"].toInt();
     if (id <= 0) {
+        Logger::warn(QString("%1: 联系人记录没有有效主键 index=%2").arg(ctx).arg(index));
         return fail(ServiceErrorCode::NotFound,
-                    QStringLiteral("联系人 id 无效"), ctx);
+                    QStringLiteral("这一位联系人在本机读不到了"), ctx);
     }
 
     // 2026-09-21 阶段 L2.2: 切 DbHelper::execDml / execDmlPositional

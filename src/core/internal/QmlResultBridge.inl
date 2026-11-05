@@ -110,7 +110,10 @@ inline QVariantMap okVoid() {
 inline QVariantMap syncToQVariant(const Result<std::monostate>& syncRes,
                                     const QString& context) {
     if (syncRes.isOk()) return okVoid();
-    return fail(ServiceErrorCode::IoError, syncRes.error.message, context);
+    // L12: error.message 是上游 (std::error_code / 驱动) 的英文原文, 屏幕上不能端它 ——
+    //   原文只进日志, 用户读到的那一句必须是中文。
+    Logger::error(QString("%1: 同步失败 %2").arg(context, syncRes.error.message));
+    return fail(ServiceErrorCode::IoError, QStringLiteral("本机存储没同步成功"), context);
 }
 
 /**
@@ -121,7 +124,9 @@ inline QVariantMap dbErr(DmlResult rc, const QSqlDatabase& db, const QString& co
     if (rc == DmlResult::Ok) return okVoid();
     const QString err = db.lastError().text();
     Logger::error(QString("%1: %2").arg(context, err));
-    return fail(ServiceErrorCode::DbError, err, context);
+    // L12: lastError().text() 是 SQLite 驱动的英文原文, 而 message 这一路会被 14 处
+    //   QML 直接拼进屏幕上的文案 —— 驱动原文只进日志, 屏幕上给中文。
+    return fail(ServiceErrorCode::DbError, QStringLiteral("本机数据库没写进去"), context);
 }
 
 /**
@@ -169,7 +174,7 @@ inline QVariantMap execDmlReturning(Database* db, Database::Name name,
 inline std::optional<QVariantMap> dbOpenCheck(const Database* db, Database::Name name,
                                                 const QString& context) {
     if (db && db->isOpen(name)) return std::nullopt;
-    return fail(ServiceErrorCode::DbError, QStringLiteral("DB 未打开"), context);
+    return fail(ServiceErrorCode::DbError, QStringLiteral("本机数据库没打开"), context);
 }
 
 /**
@@ -180,7 +185,7 @@ template <typename T>
 inline std::optional<QVariantMap> propagateError(const QVariantMap& sub,
                                                     const QString& context) {
     if (isOk(sub)) return std::nullopt;
-    // 抽取子调用的 error.message, 包装为本函数的 Err<T>
+    // L12 免: 透传子调用已经判过的中文文案, 这里不是新的写入点 (上游中文由各自 fail() 负责)
     return toQVariant(Err<T>(ServiceErrorCode::DbError, errorMessage(sub), context));
 }
 

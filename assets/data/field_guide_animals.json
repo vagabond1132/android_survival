@@ -124,7 +124,6 @@
       ],
       "description": "中国北方最常见的毒蛇,占北方蝮蛇咬伤的 70% 以上。血液毒素,排毒量小但易致 DIC。",
       "source": "中国蛇类志 / 中国毒蛇数据库",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Gloydius brevicaudus",
         "短尾蝮 animal"
@@ -218,7 +217,6 @@
       ],
       "description": "山东半岛和河北承德山区分布,北方毒蛇之一。",
       "source": "中国蛇类志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Gloydius ussuriensis",
         "乌苏里蝮 animal"
@@ -347,7 +345,6 @@
       ],
       "description": "华北山地高海拔蝮蛇,五台山、恒山一带常见。血循毒,咬伤后 6-12 小时肿胀达峰。",
       "source": "中国蛇类志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Gloydius intermedius",
         "中介蝮 animal"
@@ -450,7 +447,6 @@
       ],
       "description": "中国南方常见剧毒蛇,夜间活动。排毒量大,致死率较高。",
       "source": "中国蛇类志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Protobothrops mucrosquamatus",
         "原矛头蝮(烙铁头) animal"
@@ -559,7 +555,6 @@
       ],
       "description": "中国南方常见剧毒蛇,树栖,常盘踞于竹林与树枝,夜行时易误触。血液毒素,咬伤后局部肿痛、出血。",
       "source": "中国蛇类志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Trimeresurus stejnegeri",
         "竹叶青 animal"
@@ -660,7 +655,6 @@
       ],
       "description": "中国十大毒蛇之一。吻尖上翘是独有特征。排毒量大,被咬后进展极快。",
       "source": "中国蛇类志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Deinagkistrodon acutus",
         "五步蛇(尖吻蝮) animal"
@@ -800,7 +794,6 @@
       ],
       "description": "中国南方及华北南部剧毒眼镜蛇,受激时颈膨扁、颈背现眼镜斑。神经毒可致呼吸麻痹,遇之应远避。",
       "source": "中国蛇类图鉴",
-      "reviewer": "XX 教授(两栖爬行学)",
       "photo_sources": [
         "Naja atra",
         "舟山眼镜蛇 animal"
@@ -910,7 +903,6 @@
       ],
       "description": "中国毒性最强的蛇之一。神经毒素,一次排毒可致数人死亡。常夜间活动于水边。",
       "source": "中国蛇类志 / 中国毒蛇数据库",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Bungarus multicinctus",
         "银环蛇 animal"
@@ -1001,7 +993,6 @@
       ],
       "description": "中国南方毒蛇。混合毒素,愈后常留下后遗症。",
       "source": "中国蛇类志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Daboia siamensis",
         "圆斑蝰 animal"
@@ -1082,7 +1073,6 @@
       ],
       "description": "北方山区最常见的无毒蛇,体型大,行动迅速。受惊时竖头喷气但不咬。",
       "source": "中国蛇类志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Elaphe carinata",
         "黑眉锦蛇 animal"
@@ -1162,7 +1152,6 @@
       ],
       "description": "北方常见的无毒蛇,捕鼠有益。",
       "source": "中国蛇类志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Elaphe taeniura",
         "黑眉曙蛇 animal"
@@ -1236,7 +1225,6 @@
       ],
       "description": "北方最常见的无毒蛇,中药材(乌蛇)。",
       "source": "中国蛇类志 / 本草纲目",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Zaocys dhumnades",
         "乌梢蛇 animal"
@@ -1315,7 +1303,6 @@
       ],
       "description": "与银环蛇极易混淆,但无毒。",
       "source": "中国蛇类志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Lycodon rufozonatus",
         "白环蛇 animal"
@@ -1392,7 +1379,6 @@
       ],
       "description": "北方水边常见。颈背腺含抗凝血物质,过敏体质者被咬可能有严重反应。",
       "source": "中国蛇类志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Rhabdophis tigrinus",
         "虎斑颈槽蛇 animal"
@@ -1471,7 +1457,6 @@
       ],
       "description": "近年北方山区数量增加,具有攻击性。带崽母猪和雄猪最危险。",
       "source": "中国哺乳动物志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Sus scrofa",
         "野猪 animal"
@@ -1558,7 +1543,6 @@
       ],
       "description": "国家二级保护动物。河南伏牛山区有少量分布,一般不主动攻击人,但带崽母熊极危险。",
       "source": "中国哺乳动物志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Ursus thibetanus",
         "黑熊 animal"
@@ -1636,7 +1620,6 @@
       ],
       "description": "北方常见,夜行性。被激怒时可能咬人,需警惕狂犬病。",
       "source": "中国哺乳动物志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Meles meles",
         "狗獾 animal"
@@ -1722,7 +1705,6 @@
       ],
       "description": "河北坝上、内蒙古有分布。鼠疫宿主,接触有风险。",
       "source": "中国哺乳动物志 / 鼠疫防治手册",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Marmota bobak",
         "旱獭 animal"
@@ -1783,7 +1765,6 @@
       ],
       "description": "北方常见的野味,需办狩猎证。鼠疫、兔热病潜在宿主,勿食病死兔。",
       "source": "中国哺乳动物志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Lepus sinensis",
         "野兔 animal"
@@ -1856,7 +1837,6 @@
       ],
       "description": "北方常见蛙类,捕食害虫有益。",
       "source": "中国两栖爬行动物志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Pelophylax nigromaculatus",
         "黑斑蛙 animal"
@@ -1938,7 +1918,6 @@
       ],
       "description": "河南伏牛山、山西太行山区夏季多。",
       "source": "中国无脊椎动物志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Haemadipsa",
         "山蛭 animal"
@@ -2007,7 +1986,6 @@
       ],
       "description": "北方林区常见。无危险,但偶有狂犬病案例。",
       "source": "中国哺乳动物志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Sciurus vulgaris",
         "松鼠 animal"
@@ -2078,7 +2056,6 @@
       ],
       "description": "北方常见,捕虫有益。",
       "source": "中国哺乳动物志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Erinaceus amurensis",
         "刺猬 animal"
@@ -2159,7 +2136,6 @@
       ],
       "description": "北方常见的夜行性飞行哺乳动物。",
       "source": "中国哺乳动物志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Vespertilio sinensis",
         "蝙蝠 animal"
@@ -2227,7 +2203,6 @@
       ],
       "description": "北方农田最常见鼠类,出血热主要宿主,接触有风险。",
       "source": "中国哺乳动物志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Apodemus agrarius",
         "黑线姬鼠 animal"
@@ -2296,7 +2271,6 @@
       ],
       "description": "北方人居环境最常见害鼠。",
       "source": "中国哺乳动物志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Rattus norvegicus",
         "褐家鼠 animal"
@@ -2360,7 +2334,6 @@
       ],
       "description": "北方常见,杂食。繁殖期护巢偶有攻击人记录。",
       "source": "中国鸟类志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Corvus corone",
         "乌鸦 animal"
@@ -2421,7 +2394,6 @@
       ],
       "description": "北方水边常见。无危险。",
       "source": "中国鸟类志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Ardea cinerea",
         "苍鹭 animal"
@@ -2481,7 +2453,6 @@
       ],
       "description": "北方最常见小鸟,三有保护动物。",
       "source": "中国鸟类志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Passer montanus",
         "麻雀 animal"
@@ -2542,7 +2513,6 @@
       ],
       "description": "北方常见,民俗吉祥鸟。",
       "source": "中国鸟类志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Pica pica",
         "喜鹊 animal"
@@ -2612,7 +2582,6 @@
       ],
       "description": "北方高山崖壁上的野生动物,受保护。",
       "source": "中国哺乳动物志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Pseudois nayaur",
         "岩羊 animal"
@@ -2676,7 +2645,6 @@
       ],
       "description": "北方山地稀少的猫科动物。",
       "source": "中国哺乳动物志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Lynx lynx",
         "猞猁 animal"
@@ -2787,7 +2755,6 @@
       ],
       "description": "华北山地草原常见中型食肉兽,体红褐、尾大尾尖白。夜行独居,食鼠类与果实,是鼠类重要天敌。",
       "source": "中国哺乳动物志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Vulpes vulpes",
         "赤狐 animal"
@@ -2857,7 +2824,6 @@
       ],
       "description": "北方有尾两栖类,水质的指示生物。",
       "source": "中国两栖爬行动物志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Hynobius leechii",
         "北方小鲵 animal"
@@ -2930,7 +2896,6 @@
       ],
       "description": "北方水域常见的爬行动物,经济价值高。",
       "source": "中国两栖爬行动物志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Pelodiscus sinensis",
         "中华鳖 animal"
@@ -3002,7 +2967,6 @@
       ],
       "description": "捕食蚊虫有益,完全无害。",
       "source": "中国两栖爬行动物志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Gekko japonicus",
         "壁虎 animal"
@@ -3074,7 +3038,6 @@
       ],
       "description": "北方山区常见蛙类。雌蛙输卵管制成哈士蟆油,名贵中药。",
       "source": "中国两栖爬行动物志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Rana chensinensis",
         "中国林蛙 animal"
@@ -3135,7 +3098,6 @@
       ],
       "description": "北方林区常见的有蹄类。受惊时尾毛炸开,称\"傻狍子\"。",
       "source": "中国哺乳动物志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Capreolus pygargus",
         "狍子 animal"
@@ -3204,7 +3166,6 @@
       ],
       "description": "北方常见蛙类。",
       "source": "中国两栖爬行动物志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Rana amurensis",
         "东北林蛙 animal"
@@ -3295,7 +3256,6 @@
       ],
       "description": "东北山区常见蝮蛇,长白山一带多见。栖息岩石缝隙,受惊时盘踞警戒。",
       "source": "中国蛇类志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Gloydius saxatilis",
         "Gloydius saxatilis",
@@ -3387,7 +3347,6 @@
       ],
       "description": "新疆及东北北部林区蝮蛇,耐寒。新疆喀纳斯、白哈巴一带徒步需留意。",
       "source": "中国蛇类志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Vipera berus",
         "Vipera berus",
@@ -3480,7 +3439,6 @@
       ],
       "description": "秦岭一带可见的原始蝰科蛇类,夜行性。毒液含神经毒素,咬伤需按毒蛇处理。",
       "source": "中国蛇类志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Azemiops feae",
         "Azemiops feae",
@@ -3577,7 +3535,6 @@
       ],
       "description": "华北常见无毒蛇,农田石堆间活动。捕食鼠类,对人无害。",
       "source": "中国蛇类志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Elaphe bimaculata",
         "Elaphe bimaculata",
@@ -3673,7 +3630,6 @@
       ],
       "description": "华北体型较大的无毒蛇,常见于八达岭、五台山一带林缘。捕食鼠类与鸟类。",
       "source": "中国蛇类志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Elaphe anomala",
         "Elaphe anomala",
@@ -3758,7 +3714,6 @@
       ],
       "description": "中原山地小型无毒蛇,性温顺。栖息石缝灌丛,捕食蜥蜴与蛙类。",
       "source": "中国蛇类志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Sibynophis chinensis",
         "Sibynophis chinensis",
@@ -3901,7 +3856,6 @@
       ],
       "description": "华北山地常见小型野生猫科,体背黄褐满布黑斑、尾有黑环。夜行独居善捕鼠,是国家二级保护动物。",
       "source": "中国兽类图鉴",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Prionailurus bengalensis",
         "Prionailurus bengalensis",
@@ -4004,7 +3958,6 @@
       ],
       "description": "西北与东北林区顶级食肉兽。护崽或护食时攻击性极强,遇之须保持距离。",
       "source": "中国兽类志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Ursus arctos",
         "Ursus arctos",
@@ -4103,7 +4056,6 @@
       ],
       "description": "国家一级保护动物,华北山地稀见。雄性产麝香,受惊时以獠牙自卫。",
       "source": "中国兽类志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Moschus moschiferus",
         "Moschus moschiferus",
@@ -4211,7 +4163,6 @@
       ],
       "description": "华北崖壁典型有蹄类,恒山、嵩山一带可见。悬崖行走如履平地。",
       "source": "中国兽类志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Naemorhedus griseus",
         "Naemorhedus griseus",
@@ -4294,7 +4245,6 @@
       ],
       "description": "华北农田最常见鼠类之一。喜储粮,洞穴复杂。注意鼠传疾病防范。",
       "source": "中国兽类志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Tscherskia triton",
         "Tscherskia triton",
@@ -4386,7 +4336,6 @@
       ],
       "description": "黄土高原与华北山地地下鼠类。地表常见成串土丘,为典型活动痕迹。",
       "source": "中国兽类志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Eospalax fontanierii",
         "Eospalax fontanierii",
@@ -4488,7 +4437,6 @@
       ],
       "description": "华北平原与丘陵极常见食肉小兽,夜行捕鼠。受威胁时释放刺鼻臭液。",
       "source": "中国兽类志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Mustela sibirica",
         "Mustela sibirica",
@@ -4589,7 +4537,6 @@
       ],
       "description": "华北丘陵常见犬科,唯一会冬眠的犬科动物。常夜访营地翻找食物。",
       "source": "中国兽类志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Nyctereutes procyonoides",
         "Nyctereutes procyonoides",
@@ -4681,7 +4628,6 @@
       ],
       "description": "华北高山草甸常见小型兔形目。洞穴密集,是高原草甸生态关键种。",
       "source": "中国兽类志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Ochotona dauurica",
         "Ochotona dauurica",
@@ -4780,7 +4726,6 @@
       ],
       "description": "华北最普遍蛙类,稻田与池沼夜鸣。皮肤分泌物对部分人可致轻度过敏。",
       "source": "中国两栖爬行动物志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Pelophylax nigromaculatus",
         "Pelophylax nigromaculatus",
@@ -4857,7 +4802,6 @@
       ],
       "description": "华北平原小型树栖蛙,雨前鸣叫频繁。趾端吸盘使其能攀附草叶。",
       "source": "中国两栖爬行动物志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Hyla immaculata",
         "Hyla immaculata",
@@ -4933,7 +4877,6 @@
       ],
       "description": "中原与华东最小蛙类之一。雨季夜间成群鸣叫,声如虫鸣。",
       "source": "中国两栖爬行动物志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Microhyla fissipes",
         "Microhyla fissipes",
@@ -5041,7 +4984,6 @@
       ],
       "description": "华北最常见中型猛禽,悬停觅食鼠类。繁殖期护巢可攻击靠近的行人。",
       "source": "中国鸟类志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Buteo japonicus",
         "Buteo japonicus",
@@ -5144,7 +5086,6 @@
       ],
       "description": "中国最大鸮类,华北崖壁繁殖。育雏期对巢边靠近者俯冲抓击,须护头避让。",
       "source": "中国鸟类志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Bubo bubo",
         "Bubo bubo",
@@ -5236,7 +5177,6 @@
       ],
       "description": "华北山地与城市绿地极常见。群体活动,育雏期对靠近巢区者鸣叫俯冲驱赶。",
       "source": "中国鸟类志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Cyanopica cyanus",
         "Cyanopica cyanus",
@@ -5324,7 +5264,6 @@
       ],
       "description": "华北田野最常见鸠鸽类,晨昏取食谷物种子。可携带禽类病原。",
       "source": "中国鸟类志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Streptopelia orientalis",
         "Streptopelia orientalis",
@@ -5413,7 +5352,6 @@
       ],
       "description": "华北干草地最常见蜥蜴。奔跑迅捷,受惊断尾逃生,无毒无害。",
       "source": "中国两栖爬行动物志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Eremias argus",
         "Eremias argus",
@@ -5502,7 +5440,6 @@
       ],
       "description": "华北低山林下石龙子,幼体蓝尾醒目。捕食昆虫,对人完全无害。",
       "source": "中国两栖爬行动物志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Plestiodon chinensis",
         "Plestiodon chinensis",
@@ -5589,7 +5526,6 @@
       ],
       "description": "华北灌丛细长蜥蜴,常攀于草叶。无毒,捕食小型昆虫。",
       "source": "中国两栖爬行动物志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Takydromus wolteri",
         "Takydromus wolteri",
@@ -5691,7 +5627,6 @@
       ],
       "description": "华北水边常见后沟牙毒蛇,颈背红斑显眼。咬伤可致凝血障碍,须及时就医。",
       "source": "中国蛇类图鉴",
-      "reviewer": "XX 教授(两栖爬行学)",
       "photo_sources": [
         "Rhabdophis subminiatus",
         "Rhabdophis subminiatus",
@@ -5788,7 +5723,6 @@
       ],
       "description": "西部高山蝮蛇,海拔可达 4000m。太白山等高山路线须留意乱石间。",
       "source": "中国蛇类图鉴",
-      "reviewer": "XX 教授(两栖爬行学)",
       "photo_sources": [
         "Gloydius strauchi",
         "Gloydius strauchi",
@@ -5888,7 +5822,6 @@
       ],
       "description": "华北最常见的大型无毒蛇,红黑横纹醒目,常被误认为毒蛇遭捕杀。",
       "source": "中国蛇类图鉴",
-      "reviewer": "XX 教授(两栖爬行学)",
       "photo_sources": [
         "Lycodon rufozonatus",
         "Lycodon rufozonatus",
@@ -5989,7 +5922,6 @@
       ],
       "description": "华北最大无毒蛇,食鼠能力强的益蛇。受扰时释放恶臭,极少主动咬人。",
       "source": "中国蛇类图鉴",
-      "reviewer": "XX 教授(两栖爬行学)",
       "photo_sources": [
         "Elaphe carinata",
         "Elaphe carinata",
@@ -6090,7 +6022,6 @@
       ],
       "description": "华北林下夜行中型食肉兽,面部花斑独特。受惊释放臭液,勿徒手捕捉。",
       "source": "中国兽类图鉴",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Melogale moschata",
         "Melogale moschata",
@@ -6190,7 +6121,6 @@
       ],
       "description": "华北山地体型较大的獾类,善掘洞。受困时极具攻击性,须保持距离。",
       "source": "中国兽类图鉴",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Arctonyx collaris",
         "Arctonyx collaris",
@@ -6289,7 +6219,6 @@
       ],
       "description": "华北山地夜行树栖食肉兽,面部白纹显著。野外遇人即逃,勿主动接近。",
       "source": "中国兽类图鉴",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Paguma larvata",
         "Paguma larvata",
@@ -6387,7 +6316,6 @@
       ],
       "description": "华北山地滑翔兽,古称\"寒号鸟\"。其干燥粪便即中药\"五灵脂\",夜行滑翔于崖壁间。",
       "source": "中国兽类图鉴",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Trogopterus xanthipes",
         "Trogopterus xanthipes",
@@ -6481,7 +6409,6 @@
       ],
       "description": "华北顶级食肉兽,国家一级保护动物,仅太行山等少数区域有稳定种群。野外相遇概率极低,勿单独进入核心栖息地。",
       "source": "中国兽类图鉴 / 国家重点保护野生动物名录",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Panthera pardus japonensis",
         "Panthera pardus",
@@ -6578,7 +6505,6 @@
       ],
       "description": "国家一级保护动物,种群极稀少。集群捕猎能力强,野外偶遇须冷静离开,勿奔跑。",
       "source": "中国兽类图鉴 / 国家重点保护野生动物名录",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Cuon alpinus",
         "Cuon alpinus",
@@ -6666,7 +6592,6 @@
       ],
       "description": "华北最常见的大型雉类,雄鸟羽色艳丽颈有白环。受惊短飞,晨昏鸣声洪亮。",
       "source": "中国鸟类图鉴",
-      "reviewer": "XX(鸟类学)",
       "photo_sources": [
         "Phasianus colchicus",
         "Phasianus colchicus",
@@ -6755,7 +6680,6 @@
       ],
       "description": "华北干旱山地常见雉类,善奔跑攀岩,晨昏集群鸣叫\"嘎嘎\"声。",
       "source": "中国鸟类图鉴",
-      "reviewer": "XX(鸟类学)",
       "photo_sources": [
         "Alectoris chukar",
         "Alectoris chukar",
@@ -6834,7 +6758,6 @@
       ],
       "description": "华北常见留鸟,羽冠似折扇。喜在草地掘食昆虫,繁殖期巢中臭味重。",
       "source": "中国鸟类图鉴",
-      "reviewer": "XX(鸟类学)",
       "photo_sources": [
         "Upupa epops",
         "Upupa epops",
@@ -6929,7 +6852,6 @@
       ],
       "description": "华北山地美丽的大型鸦科鸟,长尾鲜红嘴脚。护巢期会俯冲驱赶接近者。",
       "source": "中国鸟类图鉴",
-      "reviewer": "XX(鸟类学)",
       "photo_sources": [
         "Urocissa erythroryncha",
         "Urocissa erythroryncha",
@@ -7030,7 +6952,6 @@
       ],
       "description": "华北草地常见蟾蜍,背有花斑。耳后腺分泌蟾毒,接触眼须立即冲洗。",
       "source": "中国两栖爬行动物志",
-      "reviewer": "XX 教授(两栖爬行学)",
       "photo_sources": [
         "Strauchbufo raddei",
         "Strauchbufo raddei",
@@ -7121,7 +7042,6 @@
       ],
       "description": "华北水田池塘常见蛙,背侧金黄纵纹醒目。捕食昆虫,平原益农主力。",
       "source": "中国两栖爬行动物志",
-      "reviewer": "XX 教授(两栖爬行学)",
       "photo_sources": [
         "Pelophylax plancyi",
         "Pelophylax plancyi",
@@ -7197,7 +7117,6 @@
       ],
       "description": "华北夏季雨后常见的小型穴居蛙,体圆如球。雨后成片鸣叫,善钻土避旱。",
       "source": "中国两栖爬行动物志",
-      "reviewer": "XX 教授(两栖爬行学)",
       "photo_sources": [
         "Kaloula borealis",
         "Kaloula borealis",
@@ -7285,7 +7204,6 @@
       ],
       "description": "华北至西部山地常见攀蜥,体侧黄绿纵纹鲜明。捕食昆虫,对人无害。",
       "source": "中国两栖爬行动物志",
-      "reviewer": "XX 教授(两栖爬行学)",
       "photo_sources": [
         "Diploderma splendidum",
         "Diploderma splendidum",
@@ -7378,7 +7296,6 @@
       ],
       "description": "华北林下常见石龙子,体侧金黄黑带明显。捕食昆虫,无毒无害。",
       "source": "中国两栖爬行动物志",
-      "reviewer": "XX 教授(两栖爬行学)",
       "photo_sources": [
         "Sphenomorphus indicus",
         "Sphenomorphus indicus",
@@ -7480,7 +7397,6 @@
       ],
       "description": "北方水田溪流常见吸血蛭。叮咬无痛且难察觉,伤口渗血久,勿硬拽应轻拍取下。",
       "source": "中国动物志·环节动物门",
-      "reviewer": "XX(无脊椎动物学)",
       "photo_sources": [
         "Hirudo nipponia",
         "Hirudo nipponia",
@@ -7575,7 +7491,6 @@
       ],
       "description": "华北森林最常见啄木鸟,通体橄榄绿、善凿木取虫。为著名森林益鸟,繁殖于树洞中。",
       "source": "中国鸟类图鉴",
-      "reviewer": "XX(鸟类学)",
       "photo_sources": [
         "Picus canus",
         "Picus canus",
@@ -7663,7 +7578,6 @@
       ],
       "description": "华北溪涧水边最常见的小鸟,黑白相间、尾不停上下摆动。常在溪石间奔走捕虫,善识水边。",
       "source": "中国鸟类图鉴",
-      "reviewer": "XX(鸟类学)",
       "photo_sources": [
         "Motacilla alba",
         "Motacilla alba",
@@ -7753,7 +7667,6 @@
       ],
       "description": "华北夏季林缘常见猛雀,嘴有钩可捕食昆虫、蜥蜴。有将猎物穿挂枝刺的\"屠夫\"习性。",
       "source": "中国鸟类图鉴",
-      "reviewer": "XX(鸟类学)",
       "photo_sources": [
         "Lanius cristatus",
         "Lanius cristatus",
@@ -7845,7 +7758,6 @@
       ],
       "description": "华北林间最常见的小鸟之一,黑头白脸、腹黄黑带。全年啄食害虫,是著名益鸟。",
       "source": "中国鸟类图鉴",
-      "reviewer": "XX(鸟类学)",
       "photo_sources": [
         "Parus major",
         "Parus major",
@@ -7935,7 +7847,6 @@
       ],
       "description": "华北山地溪流特有的\"潜水鸟\",通体深褐、能潜入急流捕食水生昆虫。是水质良好的指示物种。",
       "source": "中国鸟类图鉴",
-      "reviewer": "XX(鸟类学)",
       "photo_sources": [
         "Cinclus pallasii",
         "Cinclus pallasii",
@@ -8026,7 +7937,6 @@
       ],
       "description": "华北水田沼泽常见夏候鸟,繁殖期披栗红色蓑羽。常在稻田浅水捕食鱼虾蛙类。",
       "source": "中国鸟类图鉴",
-      "reviewer": "XX(鸟类学)",
       "photo_sources": [
         "Ardeola bacchus",
         "Ardeola bacchus",
@@ -8121,7 +8031,6 @@
       ],
       "description": "华北草丛最常见的小蜥蜴,背白纵纹、尾细长。受惊自断尾逃生,无毒无害。",
       "source": "中国两栖爬行动物志",
-      "reviewer": "XX 教授(两栖爬行学)",
       "photo_sources": [
         "Takydromus septentrionalis",
         "Takydromus septentrionalis",
@@ -8216,7 +8125,6 @@
       ],
       "description": "华北林下石缝常见石龙子,幼体蓝尾艳丽。捕食昆虫,对人无害,是森林益兽。",
       "source": "中国两栖爬行动物志",
-      "reviewer": "XX 教授(两栖爬行学)",
       "photo_sources": [
         "Plestiodon elegans",
         "Plestiodon elegans",
@@ -8308,7 +8216,6 @@
       ],
       "description": "华北村舍墙壁最常见壁虎,趾有吸盘善攀爬,夜间捕食蚊虫。无毒且捕蚊,是益兽。",
       "source": "中国两栖爬行动物志",
-      "reviewer": "XX 教授(两栖爬行学)",
       "photo_sources": [
         "Gekko japonicus",
         "Gekko japonicus",
@@ -8398,7 +8305,6 @@
       ],
       "description": "华北河湖池塘中的本土龟,颈有黄绿纵纹。以鱼虾水草为食,受惊紧闭壳或咬人,勿徒手捕捉。",
       "source": "中国两栖爬行动物志",
-      "reviewer": "XX 教授(两栖爬行学)",
       "photo_sources": [
         "Mauremys reevesii",
         "Mauremys reevesii",
@@ -8497,7 +8403,6 @@
       ],
       "description": "华北田野最常见无毒蛇,背有白色纵纹。食鼠能力强,是农业益蛇,勿因误认而捕杀。",
       "source": "中国蛇类图鉴",
-      "reviewer": "XX 教授(两栖爬行学)",
       "photo_sources": [
         "Elaphe dione",
         "Elaphe dione",
@@ -8596,7 +8501,6 @@
       ],
       "description": "北方体型最大的无毒蛇之一,成体棕黑。食鼠为主,受扰时虽凶但无毒,勿徒手捕捉。",
       "source": "中国蛇类图鉴",
-      "reviewer": "XX 教授(两栖爬行学)",
       "photo_sources": [
         "Elaphe schrenckii",
         "Elaphe schrenckii",
@@ -8690,7 +8594,6 @@
       ],
       "description": "北方湿草甸常见小型无毒蛇,体有细纵纹。以蚯蚓、鱼虾为食,性情温顺避人。",
       "source": "中国蛇类图鉴",
-      "reviewer": "XX 教授(两栖爬行学)",
       "photo_sources": [
         "Amphiesma vibakari",
         "Amphiesma vibakari",
@@ -8797,7 +8700,6 @@
       ],
       "description": "北方山溪特有的铃蟾,受惊翻肚露出橙红腹面示警。皮肤分泌蟾毒,接触后须洗手勿揉眼。",
       "source": "中国两栖爬行动物志",
-      "reviewer": "XX 教授(两栖爬行学)",
       "photo_sources": [
         "Bombina orientalis",
         "Bombina orientalis",
@@ -8890,7 +8792,6 @@
       ],
       "description": "北方山溪有尾两栖类,形似小型\"娃娃鱼\"但体型小得多。栖于清泠溪流石下,是水质指示物种。",
       "source": "中国两栖爬行动物志",
-      "reviewer": "XX 教授(两栖爬行学)",
       "photo_sources": [
         "Hynobius leechii",
         "Hynobius leechii",
@@ -8979,7 +8880,6 @@
       ],
       "description": "华北夏夜常见小型雨蛙,通体翠绿、趾有吸盘善攀叶。雨后成群鸣叫,捕食小虫。",
       "source": "中国两栖爬行动物志",
-      "reviewer": "XX 教授(两栖爬行学)",
       "photo_sources": [
         "Hyla chinensis",
         "Hyla chinensis",
@@ -9076,7 +8976,6 @@
       ],
       "description": "北方最小的食肉兽之一,身体极纤细善钻鼠洞。冬毛变白称\"扫雪\",是著名鼠类天敌。",
       "source": "中国兽类图鉴",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Mustela nivalis",
         "Mustela nivalis",
@@ -9175,7 +9074,6 @@
       ],
       "description": "华北山地岩壁最常见松鼠,耳无簇毛、尾较短。栖石缝、善攀岩,登山途中常可见。",
       "source": "中国兽类图鉴",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Sciurotamias davidianus",
         "Sciurotamias davidianus",
@@ -9274,7 +9172,6 @@
       ],
       "description": "中国著名蛇岛(辽宁)特产蝮蛇,世界罕见的高密度蛇岛种群。剧毒,沿海山地活动须格外留意。",
       "source": "中国蛇类图鉴",
-      "reviewer": "XX 教授(两栖爬行学)",
       "photo_sources": [
         "Gloydius shedaoensis",
         "Gloydius shedaoensis",
@@ -9375,7 +9272,6 @@
       ],
       "description": "山地湿林草丛中的\"旱蚂蟥\",能从草叶弹附行人体表。叮咬无痛难察,勿硬拽,应轻拍或撒盐取下。",
       "source": "中国动物志·环节动物门",
-      "reviewer": "XX(无脊椎动物学)",
       "photo_sources": [
         "Haemadipsa japonica",
         "Haemadipsa japonica",
@@ -9467,8 +9363,8 @@
         "whole"
       ],
       "description": "华北城镇林间最常见鸣禽之一,雄鸟通体黑、嘴橙黄。鸣声婉转善仿,有\"百舌\"之称。",
-      "source": "中国鸟类图鉴",
-      "reviewer": "XX(鸟类学)"
+      "source": "中国鸟类图鉴"
+
     },
     {
       "id": "animal_pycnonotus_sinensis",
@@ -9554,8 +9450,8 @@
         "whole"
       ],
       "description": "华北常见留鸟,头顶后枕一片白羽故名\"白头翁\"。食果兼食虫,常在果园、林缘成群活动。",
-      "source": "中国鸟类图鉴",
-      "reviewer": "XX(鸟类学)"
+      "source": "中国鸟类图鉴"
+
     },
     {
       "id": "animal_phylloscopus_inornatus",
@@ -9641,8 +9537,8 @@
         "whole"
       ],
       "description": "华北迁徙季林间最常见的小型莺类,眉纹淡黄、翼有双斑。终日在枝叶间跳跃捕虫。",
-      "source": "中国鸟类图鉴",
-      "reviewer": "XX(鸟类学)"
+      "source": "中国鸟类图鉴"
+
     },
     {
       "id": "animal_garrulax_davidi",
@@ -9727,8 +9623,8 @@
         "whole"
       ],
       "description": "华北山地灌丛特有噪鹛,通体灰褐不显眼但鸣声洪亮多变。常在灌丛地面刨食,是当地留鸟。",
-      "source": "中国鸟类图鉴",
-      "reviewer": "XX(鸟类学)"
+      "source": "中国鸟类图鉴"
+
     },
     {
       "id": "animal_hirundo_rustica",
@@ -9814,8 +9710,8 @@
         "whole"
       ],
       "description": "华北夏候鸟,额喉栗红、尾如剪刀。在屋檐下衔泥筑巢,是家喻户晓的\"益鸟\"。",
-      "source": "中国鸟类图鉴",
-      "reviewer": "XX(鸟类学)"
+      "source": "中国鸟类图鉴"
+
     },
     {
       "id": "animal_anthus_hodgsoni",
@@ -9900,8 +9796,8 @@
         "whole"
       ],
       "description": "华北林缘草地常见鹨类,上体橄榄褐有纵纹、受惊上树。以昆虫和草籽为食,迁徙过境较常见。",
-      "source": "中国鸟类图鉴",
-      "reviewer": "XX(鸟类学)"
+      "source": "中国鸟类图鉴"
+
     },
     {
       "id": "animal_emberiza_cioides",
@@ -9985,8 +9881,8 @@
         "whole"
       ],
       "description": "华北山地灌丛常见留鸟,头有三道黑白纵纹故名\"三道眉\"。常立灌丛顶端鸣唱,食草籽昆虫。",
-      "source": "中国鸟类图鉴",
-      "reviewer": "XX(鸟类学)"
+      "source": "中国鸟类图鉴"
+
     },
     {
       "id": "animal_chloris_sinica",
@@ -10071,8 +9967,8 @@
         "whole"
       ],
       "description": "华北常见小型雀,翼有醒目的金黄色块斑。常结小群在果园、林缘取食草籽和嫩芽。",
-      "source": "中国鸟类图鉴",
-      "reviewer": "XX(鸟类学)"
+      "source": "中国鸟类图鉴"
+
     },
     {
       "id": "animal_acridotheres_cristatellus",
@@ -10157,8 +10053,8 @@
         "whole"
       ],
       "description": "华北村舍常见留鸟,通体黑、额有竖立冠羽,飞时翼露白斑。善模仿人声,是著名笼鸟,亦食害虫。",
-      "source": "中国鸟类图鉴",
-      "reviewer": "XX(鸟类学)"
+      "source": "中国鸟类图鉴"
+
     },
     {
       "id": "animal_egretta_garzetta",
@@ -10245,8 +10141,8 @@
         "whole"
       ],
       "description": "华北水田河滩常见鹭类,通体雪白、趾黄嘴黑。繁殖期披长饰羽,常在浅水静立伺机捕鱼虾。",
-      "source": "中国鸟类图鉴",
-      "reviewer": "XX(鸟类学)"
+      "source": "中国鸟类图鉴"
+
     },
     {
       "id": "animal_scincella_modesta",
@@ -10335,8 +10231,8 @@
         "whole"
       ],
       "description": "华北落叶层石缝间常见小型滑蜥,体背古铜色有黑点。捕食小型昆虫,无毒无害。",
-      "source": "中国两栖爬行动物志",
-      "reviewer": "XX 教授(两栖爬行学)"
+      "source": "中国两栖爬行动物志"
+
     },
     {
       "id": "animal_japalura_splendida",
@@ -10424,8 +10320,8 @@
         "whole"
       ],
       "description": "华北山地岩壁常见攀蜥,背有黄绿横纹、背鬣发达。善攀岩上树,受惊点头示威,无毒无害。",
-      "source": "中国两栖爬行动物志",
-      "reviewer": "XX 教授(两栖爬行学)"
+      "source": "中国两栖爬行动物志"
+
     },
     {
       "id": "animal_phrynocephalus_przewalskii",
@@ -10514,8 +10410,8 @@
         "whole"
       ],
       "description": "北方沙地荒漠特有小型蜥蜴,体沙黄善伪装。趾缘有栉鳞便于行走流沙,遇险常快速钻沙隐匿。",
-      "source": "中国两栖爬行动物志",
-      "reviewer": "XX 教授(两栖爬行学)"
+      "source": "中国两栖爬行动物志"
+
     },
     {
       "id": "animal_hemidactylus_frenatus",
@@ -10601,8 +10497,8 @@
         "whole"
       ],
       "description": "华北村舍墙壁常见小型壁虎,体背有疣粒、夜间鸣叫。捕食蚊虫,是屋舍益兽,无毒无害。",
-      "source": "中国两栖爬行动物志",
-      "reviewer": "XX 教授(两栖爬行学)"
+      "source": "中国两栖爬行动物志"
+
     },
     {
       "id": "animal_cyclophiops_major",
@@ -10693,8 +10589,8 @@
         "whole"
       ],
       "description": "华北林下常见无毒蛇,通体鲜绿易被误认为竹叶青。头短圆、无颊窝可区别,食蚯蚓昆虫,性情温顺。",
-      "source": "中国蛇类图鉴",
-      "reviewer": "XX 教授(两栖爬行学)"
+      "source": "中国蛇类图鉴"
+
     },
     {
       "id": "animal_elaphe_porphyracea",
@@ -10784,8 +10680,8 @@
         "whole"
       ],
       "description": "华北山地少见无毒锦蛇,体背紫灰带黑横纹、色彩艳丽。食鼠为主,性情温顺,勿因艳丽而误杀。",
-      "source": "中国蛇类图鉴",
-      "reviewer": "XX 教授(两栖爬行学)"
+      "source": "中国蛇类图鉴"
+
     },
     {
       "id": "animal_sinonatrix_percarinata",
@@ -10874,8 +10770,8 @@
         "whole"
       ],
       "description": "华北山溪水田无毒游蛇,体背橄榄褐有黑横斑、善游水捕鱼。性情温顺,受惊多潜入水中避敌。",
-      "source": "中国蛇类图鉴",
-      "reviewer": "XX 教授(两栖爬行学)"
+      "source": "中国蛇类图鉴"
+
     },
     {
       "id": "animal_xenochrophis_piscator",
@@ -10966,8 +10862,8 @@
         "whole"
       ],
       "description": "华北水田池塘常见半水栖蛇,体橄榄绿有黑斑、善捕鱼虾。虽属后沟牙蛇但对人基本无毒。",
-      "source": "中国蛇类图鉴",
-      "reviewer": "XX 教授(两栖爬行学)"
+      "source": "中国蛇类图鉴"
+
     },
     {
       "id": "animal_feja_multistriata",
@@ -11054,8 +10950,8 @@
         "whole"
       ],
       "description": "华北水田最常见小蛙,背有纵肤褶、唇有深色纹。夏夜田边\"呱呱\"鸣声不绝,捕食农业害虫。",
-      "source": "中国两栖爬行动物志",
-      "reviewer": "XX 教授(两栖爬行学)"
+      "source": "中国两栖爬行动物志"
+
     },
     {
       "id": "animal_bufo_gargarizans",
@@ -11164,7 +11060,6 @@
       ],
       "description": "华北田野村庄最常见蟾蜍,体背墨绿多疣、耳后腺发达。分泌蟾毒刺激黏膜,接触后须洗手勿揉眼。",
       "source": "中国两栖爬行动物志",
-      "reviewer": "XX 教授(两栖爬行学)",
       "photo_sources": [
         "Bufo gargarizans",
         "中华蟾蜍 animal"
@@ -11263,8 +11158,8 @@
         "whole"
       ],
       "description": "华北山溪有尾两栖类,体黑亮、腹面橙红艳丽。皮肤分泌河豚毒素,不可徒手把玩,接触后须洗手。",
-      "source": "中国两栖爬行动物志",
-      "reviewer": "XX 教授(两栖爬行学)"
+      "source": "中国两栖爬行动物志"
+
     },
     {
       "id": "animal_rana_spinosa",
@@ -11354,8 +11249,8 @@
         "whole"
       ],
       "description": "华北山地溪流大型蛙类,雄蛙胸部棘刺显著、故名\"棘胸蛙\"。栖阴湿石隙,是水质良好的指示物种。",
-      "source": "中国两栖爬行动物志",
-      "reviewer": "XX 教授(两栖爬行学)"
+      "source": "中国两栖爬行动物志"
+
     },
     {
       "id": "animal_canis_lupus",
@@ -11466,7 +11361,6 @@
       ],
       "description": "华北山地草原顶级捕食者,体毛黄褐灰杂、尾常下垂。成群活动,遇人应缓退勿奔逃,是二级保护动物。",
       "source": "中国哺乳动物志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Canis lupus",
         "狼 animal"
@@ -11561,8 +11455,8 @@
         "whole"
       ],
       "description": "华北山地常见中型鹿科,臀有醒目白斑、受惊时炸开。胆小善奔跑,晨昏活动,为常见三有保护动物。",
-      "source": "中国兽类图鉴",
-      "reviewer": "XX 教授(动物学)"
+      "source": "中国兽类图鉴"
+
     },
     {
       "id": "animal_scaptochirus_moschatus",
@@ -11661,7 +11555,6 @@
       ],
       "description": "华北农田草甸地下穴居兽,眼极小、前爪如铲善掘土。营地下生活拱起土垄,捕食地栖昆虫幼虫。",
       "source": "中国哺乳动物志",
-      "reviewer": "XX 教授(动物学)",
       "photo_sources": [
         "Scaptochirus moschatus",
         "麝鼹 animal"
@@ -11754,8 +11647,8 @@
         "whole"
       ],
       "description": "华中山地森林大型鼯鼠,体侧翼膜可在树间滑翔数十米。夜行树栖,栖树洞,是少见的三有保护动物。",
-      "source": "中国兽类图鉴",
-      "reviewer": "XX 教授(动物学)"
+      "source": "中国兽类图鉴"
+
     },
     {
       "id": "animal_deinagkistrodon_acutus",
@@ -11849,8 +11742,8 @@
         "head"
       ],
       "description": "著名剧毒蛇\"五步蛇\",吻端上翘尖突、体背有方形大斑。血循毒致出血坏死,山区林下须格外警惕。",
-      "source": "中国蛇类图鉴",
-      "reviewer": "XX 教授(两栖爬行学)"
+      "source": "中国蛇类图鉴"
+
     }
   ]
 }

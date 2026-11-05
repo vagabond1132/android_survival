@@ -352,8 +352,9 @@ QVariantMap TravelService::addFavorite(const QString& id) {
     const char* ctx = "TravelService::addFavorite";
 
     if (!m_travels.contains(id)) {
+        Logger::warn(QString("%1: 自驾游记录表里没有这条: %2").arg(ctx, id));
         return fail(ServiceErrorCode::NotFound,
-                    QStringLiteral("自驾游不存在: %1").arg(id), ctx);
+                    QStringLiteral("这条自驾游记录在本机读不到了"), ctx);
     }
     m_travels[id].isFavorite = true;
     emit favoriteChanged(id, true);
@@ -366,8 +367,9 @@ QVariantMap TravelService::deleteFavorite(const QString& id) {
     const char* ctx = "TravelService::deleteFavorite";
 
     if (!m_travels.contains(id)) {
+        Logger::warn(QString("%1: 自驾游记录表里没有这条: %2").arg(ctx, id));
         return fail(ServiceErrorCode::NotFound,
-                    QStringLiteral("自驾游不存在: %1").arg(id), ctx);
+                    QStringLiteral("这条自驾游记录在本机读不到了"), ctx);
     }
     m_travels[id].isFavorite = false;
     emit favoriteChanged(id, false);
@@ -402,8 +404,9 @@ QVariantMap TravelService::incrementVisitCount(const QString& id) {
     const char* ctx = "TravelService::incrementVisitCount";
 
     if (!m_travels.contains(id)) {
+        Logger::warn(QString("%1: 自驾游记录表里没有这条: %2").arg(ctx, id));
         return toQVariant(Err<bool>(ServiceErrorCode::NotFound,
-                                      QStringLiteral("路线不存在: %1").arg(id), ctx));
+                                      QStringLiteral("这条自驾游记录在本机读不到了"), ctx));
     }
     m_travels[id].visitCount++;
     emit dataChanged();

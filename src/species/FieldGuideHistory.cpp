@@ -360,8 +360,10 @@ QVariantMap FieldGuideHistory::toggleFavoriteByEntity(const QString& entityId,
                                                       int dangerLevel) {
     using namespace outdoor::internal;
     const QString ctx = "FieldGuideHistory::toggleFavoriteByEntity";
-    if (entityId.isEmpty())
-        return fail(ServiceErrorCode::InvalidArgument, QStringLiteral("entityId 为空"), ctx);
+    if (entityId.isEmpty()) {
+        Logger::warn(QString("%1: entityId 为空").arg(ctx));
+        return fail(ServiceErrorCode::InvalidArgument, QStringLiteral("物种编号没填，这条历史记不下"), ctx);
+    }
     if (auto e = dbOpenCheck(m_db, Database::Name::Settings, ctx)) return *e;
 
     QSqlDatabase db = m_db->get(Database::Name::Settings);

@@ -21,7 +21,7 @@ Result<std::monostate> fromStatus(const QSettings& s, const char* ctx) {
         return Ok(std::monostate{});
     }
     return Err<std::monostate>(ServiceErrorCode::IoError,
-                                QStringLiteral("QSettings 持久化失败: status=%1")
+                                QStringLiteral("本机设置写入失败，状态码 %1")
                                     .arg(int(s.status())),
                                 ctx);
 }

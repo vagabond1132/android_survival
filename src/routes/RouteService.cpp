@@ -424,7 +424,7 @@ QVariantMap RouteService::saveRoute(const Route& route) {
     const char* ctx = "RouteService::saveRoute";
 
     if (auto e = dbOpenCheck(m_db, Database::Name::Routes, ctx)) return *e;
-    if (auto e = requireNonEmpty(route.id, "route.id", ctx)) return *e;
+    if (auto e = requireNonEmpty(route.id, "这条路线的编号", ctx)) return *e;
 
     if (insertRoute(route)) {
         m_routes[route.id] = route;
@@ -1148,8 +1148,9 @@ QVariantMap RouteService::addFavorite(const QString& id) {
 
     if (auto e = dbOpenCheck(m_db, Database::Name::Routes, ctx)) return *e;
     if (!m_routes.contains(id)) {
+        Logger::warn(QString("%1: 路线目录里没有这条: %2").arg(ctx, id));
         return fail(ServiceErrorCode::NotFound,
-                    QStringLiteral("路线不存在: %1").arg(id), ctx);
+                    QStringLiteral("这条路线在目录里没有"), ctx);
     }
 
     // 2026-09-21 阶段 L2.2: DbHelper::execDmlPositional 需 QSqlQuery lvalue, 提取本地变量

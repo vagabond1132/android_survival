@@ -92,7 +92,6 @@
       ],
       "description": "中国毒性最强的蘑菇之一。河南豫南山区 6-9 月多见。致死率极高,无特效解毒剂。",
       "source": "中国毒蘑菇图鉴 / 急救医学",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Amanita verna",
         "致命白毒伞 mushroom"
@@ -180,7 +179,6 @@
       ],
       "description": "欧洲最著名的毒蘑菇。河南豫南有分布。",
       "source": "中国毒蘑菇图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Amanita phalloides",
         "毒鹅膏(鬼笔鹅膏) mushroom"
@@ -252,7 +250,6 @@
       ],
       "description": "北方常见致命鹅膏,黄色菌盖易与可食鹅膏混淆。",
       "source": "中国毒蘑菇图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Amanita subjunquillea",
         "黄盖鹅膏 mushroom"
@@ -328,7 +325,6 @@
       ],
       "description": "近年被列为最毒蘑菇之一。北方山区有分布。",
       "source": "中国毒蘑菇图鉴 / 急救医学",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Russula subnigricans",
         "亚稀褶红菇 mushroom"
@@ -405,7 +401,6 @@
       ],
       "description": "北方草坪常见,胃肠炎型。",
       "source": "中国毒蘑菇图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Chlorophyllum molybdites",
         "大青褶伞 mushroom"
@@ -481,7 +476,6 @@
       ],
       "description": "童话中常见,实际含神经毒素,北方针叶林有分布。",
       "source": "中国毒蘑菇图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Amanita muscaria",
         "鹅膏菌(毒蝇伞) mushroom"
@@ -554,7 +548,6 @@
       ],
       "description": "北方林缘常见,神经毒型。",
       "source": "中国毒蘑菇图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Inocybe",
         "丝盖伞 mushroom"
@@ -630,7 +623,6 @@
       ],
       "description": "北方常见,食后忌酒是关键。",
       "source": "中国毒蘑菇图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Coprinopsis atramentaria",
         "墨汁鬼伞 mushroom"
@@ -703,7 +695,6 @@
       ],
       "description": "夜间发光是显著识别特征。",
       "source": "中国毒蘑菇图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Omphalotus japonicus",
         "发光类脐菇 mushroom"
@@ -775,7 +766,6 @@
       ],
       "description": "北方针叶林常见,反复食用才显毒性。",
       "source": "中国毒蘑菇图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Tapinella atrotomentosus",
         "卷边桩菇 mushroom"
@@ -846,7 +836,6 @@
       ],
       "description": "秋季常见,含鹅膏毒素,同样危险。",
       "source": "中国毒蘑菇图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Galerina marginata",
         "秋盔孢伞 mushroom"
@@ -911,7 +900,6 @@
       ],
       "description": "常见小蘑菇,大多轻度有毒或不可食。",
       "source": "中国毒蘑菇图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Mycena",
         "小皮伞属 mushroom"
@@ -984,7 +972,6 @@
       ],
       "description": "北方常见毒鹅膏,神经毒型。",
       "source": "中国毒蘑菇图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Amanita pantherina",
         "豹斑毒鹅膏 mushroom"
@@ -1047,7 +1034,6 @@
       ],
       "description": "黏滑伞菌慎食。",
       "source": "中国毒蘑菇图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Hebeloma",
         "丝膜菌(毒滑锈伞) mushroom"
@@ -1120,7 +1106,6 @@
       ],
       "description": "北方常见,外皮厚的不可食。",
       "source": "中国毒蘑菇图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Scleroderma citrinum",
         "硬皮马勃 mushroom"
@@ -1189,7 +1174,6 @@
       ],
       "description": "北方山区最名贵的可食菌之一。",
       "source": "中国食用菌图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Boletus edulis",
         "美味牛肝菌 mushroom"
@@ -1256,7 +1240,6 @@
       ],
       "description": "北方松林常见,名贵野生菌。",
       "source": "中国食用菌图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Lactarius deliciosus",
         "松乳菇 mushroom"
@@ -1325,7 +1308,6 @@
       ],
       "description": "北方松林名贵食用菌。",
       "source": "中国食用菌图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Cantharellus cibarius",
         "鸡油菌 mushroom"
@@ -1394,7 +1376,6 @@
       ],
       "description": "东北名菜\"小鸡炖蘑菇\"主料,但秋季有与秋盔孢伞混淆风险。",
       "source": "中国食用菌图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Armillaria mellea",
         "假蜜环菌 mushroom"
@@ -1458,7 +1439,6 @@
       ],
       "description": "河北坝上、内蒙古草原名产,名贵食用菌。",
       "source": "中国食用菌图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Tricholoma mongolicum",
         "口蘑 mushroom"
@@ -1525,7 +1505,6 @@
       ],
       "description": "最常见的食用蘑菇。北方野生种在草地。",
       "source": "中国食用菌图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Agaricus bisporus",
         "双孢蘑菇 mushroom"
@@ -1595,7 +1574,6 @@
       ],
       "description": "北方常见,幼嫩可食,老熟液化。",
       "source": "中国食用菌图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Coprinus comatus",
         "毛头鬼伞 mushroom"
@@ -1652,7 +1630,6 @@
       ],
       "description": "最常见的栽培食用菌,北方野生多。",
       "source": "中国食用菌图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Pleurotus ostreatus",
         "平菇 mushroom"
@@ -1710,7 +1687,6 @@
       ],
       "description": "北方主产区,河南西峡是中国香菇之乡。",
       "source": "中国食用菌图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Lentinula edodes",
         "香菇 mushroom"
@@ -1777,7 +1753,6 @@
       ],
       "description": "北方早春名贵野生菌。需与鹿花菌严格区分。",
       "source": "中国食用菌图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Morchella esculenta",
         "羊肚菌 mushroom"
@@ -1847,7 +1822,6 @@
       ],
       "description": "北方常见的可食马勃,幼嫩时整个可食。",
       "source": "中国食用菌图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Calvatia gigantea",
         "大马勃 mushroom"
@@ -1905,7 +1879,6 @@
       ],
       "description": "著名药食两用菌,八大山珍之一。",
       "source": "中国食用菌图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Hericium erinaceus",
         "猴头菇 mushroom"
@@ -1993,7 +1966,6 @@
       ],
       "description": "华北阔叶林枯木上生长的传统药用真菌,菌盖有漆样光泽。野生品须与毒菌区分,建议遵医嘱使用。",
       "source": "本草纲目 / 中国食用菌图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Ganoderma lucidum",
         "灵芝 mushroom",
@@ -2067,7 +2039,6 @@
       ],
       "description": "名贵食用菌,河北有产。",
       "source": "中国食用菌图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Sparassis crispa",
         "绣球菌 mushroom"
@@ -2133,7 +2104,6 @@
       ],
       "description": "最常见的食用菌,北方枯木上常见。",
       "source": "中国食用菌图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Auricularia auricula-judae",
         "Auricularia auricula",
@@ -2226,7 +2196,6 @@
       ],
       "description": "北方针叶林最致命的鹅膏之一,与可食白蘑菇极易混淆,务必检查菌托。",
       "source": "中国毒蘑菇图鉴 / 急救医学",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Amanita virosa",
         "Amanita virosa",
@@ -2304,7 +2273,6 @@
       ],
       "description": "华北草地常见小型剧毒菌,含鹅膏毒素,常被当作\"小蘑菇\"误采。",
       "source": "中国毒蘑菇图鉴 / 急救医学",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Lepiota brunneoincarnata",
         "Lepiota brunneoincarnata",
@@ -2390,7 +2358,6 @@
       ],
       "description": "我国鹅膏中毒的主要致死种,北方阔叶林夏秋可见。",
       "source": "中国毒蘑菇图鉴 / 急救医学",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Amanita fuliginea",
         "Amanita fuliginea",
@@ -2473,7 +2440,6 @@
       ],
       "description": "北方春季沙地针叶林常见,常被误当羊肚菌。生食剧毒,鹿花菌素具挥发性。",
       "source": "中国毒蘑菇图鉴 / 急救医学",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Gyromitra esculenta",
         "Gyromitra esculenta",
@@ -2557,7 +2523,6 @@
       ],
       "description": "北方阔叶林剧毒牛肝菌,菌孔红色是最醒目特征,与美味牛肝菌同域分布。",
       "source": "中国毒蘑菇图鉴 / 急救医学",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Rubroboletus satanas",
         "Rubroboletus satanas",
@@ -2643,7 +2608,6 @@
       ],
       "description": "北方草地常见,与可食野蘑菇极易混淆,菌柄受伤变黄是鉴别要点。",
       "source": "中国毒蘑菇图鉴 / 急救医学",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Agaricus xanthodermus",
         "Agaricus xanthodermus",
@@ -2726,7 +2690,6 @@
       ],
       "description": "北方阔叶林常见大型毒菌,常被误认为口蘑,中毒症状剧烈。",
       "source": "中国毒蘑菇图鉴 / 急救医学",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Entoloma sinuatum",
         "Entoloma sinuatum",
@@ -2813,7 +2776,6 @@
       ],
       "description": "北方草地\"仙女环\"常见小白菌,毒蕈碱型中毒,起病极快。",
       "source": "中国毒蘑菇图鉴 / 急救医学",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Clitocybe dealbata",
         "Clitocybe dealbata",
@@ -2899,7 +2861,6 @@
       ],
       "description": "北方最常见的腐木毒菌,一丛可达上百朵,味极苦是重要识别特征。",
       "source": "中国毒蘑菇图鉴 / 急救医学",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Hypholoma fasciculare",
         "Hypholoma fasciculare",
@@ -2981,7 +2942,6 @@
       ],
       "description": "北方针叶林常见红菇,辛辣味明显,常成片出现。",
       "source": "中国毒蘑菇图鉴 / 急救医学",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Russula emetica",
         "Russula emetica",
@@ -3063,7 +3023,6 @@
       ],
       "description": "北方桦木林常见,与松乳菇外形相近,乳汁白色辛辣是鉴别点。",
       "source": "中国毒蘑菇图鉴 / 急救医学",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Lactarius torminosus",
         "Lactarius torminosus",
@@ -3142,7 +3101,6 @@
       ],
       "description": "北方林缘常见大型食用菌,与有毒的大青褶伞须严格区分。",
       "source": "中国食用菌图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Macrolepiota procera",
         "Macrolepiota procera",
@@ -3223,7 +3181,6 @@
       ],
       "description": "北方草原与牧场最经典的野生食用菌,双孢蘑菇的野生近缘种。",
       "source": "中国食用菌图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Agaricus campestris",
         "Agaricus campestris",
@@ -3303,7 +3260,6 @@
       ],
       "description": "北方冬季阔叶枯木主要食用菌,野生种与致命的秋盔孢伞同季同域,须严格区分。",
       "source": "中国食用菌图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Flammulina filiformis",
         "Flammulina filiformis",
@@ -3380,7 +3336,6 @@
       ],
       "description": "北方秋季阔叶枯木常见食用菌,因菌盖黏滑得名,已广泛栽培。",
       "source": "中国食用菌图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Pholiota microspora",
         "Pholiota microspora",
@@ -3451,7 +3406,6 @@
       ],
       "description": "北方秋季紫蓝色食用菌,色泽独特易辨,须煮熟食用。",
       "source": "中国食用菌图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Lepista nuda",
         "Lepista nuda",
@@ -3532,7 +3486,6 @@
       ],
       "description": "北方草原\"仙女环\"主角,菌柄坚韧耐运,但与有毒白霜杯伞同域,须细辨。",
       "source": "中国食用菌图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Marasmius oreades",
         "Marasmius oreades",
@@ -3610,7 +3563,6 @@
       ],
       "description": "传统药食两用菌,北方阔叶枯木有野生分布,河南为传统产区。",
       "source": "中国食用菌图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Tremella fuciformis",
         "Tremella fuciformis",
@@ -3679,7 +3631,6 @@
       ],
       "description": "著名中药\"猪苓\"的实体,北方林下可见,嫩时可食,药用价值更高。",
       "source": "本草纲目 / 中国食用菌图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Polyporus umbellatus",
         "Polyporus umbellatus",
@@ -3778,7 +3729,6 @@
       ],
       "description": "北方阔叶林剧毒鹅膏,菌盖带淡粉调仍极易与可食菌混淆。凡见菌托即弃。",
       "source": "中国毒蘑菇图鉴 / 急救医学",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Amanita pallidorosea",
         "Amanita pallidorosea",
@@ -3863,7 +3813,6 @@
       ],
       "description": "华北草地小型剧毒环柄菇,与肉褐鳞环柄菇为姊妹种,含鹅膏毒素,极易被当\"小蘑菇\"误采。",
       "source": "中国毒蘑菇图鉴 / 急救医学",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Lepiota helveola",
         "Lepiota helveola",
@@ -3948,7 +3897,6 @@
       ],
       "description": "外形普通的小型毒菌,却含鹅膏毒素。华北草地腐殖土常见,误采后果极严重。",
       "source": "中国毒蘑菇图鉴 / 急救医学",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Conocybe filaris",
         "Conocybe filaris",
@@ -4033,7 +3981,6 @@
       ],
       "description": "潜伏期可长达两周的致命毒菌,含奥来毒素致不可逆肾衰竭。华北针叶林秋季可见,识别难度大。",
       "source": "中国毒蘑菇图鉴 / 急救医学",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Cortinarius orellanus",
         "Cortinarius orellanus",
@@ -4119,7 +4066,6 @@
       ],
       "description": "丝盖伞属中毒蕈碱含量高的种类,起病极快。华北阔叶林常见,个体不显眼却可致命。",
       "source": "中国毒蘑菇图鉴 / 急救医学",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Inocybe maculata",
         "Inocybe maculata",
@@ -4204,7 +4150,6 @@
       ],
       "description": "北方阔叶林浅色鹅膏,含鹅膏毒素类与致幻成分,外形淡雅却不可食。",
       "source": "中国毒蘑菇图鉴 / 急救医学",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Amanita citrina",
         "Amanita citrina",
@@ -4282,7 +4227,6 @@
       ],
       "description": "北方草地蜡伞类,橙黄醒目但受伤即变黑是鉴别特征。含胃肠炎毒素,不可食。",
       "source": "中国毒蘑菇图鉴 / 急救医学",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Hygrocybe conica",
         "Hygrocybe conica",
@@ -4366,7 +4310,6 @@
       ],
       "description": "北方针叶林常见大型毒红菇,刺鼻气味明显。与可食正红菇类外形相近,须细辨。",
       "source": "中国毒蘑菇图鉴 / 急救医学",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Russula foetens",
         "Russula foetens",
@@ -4450,7 +4393,6 @@
       ],
       "description": "北方阔叶树基部常见丛生菌,菌盖翘鳞醒目。与栽培食用菌滑菇同属,须严格区分。",
       "source": "中国毒蘑菇图鉴 / 急救医学",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Pholiota squarrosa",
         "Pholiota squarrosa",
@@ -4535,7 +4477,6 @@
       ],
       "description": "北方落叶层常见淡紫小菇,含毒蕈碱与致幻成分。与可食紫丁香蘑颜色相近,须分辨菌褶颜色。",
       "source": "中国毒蘑菇图鉴 / 急救医学",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Mycena pura",
         "Mycena pura",
@@ -4623,7 +4564,6 @@
       ],
       "description": "与白霜杯伞同为草地\"仙女环\"毒菌,毒蕈碱含量高,起病极快。华北夏秋高发。",
       "source": "中国毒蘑菇图鉴 / 急救医学",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Clitocybe rivulosa",
         "Clitocybe rivulosa",
@@ -4701,7 +4641,6 @@
       ],
       "description": "北方阔叶林优质食用牛肝菌,菌柄网纹明显。与有毒魔牛肝菌须以菌孔颜色严格区分。",
       "source": "中国食用菌图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Boletus reticulatus",
         "Boletus reticulatus",
@@ -4773,7 +4712,6 @@
       ],
       "description": "北方松林最常见食用牛肝菌,菌盖黏滑、菌柄有紫褐菌环。须撕去黏液层再食。",
       "source": "中国食用菌图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Suillus luteus",
         "Suillus luteus",
@@ -4848,7 +4786,6 @@
       ],
       "description": "北方阔叶树干基常见大型多孔菌,幼时硫黄鲜嫩可食。老后韧如木不可食。",
       "source": "中国食用菌图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Laetiporus sulphureus",
         "Laetiporus sulphureus",
@@ -4920,7 +4857,6 @@
       ],
       "description": "北方栗林名贵食用菌,又称\"舞茸\"\"栗蘑\"。成群生于栎树根部,口感脆嫩、药食两用。",
       "source": "中国食用菌图鉴 / 本草纲目",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Grifola frondosa",
         "Grifola frondosa",
@@ -4997,7 +4933,6 @@
       ],
       "description": "北方松林名贵食用菌,香气浓郁。东北与北方山地秋季可见,与栽培口蘑须区分。",
       "source": "中国食用菌图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Tricholoma matsutake",
         "Tricholoma matsutake",
@@ -5076,7 +5011,6 @@
       ],
       "description": "北方秋季成丛食用菌,数十朵簇生如\"一窝鸡\"。肉质脆嫩,已广泛栽培。",
       "source": "中国食用菌图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Lyophyllum decastes",
         "Lyophyllum decastes",
@@ -5157,7 +5091,6 @@
       ],
       "description": "北方草地路旁常见大型食用蘑菇,菌柄双层菌环是可靠特征,可顶开土被而出。",
       "source": "中国食用菌图鉴",
-      "reviewer": "XX(菌物学)",
       "photo_sources": [
         "Agaricus bitorquis",
         "Agaricus bitorquis",

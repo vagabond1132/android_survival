@@ -96,11 +96,11 @@ QVariantMap execDmlReturning(Database* db, Database::Name name,
                              ExecFn&& execFn);
 
 /**
- * @brief 检查 db 是否打开, 失败 → fail(DbError, "DB 未打开", ctx), 成功 → nullopt.
+ * @brief 检查 db 是否打开, 失败 → fail(DbError, "本机数据库没打开", ctx), 成功 → nullopt.
  *
  * 替代 4 行模板:
  *   if (!m_db || !m_db->isOpen(Database::Name::X)) {
- *       return fail(ServiceErrorCode::DbError, QStringLiteral("DB 未打开"), ctx);
+ *       return fail(ServiceErrorCode::DbError, QStringLiteral("本机数据库没打开"), ctx);
  *   }
  *
  * 用法: if (auto e = dbOpenCheck(m_db, Database::Name::X, ctx)) return *e;
@@ -134,17 +134,17 @@ std::optional<QVariantMap> propagateError(const QVariantMap& sub,
                                             const QString& context = {});
 
 /**
- * @brief 入参校验: 字符串非空 (非 trimmed-empty). 失败 → fail(InvalidArgument, "name 不能为空", ctx)
+ * @brief 入参校验: 字符串非空 (非 trimmed-empty). 失败 → fail(InvalidArgument, "<字段名> 不能为空", ctx)
  *
  * 替代 3 行模板:
  *   if (value.isEmpty()) {
- *       return fail(InvalidArgument, QStringLiteral("name 不能为空"), ctx);
+ *       return fail(InvalidArgument, QStringLiteral("这条装备的编号不能为空"), ctx);
  *   }
  *
- * 用法: if (auto e = requireNonEmpty(value, "name", ctx)) return *e;
+ * 用法: if (auto e = requireNonEmpty(value, "这条装备的编号", ctx)) return *e;
  *
  * @param value  待校验字符串
- * @param name   参数名 (用于错误消息: "name 不能为空")
+ * @param name   字段名 —— 会被拼进屏幕上那句「…不能为空」, 所以必须写给人读的中文
  * @param context  当前函数 ctx
  * @return nullopt = 通过; QVariantMap = 应直接 return 的错误
  */

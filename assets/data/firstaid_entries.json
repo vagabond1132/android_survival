@@ -46,8 +46,8 @@
       ],
       "related_species": [],
       "video_url": "firstaid_cpr.mp4",
-      "source": "中国红十字会 / 卫健委",
-      "reviewer": "XX 主任医师（急诊科）"
+      "source": "中国红十字会 / 卫健委"
+
     },
     {
       "id": "firstaid_bleeding",
@@ -89,8 +89,8 @@
         "不要揭开已经粘住伤口的覆盖物"
       ],
       "video_url": "firstaid_bleeding.mp4",
-      "source": "中国红十字会",
-      "reviewer": "XX 副主任医师（创伤外科）"
+      "source": "中国红十字会"
+
     },
     {
       "id": "firstaid_snake_bite",
@@ -146,8 +146,8 @@
         "snake_trimeresurus"
       ],
       "video_url": "firstaid_snake_bite.mp4",
-      "source": "中国蛇伤学会 / 卫健委",
-      "reviewer": "XX 主任医师（急诊科）"
+      "source": "中国蛇伤学会 / 卫健委"
+
     },
     {
       "id": "firstaid_hypothermia",
@@ -194,8 +194,8 @@
         "不要剧烈活动试图\"暖起来\""
       ],
       "video_url": "firstaid_hypothermia.mp4",
-      "source": "中国登山协会 / 卫健委",
-      "reviewer": "XX 主任医师（急诊科）"
+      "source": "中国登山协会 / 卫健委"
+
     },
     {
       "id": "firstaid_heatstroke",
@@ -234,8 +234,8 @@
         "不要独自等待而不降温"
       ],
       "video_url": "firstaid_heatstroke.mp4",
-      "source": "卫健委",
-      "reviewer": "XX 副主任医师"
+      "source": "卫健委"
+
     },
     {
       "id": "firstaid_choking",
@@ -277,8 +277,8 @@
         "不要浪费太多时间"
       ],
       "video_url": "firstaid_choking.mp4",
-      "source": "中国红十字会",
-      "reviewer": "XX 主任医师"
+      "source": "中国红十字会"
+
     },
     {
       "id": "firstaid_bone_fracture",
@@ -320,8 +320,8 @@
         "不要给伤者喝水或食物（可能需要手术麻醉）"
       ],
       "video_url": "firstaid_bone_fracture.mp4",
-      "source": "中国红十字会",
-      "reviewer": "XX 副主任医师（骨科）"
+      "source": "中国红十字会"
+
     },
     {
       "id": "firstaid_burn",
@@ -354,8 +354,8 @@
         "不要强行撕扯粘连的衣物"
       ],
       "video_url": "firstaid_burn.mp4",
-      "source": "中国红十字会",
-      "reviewer": "XX 主任医师（烧伤科）"
+      "source": "中国红十字会"
+
     },
     {
       "id": "firstaid_plant_poisoning",
@@ -396,8 +396,8 @@
         "不要丢弃剩余植物样本"
       ],
       "video_url": "firstaid_plant_poisoning.mp4",
-      "source": "中国疾控中心 / 卫健委",
-      "reviewer": "XX 主任医师（急诊科）"
+      "source": "中国疾控中心 / 卫健委"
+
     },
     {
       "id": "firstaid_mushroom_poisoning",
@@ -434,8 +434,8 @@
         "不要丢弃剩余的蘑菇"
       ],
       "video_url": "firstaid_mushroom_poisoning.mp4",
-      "source": "中国疾控中心 / 卫健委",
-      "reviewer": "XX 主任医师（急诊科）"
+      "source": "中国疾控中心 / 卫健委"
+
     },
     {
       "id": "firstaid_animal_bite",
@@ -477,8 +477,8 @@
         "不要自行处理 III 级暴露（须就医）"
       ],
       "video_url": "firstaid_animal_bite.mp4",
-      "source": "中国疾控中心 / 卫健委",
-      "reviewer": "XX 副主任医师（急诊科）"
+      "source": "中国疾控中心 / 卫健委"
+
     },
     {
       "id": "firstaid_tick_removal",
@@ -516,8 +516,8 @@
         "不要忽视数周后的发热（蜱传病潜伏期长）"
       ],
       "video_url": "firstaid_tick_removal.mp4",
-      "source": "中国疾控中心 / 卫健委",
-      "reviewer": "XX 副主任医师（感染科）"
+      "source": "中国疾控中心 / 卫健委"
+
     },
     {
       "id": "firstaid_leech_bite",
@@ -556,8 +556,8 @@
         "不要忽视伤口持续渗血（抗凝作用可致失血）"
       ],
       "video_url": "firstaid_leech_bite.mp4",
-      "source": "中国登山协会 / 卫健委",
-      "reviewer": "XX 副主任医师（急诊科）"
+      "source": "中国登山协会 / 卫健委"
+
     },
     {
       "id": "firstaid_fire_ant_sting",
@@ -596,8 +596,8 @@
         "不要用热水浸泡（加重症状）"
       ],
       "video_url": "firstaid_fire_ant_sting.mp4",
-      "source": "中国疾控中心 / 卫健委",
-      "reviewer": "XX 副主任医师（皮肤科）"
+      "source": "中国疾控中心 / 卫健委"
+
     },
     {
       "id": "firstaid_centipede_bite",
@@ -633,8 +633,8 @@
         "不要忽视儿童患者（按体重中毒剂量相对更高）"
       ],
       "video_url": "firstaid_centipede_bite.mp4",
-      "source": "卫健委",
-      "reviewer": "XX 副主任医师（急诊科）"
+      "source": "卫健委"
+
     },
     {
       "id": "firstaid_scorpion_sting",
@@ -672,8 +672,8 @@
         "不要让伤者剧烈活动"
       ],
       "video_url": "firstaid_scorpion_sting.mp4",
-      "source": "卫健委",
-      "reviewer": "XX 主任医师（急诊科）"
+      "source": "卫健委"
+
     },
     {
       "id": "firstaid_paederus_dermatitis",
@@ -711,8 +711,8 @@
         "不要用刺激性药水（酒精、碘酒）大面积涂擦面部"
       ],
       "video_url": "firstaid_paederus_dermatitis.mp4",
-      "source": "中国疾控中心 / 卫健委",
-      "reviewer": "XX 副主任医师（皮肤科）"
+      "source": "中国疾控中心 / 卫健委"
+
     },
     {
       "id": "firstaid_mosquito_bite",
@@ -749,8 +749,8 @@
         "不要给婴幼儿用高浓度避蚊胺驱蚊剂"
       ],
       "video_url": "firstaid_mosquito_bite.mp4",
-      "source": "中国疾控中心 / 卫健委",
-      "reviewer": "XX 副主任医师（感染科）"
+      "source": "中国疾控中心 / 卫健委"
+
     },
     {
       "id": "firstaid_insect_bite",
@@ -787,8 +787,8 @@
         "不要用泥土等敷伤口"
       ],
       "video_url": "firstaid_insect_bite.mp4",
-      "source": "卫健委",
-      "reviewer": "XX 副主任医师（急诊科）"
+      "source": "卫健委"
+
     },
     {
       "id": "firstaid_fly_bite",
@@ -825,8 +825,8 @@
         "不要忽视伤口化脓（需抗生素治疗）"
       ],
       "video_url": "firstaid_fly_bite.mp4",
-      "source": "卫健委",
-      "reviewer": "XX 副主任医师（皮肤科）"
+      "source": "卫健委"
+
     },
     {
       "id": "firstaid_louse_bite",
@@ -861,8 +861,8 @@
         "不要仅处理个人而忽略集体（反复感染）"
       ],
       "video_url": "firstaid_louse_bite.mp4",
-      "source": "中国疾控中心 / 卫健委",
-      "reviewer": "XX 副主任医师（皮肤科）"
+      "source": "中国疾控中心 / 卫健委"
+
     },
     {
       "id": "firstaid_flea_bite",
@@ -897,8 +897,8 @@
         "不要忽视疫区的发热症状"
       ],
       "video_url": "firstaid_flea_bite.mp4",
-      "source": "中国疾控中心 / 卫健委",
-      "reviewer": "XX 副主任医师（感染科）"
+      "source": "中国疾控中心 / 卫健委"
+
     },
     {
       "id": "firstaid_mite_bite",
@@ -933,8 +933,8 @@
         "不要在高热时自行服退烧药而不就医"
       ],
       "video_url": "firstaid_mite_bite.mp4",
-      "source": "中国疾控中心 / 卫健委",
-      "reviewer": "XX 主任医师（感染科）"
+      "source": "中国疾控中心 / 卫健委"
+
     },
     {
       "id": "firstaid_jellyfish_sting",
@@ -974,8 +974,8 @@
         "不要忽视迟发过敏反应"
       ],
       "video_url": "firstaid_jellyfish_sting.mp4",
-      "source": "卫健委",
-      "reviewer": "XX 主任医师（急诊科）"
+      "source": "卫健委"
+
     },
     {
       "id": "firstaid_sfts",
@@ -1014,8 +1014,8 @@
         "不要忽视潜伏期内（2 周）的体温变化"
       ],
       "video_url": "firstaid_sfts.mp4",
-      "source": "中国疾控中心 / 卫健委",
-      "reviewer": "XX 主任医师（感染科）"
+      "source": "中国疾控中心 / 卫健委"
+
     },
     {
       "id": "firstaid_internal_heat",
@@ -1051,8 +1051,8 @@
         "不要把持续发热当普通上火（可能是感染）"
       ],
       "video_url": "firstaid_internal_heat.mp4",
-      "source": "中医对症调理（非急救）",
-      "reviewer": "XX 副主任医师（中医科）"
+      "source": "中医对症调理（非急救）"
+
     },
     {
       "id": "firstaid_liver_heat",
@@ -1087,8 +1087,8 @@
         "不要在调理期继续饮酒熬夜"
       ],
       "video_url": "firstaid_liver_heat.mp4",
-      "source": "中医对症调理（非急救）",
-      "reviewer": "XX 副主任医师（中医科）"
+      "source": "中医对症调理（非急救）"
+
     },
     {
       "id": "firstaid_diarrhea",
@@ -1124,8 +1124,8 @@
         "不要忽视血便、高热、严重脱水（须就医）"
       ],
       "video_url": "firstaid_diarrhea.mp4",
-      "source": "卫健委",
-      "reviewer": "XX 副主任医师（消化内科）"
+      "source": "卫健委"
+
     },
     {
       "id": "firstaid_urine_difficulty",
@@ -1161,8 +1161,8 @@
         "不要忽视无尿（肾功能损害征象）"
       ],
       "video_url": "firstaid_urine_difficulty.mp4",
-      "source": "卫健委",
-      "reviewer": "XX 副主任医师（泌尿外科）"
+      "source": "卫健委"
+
     },
     {
       "id": "firstaid_drug_intoxication",
@@ -1203,8 +1203,8 @@
         "不要丢弃毒物样本"
       ],
       "video_url": "firstaid_drug_intoxication.mp4",
-      "source": "中国疾控中心 / 卫健委",
-      "reviewer": "XX 主任医师（急诊 / 中毒科）"
+      "source": "中国疾控中心 / 卫健委"
+
     },
     {
       "id": "firstaid_seizure",
@@ -1246,8 +1246,8 @@
         "不要立即喂水喂药（等完全清醒后）"
       ],
       "video_url": "firstaid_seizure.mp4",
-      "source": "卫健委",
-      "reviewer": "XX 主任医师（神经内科）"
+      "source": "卫健委"
+
     },
     {
       "id": "firstaid_contact_dermatitis",
@@ -1286,8 +1286,8 @@
         "不要挑破水疱"
       ],
       "video_url": "firstaid_contact_dermatitis.mp4",
-      "source": "卫健委",
-      "reviewer": "XX 副主任医师（皮肤科）"
+      "source": "卫健委"
+
     },
     {
       "id": "firstaid_contact_toxin",
@@ -1325,8 +1325,8 @@
         "不要丢弃样本"
       ],
       "video_url": "firstaid_contact_toxin.mp4",
-      "source": "中国疾控中心 / 卫健委",
-      "reviewer": "XX 主任医师（中毒科）"
+      "source": "中国疾控中心 / 卫健委"
+
     },
     {
       "id": "firstaid_plague",
@@ -1364,8 +1364,8 @@
         "不要当作普通感冒拖延就医"
       ],
       "video_url": "firstaid_plague.mp4",
-      "source": "中国疾控中心 / 卫健委",
-      "reviewer": "XX 主任医师（感染科）"
+      "source": "中国疾控中心 / 卫健委"
+
     },
     {
       "id": "firstaid_animal_disease",
@@ -1405,8 +1405,8 @@
         "不要将流行区发热当普通感冒"
       ],
       "video_url": "firstaid_animal_disease.mp4",
-      "source": "中国疾控中心 / 卫健委",
-      "reviewer": "XX 主任医师（感染科）"
+      "source": "中国疾控中心 / 卫健委"
+
     }
   ],
   "decision_nodes": [
