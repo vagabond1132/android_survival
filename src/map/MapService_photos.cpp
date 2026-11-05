@@ -214,8 +214,9 @@ QVariantMap MapService::deletePhoto(qint64 id) {
 
     QFile file(m_storagePath + QString("/photo_%1.json").arg(id));
     if (!file.exists()) {
+        Logger::warn(QString("%1: 照片文件不存在 id=%2").arg(ctx).arg(id));
         return toQVariant(Err<bool>(ServiceErrorCode::NotFound,
-                                      QStringLiteral("照片不存在 id=%1").arg(id), ctx));
+                                      QStringLiteral("这一张照片在本机读不到了"), ctx));
     }
     if (!file.remove()) {
         return toQVariant(Err<bool>(ServiceErrorCode::IoError,
@@ -232,8 +233,9 @@ QVariantMap MapService::updatePhotoNote(qint64 id, const QString& note) {
 
     auto photo = getPhotoById(id);  // 2026-09-20: rename
     if (photo.isEmpty()) {
+        Logger::warn(QString("%1: 照片记录读不到 id=%2").arg(ctx).arg(id));
         return toQVariant(Err<bool>(ServiceErrorCode::NotFound,
-                                      QStringLiteral("照片不存在 id=%1").arg(id), ctx));
+                                      QStringLiteral("这一张照片在本机读不到了"), ctx));
     }
     photo["note"] = note;
 
@@ -258,8 +260,9 @@ QVariantMap MapService::updatePhotoSpecies(qint64 id, const QString& speciesId,
 
     auto photo = getPhotoById(id);  // 2026-09-20: rename
     if (photo.isEmpty()) {
+        Logger::warn(QString("%1: 照片记录读不到 id=%2").arg(ctx).arg(id));
         return toQVariant(Err<bool>(ServiceErrorCode::NotFound,
-                                      QStringLiteral("照片不存在 id=%1").arg(id), ctx));
+                                      QStringLiteral("这一张照片在本机读不到了"), ctx));
     }
     photo["speciesId"] = speciesId;
     photo["speciesName"] = speciesName;
@@ -284,15 +287,17 @@ QVariantMap MapService::setPhotoFavorite(qint64 id, bool favorite) {
 
     auto photo = getPhotoById(id);  // 2026-09-20: rename
     if (photo.isEmpty()) {
+        Logger::warn(QString("%1: 照片记录读不到 id=%2").arg(ctx).arg(id));
         return toQVariant(Err<bool>(ServiceErrorCode::NotFound,
-                                      QStringLiteral("照片不存在 id=%1").arg(id), ctx));
+                                      QStringLiteral("这一张照片在本机读不到了"), ctx));
     }
     photo["isFavorite"] = favorite;
 
     QFile file(m_storagePath + QString("/photo_%1.json").arg(id));
     if (!file.open(QIODevice::WriteOnly)) {
+        Logger::error(QString("%1: 打开照片文件失败 id=%2 %3").arg(ctx).arg(id).arg(file.errorString()));
         return fail(ServiceErrorCode::IoError,
-                    QStringLiteral("写入失败: %1").arg(file.errorString()), ctx);
+                    QStringLiteral("这张照片存不进本机"), ctx);
     }
     file.write(QJsonDocument(QJsonObject::fromVariantMap(photo))
                     .toJson(QJsonDocument::Indented));

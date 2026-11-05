@@ -110,7 +110,7 @@ QVariantMap MapService::startTrack(const QString& name, int frequencySeconds) {
         Logger::error(QString("%1: %2").arg(ctx, err));
         return toQVariant(Err<QString>(
             ServiceErrorCode::IoError,
-            QStringLiteral("无法创建轨迹文件: %1").arg(err), ctx));
+            QStringLiteral("这条轨迹存不进本机"), ctx));
     }
     file.write(QJsonDocument(obj).toJson(QJsonDocument::Indented));
     file.close();
@@ -136,8 +136,9 @@ QVariantMap MapService::addTrackPoint(const QString& trackId, double lat, double
     //   否则之前会静默写一个孤儿 points 文件, stopTrack 拿不到 track meta,
     //   getTrackStats 返回 "too few points".
     if (!QFileInfo::exists(m_storagePath + QString("/track_%1.json").arg(trackId))) {
+        Logger::warn(QString("%1: 轨迹本体文件不存在: %2").arg(ctx, trackId));
         return toQVariant(Err<bool>(ServiceErrorCode::NotFound,
-                                      QStringLiteral("轨迹不存在: %1").arg(trackId), ctx));
+                                      QStringLiteral("这条轨迹在本机读不到了"), ctx));
     }
     // 2026-10-26: 采样点必须自证是有效坐标. RecordTab 现在每个采样周期直接落盘,
     //   无权限时 EmergencyService 的 currentLatitude 是 0 —— 不过这道门就会攒一条
@@ -325,6 +326,7 @@ QVariantMap MapService::deleteTrack(const QString& id) {
     bool ok = t.remove() && p.remove();
     if (ok) {
         emit dataChanged();
+        emit trackDeleted(id);
         return toQVariant(Ok(true));
     }
     return toQVariant(Err<bool>(ServiceErrorCode::IoError,
@@ -427,11 +429,11 @@ QVariantMap MapService::importGpx(const QString& filePath) {
 
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly)) {
-        const QString err = file.errorString();
-        emit warningTriggered("无法打开文件: " + filePath);
+        Logger::error(QString("%1: 打不开 %2 %3").arg(ctx).arg(filePath, file.errorString()));
+        emit warningTriggered("这个 GPX 文件打不开");
         return toQVariant(Err<QString>(
             ServiceErrorCode::IoError,
-            QStringLiteral("无法打开 GPX 文件: %1").arg(err), ctx));
+            QStringLiteral("这个 GPX 文件打不开"), ctx));
     }
 
     QXmlStreamReader xml(&file);
@@ -604,10 +606,11 @@ QVariantMap MapService::importKml(const QString& filePath) {
 
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly)) {
-        emit warningTriggered("无法打开文件");
+        Logger::error(QString("%1: 打不开 %2 %3").arg(ctx).arg(filePath, file.errorString()));
+        emit warningTriggered("这个 KML 文件打不开");
         return toQVariant(Err<QString>(
             ServiceErrorCode::IoError,
-            QStringLiteral("无法打开 KML 文件: %1").arg(filePath), ctx));
+            QStringLiteral("这个 KML 文件打不开"), ctx));
     }
 
     // 2026-10-27 #134 整体重写.
@@ -908,10 +911,11 @@ QVariantMap MapService::importCsv(const QString& filePath) {
 
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly)) {
-        emit warningTriggered("无法打开文件");
+        Logger::error(QString("%1: 打不开 %2 %3").arg(ctx).arg(filePath, file.errorString()));
+        emit warningTriggered("这个 CSV 文件打不开");
         return toQVariant(Err<QString>(
             ServiceErrorCode::IoError,
-            QStringLiteral("无法打开 CSV 文件: %1").arg(filePath), ctx));
+            QStringLiteral("这个 CSV 文件打不开"), ctx));
     }
 
     struct CsvPoint {

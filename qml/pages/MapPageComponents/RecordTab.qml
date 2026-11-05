@@ -491,6 +491,16 @@ Item {
         //   换成底排四格. 通栏按钮的问题不是"不好看", 是它把一次动作和整块内容抢同一
         //   列宽 (pass9 ② 查找那颗的图标压文案就是同一个形状). 动作带自己占一行 60,
         //   每格一个动作, 抽屉底部的 1px 描边就是它的上沿.
+        // 2026-11-03 F5 同族 (L3): 这一档整棵 ColumnLayout 原先一个 fillHeight 子项都没有,
+        //   而宿主 MapBottomSheet 的 StackLayout 是 fillHeight 的 —— 未开始录制时数据卡
+        //   不出现, 剩余高度被 Qt 摊到子项之间, 动作带被顶到底边外, 黑框下缘就是这么被
+        //   sheet 裁掉的 (pass 2 「记录/轨迹/查找」三格同一形状)。补一根吃掉剩余高度的
+        //   空档, 让富余只落在"内容"与"动作带"之间这一处。
+        Item {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+        }
+
         SheetActionBand {
             Layout.fillWidth: true
             actions: root._bandActions

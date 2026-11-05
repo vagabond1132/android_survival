@@ -133,18 +133,21 @@ QVariantMap MapService::deleteSpeciesLocation(const QString& locationId) {
         if (!c.isDigit()) { digitsOnly = false; break; }
     }
     if (!digitsOnly) {
+        Logger::warn(QString("%1: 标注编号不是纯数字, 拒绝拼路径: %2").arg(ctx, id));
         return toQVariant(Err<bool>(ServiceErrorCode::InvalidArgument,
-                                    QStringLiteral("标注 ID 非法: %1").arg(id), ctx));
+                                    QStringLiteral("这条标注的编号不对，为防改错没动手"), ctx));
     }
 
     QFile file(m_storagePath + QString("/species_%1.json").arg(id));
     if (!file.exists()) {
+        Logger::warn(QString("%1: 标注文件不存在: %2").arg(ctx, id));
         return toQVariant(Err<bool>(ServiceErrorCode::NotFound,
-                                    QStringLiteral("标注不存在: %1").arg(id), ctx));
+                                    QStringLiteral("这条标注在本机读不到了"), ctx));
     }
     if (!file.remove()) {
+        Logger::error(QString("%1: 标注文件删除失败 %2").arg(ctx, file.errorString()));
         return toQVariant(Err<bool>(ServiceErrorCode::IoError,
-            QStringLiteral("标注文件删除失败: %1").arg(file.errorString()), ctx));
+            QStringLiteral("这条标注的文件删不掉"), ctx));
     }
     emit dataChanged();
     return toQVariant(Ok(true));
@@ -268,7 +271,7 @@ QVariantMap MapService::getTrackStats(const QString& trackId, double weightKg) {
     }
     QJsonArray points = pdoc.array();
     if (points.size() < 2) {
-        result["error"] = "too few points";
+        result["error"] = QStringLiteral("这条轨迹存下的点太少, 算不出统计");
         return result;
     }
 
@@ -454,18 +457,18 @@ QVariantMap MapService::getTrackProfile(const QString& trackId) {
 
     QFile pf(m_storagePath + QString("/track_%1_points.json").arg(trackId));
     if (!pf.open(QIODevice::ReadOnly)) {
-        result["error"] = "points file not found";
+        result["error"] = QStringLiteral("这条轨迹的点数据读不到");
         return result;
     }
     QJsonDocument pdoc = QJsonDocument::fromJson(pf.readAll());
     pf.close();
     if (!pdoc.isArray()) {
-        result["error"] = "not array";
+        result["error"] = QStringLiteral("这条轨迹的点数据格式不对");
         return result;
     }
     QJsonArray points = pdoc.array();
     if (points.size() < 2) {
-        result["error"] = "too few points";
+        result["error"] = QStringLiteral("这条轨迹存下的点太少, 画不出曲线");
         return result;
     }
 

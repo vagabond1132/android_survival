@@ -255,6 +255,9 @@ signals:
     void trackStarted(QString trackId);
     void trackPointAdded(QString trackId, double lat, double lon);
     void trackStopped(QString trackId);
+    // 0.0.9 真机: 删掉的只是存储, 地图上的画线与「已选 N」还留着死 id —— dataChanged 太粗
+    //   (MapPage 只拿它刷物种标注), 所以这里给一条点名到轨迹的信号, 与 photoDeleted 同族。
+    void trackDeleted(QString trackId);
     void photoAdded(qint64 photoId);
     void photoUpdated(qint64 photoId);
     void photoDeleted(qint64 photoId);

@@ -9,6 +9,7 @@
  *   - 海拔 5 段分级边界 (L0-L4) + 名称/颜色/区间
  *   - 记录频率选项 (5/10/15/30) 与档位持久化 (QSettings: track/frequencySec)
  *   - 轨迹生命周期 start → addPoint → stop → get → delete
+ *     (0.0.9 真机补: 删除要点名发 trackDeleted, 地图页靠它摘掉已画的线)
  *   - 轨迹统计与海拔曲线
  *   - GPX 导入 / 导出回环, CSV 导入 (表头列名兼容)
  *   - 2026-10-27 #134 KML 导入: 两步路的 <gx:Track> (coord/when 两条平行列表按下标
@@ -197,6 +198,23 @@ private slots:
         const QVariantMap del = m_svc->deleteTrack(id);
         QVERIFY2(isOk(del), qPrintable(errText(del)));
         QVERIFY(!isOk(m_svc->getTrackById(id)));
+    }
+
+    // 0.0.9 真机 (删轨迹留幽灵选择): 删除只发了粗粒度的 dataChanged, 而 MapPage 拿它只刷
+    //   物种标注, 于是地图上的画线与「已选 N」继续列着已经不存在的轨迹。修法是补一条点名
+    //   到 id 的 trackDeleted —— 这里钉住"发了一次、带的就是被删的那条"。
+    void test_deleteTrackEmitsTrackDeleted() {
+        const QVariantMap start = m_svc->startTrack(QStringLiteral("信号轨迹"), 10);
+        QVERIFY2(isOk(start), qPrintable(errText(start)));
+        const QString id = start.value(QLatin1String("value")).toString();
+        QVERIFY(isOk(m_svc->addTrackPoint(id, 36.250, 117.100, 150)));
+        QVERIFY(isOk(m_svc->stopTrack(id)));
+
+        QSignalSpy deletedSpy(m_svc, &MapService::trackDeleted);
+        QVERIFY(deletedSpy.isValid());
+        QVERIFY(isOk(m_svc->deleteTrack(id)));
+        QCOMPARE(deletedSpy.count(), 1);
+        QCOMPARE(deletedSpy.at(0).at(0).toString(), id);
     }
 
     void test_startTrackRejectsBlankName() {

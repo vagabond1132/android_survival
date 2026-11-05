@@ -929,7 +929,9 @@ Page {
                 console.warn("[map onErrorChanged] " + _errDiag)
                 // 2026-10-16: 改走统一的 _failoverToNext (原内联切源逻辑与探测重复).
                 //   遍历完仍失败时由它写入常驻横幅.
-                mapPage._failoverToNext(_errDiag)
+                // L12: error 是 Qt Location 自己的英文原文, 只留在上面那行日志;
+                //   横幅是给用户看的, 只写中文那一句 (英文串进屏幕不需要经过 src/, 这一路以前漏了).
+                mapPage._failoverToNext("底图瓦片读取失败")
             }
         }
         // 2026-10-19 (用户反馈"地图需要可以手动移动"): 这里原来写
@@ -1064,6 +1066,11 @@ Page {
             target: mapService
             function onDataChanged() {
                 mapPage._reloadSpecies()
+            }
+            // 0.0.9 真机: 删一条已加载的轨迹后, 列表计数回 0 而地图上的「已选 1」还列着
+            //   那条死轨迹 (分析图/× 都还能点)。dataChanged 只管标注, 删除要按 id 摘画线。
+            function onTrackDeleted(trackId) {
+                mapPage.removeTrack(trackId)
             }
         }
 
@@ -1534,6 +1541,7 @@ Page {
     // 2026-09-15: 添加标注对话框 - 类别 + 物种 + 备注 + 自动 dangerLevel
     Dialog {
         id: addAnnotateDialog
+        modal: true   // L8 三件套之一: Qt6 的 Popup.modal 默认 false, 不写就是能点穿 (真机 F6)
         title: "添加标注"
         anchors.centerIn: parent
         width: Math.min(420, mapPage.width - 2 * styles.pageMargin)
@@ -1564,10 +1572,10 @@ Page {
             selectedSpeciesName = ""
             computedDangerLevel = 0
             refreshSpeciesList()
-            // 2026-10-20: ComboBox 的 currentIndex 在用户点选后就被控件自己打断了,
-            //   上面把 selectedCategory 复位而 combo 还显示上一轮那一类 → "看着是动物、
-            //   存进去是植物". 两个都必须在这里按回默认.
-            catCombo.currentIndex = 3
+            // 2026-11-03 (L11): 原来这里还写了一句 catCombo.currentIndex = 3 —— QML 侧的
+            //   命令式赋值会**打断**声明式绑定, 那次复位之后 combo 就再也不跟
+            //   selectedCategory 走了, 于是"看着是动物、存进去是植物"又回来. 现在
+            //   currentIndex 绑的就是 selectedCategory, 上面那句复位自己会把下拉拽回默认.
             speciesCombo.currentIndex = -1
         }
 
@@ -1664,9 +1672,9 @@ Page {
                                    : "transparent"
                         }
                     }
-                    currentIndex: 3
-                    onActivated: {
-                        addAnnotateDialog.selectedCategory = currentIndex
+                    currentIndex: addAnnotateDialog.selectedCategory
+                    onActivated: (index) => {
+                        addAnnotateDialog.selectedCategory = index
                         addAnnotateDialog.refreshSpeciesList()
                         addAnnotateDialog.selectedSpeciesId = ""
                         addAnnotateDialog.recomputeDanger()
@@ -1783,6 +1791,7 @@ Page {
     // 2026-09-15: marker 点击详情对话框 (复用, 根据 markerDetailKind 切换内容)
     Dialog {
         id: markerDetailDialog
+        modal: true   // L8 三件套之一: Qt6 的 Popup.modal 默认 false, 不写就是能点穿 (真机 F6)
         title: mapPage.markerDetailTitle
         anchors.centerIn: parent
         width: Math.min(420, mapPage.width - 2 * styles.pageMargin)
@@ -1904,7 +1913,9 @@ Page {
                     Layout.fillWidth: true
                     tone: CommonOptions.colorAccent
                     textSize: styles.fsMd
-                    enabled: !!mapPage.markerDetailRouteId
+                    // L11: 老数据 (手工标的点没有路线号) 会走到这里 —— 与其摆一枚点不动的
+                    //   按钮, 不如整枚收起, 用户看到的是"这里只有一件事可做".
+                    visible: !!mapPage.markerDetailRouteId
                     onClicked: {
                         if (mapPage.markerDetailRouteId) {
                             mapPage.ApplicationWindow.window.navBus.navigateTo(
@@ -1917,6 +1928,8 @@ Page {
                     text: "导航到此"
                     Layout.fillWidth: true
                     tone: CommonOptions.colorText
+                    // L11 免: 这一枚只在已经点开某个图上的点时出现, 那一刻 coord 必然有值
+                    //   (markerDetailCoord 就是从被点的标记里取来的), 禁用态实际到不了。
                     enabled: mapPage.markerDetailCoord !== null
                     onClicked: {
                         if (mapPage.markerDetailCoord) {
@@ -1955,6 +1968,7 @@ Page {
                     text: "导航到此"
                     Layout.fillWidth: true
                     tone: CommonOptions.colorText
+                    // L11 免: 同上 —— 物种那一枚标记也一定带坐标, 禁用态到不了。
                     enabled: mapPage.markerDetailCoord !== null
                     onClicked: {
                         if (mapPage.markerDetailCoord) {
@@ -2002,16 +2016,24 @@ Page {
         Material.foreground: CommonOptions.colorText
         padding: styles.spMd
 
-        contentItem: Text {
-            text: "从本机删掉「" + (mapPage.markerDetailTitle || "标注点") +
-                  "」? 删掉后图上和盘上都不再有这个点, 物种本身不受影响."
-            color: CommonOptions.colorText
-            font.pixelSize: styles.fsMd
-            wrapMode: Text.WordWrap
+        // L15: Dialog 的 contentItem 是裸 Item, 不把宽度传给子项 —— 正文要有宽度约束才 wrap。
+        contentItem: ColumnLayout {
+            spacing: styles.spSm
+
+            Text {
+                Layout.fillWidth: true
+                text: "从本机删掉「" + (mapPage.markerDetailTitle || "标注点") +
+                      "」? 删掉后图上和盘上都不再有这个点, 物种本身不受影响."
+                color: CommonOptions.colorText
+                font.pixelSize: styles.fsMd
+                wrapMode: Text.WordWrap
+            }
         }
         footer: DialogFooter {
+            kind: "danger"   // 真删本机记录 —— 不靠 DialogFooter 的默认值兜 (改默认就会悄悄失守)
             cancelText: "留着"
             confirmText: "删除"
+            confirmCode: "不可撤"
             onCancel: confirmDeleteMark.close()
             onConfirm: {
                 mapPage.deleteMarkedSpecies(mapPage.markerDetailLocationId)
@@ -2066,6 +2088,7 @@ Page {
     // 2026-09-15: 已选列表 - 单击 chip 弹出, 列出全部选中 + 单项删除
     Dialog {
         id: selectedListDialog
+        modal: true   // L8 三件套之一: Qt6 的 Popup.modal 默认 false, 不写就是能点穿 (真机 F6)
         // 2026-10-23 真机 (A5 假读数): 标题原来数 selectedRouteIds+selectedTrackIds,
         //   列表却画 routeOverlays+trackOverlays —— 缺点位的那条路线进了前者没进后者,
         //   于是「已选 2 项」下面只有一行. 现在标题与列表同源, 数得出来的就一定删得掉.
@@ -2086,13 +2109,14 @@ Page {
         Material.background: CommonOptions.colorSurface
         Material.foreground: CommonOptions.colorText
         footer: DialogFooter {
-            kind: "danger"
+            // 这一格只是"打开确认框", 一个字节都不改 —— 危险档(红口+红字)留给真删数据的那扇门。
+            kind: "plain"
             cancelText: "关闭"
             confirmText: "全部清空"
             // 清空选中只是视图状态, 重新点一行就回来了 —— 不写「不可撤」的附注
             confirmCode: ""
             onCancel: selectedListDialog.close()
-            // 清空是不可逆的, 走 confirmClearDialog. 那张确认框本来就写好了, 只是
+            // 清空只擦画线, 存储里的轨迹一条不少。那张确认框本来就写好了, 只是
             // 唯一的入口 (浮层 chip 的 selectedClearClicked) 从没被发出过 —— #82 复盘
             // 把这里接成唯一出口. 先关清单再弹确认, 免得两层叠住确认那句"已选 N 项".
             onConfirm: {
@@ -2307,6 +2331,7 @@ Page {
     //   只剩两颗按钮. 现在文字走 colorText, 弹层底显式绑 colorSurface.
     Dialog {
         id: confirmClearDialog
+        modal: true   // L8 三件套之一: Qt6 的 Popup.modal 默认 false, 不写就是能点穿 (真机 F6)
         title: "清空已选?"
         anchors.centerIn: parent
         width: Math.min(360, mapPage.width - 2 * styles.pageMargin)
@@ -2315,17 +2340,26 @@ Page {
         Material.foreground: CommonOptions.colorText
         padding: styles.spMd
 
-        Text {
-            text: "已选 " + (mapPage.routeOverlays.length + mapPage.trackOverlays.length) +
-                  " 项 (路线/轨迹), 全部清空?"
-            color: CommonOptions.colorText
-            font.pixelSize: styles.fsMd
-            wrapMode: Text.WordWrap
+        // L15: 裸 Text 子项拿不到宽度, wrapMode 会是死的。
+        contentItem: ColumnLayout {
+            spacing: styles.spSm
+
+            Text {
+                Layout.fillWidth: true
+                text: "已选 " + (mapPage.routeOverlays.length + mapPage.trackOverlays.length) +
+                      " 项 (路线/轨迹), 全部清空?"
+                color: CommonOptions.colorText
+                font.pixelSize: styles.fsMd
+                wrapMode: Text.WordWrap
+            }
         }
         footer: DialogFooter {
-            cancelText: "留着"
+            // 清的是屏上的画线, 不是存储里的数据 —— 重新点一行就回来了, 所以不占危险档,
+            // 也不写「不可撤」。(同一扇门另一侧 selectedListDialog 的口径要一致, #43 轮记录过相反写法)
+            kind: "plain"
+            cancelText: "返回"
             confirmText: "清空"
-            confirmCode: "不可撤"
+            confirmCode: ""
             onCancel: confirmClearDialog.close()
             onConfirm: {
                 mapPage.clearSelections()
@@ -2385,9 +2419,42 @@ Page {
     // 2026-10-20: 点选 → 写会话索引 → 重建本页 (Map.plugin write-once, 换 Plugin
     //   对象无效, 见 _rebuildForBaseMap). 重建会丢掉已画的路线/轨迹和抽屉状态,
     //   视野靠会话里的 mapView* 落回原处.
+    // 2026-11-03 真机 (F6 / 定律 L8): 这块面板原来只有三个单选项 —— 无遮罩、无标题、无出口，
+    //   用户只能"选一项"才能离开，等于把换底图变成一次强制改写。浮层三件套补齐：
+    //   dim 遮罩 (点外面必关且不穿到底层地图) + 标题 (Menu 的 title 属性不画出来) +
+    //   明确的「关闭」出口。
+    // 2026-11-03 qml_load_check 抓出来的致命错: Menu 在 Qt6 是 **Popup 派生**, 没有
+    //   header / footer (那两个属于 Pane / Dialog / ApplicationWindow)。写了不是警告,
+    //   是 "Cannot assign to non-existent property" —— 整个 MapPage 编译不过, 而 MapPage
+    //   被 Main.qml 引用, 于是**真机开局白屏**。qmllint 全树当时 0 Error, 只有 load check
+    //   能抓到, 所以这三件套的标题/出口只能做成首尾两行 MenuItem。
+    //   closePolicy 不写：Popup 的默认口径已经含
+    //   点外部/Escape 关闭，而 `Popup.CloseOnPressOutside` 这个枚举要引基座 `Popup` 类型，
+    //   与"只 import QtQuick.Controls.Material"的打包口径冲突 (controls_import_check.js)。
     Menu {
         id: baseMapMenu
         title: "选择底图"
+        dim: true
+        modal: true
+
+        // 标题行与出口 (2026-11-03): Menu 没有 header/footer, 三件套里的"标题"和"出口"
+        //   只能做成首尾两行 MenuItem。标题这行 enabled:false = 它不是一项可选动作, 但
+        //   Material 的默认 contentItem 会把禁用行的字染成 hintTextColor
+        //   (Material/MenuItem.qml:41), 所以自带一个 Text 指定 colorText, 别让它像灰掉的选项。
+        MenuItem {
+            // L11 免: 这一行是浮层的标题条, 不是一项被禁掉的动 —— 没有"为什么点不动"可答。
+            //   enabled:false 只用来让它不参与选中/高亮。
+            enabled: false
+            text: ""
+            contentItem: Text {
+                text: "选择底图"
+                font.pixelSize: styles.fsSm
+                font.bold: true
+                color: CommonOptions.colorText
+                verticalAlignment: Text.AlignVCenter
+            }
+        }
+
         Repeater {
             model: mapPage._baseMaps
             delegate: MenuItem {
@@ -2404,6 +2471,12 @@ Page {
                     mapPage._rebuildForBaseMap(index)
                 }
             }
+        }
+
+        MenuItem {
+            text: "关闭"
+            font.pixelSize: styles.fsSm
+            onClicked: baseMapMenu.close()
         }
     }
 
@@ -3052,6 +3125,7 @@ Page {
     // 权限不在启动时要, 只有用户点「开启全部文件访问」才跳系统设置页。
     Dialog {
         id: importDialog
+        modal: true   // L8 三件套之一: Qt6 的 Popup.modal 默认 false, 不写就是能点穿 (真机 F6)
         title: "导入外部轨迹"
         anchors.centerIn: parent
         width: Math.min(400, mapPage.width - 2 * styles.pageMargin)
