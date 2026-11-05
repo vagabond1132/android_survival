@@ -73,30 +73,14 @@ Page {
             spacing: styles.pageGap
 
             // === 标题条 ===
-            Item {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 54
-                Column {
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.bottom: parent.bottom
-                    anchors.leftMargin: styles.pageMargin
-                    anchors.rightMargin: styles.pageMargin
-                    spacing: 3
-                    Text {
-                        text: "ME"
-                        font.family: styles.monoFont
-                        font.pixelSize: styles.fsXs
-                        font.letterSpacing: 1.6
-                        color: CommonOptions.colorInk3
-                    }
-                    Text {
-                        text: "我带的东西与我留的记录"
-                        font.pixelSize: styles.fs2xl
-                        font.bold: true
-                        color: CommonOptions.colorText
-                    }
-                }
+            // 2026-11-03 #42 (L3/L13): tab 页, 右上角既无返回方块也无角标 → showBack: false.
+            //   原来这一条是页头家族的第 13 份复制体 (54 高 / 微标签字距 1.6), 字距统一到
+            //   组件里的 1.8 (两个拉丁字母, 肉眼不可分, 但两处写死迟早变成两处不同).
+            PageHeadBand {
+                eyebrowText: "ME"
+                eyebrowMono: true
+                titleText: "我带的东西与我留的记录"
+                showBack: false
             }
 
             Item {

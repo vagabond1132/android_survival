@@ -421,6 +421,10 @@ qt_add_qml_module(${APP_NAME}
         #   文件搬到 _scratch_debug/qml_quarantine/RegMarks.qml.unused-20261021 (它从未入过 git, 删了就找不回).
         qml/components/base/DuoRule.qml
         qml/components/base/Plate.qml
+        # L3/L13 (2026-11-03 #42): 二级页页首标题条 —— 12 个页头原来是逐字节复制体,
+        #   数写死在页里 (54 / 40 / 26 / 9 / 56 / 64). 收成一个组件, 几何只在 Styles
+        #   的 pageHead* token 与这一处. 未注册则 qmldir 不含 → push 时 module not found 崩.
+        qml/components/base/PageHeadBand.qml
         qml/components/base/BearingCell.qml
         qml/components/base/PositionReadout.qml
         qml/components/base/Dial.qml

@@ -184,66 +184,15 @@ Page {
         spacing: 0
 
         // --- 标题条 (54px: 微标签 / 页名 / 读数行, 右上 26px 方角返回) ---
-        Item {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 54
-            Layout.leftMargin: styles.pageMargin
-            Layout.rightMargin: styles.pageMargin
-
-            Column {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                // 给右上角的方角让位, 否则读数行从它底下穿过
-                anchors.rightMargin: 40
-                spacing: 3
-                Text {
-                    text: "手册 · 绳结"
-                    font.pixelSize: styles.fsXs
-                    color: CommonOptions.colorInk3
-                }
-                Text {
-                    width: parent.width
-                    text: "绳结"
-                    font.pixelSize: styles.fs2xl
-                    font.bold: true
-                    color: CommonOptions.colorText
-                    elide: Text.ElideRight
-                }
-                Text {
-                    width: parent.width
-                    text: knotPage.statusLine
-                    font.pixelSize: styles.fsXs
-                    color: CommonOptions.colorInk3
-                    elide: Text.ElideRight
-                }
-            }
-
-            // 返回方角: 26px 描边方块, 热区向外扩 9px 到 44 (戴手套)
-            Rectangle {
-                anchors.right: parent.right
-                anchors.top: parent.top
-                anchors.topMargin: styles.spXs
-                width: 26
-                height: 26
-                color: CommonOptions.colorSurface
-                border.color: CommonOptions.colorText
-                border.width: styles.lineHair
-                IconLabel {
-                    anchors.centerIn: parent
-                    name: "back"
-                    size: styles.icSm
-                    tintColor: CommonOptions.colorText
-                }
-                MouseArea {
-                    anchors.fill: parent
-                    anchors.margins: -9
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        var win = ApplicationWindow.window
-                        if (win && win.navBus) win.navBus.back()
-                    }
-                }
+        // 2026-11-03 #42 (L3/L13): 这一条原来是复制体, 数写死在页里 (54/40/26/9),
+        //   12 个二级页各一份. 几何收进 PageHeadBand + Styles.pageHead*, 这里只给文案.
+        PageHeadBand {
+            eyebrowText: "手册 · 绳结"
+            titleText: "绳结"
+            statusText: knotPage.statusLine
+            onBackClicked: {
+                var win = ApplicationWindow.window
+                if (win && win.navBus) win.navBus.back()
             }
         }
 
@@ -434,7 +383,9 @@ Page {
                             elide: Text.ElideRight
                         }
                         OutlineButton {
-                            text: "重置进度"
+                            // L11: 一条都没学过就没有进度可重置。与其摆一枚点不动的按钮,
+                            //   让标签自己说出状态更实在 (左边那行读数也确实是 0 / N)。
+                            text: knotPage.learnedCount > 0 ? "重置进度" : "还没有进度可重置"
                             tone: CommonOptions.colorTextMuted
                             enabled: knotPage.learnedCount > 0
                             onClicked: {

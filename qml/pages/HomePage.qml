@@ -275,58 +275,29 @@ Page {
             spacing: styles.spMd
 
             // --- 标题条: 页名 + 状态行, 右上角等宽读取时间 ---
-            Item {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 52
-                Layout.leftMargin: styles.pageMargin
-                Layout.rightMargin: styles.pageMargin
-
-                Column {
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.bottom: parent.bottom
-                    // 右上角 Plate 占位 (~"10:42" 等宽 + 字距), 不留这个边距状态行会从
-                    // Plate 底下穿过去 —— 两处都看得见但谁都读不全.
-                    anchors.rightMargin: 56
-                    spacing: 3
-                    Text {
-                        text: "营地"
-                        font.pixelSize: styles.fsXs
-                        color: CommonOptions.colorInk3
-                    }
-                    Text {
-                        width: parent.width
-                        text: "营地"
-                        font.pixelSize: styles.fs2xl
-                        font.bold: true
-                        color: CommonOptions.colorText
-                        elide: Text.ElideRight
-                    }
-                    Text {
-                        width: parent.width
-                        // 朝向没校准时明说, 别让用户以为盘上的方位是真的.
-                        //   2026-10-26: 罗盘之外还有 GPS 行进方向这一路, 那句话要分开说
-                        //   —— "按行进方向"只在走动时成立, 写成"朝向"会以为站着转手机也算.
-                        text: homePage.hasFix
-                              ? (homePage.hasHeading
-                                 ? "定位就绪 · 朝向 " + homePage.headingText
-                                   + (homePage.calibPct >= 0 && homePage.calibPct < 40
-                                      ? " · 罗盘需校准" : "")
-                                 : (homePage.hasCourse
-                                    ? "定位就绪 · 按行进方向 " + homePage.headingText
-                                      + " (走动时才准)"
-                                    : "定位就绪 · 无朝向来源, 按正北读"))
-                              : "尚未定位 · GPS 未就绪, 盘停在空盘"
-                        font.pixelSize: styles.fsSm
-                        color: CommonOptions.colorTextMuted
-                        elide: Text.ElideRight
-                    }
-                }
-                Plate {
-                    anchors.right: parent.right
-                    anchors.bottom: parent.bottom
-                    code: homePage.fixTime
-                }
+            // 2026-11-03 #42 (L3/L13): 这一条与 12 个二级页的标题条同形, 只差高度
+            //   (这里是 52, 那里是 54) 与右上角放的是时间而不是返回方块 —— 52/54 本身
+            //   就是复制体漂移. 右缘让位原来手抄 56 (照着 "10:42" 数的), 现在按角标实宽算.
+            //   换组件后这一格高度取 54 (styles.pageHeadH), 盘行整体下移 2 逻辑 px.
+            PageHeadBand {
+                eyebrowText: "营地"
+                titleText: "营地"
+                // 朝向没校准时明说, 别让用户以为盘上的方位是真的.
+                //   2026-10-26: 罗盘之外还有 GPS 行进方向这一路, 那句话要分开说
+                //   —— "按行进方向"只在走动时成立, 写成"朝向"会以为站着转手机也算.
+                statusText: homePage.hasFix
+                            ? (homePage.hasHeading
+                               ? "定位就绪 · 朝向 " + homePage.headingText
+                                 + (homePage.calibPct >= 0 && homePage.calibPct < 40
+                                    ? " · 罗盘需校准" : "")
+                               : (homePage.hasCourse
+                                  ? "定位就绪 · 按行进方向 " + homePage.headingText
+                                    + " (走动时才准)"
+                                  : "定位就绪 · 无朝向来源, 按正北读"))
+                            : "尚未定位 · GPS 未就绪, 盘停在空盘"
+                statusSize: styles.fsSm
+                statusColor: CommonOptions.colorTextMuted
+                plateCode: homePage.fixTime
             }
 
             // --- 盘行: 左 130 方位盘, 右侧读数栏 ---

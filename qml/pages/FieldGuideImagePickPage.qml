@@ -188,62 +188,13 @@ Page {
         spacing: 0
 
         // --- 标题条 (54px: 微标签 / 页名 / 读数行, 右上 26px 方角返回) ---
-        Item {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 54
-            Layout.leftMargin: styles.pageMargin
-            Layout.rightMargin: styles.pageMargin
-
-            Column {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                anchors.rightMargin: 40      // 给右上角方角让位
-                spacing: 3
-                Text {
-                    text: "图片比对"
-                    font.pixelSize: styles.fsXs
-                    color: CommonOptions.colorInk3
-                }
-                Text {
-                    width: parent.width
-                    text: "拍照检索图鉴"
-                    font.pixelSize: styles.fs2xl
-                    font.bold: true
-                    color: CommonOptions.colorText
-                    elide: Text.ElideRight
-                }
-                Text {
-                    width: parent.width
-                    text: pickPage.statusLine
-                    font.pixelSize: styles.fsXs
-                    color: CommonOptions.colorInk3
-                    elide: Text.ElideRight
-                }
-            }
-
-            Rectangle {
-                anchors.right: parent.right
-                anchors.top: parent.top
-                anchors.topMargin: styles.spXs
-                width: 26
-                height: 26
-                color: CommonOptions.colorSurface
-                border.color: CommonOptions.colorText
-                border.width: styles.lineHair
-                IconLabel {
-                    anchors.centerIn: parent
-                    name: "back"
-                    size: styles.icSm
-                    tintColor: CommonOptions.colorText
-                }
-                MouseArea {
-                    anchors.fill: parent
-                    anchors.margins: -9
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: pickPage.goBack()
-                }
-            }
+        // 2026-11-03 #42 (L3/L13): 原来这一条是 12 个二级页各一份的复制体, 数写死在页里
+        //   (54 / 40 / 26 / 9)。几何收进 PageHeadBand + Styles.pageHead*, 这里只留文案与回退动作。
+        PageHeadBand {
+            eyebrowText: "图片比对"
+            titleText: "拍照检索图鉴"
+            statusText: pickPage.statusLine
+            onBackClicked: pickPage.goBack()
         }
 
         // --- 界门 chip ---
@@ -397,9 +348,12 @@ Page {
             }
             // 拍照在 Android 侧才接得上 (requestTakePhoto 是 AndroidPlatform 的 invokable)
             OutlineButton {
+                id: shootButton
                 Layout.fillWidth: true
                 text: "拍照"
                 tone: CommonOptions.colorText
+                // L11: 条件禁用要自带原因, 页面底部那一行渲染它。
+                property string disabledHint: androidPlatform ? "" : "拍照只在手机上可用"
                 enabled: androidPlatform ? true : false
                 onClicked: {
                     if (androidPlatform) androidPlatform.requestTakePhoto()
@@ -408,6 +362,7 @@ Page {
         }
 
         PrimaryButton {
+            id: matchButton
             Layout.fillWidth: true
             Layout.leftMargin: styles.pageMargin
             Layout.rightMargin: styles.pageMargin
@@ -415,8 +370,28 @@ Page {
             text: "按主色匹配"
             iconName: "search"        // 已核验码位 (原 \ue412 实为 photo, 不是 search)
             tone: CommonOptions.colorAccent
+            property string disabledHint: pickPage.currentImagePath === ""
+                                          ? "先选一张或拍一张照片, 才能按主色匹配" : ""
             enabled: pickPage.currentImagePath !== ""
             onClicked: pickPage.runMatch()
+        }
+
+        // L11: 按钮点不动时当场说清为什么 (手机端没有 hover, ToolTip 出不来)。
+        Text {
+            Layout.fillWidth: true
+            Layout.leftMargin: styles.pageMargin
+            Layout.rightMargin: styles.pageMargin
+            Layout.topMargin: styles.spXs
+            visible: text.length > 0
+            text: {
+                var why = []
+                if (shootButton.disabledHint.length > 0) why.push(shootButton.disabledHint)
+                if (matchButton.disabledHint.length > 0) why.push(matchButton.disabledHint)
+                return why.join(" · ")
+            }
+            font.pixelSize: styles.fsXs
+            color: CommonOptions.colorTextMuted
+            wrapMode: Text.WordWrap
         }
 
         // --- 常驻提示 (规则 ③) ---

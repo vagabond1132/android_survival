@@ -305,63 +305,14 @@ Page {
         spacing: 0
 
         // --- 标题条 (54px) ---
-        Item {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 54
-            Layout.leftMargin: styles.pageMargin
-            Layout.rightMargin: styles.pageMargin
-
-            Column {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                anchors.rightMargin: 40      // 给右上角方角让位
-                spacing: 3
-                Text {
-                    text: checklistPage.meta.kicker || "装备 / 应急清单"
-                    // kicker 现在是汉字 (原 "GEAR / CHECKLIST"), 不再走等宽
-                    font.pixelSize: styles.fsXs
-                    color: CommonOptions.colorInk3
-                }
-                Text {
-                    width: parent.width
-                    text: checklistPage.meta.name || "出门前清点"
-                    font.pixelSize: styles.fs2xl
-                    font.bold: true
-                    color: CommonOptions.colorText
-                    elide: Text.ElideRight
-                }
-                Text {
-                    width: parent.width
-                    text: checklistPage.statusLine
-                    font.pixelSize: styles.fsXs
-                    color: CommonOptions.colorInk3
-                    elide: Text.ElideRight
-                }
-            }
-
-            Rectangle {
-                anchors.right: parent.right
-                anchors.top: parent.top
-                anchors.topMargin: styles.spXs
-                width: 26
-                height: 26
-                color: CommonOptions.colorSurface
-                border.color: CommonOptions.colorText
-                border.width: styles.lineHair
-                IconLabel {
-                    anchors.centerIn: parent
-                    name: "back"
-                    size: styles.icSm
-                    tintColor: CommonOptions.colorText
-                }
-                MouseArea {
-                    anchors.fill: parent
-                    anchors.margins: -9
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: checklistPage.goBack()
-                }
-            }
+        // 2026-11-03 #42 (L3/L13): 原来这一条是 12 个二级页各一份的复制体, 数写死在页里
+        //   (54 / 40 / 26 / 9)。几何收进 PageHeadBand + Styles.pageHead*, 这里只留文案与回退动作。
+        PageHeadBand {
+            eyebrowText: checklistPage.meta.kicker || "装备 / 应急清单"
+            // kicker 现在是汉字 (原 "GEAR / CHECKLIST"), 不再走等宽
+            titleText: checklistPage.meta.name || "出门前清点"
+            statusText: checklistPage.statusLine
+            onBackClicked: checklistPage.goBack()
         }
 
         // --- 场景 chip (只有模板模式有; 装备清单只有一份, 没有可换的) ---

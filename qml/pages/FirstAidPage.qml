@@ -186,63 +186,13 @@ Page {
         spacing: 0
 
         // --- 标题条 (54px: 微标签 / 页名 / 读数行, 右上 26px 方角返回) ---
-        Item {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 54
-            Layout.leftMargin: styles.pageMargin
-            Layout.rightMargin: styles.pageMargin
-
-            Column {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                // 给右上角的方角让位, 否则读数行从它底下穿过
-                anchors.rightMargin: 40
-                spacing: 3
-                Text {
-                    text: "手册 · 急救"
-                    font.pixelSize: styles.fsXs
-                    color: CommonOptions.colorInk3
-                }
-                Text {
-                    width: parent.width
-                    text: "急救"
-                    font.pixelSize: styles.fs2xl
-                    font.bold: true
-                    color: CommonOptions.colorText
-                    elide: Text.ElideRight
-                }
-                Text {
-                    width: parent.width
-                    text: firstAidPage.statusLine
-                    font.pixelSize: styles.fsXs
-                    color: CommonOptions.colorInk3
-                    elide: Text.ElideRight
-                }
-            }
-
-            Rectangle {
-                anchors.right: parent.right
-                anchors.top: parent.top
-                anchors.topMargin: styles.spXs
-                width: 26
-                height: 26
-                color: CommonOptions.colorSurface
-                border.color: CommonOptions.colorText
-                border.width: styles.lineHair
-                IconLabel {
-                    anchors.centerIn: parent
-                    name: "back"
-                    size: styles.icSm
-                    tintColor: CommonOptions.colorText
-                }
-                MouseArea {
-                    anchors.fill: parent
-                    anchors.margins: -9
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: firstAidPage.goBack()
-                }
-            }
+        // 2026-11-03 #42 (L3/L13): 原来这一条是 12 个二级页各一份的复制体, 数写死在页里
+        //   (54 / 40 / 26 / 9)。几何收进 PageHeadBand + Styles.pageHead*, 这里只留文案与回退动作。
+        PageHeadBand {
+            eyebrowText: "手册 · 急救"
+            titleText: "急救"
+            statusText: firstAidPage.statusLine
+            onBackClicked: firstAidPage.goBack()
         }
 
         // --- 分类 chip (全部 + 五个分类, 带条数) ---

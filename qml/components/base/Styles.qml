@@ -119,6 +119,21 @@ Item {
     //   末行被切一半且看不出是"滚到边"还是"被条盖住". 折边与条之间留这一格,
     //   滚到底时末行整条露出, 未滚到底时切痕也落在空白里而不是字上.
     readonly property int bottomClearance: spLg + spXs   // 20
+    // L6 (2026-11-03 #37, 真机 0.0.6 复量): 页首第一行与 app bar 之间的净空.
+    //   六个二级页实测面包屑/微标签的墨迹都从 device y=249 起画 —— 正好是内容区的第一
+    //   像素行, 零净空, 字的上半截直接顶在 app bar 下缘上 (行规: 同一字号在有富余的
+    //   地方墨迹 21 px, 顶到边的地方只有 17 px). 净空加在 StackView 一处而不是逐页加
+    //   topMargin: 逐页写迟早有人漏一页, 而"同类控件全站一套几何"要的正是只有一个地方能改。
+
+    readonly property int topClearance: spMd              // 12
+
+    // L3/L13 (2026-11-03 #42): 二级页页首标题条的几何. 今天 12 个页头是复制体,
+    //   数写死在每一页里 (54 / 40 / 26 / 9 / 56 / 64), 其中"右缘让位"三页三个数 ——
+    //   40 = 26 方块 + 14, 56 / 64 = 编号宽度 + 12. 收进 PageHeadBand 之后让位一律按
+    //   "右上角控件实际宽 + spMd" 现算, 54/26/9 走这三个 token, 40 那格由 26+12=38 代.
+    readonly property int pageHeadH: 54       // 微标签 / 页名 / 读数行 三行的高度
+    readonly property int pageHeadBox: 26     // 右上返回方块的描边盒边长
+    readonly property int pageHeadTapPad: 9   // 热区向外扩到 44 = touchMin (戴手套)
 
     // === 「地物图例」丁骨架专用 ===
     readonly property int navBandH: 48        // 底部 5 方位导航条 (BASE/RES/ROUTE/SOS/我)

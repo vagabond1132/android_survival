@@ -212,52 +212,23 @@ Page {
             spacing: styles.spMd
 
             // --- 标题条 ---
-            Item {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 54
-                Layout.leftMargin: styles.pageMargin
-                Layout.rightMargin: styles.pageMargin
-
-                Column {
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.bottom: parent.bottom
-                    // 右上角 Plate 让位, 否则状态行从它底下穿过两边都读不全
-                    anchors.rightMargin: 64
-                    spacing: 3
-                    Text {
-                        text: "求助"
-                        font.pixelSize: styles.fsXs
-                        color: CommonOptions.colorInk3
-                    }
-                    Text {
-                        width: parent.width
-                        text: "求助"
-                        font.pixelSize: styles.fs2xl
-                        font.bold: true
-                        color: CommonOptions.colorText
-                        elide: Text.ElideRight
-                    }
-                    Text {
-                        width: parent.width
-                        text: sosPage.hasFix
-                              ? (sosPage.hasHeading
-                                 ? "定位就绪 · 朝向 " + sosPage.headingText
-                                 : (sosPage.hasCourse
-                                    ? "定位就绪 · 按行进方向 " + sosPage.headingText
-                                    : "定位就绪 · 无朝向来源, 按正北读"))
-                              : "尚未定位 · 草稿里只有时间没有坐标"
-                        font.pixelSize: styles.fsSm
-                        color: CommonOptions.colorTextMuted
-                        elide: Text.ElideRight
-                    }
-                }
-                Plate {
-                    anchors.right: parent.right
-                    anchors.bottom: parent.bottom
-                    code: "119/120"
-                    tone: CommonOptions.colorHazard
-                }
+            // 2026-11-03 #42 (L3/L13): 原来是复制体之一, 右缘让位写死 64 (照着一屏数出来的)。
+            //   这一页右上角是"119/120"而不是返回方块 —— PageHeadBand 用 plateCode 非空来表达
+            //   "放角标、不放返回", 让位按角标实际宽现算。
+            PageHeadBand {
+                eyebrowText: "求助"
+                titleText: "求助"
+                statusText: sosPage.hasFix
+                            ? (sosPage.hasHeading
+                               ? "定位就绪 · 朝向 " + sosPage.headingText
+                               : (sosPage.hasCourse
+                                  ? "定位就绪 · 按行进方向 " + sosPage.headingText
+                                  : "定位就绪 · 无朝向来源, 按正北读"))
+                            : "尚未定位 · 草稿里只有时间没有坐标"
+                statusSize: styles.fsSm
+                statusColor: CommonOptions.colorTextMuted
+                plateCode: "119/120"
+                plateTone: CommonOptions.colorHazard
             }
 
             // --- 墨底仪表 + 迷你盘 (全站两处墨底之二) ---
@@ -391,6 +362,11 @@ Page {
 
             // triggerSOS() 内部会拨 120 并给所有联系人群发位置短信, 是本页后果最重
             // 的一次动作, 所以它和号码行用同一个门, 只是拉到 3 秒.
+            // 2026-11-03 真机 (F7 / L11): 一个联系人都没有时, 旧文案写"群发位置给 0 位
+            // 联系人"却仍画成可用入口 —— 用户读到的是"这条链路是通的", 而 triggerSOS()
+            // 实际只做两件事: 拨 120 + 开始上报位置, 短信一条也发不出去.
+            //   这里**不许**改成禁用: 名单空着不该挡住拨 120 (那是这一页存在的理由),
+            //   要修的是"话要说准" —— 没联系人就直说没有, 并给出补救入口.
             HoldConfirmRow {
                 Layout.fillWidth: true
                 Layout.leftMargin: styles.pageMargin
@@ -398,13 +374,31 @@ Page {
                 visible: !(emergencyService && emergencyService.isSosActive)
                 code: "SOS"
                 title: "触发 SOS"
-                subtitle: "拨 120 并群发位置给 "
-                          + (emergencyService ? emergencyService.contactCount : 0) + " 位联系人"
+                subtitle: {
+                    var n = emergencyService ? emergencyService.contactCount : 0
+                    return n > 0
+                           ? ("拨 120 · 同时给 " + n + " 位联系人发位置短信")
+                           : ("拨 120 · 开始上报位置 · 名单为空, 不会发短信")
+                }
                 holdMs: 3000
                 accent: CommonOptions.colorBlaze
                 onConfirmed: {
                     if (emergencyService) emergencyService.triggerSOS()
                 }
+            }
+
+            // 名单为空时把"缺什么"摆在按钮正下方 (旧版只有页尾那块 EmptyState,
+            // 用户在按钮上看不到补救入口, 只能猜).
+            Text {
+                Layout.fillWidth: true
+                Layout.leftMargin: styles.pageMargin
+                Layout.rightMargin: styles.pageMargin
+                visible: !(emergencyService && emergencyService.isSosActive)
+                         && (!emergencyService || emergencyService.contactCount === 0)
+                text: "添加紧急联系人后, 触发时会把坐标与伤情一并发出去"
+                font.pixelSize: styles.fsXs
+                color: CommonOptions.colorDanger
+                wrapMode: Text.WordWrap
             }
 
             // SOS 进行中: hazard 实心条, 不占墨底名额.

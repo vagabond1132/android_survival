@@ -51,6 +51,17 @@ Page {
     // 2026-09-21: 默认必须是 0=全部月份. 之前默认当前月, 数据稀疏月份直接空列表.
     property int currentMonth: 0
     property string currentProvince: "全部"
+    // 2026-11-03 真机 (F1 / 定律 L11): 月份下拉的**唯一一份**选项表。
+    //   旧版在 comboModel 与 comboCurrentIndex 里各调一次 CommonOptions.monthOptions()，
+    //   而它是个 Q_INVOKABLE 方法 (不是属性)，每次返回一份**新数组**：两处拿到的是两个
+    //   不同对象，"显示"和"筛选"因此可以各说各话。收成一个 readonly 属性后，模型、反查
+    //   index、显示文字三者同源。
+    readonly property var monthOpts: CommonOptions.monthOptions()
+    readonly property int monthIndex: {
+        for (var i = 0; i < monthOpts.length; i++)
+            if (Number(monthOpts[i].value) === currentMonth) return i
+        return 0
+    }
     property string currentCategory: ""   // "" = 全部类目 (speciesCategoryLabel 的键)
     // 丁: 默认按"离我多远"排. 切序靠长按, 见下面排序条.
     property bool sortByNear: true
@@ -312,48 +323,18 @@ Page {
         spacing: 0
 
         // --- 标题条 ---
-        Item {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 54
-            Layout.leftMargin: styles.pageMargin
-            Layout.rightMargin: styles.pageMargin
-
-            Column {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                // 右上角编号让位, 否则状态行从它底下穿过两边都读不全
-                anchors.rightMargin: 56
-                spacing: 3
-                Text {
-                    text: "资源"
-                    font.pixelSize: styles.fsXs
-                    color: CommonOptions.colorInk3
-                }
-                Text {
-                    width: parent.width
-                    text: fieldGuidePage.pageTitle
-                    font.pixelSize: styles.fs2xl
-                    font.bold: true
-                    color: CommonOptions.colorText
-                    elide: Text.ElideRight
-                }
-                Text {
-                    width: parent.width
-                    text: fieldGuidePage.statusLine
-                    font.pixelSize: styles.fsSm
-                    color: CommonOptions.colorTextMuted
-                    elide: Text.ElideRight
-                }
-            }
+        // 2026-11-03 #42 (L3/L13): 原来是 12 个二级页复制体之一。这一条没有返回方块而是
+        //   屏号, 右缘让位原来写死 56 —— 那是照着某一屏数出来的; PageHeadBand 按角标实际
+        //   宽度现算, 所以「①-④ 哪一格」换字都不会挤到状态行。
+        PageHeadBand {
+            eyebrowText: "资源"
+            titleText: fieldGuidePage.pageTitle
+            statusText: fieldGuidePage.statusLine
+            statusSize: styles.fsSm
+            statusColor: CommonOptions.colorTextMuted
             // 屏号: 图鉴是 RES 这一格, 界门 1..4 → G-1..G-4 (地物图例的页面编号,
             // 与"这条物种是什么"无关, 别当数据读)
-            Plate {
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                code: "G-" + (fieldGuidePage.currentKingdom + 1)
-                tone: CommonOptions.colorInk3
-            }
+            plateCode: "G-" + (fieldGuidePage.currentKingdom + 1)
         }
 
         // --- 类目环 + 类目 chip ---
@@ -466,6 +447,8 @@ Page {
                     }
                     return 0
                 }
+                // 显示词由 FilterRow 从 comboCurrentIndex + 模型反查 (F1 / L11)，
+                // 这里不再单独给 comboDisplayText —— 两个口径会漂。
                 onComboActivated: (idx) => {
                     fieldGuidePage.currentProvince = provinceComboModel.get(idx).name
                 }
@@ -476,17 +459,12 @@ Page {
                 label: "月份"
                 // 2026-09-23: CommonOptions.monthOptions() 第 0 项已经是 "全部"(value=0),
                 //   之前页面又 concat 一个 → ComboBox 出现两个 "全部".
-                comboModel: CommonOptions.monthOptions()
+                // 2026-11-03 (F1): 选项表改成页内的 monthOpts 单例，模型/反查/显示同源。
+                comboModel: fieldGuidePage.monthOpts
                 comboTextRole: "label"
                 comboValueRole: "value"
-                comboCurrentIndex: {
-                    var opts = CommonOptions.monthOptions()
-                    for (var i = 0; i < opts.length; i++) {
-                        if (opts[i].value === fieldGuidePage.currentMonth) return i
-                    }
-                    return 0
-                }
-                onComboActivated: (idx, value) => { fieldGuidePage.currentMonth = value }
+                comboCurrentIndex: fieldGuidePage.monthIndex
+                onComboActivated: (idx, value) => { fieldGuidePage.currentMonth = Number(value) }
             }
         }
 

@@ -223,6 +223,18 @@ ApplicationWindow {
             anchors.fill: parent
             anchors.topMargin: winStyles.spSm
             anchors.bottomMargin: winStyles.spSm
+            // L8 浮层三件套之一: 这一屏得说清自己是什么。Qt 6.7 的 Drawer 没有 title /
+            //   header 属性 (那两个是 Dialog 的), 所以标题挂在 ListView.header 上。
+            //   13 项在 48dp 行高下正好一屏放得下, header 首屏必定看得见。
+            header: Text {
+                width: ListView.view.width
+                text: "全部入口"
+                font.pixelSize: winStyles.fsXs
+                color: CommonOptions.colorTextMuted
+                leftPadding: winStyles.pageMargin
+                topPadding: winStyles.spXs
+                bottomPadding: winStyles.spSm
+            }
             model: ListModel {
                 ListElement { name: "home";          title: "首页" }
                 ListElement { name: "map";           title: "地图与轨迹" }
@@ -400,6 +412,8 @@ ApplicationWindow {
     StackView {
         id: stackView
         anchors.fill: parent
+        // L6: 页首净空只在这一处给, 23 个页头不必各写一遍 topMargin。
+        anchors.topMargin: winStyles.topClearance
         onCurrentItemChanged: window.syncBand()
         // 2026-09-15: 改回 HomePage 作为 initialItem
         // (之前 MapPage 作主页时, 因地图插件/瓦片未就绪 + QML6 signal handler 语法

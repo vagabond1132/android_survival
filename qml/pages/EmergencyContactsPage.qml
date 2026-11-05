@@ -169,64 +169,15 @@ Page {
         spacing: 0
 
         // --- 标题条 (54px) ---
-        Item {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 54
-            Layout.leftMargin: styles.pageMargin
-            Layout.rightMargin: styles.pageMargin
-
-            Column {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                anchors.rightMargin: 40      // 给右上角方角让位
-                spacing: 3
-                Text {
-                    text: "求助收件人"
-                    font.pixelSize: styles.fsXs
-                    color: CommonOptions.colorInk3
-                }
-                Text {
-                    width: parent.width
-                    text: "紧急联系人"
-                    font.pixelSize: styles.fs2xl
-                    font.bold: true
-                    color: CommonOptions.colorText
-                    elide: Text.ElideRight
-                }
-                Text {
-                    width: parent.width
-                    text: contactsPage.contactCount > 0
-                          ? (contactsPage.contactCount + " 人 · 触发 SOS 全员收到同一条定位短信")
-                          : "名单是空的 · 触发 SOS 时发不出短信"
-                    font.pixelSize: styles.fsXs
-                    color: CommonOptions.colorInk3
-                    elide: Text.ElideRight
-                }
-            }
-
-            Rectangle {
-                anchors.right: parent.right
-                anchors.top: parent.top
-                anchors.topMargin: styles.spXs
-                width: 26
-                height: 26
-                color: CommonOptions.colorSurface
-                border.color: CommonOptions.colorText
-                border.width: styles.lineHair
-                IconLabel {
-                    anchors.centerIn: parent
-                    name: "back"
-                    size: styles.icSm
-                    tintColor: CommonOptions.colorText
-                }
-                MouseArea {
-                    anchors.fill: parent
-                    anchors.margins: -9
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: contactsPage.goBack()
-                }
-            }
+        // 2026-11-03 #42 (L3/L13): 原来这一条是 12 个二级页各一份的复制体, 数写死在页里
+        //   (54 / 40 / 26 / 9)。几何收进 PageHeadBand + Styles.pageHead*, 这里只留文案与回退动作。
+        PageHeadBand {
+            eyebrowText: "求助收件人"
+            titleText: "紧急联系人"
+            statusText: contactsPage.contactCount > 0
+                ? (contactsPage.contactCount + " 人 · 触发 SOS 全员收到同一条定位短信")
+                : "名单是空的 · 触发 SOS 时发不出短信"
+            onBackClicked: contactsPage.goBack()
         }
 
         // --- 读数带 (3 格) ---
@@ -267,7 +218,7 @@ Page {
                     // 规则 ②: 「主」的语义在这一行交代, 不靠按钮暗示
                     Text {
                         Layout.alignment: Qt.AlignVCenter
-                        text: "「主」只排最前 · 拨号在⑤求助页长按"
+                        text: "「主」只排最前 · 拨号在求助页长按"
                         font.pixelSize: styles.fsXs
                         color: CommonOptions.colorTextDim
                     }
@@ -318,12 +269,17 @@ Page {
         }
 
         // --- 名册 ---
-        // 2026-10-22 巡检: 0 联系人时这个 Item 照样 fillHeight, 一小块 EmptyState 漂在
-        //   整页空白正中, 看着像页面坏了. 空态改为不占满: 列表有才 fillHeight,
-        //   空态贴着上边缘, 下方留给底栏的主按钮.
+        // 2026-10-22 巡检: 0 联系人时这一格漂在整页空白正中, 看着像页面坏了 —— 当时的
+        //   修法是"空态不占满" (fillHeight 只在有列表时为真) + 空态改 anchors.top。
+        // 2026-11-03 F5 复量 (真机 0.0.6): 那个条件句才是病根。空名单时整棵根
+        //   ColumnLayout 一个 fillHeight 子项都没有, Qt Quick Layouts 于是把剩余空间
+        //   摊到子项之间而不是留在末尾, 结果 54px 标题条被顶下 67 逻辑 px —— 同一屏的
+        //   返回方块从 device y=266 跑到 454, 用户按 266 点两次都退不出去。
+        //   空态本来就 anchors.top, 所以 fillHeight 恒真既保住 2026-10-22 的意图
+        //   (空态贴上边缘), 又让页根永远有一个吃满剩余高度的子项。见 page_fill_check。
         Item {
             Layout.fillWidth: true
-            Layout.fillHeight: contactsPage.contactCount > 0
+            Layout.fillHeight: true
             Layout.preferredHeight: emptyBox.implicitHeight
             Layout.topMargin: styles.spSm
 
@@ -454,7 +410,7 @@ Page {
                 text: "名单里还没有人"
                 hint: contactsPage.note.length > 0
                       ? contactsPage.note
-                      : "添加之后, ⑤求助页长按触发 SOS 会给名单里每个人都发一条含位置的短信"
+                      : "添加之后, 在求助页长按触发 SOS 会给名单里每个人都发一条含位置的短信"
                 // 出口只有一个: 底栏那颗「添加联系人」主按钮.
                 // 原来这里也放了一颗同名按钮, 空态一个 + 底栏一个, 两个入口一件事.
                 actionText: ""
@@ -683,13 +639,19 @@ Page {
         Material.foreground: CommonOptions.colorText
         standardButtons: Dialog.NoButton
 
-        contentItem: Text {
-            text: "把「" + (contactsPage.rows[confirmDeleteDialog.delIndex]
-                            ? contactsPage.rows[confirmDeleteDialog.delIndex].name : "")
-                  + "」从名单里移出去？移走后触发 SOS 不再给这个号码发定位短信。"
-            color: CommonOptions.colorText
-            font.pixelSize: styles.fsMd
-            wrapMode: Text.WordWrap
+        // L15: Dialog 的 contentItem 是裸 Item, 不把宽度传给子项 —— 正文要有宽度约束才 wrap。
+        contentItem: ColumnLayout {
+            spacing: styles.spSm
+
+            Text {
+                Layout.fillWidth: true
+                text: "把「" + (contactsPage.rows[confirmDeleteDialog.delIndex]
+                                ? contactsPage.rows[confirmDeleteDialog.delIndex].name : "")
+                      + "」从名单里移出去？移走后触发 SOS 不再给这个号码发定位短信。"
+                color: CommonOptions.colorText
+                font.pixelSize: styles.fsMd
+                wrapMode: Text.WordWrap
+            }
         }
 
         footer: DialogFooter {
