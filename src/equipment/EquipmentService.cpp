@@ -10,6 +10,7 @@
 #include "../core/ServiceErrors.h"
 #include "../core/internal/QmlResultBridge.h"  // 2026-09-21: Phase 5 写操作切 Result
 #include "../common/SettingsStore.h"  // 2026-09-21: 阶段 L5.1 QSettings 封装
+#include "../common/TrackMetrics.h"   // 2026-11-03 #45: 距离公式只有一份 (定位反查省份锚点用)
 #include "RuleConditionFactory.h"  // 2026-09-21: Phase 3 接入 Strategy 工厂
 
 #include <QFile>
@@ -146,8 +147,9 @@ QVariantMap EquipmentService::deleteUserItem(const QString& id) {
     const char* ctx = "EquipmentService::deleteUserItem";
 
     if (id.isEmpty() || !id.startsWith("user_")) {
+        Logger::warn(QString("%1: 非用户装备 id, 拒绝删除: %2").arg(ctx, id));
         return fail(ServiceErrorCode::InvalidArgument,
-                    QStringLiteral("只能删除用户装备 (id 必须 user_ 开头), 收到: %1").arg(id), ctx);
+                    QStringLiteral("这条装备不是本机添加的，删不掉"), ctx);
     }
     SettingsStore::beginGroup("user_items");
     SettingsStore::remove(id);
@@ -164,8 +166,9 @@ QVariantMap EquipmentService::updateUserItem(const QString& id, const QString& n
     const char* ctx = "EquipmentService::updateUserItem";
 
     if (id.isEmpty() || !id.startsWith("user_")) {
+        Logger::warn(QString("%1: 非用户装备 id, 拒绝编辑: %2").arg(ctx, id));
         return fail(ServiceErrorCode::InvalidArgument,
-                    QStringLiteral("只能编辑用户装备 (id 必须 user_ 开头), 收到: %1").arg(id), ctx);
+                    QStringLiteral("这条装备不是本机添加的，改不了"), ctx);
     }
     if (auto e = requireNonBlank(name, "装备名称", ctx)) return *e;
     if (weightG < 0) {
@@ -176,8 +179,9 @@ QVariantMap EquipmentService::updateUserItem(const QString& id, const QString& n
     SettingsStore::beginGroup("user_items");
     if (!SettingsStore::childGroups().contains(id)) {
         SettingsStore::endGroup();
+        Logger::warn(QString("%1: 用户装备组不存在: %2").arg(ctx, id));
         return fail(ServiceErrorCode::NotFound,
-                    QStringLiteral("用户装备不存在: %1").arg(id), ctx);
+                    QStringLiteral("这条装备在本机读不到了"), ctx);
     }
     SettingsStore::beginGroup(id);
     SettingsStore::setValue("name", name);
@@ -475,6 +479,50 @@ QVariantMap EquipmentService::climateStation(const QString& province) const {
     out["lat"] = o["lat"].toDouble();
     out["lon"] = o["lon"].toDouble();
     out["refAltitudeM"] = o["refAltitudeM"].toDouble();
+    return out;
+}
+
+/**
+ * 坐标 → 气候表省份锚点 反查 (2026-11-03 #45)
+ *
+ * 表里每省一个锚点: lat 是代表纬度 (气候模型的形状锚, 与 UV/气温正弦共用), lon 是
+ * 省人民政府驻地经度 —— 只有这两个数凑齐才是一个"点", 缺 lon 的条目整条跳过 (老版本
+ * 的 JSON 没写过 lon, `o["lon"].toDouble()` 会静悄悄给 0, 于是新疆以西全被算到本初子午线
+ * 上, 所以这里按 contains + isDouble 卡, 不卡就是拿假坐标反查)。
+ * 距离用 outdoor::track::haversineM —— 全工程只那一份公式, 不在这里抄第二份。
+ * 省级反查在边界附近本来就会错, 所以 distanceKm 一并返回, 由页面照实提示而不是"就信我"。
+ */
+QVariantMap EquipmentService::nearestClimateProvince(double latitude, double longitude) const {
+    QVariantMap out;
+    if (!std::isfinite(latitude) || !std::isfinite(longitude)) return out;
+    if (latitude < -90.0 || latitude > 90.0 || longitude < -180.0 || longitude > 180.0) return out;
+    // (0,0) 是"赤道与本初子午线交点", 定位没给数时最常见的假值, 不是中国任何一个省
+    if (latitude == 0.0 && longitude == 0.0) return out;
+
+    QString bestName;
+    double bestDistM = 0.0;
+    double bestLat = 0.0;
+    double bestLon = 0.0;
+    for (auto it = m_climate.constBegin(); it != m_climate.constEnd(); ++it) {
+        const QJsonObject& o = it.value();
+        if (!o["lat"].isDouble() || !o["lon"].isDouble()) continue;
+        const double aLat = o["lat"].toDouble();
+        const double aLon = o["lon"].toDouble();
+        if (!std::isfinite(aLat) || !std::isfinite(aLon)) continue;
+        const double d = track::haversineM(latitude, longitude, aLat, aLon);
+        // QHash 的顺序不保证, 完全等距时按省名取小的那个, 免得同一对点两次跑出两个省
+        if (bestName.isEmpty() || d < bestDistM || (d == bestDistM && it.key() < bestName)) {
+            bestDistM = d;
+            bestName = it.key();
+            bestLat = aLat;
+            bestLon = aLon;
+        }
+    }
+    if (bestName.isEmpty()) return out;   // 表里一条可用的坐标都没有 —— 返回空, 让页面走"没定位"那条话
+    out["province"] = bestName;
+    out["distanceKm"] = qRound(bestDistM / 1000.0);
+    out["anchorLat"] = bestLat;
+    out["anchorLon"] = bestLon;
     return out;
 }
 
@@ -1057,7 +1105,7 @@ QVariantMap EquipmentService::saveList(const QVariantMap& listMap) {
     const char* ctx = "EquipmentService::saveList";
 
     QString id = listMap.value("id").toString();
-    if (auto e = requireNonEmpty(id, "listMap.id", ctx)) return *e;
+    if (auto e = requireNonEmpty(id, "这份清单的编号", ctx)) return *e;
 
     EquipmentList list = loadListFromStorage(id);
     // 2026-09-19: 修复重命名无效 — QML 端 modifyList(name=...) 时旧逻辑
@@ -1150,13 +1198,14 @@ QVariantMap EquipmentService::deleteList(const QString& id) {
 
     QFile file(m_storagePath + "/" + id + ".json");
     if (!file.exists()) {
+        Logger::warn(QString("%1: 清单文件不存在: %2").arg(ctx, id));
         return fail(ServiceErrorCode::NotFound,
-                    QStringLiteral("清单文件不存在: %1").arg(id), ctx);
+                    QStringLiteral("这份清单的文件在本机找不到"), ctx);
     }
     if (!file.remove()) {
-        const QString err = file.errorString();
-        Logger::error(QString("%1: %2").arg(ctx, err));
-        return fail(ServiceErrorCode::IoError, err, ctx);
+        Logger::error(QString("%1: %2").arg(ctx, file.errorString()));
+        return fail(ServiceErrorCode::IoError,
+                    QStringLiteral("这份清单的文件删不掉"), ctx);
     }
     // 2026-10-22 修 (用户报"删除清单后行不消失, 要重开页面"): 写操作里只有这条
     //   没发信号, EquipmentPage 的 Connections 全靠 dataChanged 回表 → 行一直留在屏上.
@@ -1175,13 +1224,13 @@ QVariantMap EquipmentService::modifyList(const QString& id,
     if (mapId.isEmpty()) {
         Logger::warn(QString("%1: listMap has no id").arg(ctx));
         return fail(ServiceErrorCode::InvalidArgument,
-                    QStringLiteral("listMap.id 为空"), ctx);
+                    QStringLiteral("这份清单没带编号，为防改错没动手"), ctx);
     }
     if (!id.isEmpty() && mapId != id) {
         Logger::warn(QString("%1: id mismatch (path=%2, map=%3)")
                          .arg(ctx).arg(id, mapId));
         return fail(ServiceErrorCode::InvalidArgument,
-                    QStringLiteral("id 不匹配: path=%1 map=%2").arg(id, mapId), ctx);
+                    QStringLiteral("清单编号对不上，为防改错没动手"), ctx);
     }
     return saveList(listMap);  // saveList 已是 Result, 直接转发
 }
@@ -1193,7 +1242,7 @@ QVariantMap EquipmentService::addPreference(const QString& equipmentId,
     using namespace outdoor::internal;
     const char* ctx = "EquipmentService::addPreference";
 
-    if (auto e = requireNonEmpty(equipmentId, "equipmentId", ctx)) return *e;
+    if (auto e = requireNonEmpty(equipmentId, "这条装备的编号", ctx)) return *e;
 
     UserPreference pref;
     pref.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
@@ -1242,7 +1291,7 @@ QVariantMap EquipmentService::deletePreference(const QString& id) {
     using namespace outdoor::internal;
     const char* ctx = "EquipmentService::deletePreference";
 
-    if (auto e = requireNonEmpty(id, "id", ctx)) return *e;
+    if (auto e = requireNonEmpty(id, "这条偏好的编号", ctx)) return *e;
 
     auto it = std::remove_if(m_preferences.begin(), m_preferences.end(),
         [&](const UserPreference& p) { return p.id == id; });
@@ -1250,8 +1299,9 @@ QVariantMap EquipmentService::deletePreference(const QString& id) {
     m_preferences.erase(it, m_preferences.end());
 
     if (!removed) {
+        Logger::warn(QString("%1: 偏好记录不存在: %2").arg(ctx, id));
         return toQVariant(Err<bool>(ServiceErrorCode::NotFound,
-                                      QStringLiteral("preference 不存在: %1").arg(id), ctx));
+                                      QStringLiteral("这条偏好设置在本机读不到了"), ctx));
     }
     return toQVariant(Ok(true));
 }
@@ -1266,7 +1316,7 @@ QVariantMap EquipmentService::startCheck(const QString& listId) {
     QVariantMap result;
     EquipmentList list = loadListFromStorage(listId);
     if (list.id.isEmpty()) {
-        result["error"] = "List not found";
+        result["error"] = QStringLiteral("这份清单在本机读不到了");
         return result;
     }
 
@@ -1289,8 +1339,9 @@ QVariantMap EquipmentService::checkItem(const QString& listId,
     // 用 checkedIds 做幂等: 同一个 equipmentId 重复勾选不会让 checkedCount 重复加
     EquipmentList list = loadListFromStorage(listId);
     if (list.id.isEmpty()) {
+        Logger::warn(QString("%1: 清单读不出来: %2").arg(ctx, listId));
         return fail(ServiceErrorCode::NotFound,
-                    QStringLiteral("清单不存在: %1").arg(listId), ctx);
+                    QStringLiteral("这份清单在本机读不到了"), ctx);
     }
 
     const int total = list.critical.size() + list.important.size() +
@@ -1324,7 +1375,7 @@ QVariantMap EquipmentService::confirmSkip(const QString& listId,
     using namespace outdoor::internal;
     const char* ctx = "EquipmentService::confirmSkip";
 
-    if (auto e = requireNonEmpty(equipmentId, "equipmentId", ctx)) return *e;
+    if (auto e = requireNonEmpty(equipmentId, "这条装备的编号", ctx)) return *e;
 
     Logger::info(QString("Skip %1 in list %2: %3")
                      .arg(equipmentId).arg(listId).arg(reason));

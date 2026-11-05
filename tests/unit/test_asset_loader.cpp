@@ -312,6 +312,17 @@ private slots:
             const QString where = QStringLiteral("provinces[%1]").arg(i);
             QVERIFY2(!o["name"].toString().isEmpty(), qPrintable(where + " 缺 name"));
             QVERIFY2(o["refAltitudeM"].toDouble() >= 0.0, qPrintable(where + " refAltitudeM 非法"));
+            // 2026-11-03 (#45): 经纬度是"定位反查省份"的唯一依据, 缺 lon 的那条会被
+            //   EquipmentService::nearestClimateProvince 整条跳过 —— 表少一个省, 边界处
+            //   就常年把用户填进隔壁省。这里按中国疆域卡范围, 卡住"键不存在→0"这种假值。
+            const double lat = o["lat"].toDouble();
+            const double lon = o["lon"].toDouble();
+            QVERIFY2(o["lat"].isDouble(), qPrintable(where + " 缺 lat"));
+            QVERIFY2(o["lon"].isDouble(), qPrintable(where + " 缺 lon (定位反查不到这一省)"));
+            QVERIFY2(lat >= 17.0 && lat <= 54.0,
+                     qPrintable(where + QStringLiteral(" lat=%1 不在中国范围内").arg(lat)));
+            QVERIFY2(lon >= 73.0 && lon <= 136.0,
+                     qPrintable(where + QStringLiteral(" lon=%1 不在中国范围内").arg(lon)));
             for (const char* key : kArrays) {
                 const QJsonArray arr = o[key].toArray();
                 QVERIFY2(arr.size() == 12,

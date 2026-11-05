@@ -86,7 +86,18 @@ Page {
     // 2 是在线预报 (#154 落的服务层, 这一轮才接上页面): 只要拿不到能用的数
     // (没定位 / 没网 / 缓存太旧 / 这一天空), 就**自动降到 1 的推演读数**并把原因
     // 写在读数下面 —— 环境条件这一整块不允许空白, 也不允许"预报"两个字挂着一份空数.
-    property int weatherSource: 1       // 0 手填 / 1 往年推演 / 2 当前天气预报
+    // 2026-11-04 真机 (#49 / 定律 L11): 上面那一档是「请求」，下面这一档才是「这一屏的数是谁给的」。
+    //   真机现场（0.0.7 走查 B 组判 FAIL，见 doc/09-讨论记录/13 §B）：Tab 高亮在「往年推演」，
+    //   同一屏的读数行却写「天气手填」，下面还有一行红字「这一带不在往年表里（表内 34 省）」——
+    //   即 weatherSource=1 而 applyClimate() 没取到数 (hasClimate=false)，五排 chip 用的是手填值。
+    //   第二个现场（模拟器 + 代码追）：选「当前天气预报」而预报拿不到 → 落回推演，
+    //   高亮仍跟着请求值停在预报，同屏另一行印着「退回往年推演: …」。
+    //   所以选中态一律读 weatherSourceReal；所有 if 分支照旧读 weatherSource（用户点的那一枚
+    //   决定要不要去拉预报、地点格开不开）。三档的口径与状态行「今天预报 / 往年 / 手填」同源。
+    //   门禁 tools/qml_checks/state_truth_check.js 第 ④ 条守这一对属性不许退回请求值。
+    property int weatherSource: 1       // 0 手填 / 1 往年推演 / 2 当前天气预报 —— **用户要哪一档** (请求值)
+    readonly property int weatherSourceReal:
+        hasForecast ? 2 : (weatherSource !== 0 && hasClimate ? 1 : 0)
     property string climateProvince: "" // 空 = 还没选 (表里 34 省, 见 climate_normals.json)
     property int climateMonth: new Date().getMonth() + 1
     property var climateRead: ({})      // equipmentService.climateFor 的原样返回
@@ -96,6 +107,14 @@ Page {
     // 来源句与降级原因一律**赋值**、不做绑定 (#111 两条 binding loop 的同一条教训)
     property string forecastSrcLine: ""
     property string forecastFailLine: ""
+    // === 2026-11-03 (#45): 地点这一格不再默认表里第一个省 ==================
+    // 用户报的正是这个: 人在济南, 「往年推演」按北京的气候填 —— 那是"自动档填了个错的",
+    // 比不填更坏。现在地点由当前定位反查气候表的省级锚点得出; 用户在①地点下拉框里
+    // 自己挑过 (provinceAuto = false) 就从此固定手选, 定位再变也不盖他的选择。
+    // placeLine 同样只赋值不绑定, 而且**每条出口都要落定** (含"没定位"那条) ——
+    // 这一格不允许出现"看着填好了其实没来源"的空白。
+    property bool provinceAuto: true
+    property string placeLine: ""
     readonly property bool hasEnv: hasForecast || hasClimate
     // 读数条与雪/雨折档只看这一份: 预报优先, 拿不到就是推演. 两边引擎侧键同名
     // (WeatherForecastService 头注写明了), 所以页面只写一套折档.
@@ -134,6 +153,59 @@ Page {
         return n ? n : []
     }
     readonly property int climateTotal: provinceChoices.length
+
+    /// 定位点离省级锚点超过这个距离时, 地点照用, 但额外提一句"气候按锚点一带推"可能偏。
+    /// 省级表每省只有一个锚点 (省人民政府驻地), 青岛→山东锚点实测 304 km —— 沿海与
+    /// 平原的气候确实差一档, 所以这句不是客套, 是把表的分辨率如实告诉用户。
+    readonly property int placeFarWarnKm: 200
+
+    /**
+     * 2026-11-03 (#45): 地点这一格的唯一写者 (自动档下)。
+     * 反查在引擎侧 (EquipmentService::nearestClimateProvince), 页面不抄距离公式,
+     * 也不抄 34 个锚点 —— 这里只做"有没有定位 / 反查成没成 / 手选过没有"四态的文案。
+     *
+     * 四条出口一律**先落 placeLine 再改 climateProvince**: 省份一改,
+     * onClimateProvinceChanged 立刻把 applyWeather 跑起来并把读数条显出来, 那一刻
+     * 这一格读到的必须是新定位的句子 (#111 定下的次序)。
+     * 返回"地点是不是由定位填上的" —— 调用方拿它决定要不要提示, 页面状态不靠它。
+     */
+    function applyPlaceFromLocation() {
+        if (!provinceAuto) {
+            placeLine = "地点是手选的 · 定位再变也不跟着改"
+            return false
+        }
+        if (!equipmentService) {
+            placeLine = "装备服务没就绪 · 地点反查用不了"
+            return false
+        }
+        if (!emergencyService || !emergencyService.hasLocation) {
+            // 这一句是本轮最要紧的一条: 没定位就不填, 绝不退回"表里第一个省"。
+            // 以前默认北京就是这里退出去的 —— 一个看起来像自动档的假读数。
+            placeLine = "现在没有定位 · 地点请自己选（不再默认第一个省）"
+            return false
+        }
+        var lat = emergencyService.currentLatitude
+        var lon = emergencyService.currentLongitude
+        var r = equipmentService.nearestClimateProvince(lat, lon)
+        if (!r || r.province === undefined) {
+            placeLine = "这个坐标（" + fmtCoord(lat, true) + " " + fmtCoord(lon, false)
+                        + "）不在气候表的 34 省范围内 · 地点请自己选"
+            return false
+        }
+        var line = "定位 " + fmtCoord(lat, true) + " " + fmtCoord(lon, false) + " → "
+                + r.province + "（离该省锚点 " + r.distanceKm + " km，气候按锚点一带推"
+                + (r.distanceKm > placeFarWarnKm ? "，可能偏一档" : "") + "）"
+        if (emergencyService.currentAccuracy > 0)
+            line += " · 精度 ±" + Math.round(emergencyService.currentAccuracy) + " m"
+        placeLine = line
+        if (climateProvince !== r.province) climateProvince = r.province
+        return true
+    }
+
+    /// 坐标显示: 带半球字母, 南纬/西经不硬写成 "°N"/"°E" (表只收中国, 境外坐标也要说得清)
+    function fmtCoord(v, isLat) {
+        return Math.abs(v).toFixed(2) + "°" + (isLat ? (v >= 0 ? "N" : "S") : (v >= 0 ? "E" : "W"))
+    }
 
     /**
      * 2026-10-23 (#111): 来源句的唯一生产者. 读数与月份都从**入参**取, 函数内不读
@@ -262,12 +334,16 @@ Page {
      * 预报成功时**不再**跑 applyClimate —— 否则五排 chip 会被推演值盖回去.
      */
     function applyWeather() {
-        if (weatherSource === 0) {
+        // 2026-11-04 (#49 / 定律 L11): 预报那一份读数**只在请求的就是预报时**才允许留着。
+        //   原来只有 weatherSource === 0 这一支持它归零，从「当前天气预报」切回「往年推演」时
+        //   forecastRead 带着上一份预报留在属性上 → hasForecast 仍为真 → 全站 9 处读它的地方
+        //   (数据来源句 / 「逐日预报」vs「常年值」/ envRead 取哪一份 / 状态行的「今天预报」)
+        //   全在说预报，而五排 chip 已经被 applyClimate 改写成往年值 ——
+        //   F1 那一族的第二处现场，只是这次打脸的不是下拉框而是整块读数。
+        if (weatherSource !== 2) {
             forecastRead = ({})
             forecastSrcLine = ""
             forecastFailLine = ""
-            applyClimate()
-            return
         }
         if (weatherSource === 2) {
             if (readForecast()) return
@@ -298,6 +374,19 @@ Page {
             equipmentPage.forecastSrcLine = ""
             equipmentPage.forecastFailLine = "预报拉取失败: " + reason
             equipmentPage.applyClimate()
+        }
+    }
+
+    // 2026-11-03 (#45): 定位到手 = 地点这一格与预报都要重算。
+    // 顺带补掉 #155 留的一个洞: 在"当前天气预报"档下如果进页面时还没定位,
+    // pullForecast 直接 return 了, fix 到手后没人再发请求 —— 这一格就一直空着。
+    // 手改过地点 (provinceAuto=false) 时 applyPlaceFromLocation 只改文案不改省份。
+    Connections {
+        target: emergencyService
+        function onLocationUpdated() {
+            equipmentPage.applyPlaceFromLocation()
+            if (equipmentPage.weatherSource === 2) equipmentPage.pullForecast()
+            equipmentPage.applyWeather()
         }
     }
 
@@ -418,9 +507,12 @@ Page {
             if (!equipmentService) return "装备引擎还没就绪 · 检查 ServiceRegistry 是否注册 equipmentService"
             if (items.length === 0) return "装备库空 · 检查 assets/data/equipment_base.json 是否打进包里"
             // 库件数在视图 chip 上已经写着, 读数行留给"这次到底按什么生成"
-            var src = equipmentPage.hasForecast
-                      ? "今天预报"
-                      : (weatherSource !== 0 && climateProvince.length > 0 && hasClimate
+            // 2026-11-04 (#49 / 定律 L11): 三档口径只由 weatherSourceReal 决定 ——
+            //   这一行与上面那排 Tab 高亮必须是同一个表达式算出来的同一个数，
+            //   原来这里自己拼了一套 (hasForecast / climateProvince 非空 / hasClimate)，
+            //   与 Tab 读的 weatherSource 不同源，真机才会出现"行说手填、框说推演"。
+            var src = equipmentPage.weatherSourceReal === 2 ? "今天预报"
+                      : (equipmentPage.weatherSourceReal === 1
                          ? (climateProvince + " " + climateMonth + "月往年") : "天气手填")
             return altMax + " m · " + days + " 天 · 难度 " + difficulty + " · "
                    + loadNames[loadEffective] + " · "
@@ -576,10 +668,21 @@ Page {
 
     Component.onCompleted: {
         refreshAll()
-        // 下拉框显示的是第 0 项, 状态也得是第 0 项, 否则"看着选了四川其实没选"
-        if (climateProvince.length === 0 && provinceChoices.length > 0)
-            climateProvince = provinceChoices[0]
+        // 2026-11-03 (#45): 这里原来是 `climateProvince = provinceChoices[0]` ——
+        // 表里排第一的是北京, 于是全国用户在济南/成都也按北京的气候填, 而且是
+        // "自动档"名义下填的。改成按当前定位反查: 先要一次定位 (与图鉴/地图/求助
+        // 同一条口径), 有读数就填, 没有就留空并把原因写在地点那一格下面, 不猜。
+        if (emergencyService) emergencyService.requestLocationUpdate()
+        applyPlaceFromLocation()
         // 环境条件现在有三个来源, 首屏也要走三源总入口, 不能只灌往年表
+        applyWeather()
+    }
+    onVisibleChanged: {
+        // 与 FieldGuidePage 同一套: 回到这一页时定位可能已经换了地方 (坐车进山),
+        // 手选过的地点不动, 自动档重新反查一次。
+        if (!visible) return
+        if (emergencyService) emergencyService.requestLocationUpdate()
+        applyPlaceFromLocation()
         applyWeather()
     }
 
@@ -625,6 +728,7 @@ Page {
         equipmentPage.loadIndex = 2
         equipmentPage.loadFollowTrip = true
         equipmentPage.weatherSource = 1
+        equipmentPage.provinceAuto = true
         equipmentPage.climateProvince = ""
         equipmentPage.climateMonth = new Date().getMonth() + 1
         // 2026-10-23 (#111): 这里原来直接 climateRead = ({}) 把读数清空, 而来源句
@@ -633,6 +737,9 @@ Page {
         // 2026-10-29 (#155): 换成 applyWeather() —— 预报那一源的读数与两句说明
         // (forecastRead / forecastSrcLine / forecastFailLine) 也要在这里一起归零,
         // 否则重置完"手填"档上还能看见上一份预报的数字.
+        // 2026-11-03 (#45): 重置把"手选过地点"这个状态也清掉了, 所以地点要重新按
+        // 定位反查一遍 (placeLine 与 climateProvince 都由它落), 否则句子还停在手选那条。
+        equipmentPage.applyPlaceFromLocation()
         equipmentPage.applyWeather()
         nameField.text = ""
         nameField.placeholderText = "清单名称 (留空自动命名)"
@@ -682,10 +789,14 @@ Page {
         if (equipmentPage.weatherSource !== 0) {
             if (!equipmentPage.hasEnv) {
                 // 不静默退回手填: 用户选的是自动档, 拿不到就不生成
+                // 2026-11-03 (#45): 地点现在由定位反查, "取不到"最常见的原因是没定位,
+                // 所以把地点那一格的来源句一并抄进提示里, 用户不用自己去找是哪一格空着。
                 equipmentPage.note = equipmentPage.weatherSource === 2
                         ? ("预报和往年都没取到数: " + (equipmentPage.forecastFailLine || "原因未知")
-                           + " · 切「往年推演」要先挑地点, 或改「手填」自己定档。")
-                        : "往年天气还没取到: 先挑地点; 这一带不在 34 省表里就切回「手填」。"
+                           + " · 地点: " + (equipmentPage.placeLine || "未填")
+                           + " · 或改「手填」自己定档。")
+                        : ("往年天气还没取到 · 地点: " + (equipmentPage.placeLine || "未填")
+                           + " · 有定位后会自动填，也可以在下拉框自己选；这一带不在 34 省表里就切回「手填」。")
                 return
             }
             var c = equipmentPage.envRead
@@ -801,64 +912,14 @@ Page {
         spacing: 0
 
         // --- 标题条 (54px: 微标签 / 视图名 / 读数行, 右上 26px 方角返回) ---
-        Item {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 54
-            Layout.leftMargin: styles.pageMargin
-            Layout.rightMargin: styles.pageMargin
-
-            Column {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                anchors.rightMargin: 40      // 给右上角方角让位
-                spacing: 3
-                Text {
-                    text: equipmentPage.kicker
-                    font.family: styles.monoFont
-                    font.pixelSize: styles.fsXs
-                    font.letterSpacing: 1.8
-                    color: CommonOptions.colorInk3
-                }
-                Text {
-                    width: parent.width
-                    text: equipmentPage.pageTitle
-                    font.pixelSize: styles.fs2xl
-                    font.bold: true
-                    color: CommonOptions.colorText
-                    elide: Text.ElideRight
-                }
-                Text {
-                    width: parent.width
-                    text: equipmentPage.statusLine
-                    font.pixelSize: styles.fsXs
-                    color: CommonOptions.colorInk3
-                    elide: Text.ElideRight
-                }
-            }
-
-            Rectangle {
-                anchors.right: parent.right
-                anchors.top: parent.top
-                anchors.topMargin: styles.spXs
-                width: 26
-                height: 26
-                color: CommonOptions.colorSurface
-                border.color: CommonOptions.colorText
-                border.width: styles.lineHair
-                IconLabel {
-                    anchors.centerIn: parent
-                    name: "back"
-                    size: styles.icSm
-                    tintColor: CommonOptions.colorText
-                }
-                MouseArea {
-                    anchors.fill: parent
-                    anchors.margins: -9
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: equipmentPage.goBack()
-                }
-            }
+        // 2026-11-03 #42 (L3/L13): 原来这一条是 12 个二级页各一份的复制体, 数写死在页里
+        //   (54 / 40 / 26 / 9)。几何收进 PageHeadBand + Styles.pageHead*, 这里只留文案与回退动作。
+        PageHeadBand {
+            eyebrowText: equipmentPage.kicker
+            eyebrowMono: true
+            titleText: equipmentPage.pageTitle
+            statusText: equipmentPage.statusLine
+            onBackClicked: equipmentPage.goBack()
         }
 
         // --- 视图切换 (三枚 chip 一行, 带条数) ---
@@ -1184,8 +1245,12 @@ Page {
                                             Layout.fillWidth: true
                                             Layout.preferredHeight: styles.btnHSm
                                             border.width: styles.lineHair
-                                            border.color: CommonOptions.colorText
-                                            color: equipmentPage.weatherSource === index
+                                            // 请求了但没供数的那一枚: 描边升成 blaze，
+                                            // 让用户看见"我点的是它，但这一屏不是它给的" (#49)
+                                            border.color: equipmentPage.weatherSource === index
+                                                         && equipmentPage.weatherSourceReal !== index
+                                                         ? CommonOptions.colorBlaze : CommonOptions.colorText
+                                            color: equipmentPage.weatherSourceReal === index
                                                    ? CommonOptions.colorText
                                                    : CommonOptions.colorSurface
                                             // 相邻两枚之间只画一条线: 后一枚盖掉自己的左边
@@ -1194,8 +1259,8 @@ Page {
                                                 anchors.centerIn: parent
                                                 text: modelData
                                                 font.pixelSize: styles.fsSm
-                                                font.bold: equipmentPage.weatherSource === index
-                                                color: equipmentPage.weatherSource === index
+                                                font.bold: equipmentPage.weatherSourceReal === index
+                                                color: equipmentPage.weatherSourceReal === index
                                                        ? CommonOptions.colorTextOnAccent
                                                        : CommonOptions.colorTextMuted
                                             }
@@ -1216,12 +1281,41 @@ Page {
                                     comboCurrentIndex: Math.max(
                                         0, equipmentPage.provinceChoices.indexOf(
                                                equipmentPage.climateProvince))
+                                    // 2026-11-03 (定律 L11 / #45): 显示值一律由页面状态拼,
+                                    // 不吃控件内部那个 currentIndex。现在 climateProvince
+                                    // 可以是空 (还没定位到 / 反查不到), 而 currentIndex 为空
+                                    // 时被 Math.max 夹成 0 = 显示"北京"、状态却是"没选" ——
+                                    // 就是 F1 那一族。所以这一格永远给 comboDisplayText:
+                                    // 没选就明写"没选", 自动档要带上"按定位"这个身份,
+                                    // 用户才分得清这省是它挑的还是我挑的。
+                                    comboDisplayText: equipmentPage.climateProvince.length === 0
+                                                      ? "未选地点"
+                                                      : (equipmentPage.climateProvince
+                                                         + (equipmentPage.provinceAuto ? "（按定位）" : ""))
                                     // 2026-10-29 (#155): 预报档也要能改 —— 预报取不到时
                                     // 落回的就是这一份往年读数, 锁住等于把降级的那条路也锁了.
                                     enabled: equipmentPage.weatherSource !== 0
                                     onComboActivated: (i, v) => {
+                                        // 手挑一次就从此固定: 之后定位再刷新也不盖用户的选择
+                                        equipmentPage.provinceAuto = false
                                         equipmentPage.climateProvince = String(v)
+                                        equipmentPage.applyPlaceFromLocation()
                                     }
+                                }
+
+                                // 地点这一格的来源句 (#45): 坐标 / 反查到的省 / 离锚点多少公里 /
+                                // 精度, 或者"为什么没填上"。与 placeLine 一样只在函数里赋值,
+                                // 这里只是消费者。
+                                Text {
+                                    Layout.fillWidth: true
+                                    visible: equipmentPage.placeLine.length > 0
+                                             && equipmentPage.weatherSource !== 0
+                                    text: equipmentPage.placeLine
+                                    font.pixelSize: styles.fsXs
+                                    color: equipmentPage.provinceAuto
+                                           ? CommonOptions.colorTextMuted
+                                           : CommonOptions.colorInk3
+                                    wrapMode: Text.WordWrap
                                 }
 
                                 FilterRow {
@@ -1286,13 +1380,13 @@ Page {
                                             spacing: styles.spSm
                                             Text {
                                                 Layout.fillWidth: true
-                                                text: equipmentPage.hasForecast ? "今天预报" : "往年这个时候"
+                                                text: equipmentPage.weatherSourceReal === 2 ? "今天预报" : "往年这个时候"
                                                 color: CommonOptions.colorText
                                                 font.pixelSize: styles.fsSm
                                                 font.bold: true
                                             }
                                             Text {
-                                                text: equipmentPage.hasForecast ? "逐日预报" : "常年值"
+                                                text: equipmentPage.weatherSourceReal === 2 ? "逐日预报" : "常年值"
                                                 font.pixelSize: styles.fsXs
                                                 color: CommonOptions.colorInk3
                                             }
@@ -1328,7 +1422,7 @@ Page {
                                             }
                                             Text {
                                                 Layout.fillWidth: true
-                                                text: equipmentPage.hasForecast
+                                                text: equipmentPage.weatherSourceReal === 2
                                                       ? equipmentPage.forecastSrcLine
                                                       : equipmentPage.climateSrcLine
                                                 font.pixelSize: styles.fsXs
@@ -1353,7 +1447,7 @@ Page {
 
                                 Text {
                                     Layout.fillWidth: true
-                                    text: equipmentPage.hasForecast
+                                    text: equipmentPage.weatherSourceReal === 2
                                           ? ("这一屏是逐日在线预报, 只到未来几天; 天数更长的行程仍按往年推演那一档带。")
                                           : (equipmentPage.hasClimate
                                              ? (equipmentPage.weatherSource === 2

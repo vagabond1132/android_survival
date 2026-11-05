@@ -80,6 +80,16 @@ struct Metrics {
 };
 
 /**
+ * @brief 两点之间的大圆距离 (Haversine, 单位 m; R = 6371000)
+ *
+ * 2026-11-03 (#45): 全工程只有这一处 C++ 侧的距离公式实现。CommonOptions 那个
+ * Q_INVOKABLE distanceMeters 是给 QML 用的 (R 取 6371008.8, 差 0.0001%, 同一对点
+ * 的读数只在第七位小数上不同), C++ 内部要算距离一律调这里, 不要再抄第三份 ——
+ * 原来它藏在 .cpp 的匿名空间里, 结果装备清单反查省份锚点时又要抄一份。
+ */
+double haversineM(double lat1, double lon1, double lat2, double lon2);
+
+/**
  * @brief 把 track_<id>_points.json 的数组读成 Sample 列表
  * @param points 落盘的点数组 (键: lat/lon/elevation/accuracy/timestamp)
  * @return 与 points 等长的样本列表

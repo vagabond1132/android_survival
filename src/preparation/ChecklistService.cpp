@@ -398,7 +398,7 @@ QVariantMap ChecklistService::saveChecklist(const Checklist& list) {
     const char* ctx = "ChecklistService::saveChecklist";
 
     if (auto e = dbOpenCheck(m_db, Database::Name::User, ctx)) return *e;
-    if (auto e = requireNonEmpty(list.id, "checklist.id", ctx)) return *e;
+    if (auto e = requireNonEmpty(list.id, "这份清单的编号", ctx)) return *e;
 
     // 2026-09-21 阶段 L2.2: DbHelper::execDmlPositional 需 QSqlQuery lvalue, 提取本地变量
     QSqlDatabase db = m_db->get(Database::Name::User);
@@ -453,8 +453,9 @@ QVariantMap ChecklistService::deleteChecklist(const QString& id) {
     // 2026-10-16 修契约: 原来对不存在的 id 也照样 UPDATE (影响 0 行) 然后返回 ok=true,
     // UI 会误报"已删除". 与 addItem/deleteItem 的 NotFound 对齐.
     if (!checklistRowExists(m_db, id)) {
+        Logger::warn(QString("%1: 清单行不存在: %2").arg(ctx, id));
         return toQVariant(Err<bool>(ServiceErrorCode::NotFound,
-                                    QStringLiteral("清单不存在: %1").arg(id), ctx));
+                                    QStringLiteral("这份清单在本机读不到了"), ctx));
     }
 
     // 2026-09-21 阶段 L2.2: DbHelper::execDmlPositional 需 QSqlQuery lvalue, 提取本地变量
@@ -481,8 +482,9 @@ QVariantMap ChecklistService::setItemChecked(const QString& checklistId,
 
     // 2026-10-16 修契约: 清单不存在时 UPDATE 影响 0 行却仍返回 ok, 改成 NotFound.
     if (!checklistRowExists(m_db, checklistId)) {
+        Logger::warn(QString("%1: 清单行不存在: %2").arg(ctx, checklistId));
         return toQVariant(Err<bool>(ServiceErrorCode::NotFound,
-                                    QStringLiteral("清单不存在: %1").arg(checklistId), ctx));
+                                    QStringLiteral("这份清单在本机读不到了"), ctx));
     }
 
     // 2026-09-21 阶段 L2.2: DbHelper::execDmlPositional 需 QSqlQuery lvalue, 提取本地变量
@@ -547,8 +549,9 @@ QVariantMap ChecklistService::addItem(const QString& checklistId, const Item& it
 
     auto it = m_checklists.find(checklistId);
     if (it == m_checklists.end()) {
+        Logger::warn(QString("%1: 清单不在内存目录里: %2").arg(ctx, checklistId));
         return toQVariant(Err<bool>(ServiceErrorCode::NotFound,
-                                       QStringLiteral("清单不存在: %1").arg(checklistId), ctx));
+                                       QStringLiteral("这份清单在本机读不到了"), ctx));
     }
 
     Item newItem = item;
@@ -568,8 +571,9 @@ QVariantMap ChecklistService::deleteItem(const QString& checklistId,
 
     auto it = m_checklists.find(checklistId);
     if (it == m_checklists.end()) {
+        Logger::warn(QString("%1: 清单不在内存目录里: %2").arg(ctx, checklistId));
         return toQVariant(Err<bool>(ServiceErrorCode::NotFound,
-                                       QStringLiteral("清单不存在: %1").arg(checklistId), ctx));
+                                       QStringLiteral("这份清单在本机读不到了"), ctx));
     }
 
     auto& items = it.value().items;

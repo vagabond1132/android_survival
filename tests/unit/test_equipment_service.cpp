@@ -14,6 +14,8 @@
 #include <QtTest>
 #include <QCoreApplication>
 #include <QTemporaryDir>
+#include <cmath>     // 2026-11-03 #45: std::isfinite 校验气候表锚点坐标
+#include <limits>    // 2026-11-03 #45: numeric_limits<double>::infinity()
 
 #include "src/equipment/EquipmentService.h"
 #include "src/map/MapService.h"  // 2026-10-21 (#18 C3): 跨服务比对同一个高度的档位读法
@@ -504,6 +506,78 @@ private slots:
         // 部分对上: 只把认得出的省算进去, 来源里也只留那一个
         const QVariantMap partial = m_engine->climateFor(QStringLiteral("四川/不存在的省"), 1, 500);
         QCOMPARE(partial["climateProvince"].toString(), QStringLiteral("四川"));
+    }
+
+    // === 2026-11-03 #45: 坐标 → 省 反查 (装备清单的「地点」按当前定位填) ======
+    void test_climate_anchor_table_has_usable_lon() {
+        // 反查靠 lat+lon 两个数。这份表在 #45 之前**只有 lat** (气候模型的形状锚),
+        // `o["lon"].toDouble()` 对缺键静悄悄给 0 —— 于是"最近省"会算到本初子午线上,
+        // 而气候表里没有任何一条会报错。所以这里把 34 条的坐标齐全性钉死。
+        const QStringList names = m_engine->climateProvinceNames();
+        QCOMPARE(names.size(), 34);
+        for (const QString& n : names) {
+            const QVariantMap st = m_engine->climateStation(n);
+            QVERIFY2(!st.isEmpty(), qPrintable(n + QStringLiteral(" 查不到代表站")));
+            const double lat = st["lat"].toDouble();
+            const double lon = st["lon"].toDouble();
+            QVERIFY2(std::isfinite(lat) && std::isfinite(lon),
+                     qPrintable(n + QStringLiteral(" 坐标不是有限数")));
+            QVERIFY2(lat >= -90.0 && lat <= 90.0, qPrintable(n + QStringLiteral(" 纬度超范围")));
+            // 中国没有省的锚点在 0 经线上 (最西的新疆是 87.62) —— lon==0 就是缺键
+            QVERIFY2(lon > 70.0 && lon <= 180.0,
+                     qPrintable(QStringLiteral("%1 经度 %2 不像中国境内 (缺 lon?)")
+                                    .arg(n).arg(lon)));
+        }
+    }
+
+    void test_nearest_climate_province_by_location() {
+        // 期望值不是拍的: 用表里的真锚点按同式 (haversine, R=6371000) 反算过一遍。
+        struct Case { double lat; double lon; const char* want; };
+        static const Case kCases[] = {
+            {24.88, 102.83, "云南"},      // 昆明
+            {39.90, 116.40, "北京"},      // 锚点本身, 0 km
+            {29.65,  91.14, "西藏"},      // 拉萨
+            {43.83,  87.62, "新疆"},      // 乌鲁木齐 (最西)
+            {36.65, 117.00, "山东"},      // 济南 —— 真机验收就看这一条
+            {45.80, 126.53, "黑龙江"},    // 哈尔滨 (最东北)
+            {22.82, 108.37, "广西"},      // 南宁 (南疆界附近, 不误落到海南)
+            {41.80, 123.43, "辽宁"},
+            {34.34, 108.94, "陕西"},
+        };
+        for (const Case& c : kCases) {
+            const QVariantMap r = m_engine->nearestClimateProvince(c.lat, c.lon);
+            const QString got = r["province"].toString();
+            QVERIFY2(!r.isEmpty(), qPrintable(QStringLiteral("%1,%2 反查为空")
+                                                   .arg(c.lat).arg(c.lon)));
+            QVERIFY2(got == QString::fromUtf8(c.want),
+                     qPrintable(QStringLiteral("%1,%2 → %3, 期望 %4 (%5 km)")
+                                    .arg(c.lat).arg(c.lon).arg(got,
+                                                          QString::fromUtf8(c.want),
+                                                          QString::number(r["distanceKm"].toDouble()))));
+        }
+    }
+
+    void test_nearest_climate_province_distance_is_honest() {
+        // distanceKm 是给页面提示用的, 必须是"到这个省锚点的距离"而不是恒 0。
+        const QVariantMap bj = m_engine->nearestClimateProvince(39.90, 116.40);
+        QCOMPARE(bj["distanceKm"].toInt(), 0);
+        const QVariantMap lhasa = m_engine->nearestClimateProvince(29.65, 91.14);
+        QVERIFY2(lhasa["distanceKm"].toInt() > 100,   // 锚点在 31N, 差 1.35 度 ≈ 150 km
+                 qPrintable(QStringLiteral("拉萨→西藏锚点 %1 km, 偏小").arg(lhasa["distanceKm"].toInt())));
+        // 锚点坐标一并回显, 页面要能说"按到 31°N 105°E 这一带来推"
+        QVERIFY(std::isfinite(lhasa["anchorLat"].toDouble()));
+        QVERIFY(std::isfinite(lhasa["anchorLon"].toDouble()));
+    }
+
+    void test_nearest_climate_province_rejects_bad_coords() {
+        // 一律返回空 map: 页面据此走"没定位 → 手填/提示", 不能拿一个省当默认值糊过去
+        QVERIFY(m_engine->nearestClimateProvince(0.0, 0.0).isEmpty());        // 定位没给数
+        QVERIFY(m_engine->nearestClimateProvince(91.0, 100.0).isEmpty());     // 纬度超范围
+        QVERIFY(m_engine->nearestClimateProvince(-91.0, 100.0).isEmpty());
+        QVERIFY(m_engine->nearestClimateProvince(30.0, 181.0).isEmpty());     // 经度超范围
+        QVERIFY(m_engine->nearestClimateProvince(30.0, -181.0).isEmpty());
+        QVERIFY(m_engine->nearestClimateProvince(qQNaN(), 100.0).isEmpty());
+        QVERIFY(m_engine->nearestClimateProvince(30.0, std::numeric_limits<double>::infinity()).isEmpty());
     }
 
     void test_climate_readout_keys_match_qml() {

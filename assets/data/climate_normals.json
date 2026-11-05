@@ -1,8 +1,9 @@
 {
- "version": "0.1.0",
- "updated_at": "2026-10-22",
+ "version": "0.2.0",
+ "updated_at": "2026-11-03",
  "description": "省级 × 月 气候常态表 —— 装备清单按\"路线地点 + 出行月份\"自动填天气用",
- "source_note": "锚点(1/7 月均温、年降水、雨季峰值月、纬度、代表站海拔)按中国气候地理给定; 月内形状是模型: 气温正弦(最冷月锁 1 月)、降水围绕峰值月的环形高斯、紫外线=正午太阳高度^2.2 × 云量衰减、风=季节因子。用途是\"该不该带雨具/羽绒\"这一级判断, 不是气象预报精度, 不要当天气预报读。",
+ "source_note": "锚点(1/7 月均温、年降水、雨季峰值月、纬度、经度、代表站海拔)按中国气候地理给定; 月内形状是模型: 气温正弦(最冷月锁 1 月)、降水围绕峰值月的环形高斯、紫外线=正午太阳高度^2.2 × 云量衰减、风=季节因子。用途是\"该不该带雨具/羽绒\"这一级判断, 不是气象预报精度, 不要当天气预报读。",
+ "lon_note": "2026-11-03 (#45) 加的一列: 每省锚点的经度, 值取自 scripts/build_climate_normals.js 的 STATIONS (省人民政府驻地城区), 与同一条的 lat **不同源** —— lat 是气候模型形状用的省域中心 (内蒙古 42 / 西藏 31 这类), lon 是城区。凑齐两个数才是一个点, \"当前定位 → 省份\"的反查 (EquipmentService::nearestClimateProvince) 就靠它; 重跑生成脚本会把两者一起换成城区值, 反查仍然成立, 但月度读数会变 (代表站变了)。",
  "lapse_rate_c_per_1000m": -6.5,
  "uv_per_1000m": 0.12,
  "altitude_note": "表里的温度与紫外线是\"代表站海拔 refAltitudeM\"处的值。查询时按路线海拔现算: temp += -6.5 * (routeAlt - refAlt) / 1000, uv *= 1 + 0.12 * (routeAlt - refAlt) / 1000。不把海拔烘进表是因为同一条路线的海拔才是决定因素 —— 四川的锚点是成都平原, 路线在 4000m。",
@@ -25,6 +26,7 @@
   {
    "name": "北京",
    "lat": 39.9,
+   "lon": 116.4,
    "refAltitudeM": 50,
    "annualPrecipMm": 570,
    "annualPeakMonth": 7,
@@ -116,6 +118,7 @@
   {
    "name": "天津",
    "lat": 39.1,
+   "lon": 117.2,
    "refAltitudeM": 5,
    "annualPrecipMm": 550,
    "annualPeakMonth": 8,
@@ -207,6 +210,7 @@
   {
    "name": "河北",
    "lat": 38.9,
+   "lon": 114.51,
    "refAltitudeM": 100,
    "annualPrecipMm": 500,
    "annualPeakMonth": 7,
@@ -298,6 +302,7 @@
   {
    "name": "山西",
    "lat": 37.6,
+   "lon": 112.55,
    "refAltitudeM": 800,
    "annualPrecipMm": 520,
    "annualPeakMonth": 8,
@@ -389,6 +394,7 @@
   {
    "name": "内蒙古",
    "lat": 42,
+   "lon": 111.75,
    "refAltitudeM": 1100,
    "annualPrecipMm": 380,
    "annualPeakMonth": 7,
@@ -480,6 +486,7 @@
   {
    "name": "辽宁",
    "lat": 41.3,
+   "lon": 123.43,
    "refAltitudeM": 50,
    "annualPrecipMm": 640,
    "annualPeakMonth": 7,
@@ -571,6 +578,7 @@
   {
    "name": "吉林",
    "lat": 43.6,
+   "lon": 125.32,
    "refAltitudeM": 200,
    "annualPrecipMm": 620,
    "annualPeakMonth": 7,
@@ -662,6 +670,7 @@
   {
    "name": "黑龙江",
    "lat": 46,
+   "lon": 126.53,
    "refAltitudeM": 150,
    "annualPrecipMm": 530,
    "annualPeakMonth": 7,
@@ -753,6 +762,7 @@
   {
    "name": "上海",
    "lat": 31.2,
+   "lon": 121.47,
    "refAltitudeM": 4,
    "annualPrecipMm": 1150,
    "annualPeakMonth": 9,
@@ -844,6 +854,7 @@
   {
    "name": "江苏",
    "lat": 32.9,
+   "lon": 118.8,
    "refAltitudeM": 15,
    "annualPrecipMm": 1000,
    "annualPeakMonth": 7,
@@ -935,6 +946,7 @@
   {
    "name": "浙江",
    "lat": 29.2,
+   "lon": 120.15,
    "refAltitudeM": 100,
    "annualPrecipMm": 1600,
    "annualPeakMonth": 9,
@@ -1026,6 +1038,7 @@
   {
    "name": "安徽",
    "lat": 31.9,
+   "lon": 117.23,
    "refAltitudeM": 40,
    "annualPrecipMm": 1300,
    "annualPeakMonth": 7,
@@ -1117,6 +1130,7 @@
   {
    "name": "福建",
    "lat": 26.1,
+   "lon": 119.3,
    "refAltitudeM": 150,
    "annualPrecipMm": 1600,
    "annualPeakMonth": 6,
@@ -1208,6 +1222,7 @@
   {
    "name": "江西",
    "lat": 27.6,
+   "lon": 115.89,
    "refAltitudeM": 80,
    "annualPrecipMm": 1650,
    "annualPeakMonth": 6,
@@ -1299,6 +1314,7 @@
   {
    "name": "山东",
    "lat": 36.3,
+   "lon": 117.12,
    "refAltitudeM": 50,
    "annualPrecipMm": 650,
    "annualPeakMonth": 7,
@@ -1390,6 +1406,7 @@
   {
    "name": "河南",
    "lat": 34,
+   "lon": 113.62,
    "refAltitudeM": 100,
    "annualPrecipMm": 680,
    "annualPeakMonth": 7,
@@ -1481,6 +1498,7 @@
   {
    "name": "湖北",
    "lat": 31,
+   "lon": 114.3,
    "refAltitudeM": 50,
    "annualPrecipMm": 1150,
    "annualPeakMonth": 7,
@@ -1572,6 +1590,7 @@
   {
    "name": "湖南",
    "lat": 27.6,
+   "lon": 112.94,
    "refAltitudeM": 80,
    "annualPrecipMm": 1450,
    "annualPeakMonth": 5,
@@ -1663,6 +1682,7 @@
   {
    "name": "广东",
    "lat": 23.3,
+   "lon": 113.26,
    "refAltitudeM": 50,
    "annualPrecipMm": 1750,
    "annualPeakMonth": 6,
@@ -1754,6 +1774,7 @@
   {
    "name": "广西",
    "lat": 23.5,
+   "lon": 108.32,
    "refAltitudeM": 150,
    "annualPrecipMm": 1550,
    "annualPeakMonth": 6,
@@ -1845,6 +1866,7 @@
   {
    "name": "海南",
    "lat": 19.2,
+   "lon": 110.35,
    "refAltitudeM": 50,
    "annualPrecipMm": 1700,
    "annualPeakMonth": 9,
@@ -1936,6 +1958,7 @@
   {
    "name": "重庆",
    "lat": 29.6,
+   "lon": 106.55,
    "refAltitudeM": 250,
    "annualPrecipMm": 1100,
    "annualPeakMonth": 7,
@@ -2027,6 +2050,7 @@
   {
    "name": "四川",
    "lat": 30,
+   "lon": 104.07,
    "refAltitudeM": 500,
    "annualPrecipMm": 900,
    "annualPeakMonth": 7,
@@ -2118,6 +2142,7 @@
   {
    "name": "贵州",
    "lat": 26.8,
+   "lon": 106.63,
    "refAltitudeM": 1100,
    "annualPrecipMm": 1100,
    "annualPeakMonth": 6,
@@ -2209,6 +2234,7 @@
   {
    "name": "云南",
    "lat": 25,
+   "lon": 102.71,
    "refAltitudeM": 1900,
    "annualPrecipMm": 1050,
    "annualPeakMonth": 7,
@@ -2300,6 +2326,7 @@
   {
    "name": "西藏",
    "lat": 31,
+   "lon": 91.14,
    "refAltitudeM": 3650,
    "annualPrecipMm": 420,
    "annualPeakMonth": 8,
@@ -2391,6 +2418,7 @@
   {
    "name": "陕西",
    "lat": 34.3,
+   "lon": 108.94,
    "refAltitudeM": 400,
    "annualPrecipMm": 680,
    "annualPeakMonth": 9,
@@ -2482,6 +2510,7 @@
   {
    "name": "甘肃",
    "lat": 36,
+   "lon": 103.83,
    "refAltitudeM": 1500,
    "annualPrecipMm": 300,
    "annualPeakMonth": 7,
@@ -2573,6 +2602,7 @@
   {
    "name": "青海",
    "lat": 36.6,
+   "lon": 101.78,
    "refAltitudeM": 2200,
    "annualPrecipMm": 380,
    "annualPeakMonth": 7,
@@ -2664,6 +2694,7 @@
   {
    "name": "宁夏",
    "lat": 37.7,
+   "lon": 106.29,
    "refAltitudeM": 1100,
    "annualPrecipMm": 280,
    "annualPeakMonth": 7,
@@ -2755,6 +2786,7 @@
   {
    "name": "新疆",
    "lat": 43,
+   "lon": 87.62,
    "refAltitudeM": 800,
    "annualPrecipMm": 260,
    "annualPeakMonth": 5,
@@ -2846,6 +2878,7 @@
   {
    "name": "香港",
    "lat": 22.4,
+   "lon": 114.17,
    "refAltitudeM": 50,
    "annualPrecipMm": 2400,
    "annualPeakMonth": 6,
@@ -2937,6 +2970,7 @@
   {
    "name": "澳门",
    "lat": 22.2,
+   "lon": 113.55,
    "refAltitudeM": 5,
    "annualPrecipMm": 2000,
    "annualPeakMonth": 6,
@@ -3028,6 +3062,7 @@
   {
    "name": "台湾",
    "lat": 23.7,
+   "lon": 121.5,
    "refAltitudeM": 100,
    "annualPrecipMm": 2500,
    "annualPeakMonth": 6,

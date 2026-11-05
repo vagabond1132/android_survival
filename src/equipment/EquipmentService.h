@@ -230,6 +230,20 @@ public:
      */
     Q_INVOKABLE QVariantMap climateStation(const QString& province) const;
 
+    /**
+     * 按坐标反查气候表的省份锚点 (2026-11-03 #45)。
+     * 装备清单的「地点」以前默认表里第一个省 (北京) —— 人在济南给你按北京的气候填,
+     * 这就是"自动档填了个错的"。现在拿当前定位反查: 表里每省一个锚点 (代表纬度 +
+     * 省人民政府驻地经度), 取大圆距离最近的那个。
+     * 只到省级, 省界附近会错, 所以把 distanceKm 一并返回, 由页面照实提示。
+     * 实测两个边界例子 (2026-11-03, 用表里的真锚点算): 深圳(22.54,114.06) 反查成香港
+     * (19 km) 而不是广东 (90 km) —— 这类是真会填错; 青岛反查省份对 (山东) 但要走
+     * 294 km 才到济南锚点 —— 这类是"省对、气候按省域中心推"。两种都把距离显示出来。
+     * 坐标非法 (超范围 / 非有限 / lat==0 且 lon==0) 或表没加载 → 空 map, 不编一个省。
+     * 返回 {province, distanceKm, anchorLat, anchorLon}。
+     */
+    Q_INVOKABLE QVariantMap nearestClimateProvince(double latitude, double longitude) const;
+
     /// 海拔修正系数, 来自 climate_normals.json (2026-10-28 #154: 在线预报服务共用同一份, 不再各存一遍)
     double lapseRateCPer1000m() const { return m_climateLapseCPerKm; }
     double uvRatePer1000m() const { return m_climateUvPerKm; }

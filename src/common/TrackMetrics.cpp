@@ -23,20 +23,6 @@ constexpr double kNaN = std::numeric_limits<double>::quiet_NaN();
 
 bool isNum(double v) { return std::isfinite(v); }
 
-// Haversine 距离 (m)。与 MapService_species.cpp 里那一份同式, 收到这里后两边共用。
-double haversineM(double lat1, double lon1, double lat2, double lon2)
-{
-    constexpr double R = 6371000.0;
-    constexpr double deg2rad = M_PI / 180.0;
-    const double dLat = (lat2 - lat1) * deg2rad;
-    const double dLon = (lon2 - lon1) * deg2rad;
-    const double sLat = std::sin(dLat / 2.0);
-    const double sLon = std::sin(dLon / 2.0);
-    const double a = sLat * sLat
-                   + std::cos(lat1 * deg2rad) * std::cos(lat2 * deg2rad) * sLon * sLon;
-    return 2.0 * R * std::atan2(std::sqrt(a), std::sqrt(1.0 - a));
-}
-
 // 每个起点 a 取"时间跨度刚好够 minMs"的第一个窗口, 速度 = 首末点直线位移 / 跨度。
 // 用**位移**而不是窗口内的路径长度: 抖动是按段累加的 (站着不动 0.7 s 一个点,
 // 30 s 能"走出"几十米), 位移不会 —— 同一个窗口里抖动互相抵消。代价是急转弯
@@ -68,6 +54,23 @@ void windowSpeeds(const QVector<Sample>& s, qint64 minMs, double minM,
 }
 
 }  // namespace
+
+// 大圆距离 (m)。与 MapService_species.cpp 里那一份同式, 收到这里后两边共用。
+// 2026-11-03 (#45): 原来放在匿名空间里, 只在轨迹统计内部用; 装备清单要按当前定位
+//   反查气候表的省份锚点, 那是第三处要用同一个式的代码 —— 抄第三份就违背
+//   「距离公式只有一处」的口径, 所以把它提出来做公开函数, 声明在 TrackMetrics.h。
+double haversineM(double lat1, double lon1, double lat2, double lon2)
+{
+    constexpr double R = 6371000.0;
+    constexpr double deg2rad = M_PI / 180.0;
+    const double dLat = (lat2 - lat1) * deg2rad;
+    const double dLon = (lon2 - lon1) * deg2rad;
+    const double sLat = std::sin(dLat / 2.0);
+    const double sLon = std::sin(dLon / 2.0);
+    const double a = sLat * sLat
+                   + std::cos(lat1 * deg2rad) * std::cos(lat2 * deg2rad) * sLon * sLon;
+    return 2.0 * R * std::atan2(std::sqrt(a), std::sqrt(1.0 - a));
+}
 
 QVector<Sample> samplesFromJson(const QJsonArray& points)
 {
