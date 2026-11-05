@@ -1,6 +1,6 @@
 # Docker 构建 APK 完全手册(从安装到装机)
 
-> 适用版本: 荒野手册 v0.0.2 / Qt 6.7+ / Android 7.0+ (API 24+)
+> 适用版本: 荒野手册 v0.0.10（2026-11-05 出包 = 统一修改轮；v0.0.9 = 2026-11-04 / v0.0.7 = 2026-11-03）/ Qt 6.7.2 / Android 7.0+ (API 24+)
 > 平台: Windows / macOS / Linux 通用
 
 ---
@@ -216,6 +216,19 @@ gradle assembleRelease 9m09s → STAGE 4 校验与落盘 ≈ 1min。
    于是这段"等 activity 注册"的轮询每次都白等满 15 秒再报超时。修法是把简写先展开成
    全限定名再比。**判据**：轮询日志出现 `✅ activity 已注册 (waited 0~2s)` 才是真的通，
    出现"注册超时"而 `pm path` 又非空，先怀疑字符串形状而不是设备。
+
+8. **`$?` 在 `Windows → wsl.exe → docker exec` 这一串里会被提前展开，读到的不是容器的码**
+   （2026-11-03 #46 实测，并且**由这条误读倒推出过一个假结论**）。命令串里写
+   `… ; echo rc=\$?`，转发到容器时已经变成 `echo rc=\0` —— 于是 `qml_load_check.sh` 明明
+   `exit 1`（树里有加载期硬错、真机必白屏），却被读成"这脚本吞了退出码"，差一点把一道
+   能抓白屏的门禁判成摆设。两种可用判法，二选一：
+   - 不经过 `$?`：`bash tools/qml_load_check.sh > /tmp/x.log 2>&1 && echo GREEN || echo RED`；
+   - **把读数写进仓库里的脚本、在容器内跑**（推荐，本轮用的就是这个）：脚本自己
+     `bash tools/qml_load_check.sh; RC=$?; echo "load_check_rc=$RC"`，再顺带
+     `grep -c` 日志里的 `加载失败` / `组件树加载通过` 做旁证 —— 退出码与关键行两个方向互相印证。
+   同一条链上的坑还有两个已经记在册的：`… | tail` 把码盖成 `tail` 的（§18.2），
+   `grep -c` 计数为 0 时自己返回 1（本节 §9 开头）。**统一口径：跨这条链只认「脚本自己打印的
+   键值行」，不认命令行里内联的 `$?`。**
 
 ### 3.2 macOS
 
@@ -600,6 +613,33 @@ Git Bash 还会把 `/project/...` 这类容器内绝对路径改写成 `C:/Progr
 | x86_64 0.0.5 | 101 | — | 0 | 44 个 / 36 MB | 100 | 97 | 50,966,393 → **37,737,839** |
 | arm64 0.0.6 首轮（坏包） | 79 | 无② | 0 | 56 个 / 43 MB | 78 | 75 | 34,527,945（缺 Dialogs，已废弃） |
 | arm64 0.0.6 重建 | 79 | 3 | 3 | **0 个** | 84 | 81 | **35,148,762** |
+| **arm64 0.0.7**（2026-11-03，含 #42/#45/#46）| 79 | 3 | 3 | **0 个** | 84 | 81 | **35,126,922**（−21.3 KB）|
+| **arm64 0.0.9**（2026-11-04，含 #48/#49/#42 第二半；**0.0.8 那一号被并发构建吃掉，见 §12.11**）| 79 | 3 | 3 | **0 个** | 84 | 81 | **35,129,022**（+2.1 KB）|
+| **arm64 0.0.10**（2026-11-05 = 统一修改轮，含 L15/L16/L12-src/#55/#43；本轮**只改文案与 QML，没加接口**）| 79 | 3 | 3 | **0 个** | 84 | 81 | **35,141,626**（+12,604 B）|
+
+0.0.10 的库账与 0.0.9 **逐项相同**（79/3/3/0/84/81，`dist/wsl_release_arm64-v8a.log` 03:33:05~03:33:10 那七行），
+所以库集合不是本轮体积变化的来源；+12,604 B 落在主 `.so`（本轮实测 **9,241,648 B**）里的 QML 编译字节码与
+C++ 字符串表上 —— **这类"只改文案"的轮次，包体只会随文案长度小幅浮动，库数不动**。
+`aapt2 dump badging` 独立复核：`versionCode='10' versionName='0.0.10'`、`native-code` 有且仅 `'arm64-v8a'`、
+`lib/arm64-v8a/*.so` **84 个**、其他 ABI 0 个；`apksigner verify --print-certs` 证书 SHA-256 与 0.0.6/0.0.7/0.0.9
+逐字相同 ⇒ **覆盖装勿卸载**（卸载会连紧急联系人名册与自建清单一起没）。
+
+0.0.7 的库账与 0.0.6 重建轮**逐项相同**（79/3/3/0/84/81，日志同 §9.1 那七行），差的 21.3 KB 是
+#41 从六个数据 JSON 里删掉的 `reviewer` 占位符 + 页头去重，**不是**库集合变化 ——
+所以这一轮**不必重跑 `reg_sweep` 的库完整性判据**，但页级白屏那一条仍要上真机（见下）。
+`aapt2 dump badging` 独立复核：`versionCode='7' versionName='0.0.7'`、
+`sdkVersion 24 / targetSdkVersion 34`、**`native-code: 'arm64-v8a'`（有且仅此一项）**；
+zip 991 个条目、`lib/arm64-v8a/*.so` 84 个、其他 ABI 目录 0 个；
+`apksigner verify --print-certs` 通过，且**证书 SHA-256 与 0.0.6 逐字相同**
+（`ae1ceedb…b38c3e`）—— 这条是"能覆盖安装、不会 `INSTALL_FAILED_UPDATE_INCOMPATIBLE`"的真凭据。
+⚠️ 主机侧跑 `apksigner.bat` 要给嵌套的 JDK 路径：`JAVA_HOME=D:/build_docker/jdk17/jdk-17.0.20.1+1`
+（`D:/build_docker/jdk17` 那层只是解压目录，直接给会报 "JAVA_HOME is set to an invalid directory"）。
+⚠️ `array/qt_libs` 用 **aapt2** 只能确认资源存在（`resource 0x7f030002 array/qt_libs`），
+`--values` 是 **aapt1** 的口径、build-tools 34 里没 `aapt`；要数条目和顺序就读当轮日志
+`qt_libs 包含 81 个 .so (顺序: Qt6Core → 项目主 lib → 其他)` 那一行。
+⚠️ **别在 WSL 里对 `/mnt/d` 跑 `find /`**（本轮想找 aapt2 时顺手写了一句，两分钟不返回被迫中止）；
+Windows 侧已知路径 `D:/build_docker/android_sdk/build-tools/34.0.0/` 直接调 `.exe`/`.bat` 就行，
+9P 上的递归 `find` 是这条路最慢的一种走法。
 
 0.0.6 包里 84 个 .so = 未压缩 75.3 MB / 压缩后 28.3 MB；最大单库是
 `libplugins_multimedia_ffmpegmediaplugin_arm64-v8a.so` **15.72 MB**（`QtMultimedia` 摄像头链路真需要，
@@ -785,6 +825,28 @@ Qt 6 的 Quick Controls 会把 accessible 名字透出到 Android 无障碍树�
    行标签、版本号一个都没有。所以**"文字压到吸底条上"这类版式 bug 不能用 dump 判**，
    只能截图目视；dump 的用途限定在"给可点的东西定坐标"。
    （SOS 页能测到「去添加」[184,1888][436,2008] 是因为它是 `Button`，不是 `Text`。）
+5. ⚠️ **第 4 条在真机上会更糟：连"可点的东西"也可能整片消失**。2026-11-03 首次上
+   HONOR PGT-AN00，地图页 dump 出来**只有 13 个节点**，底部五格导航条和工作台四格
+   **一个都没有** —— 因为它们的 `Accessible` 根本没挂上（logcat 里 4 条
+   `Accessible must be attached to an Item`，见 12 §4.24 L7）。
+   所以 **dump 不是通用手段，它只在"无障碍确实挂上了"的构建上有效**。真机定坐标的
+   正确顺序是：**① 先从 QML 算公式**（`dp × 倍率`，倍率 = `Override density / 160`，
+   本机 448/160 = **2.8**），**② 再用截图像素验证公式**，不要反过来。
+   像素验证用 `tools/png_probe.js`（纯 Node + zlib 解 PNG，按通道右移量化后取颜色游程，
+   抗锯齿噪声压掉、纯色 UI 区浮出来）：
+
+   ```bash
+   cd /d/build_docker/app
+   node tools/png_probe.js qcol tmp_reg/device006/p2_pre.png 100 3 8   # 竖切 x=100: 找上下分界
+   node tools/png_probe.js qrow tmp_reg/device006/p2_pre.png 2245 3 10 # 横切 y=2245: 找左右分界
+   ```
+   量化后 `#1e1f1e` 这类三位一字符的是**浅色**（`0x1e<<3 ≈ 0xf0`），`#4813` 这种
+   某通道占两位十六进制的要按位拆（R=4→0x20、G=8→0x40、B=0x13→0x9b = 状态栏蓝）。
+   实测结果：地图工作台 sheet 顶边 **y≈2061**、四格等宽四列（`1224/4=306`）中心
+   **x=153/459/765/1071**；导航带 **2424..2555**（132 px）对公式的 134 px 差 2 px
+   （`lineHair` 取整），**公式可信**。
+   > 上面说的"扫像素在 AVD 上是废的"仍然成立，但那是 **swiftshader 撕裂楔形**造成的；
+   > 真机 + 量化游程不是同一件事，**真机上扫像素是可行的**，别把两条混成一条。
 
 顺带一条：`console.log` 在 release 包里**只进 logcat**（`adb logcat -d | grep -a "\[map\]"`），
 不进 `/data/data/com.outdoor.survival/files/logs/app_*.log`；后者要 root 读，
@@ -800,6 +862,11 @@ release 包不可 debug 所以 `run-as` 会报 `package not debuggable`。
    产物不在那儿。实测：`MePage_qml.cpp` 显示 10-29，而源码是当天 13:07 改的；包内主 .so
    9,233,472 B，树里 `stripped_native_libs/` 那份 9,132,040 B —— 根本不是同一份。据此会误判成
    "增量没生效"。
+   **2026-11-04 查到成因**：`docker-compose.wsl.yml:26` 用**命名卷 `android-build` 挂在 `/project/build`**，
+   所以主机 `app/build/` 对 WSL 构建而言是**空壳**（实测
+   `find app/build/release_arm64-v8a -newermt "当天 11:00" -type f | wc -l` = **0**，
+   而 `docker run --rm -v app_android-build:/v --entrypoint ls osw_ut:snap -la /v` 里
+   `release_arm64-v8a` 的 mtime 就是当轮构建时刻）。**要看构建真相得进卷，不能看主机 `build/`**。
 2. **对主 .so 直接 `grep` 明文** —— Qt 6 的 rcc 是**压缩**嵌进 `.so` 的，源码文本（含中文）
    明文扫不到，`夜晚配色`、`离线数据已入库` 都返回 0；只有进了编译字节码**名字池**的标识符
    （`bottomClearance`、`显示`）才明文命中。据此会误判成"包里没 QML"。
@@ -814,6 +881,45 @@ release 包不可 debug 所以 `run-as` 会报 `package not debuggable`。
 旧写法 Math.max(parent…800, 800)        明文 0 + 解压 0 = 0     ← 必须为 0
 新注释「不兜 800 的下限」                明文 0 + 解压 1 = 1
 ```
+
+**数旧串时有两条限定（2026-11-04 撞到的，别把它们当成"包里还有旧代码"）**：
+
+1. **注释里抄了旧写法会误报。** 本轮 `FilterRow.qml:79` 为讲清 bug 把原来的
+   `Array.isArray(comboModel)` 原样抄进注释 ⇒ 反查报"旧串 = 1"。
+   **2026-11-04 起这条已由脚本自己处理**：`count_outside_comments()` 每次命中回溯到本行行首，
+   行首到命中点之间有 `//` 就不计数 —— **明文区和解压流两边都去注释**。
+   去注释后仍非 0，才是"包里真的还留着旧写法"。
+2. **新旧两个 needle 必须互不包含。** 同一行族里 `border.color: …weatherSource === index` **含有**
+   子串 `color: …weatherSource === index` ⇒ 拿 `color: …旧串` 做对照永远非 0。
+   对照要挑只出现一次的那一行（本轮用 `font.bold: …`）。
+3. 也别顺手去 `grep` 卷里的 `.rcc/qmlcache/*_qml.cpp` —— 编译产物同样**不含 QML 标识符明文**
+   （2026-11-04 实测 `grep -c headCol|pageHeadH|implicitHeight` 在 `PageHeadBand_qml.cpp` = 0，
+   而同一轮解压 `.so` 却在压缩流里数到了那句新写法）。**阴性一律不作数，只有"解压流命中"是证据。**
+
+#### 12.7.1 脚本已门禁化，但它的"期望 0"分支自己假绿过一次（2026-11-04）
+
+`apk_rcc_probe.py` 现在收 `--must-hit '标签=文本'` / `--must-be-zero '标签=文本'`，
+逐条判定、**任一判错 exit 1**，没带任何 `--must-hit` 对照时 **exit 2**（解压一条都没解出来时，
+所有"期望 0"会集体假绿，判据不成立）。本轮七条 needle 的实跑（`tmp_reg/probe_009.sh`，321 候选块 / 33 解出）：
+
+```
+OK  新L14      去注释(明文+解压) 1   OK  旧L14  0   OK  新L6-1  1   OK  旧L6-1  0
+OK  新L11④     去注释(明文+解压) 1   OK  旧L11④ 0   OK  对照clip 35   === PASS（判错 0 条）===
+```
+
+**但它第一版是错的**：`期望 0` 只数"解压流去注释"，把明文那一份整个忽略掉（当时的理由是
+"二进制里没法安全去注释"）。反证 `--must-be-zero Z=pageHeadH` 报了 **OK**，而 `pageHeadH`
+在源树里真实存在（明文裸计数 4）—— **一道会假绿的门禁比没有门禁更坏**。修完后三条反证都过
+（`tmp_reg/probe_controls.sh`）：
+
+| 反证 | 期望 | 实跑 |
+|---|---|---|
+| ① `--must-be-zero Z=pageHeadH`（明文区真实存在） | FAIL + rc=1 | `FAIL … 去注释 2 = 2 期望 0（含注释的裸计数是 4）` ⇒ **rc=1** ✅ |
+| ② `--must-hit 不存在=zzzNoSuchNeedlezzz` | FAIL + rc=1 | `FAIL 不存在 … 0 = 0 期望 >0` ⇒ **rc=1** ✅ |
+| ③ 只带 `--must-be-zero`，不带对照 | rc=2 | `!! 本次没带任何 --must-hit 对照串…` ⇒ **rc=2** ✅ |
+
+口径记下来：**把一次性取证脚本升级成门禁时，必须当场跑"它应该会 FAIL"的那几条**，
+"正例 PASS"只证明脚本会打印绿，不证明它会变红。
 
 另外 `build_apk.sh` 自己有一道守卫会在 `.qml` 比 qmlcache 新时清缓存触发 `qmlcachegen` 重生成，
 日志里能看到 `检测到 .qml 比 qmlcache 新…` 和逐页的 `Generating .rcc/qmlcache/…`；
@@ -845,6 +951,139 @@ release 包不可 debug 所以 `run-as` 会报 `package not debuggable`。
    `libplugins_imageformats_qsvg_*` —— 猜错会报一堆假"缺失"，把注意力带偏。
    先 `ls $QT_QPA/qml/…` 或从当轮 `jniLibs` 列一遍，再写判据。
 
+
+### 12.9 真机（非模拟器）装机与取证：荣耀这一台撞到的三条
+
+2026-11-03 第一次把 0.0.6 装到真机（HONOR PGT-AN00 / Android 16 / SDK 36 / arm64-v8a），
+三条与模拟器不同的口径，都是当场撞出来的：
+
+1. **`adb install` 流式安装会静默失败**。症状是 `Performing Streamed Install` 之后
+   **错误体为空**，看不出原因，荣耀（含 HONOR/华为系）通病。加 **`--no-streaming`** 一次成功。
+   升级装（`-r`）在签名一致时可用；本轮按用户决定走的是 **`adb uninstall` 后全新装**，
+   代价是**真机数据全清**（标注/轨迹/紧急联系人），不可回退，必须先问用户。
+2. **release 包在真机上读不到 App 私有文件**，模拟器那套判据直接作废：
+   ```
+   adb shell ls /data/data/com.outdoor.survival/files/logs/  → Permission denied
+   adb shell run-as com.outdoor.survival id                  → run-as: package not debuggable
+   ```
+   所以真机回归的证据只有两样：**截图** + **按 pid 过滤的 logcat**
+   （`adb shell pidof -s com.outdoor.survival` → `adb logcat -d --pid=<pid>`）。
+   `tools/reg_sweep.sh` 里"日志字节增量 > 1 KB"那条判据在真机**不成立**，别照搬。
+   要拿真机文件日志只有两条路：出 debug 包（占一个版本号、改的是打包口径不是代码），
+   或在 App 里做日志导出到 `/sdcard` 的入口（是功能改动，得单独排）。
+3. **装机前先核 ABI 与倍率，别假设**。`ro.product.cpu.abi` 决定包能不能装（本项目只出
+   arm64-v8a），`wm density` 的 **Override** 值（不是 Physical）决定 dp→px 倍率：
+   本机 Physical 528 / **Override 448** → 倍率 `448/160 = 2.8`。
+   内容区底边要从 `uiautomator dump` 的根节点读（本机 **2556**，`2556..2688` 是系统栏），
+   再减 `navBandH × 倍率` 才是导航带中心，**按模拟器的比例推 y 会点到系统栏、把 App 甩回桌面**。
+
+走查驱动器：`tools/reg_sweep_device.sh`（冷启动 + 点五格 + 轮询换帧 + 抓 logcat）、
+`tools/reg_tap_device.sh`（按步骤表点**实测坐标**跑二级页面）、`tools/png_probe.js`（从截图像素
+反推元素边界，用法见 §12.6 第 5 条）。三者都在 gitignore 的 `tmp_reg/` 里，是本轮的工具沉淀。
+
+### 12.10 真机二级页面走查：坐标换算与日志计数的两条硬口径（2026-11-03，pass 2）
+
+pass 2 跑了 13 轮 / 55 步（地图工作台四格与图层/定位/搜索、资源页类目 chip 与省份·月份选择器、
+物种详情、急救步骤页、紧急联系人与添加表单、我页七个二级入口、抽屉、搜索对话框），
+步骤表在 gitignore 的 `tmp_reg/steps_*.txt`，每行 `name|x|y`。两条当场定下来的口径：
+
+1. **二级页坐标用「显示图 × 1.36」换算，再用 `png_probe.js` 复核，不要拍脑袋**。
+   截图是 `1224×2688` 原生分辨率，但读图时看到的是约 `900` 宽的缩放图，
+   倍率 `1224/900 = 1.36`。换算完必须拿列扫描验一次：
+   ```bash
+   node tools/png_probe.js qcol tmp_reg/device006/r2_res.png 700 3 6
+   ```
+   本轮在 x=700 扫到 `754..847` / `877..970` 两段纯色区，正是省份、月份两个下拉的内区，
+   中心 800/923 对换算值 805/922 差 ≤5 px —— 换算可用。55 步**只点空 1 次**，
+   而那 1 次恰恰是**页面自己的锅**（二级页返回键位置漂移，见下）。
+   **注意换算只对"同一张截图"成立**：筛选态一变，控件就整体下移（动物界子类目三行时
+   省份行从 805 掉到 885），所以**每轮步数要少、跑完看图再定下一步**，别一次写完 20 步再跑。
+2. **logcat 的 WARN 计数不能跨轮比较，"这轮 0 条"不等于"缺陷已消失"**。
+   pass 1 报过 4 条 `Accessible must be attached to an Item`，pass 2 十三轮**全 0**，
+   其中两轮明确打开过 Material `Dialog`（添加联系人、搜索），按 pass 1 的归因本该复报。
+   真相是**那 4 条只在冷启动后首次实例化时报**，而 pass 2 全程没重启进程
+   （`adb shell pidof -s com.outdoor.survival` 一直是 2045）。所以：
+   **要判"某条运行时警告还在不在"，必须先 force-stop 冷启动**（`tools/reg_sweep_device.sh` 就是这么做的），
+   在同一个热进程里跑第二轮拿到的 0 是**假绿**。
+
+顺带一条取证副产物：`tools/reg_tap_device.sh` 的 `换帧=1` 只证明"画面变了"，
+**不证明"点的东西对了"** —— 状态栏时钟每秒都在变。所以步表跑完必须逐张看图，
+本轮就是这么发现「月份筛了 7 月但下拉仍显示全部」这种控件级 bug 的（详见 09-讨论记录/12 §4.25 F1）。
+
+---
+
+### 12.11 一次只跑一个构建：涨号在 STAGE 1、交付包的名字在 STAGE 4 现读（2026-11-04 实测）
+
+`build_apk.sh` 把版本号在 **STAGE 1 就 +1 写进 4 处文件**（`CMakeLists.txt` / `AndroidManifest.xml` /
+gradle 两处），而 **STAGE 4 复制 APK 到 `dist/` 时再现读一次** `CMakeLists.txt` 来拼文件名。
+于是**并发跑两轮构建会把这两件事搅在一起**，2026-11-04 实测到完整现场：
+
+```
+A 轮 02:58:47  0.0.7 → 0.0.8        B 轮 03:12:35  0.0.8 → 0.0.9（改写同一批文件）
+A 轮 03:15:48  ✅ APK 版本回验通过: versionName=0.0.8 versionCode=8   ← 从包里读的真值
+A 轮 03:15:52    路径: /project/dist/OutdoorSurvival-v0.0.9-…apk      ← 复制时现读 CMakeLists
+```
+
+**A 造出来的 versionCode=8 那个包，被按 0.0.9 的名字放进了 `dist/`。** 只看"路径:"那行会拿到一个
+"名字说 9、里面是 8"的交付包；只看日志尾部的成功行还会反过来误判（本轮另一条教训：
+后台命令写成 `… > log 2>&1; echo "rc=$?"` 会让 **echo 盖掉真实退出码**，一次成功的构建被我记成了失败的）。
+
+三条规矩：
+
+1. **出包期间不并发构建**（同一份 `/project`、同一个 `android-build` 卷、同一批版本号文件）；
+   也别并发跑全树 qmllint / load check 抢内存（WSL 只有主机一半内存，实测 `free -m` 总量 7796 MB，
+   而 `BUILD_JOBS=6` + gradle `-Xmx2048m` 本来就有余量爆掉的风险）。
+2. **拿包里的真值定版本号**：装机前用 Windows 侧 build-tools 34 跑
+   `aapt2 dump badging <apk> | grep ^package`，读 `versionCode=` / `versionName=` 与 `native-code:`，
+   **不要引用构建日志里"路径:"那一行**（那只是复制时的文件名）。
+   本轮据此确认 `dist/…v0.0.9….apk`（35,129,022 B）是 `versionCode='9' versionName='0.0.9'`、
+   `native-code: 'arm64-v8a'` 有且仅一个，`unzip -l` 991 条目 / `lib/arm64-v8a/` 84 个 `.so` / 其他 ABI 0 个。
+3. **号被吃掉就跳格，不回退**。0.0.8 那一号被 A 消耗了却从未以正确的名字存在过，
+   跳一格比"盘上冒出对不上的号"好对账；但文档与 commit 必须写实际那个号。
+   真要拿指定位号出包：`VERSION=0.0.8 bash tools/wsl_build_apk.sh`（或 `VERSION_BUMP=0` 不涨号），脚本头写着这两个开关。
+
+`apksigner verify --print-certs` 记得**逐版对证书 SHA-256**：0.0.6 / 0.0.7 / 0.0.9 三版都是
+`ae1ceedb615a9bbe5072d390b61dd1e8b105b8d45d0cec212ade3b4563b38c3e` ⇒ 同证书可 `adb install -r` **覆盖装**，
+**千万别卸载**（卸载会连真机上的紧急联系人名册与自建清单一起没）。
+跑 `apksigner` 要 `JAVA_HOME` 指到真正的 JDK 根（本机是 `D:\build_docker\jdk17\jdk-17.0.20.1+1`，
+指到上一层会报 "JAVA_HOME is set to an invalid directory"）。
+**0.0.10（2026-11-05 统一修改轮）复核补进同一条**：`apksigner verify --print-certs` 仍是
+`ae1ceedb615a9bbe5072d390b61dd1e8b105b8d45d0cec212ade3b4563b38c3e`，**Verified using v2 scheme: true、v1/v3/v3.1/v4 全 false**
+（本机签名方案从 0.0.6 起就只有 v2，别按"v1+v2+v3"那句旧文档去判失败）。
+容器内路径 `/opt/android-sdk/build-tools/34.0.0/apksigner`，`which apksigner` 在 PATH 里取不到，要写全路径。
+
+### 12.12 判「C++ 改的文案进没进包」：rcc 探针盖不到，要按字节数主 `.so`（2026-11-05 出 0.0.10 时定下）
+
+§12.7 那个 `tools/apk_rcc_probe.py` 解的是 **rcc 资源段**，里面只有 **QML / 数据文件**。
+本轮 L12 的另一半改在 `src/`（`fail(ServiceErrorCode::X, QStringLiteral("…"))`、`Err<T>(…)`、
+`requireNonEmpty(value, "字段名", ctx)`），**这些字符串不经过 rcc** —— 它们被编译进主 `.so` 的只读数据段，
+`QStringLiteral` 出的是 **UTF-16**，所以：
+
+- 用 rcc 探针判 src 侧改动 = **判不到**（解压流里根本没有它们）；
+- 直接对 `.so` 做**明文 UTF-8 `grep`** = **也判不到**（中文短语句在包里是 UTF-16LE 字节，ASCII grep 返回 0 会误判成"没进包"）。
+
+**可用做法**（本轮一次性跑通，**尚未固化成常驻脚本**）：解 APK 取 `lib/arm64-v8a/libOutdoorSurvival_arm64-v8a.so`
+（本轮 9,241,648 B），对每条 needle 同时数 `s.encode('utf-8')` 与 `s.encode('utf-16-le')` 两种编码的出现次数。
+本轮实测：must-hit `本机数据库没打开` 1 / `这个 GPX 文件打不开` 2（`warningTriggered` 与 `fail` 各一处，同一字面量两处引用）/
+`这条装备的编号` 1；must-be-zero `DB 未打开`、`List not found`、`equipmentId 不能为空`、`knot_progress 写入失败`、
+`listMap.id 为空`、`routeId 不能为空` **全 0** ⇒ PASS。
+
+三条口径：
+1. **"包侧已复核"这句话必须说清算了哪一半**。只跑 rcc 探针 = 只盖住 QML 那一半，src 文案改动一律还要这一步。
+2. **计数要能解释**。`这个 GPX 文件打不开` 出 2 不是错，是源码里两处引用（`warningTriggered` + `fail`）；
+   反过来若一条 must-hit 出 0，先怀疑编码（UTF-16）再怀疑构建，别急着说"构建没生效"。
+3. **编码按字面量类型分两路，判据必须双编码一起数**（本轮在同一份 `.so` 上逐条量出来的对照）：
+   `knot_progress`（`QLatin1String` / 纯 ASCII）utf-8 **8** / utf-16 **0**；
+   `本机数据库没打开`（`QStringLiteral`）utf-8 **0** / utf-16 **1**。
+   只按一种编码数，命中数会静默偏低甚至归零。
+4. **must-be-zero 只能挑「用户可见通道」里的串**。本轮 `not found` 在包里 utf-16 仍出 **2** ——
+   那是 `ImageColorExtractor.cpp:41/166` 的 `result["detail"] = QStringLiteral("file not found: ") + localPath`，
+   而 `detail` 按 2026-10-23 #115 的既定口径**只进 `console.warn`**，屏上那句是 `info.error`（中文，
+   `FieldGuideImagePickPage.qml:141`）。同理 `AssetLoader::loadJson(..., &err)` 的英文 `err` 全部只进 `Logger`。
+   所以"包里还有英文串"本身不是缺陷，**判据要钉的是它落在哪个字段**。
+
+**下一轮待办**：把这段并进 `tools/apk_rcc_probe.py`（加 `--so-utf16-hit` / `--so-utf16-zero` 两个开关），
+让它和 rcc 那半共用同一个 exit code 口径 —— 现在这一步是人判，不属于 27 道门禁。
 
 ---
 
@@ -1117,7 +1356,34 @@ adb shell am start -n com.outdoor.survival/org.qtproject.qt.android.bindings.QtA
 ---
 
 **文档维护**: [doc/07-部署与发布/Docker构建APK手册.md](Docker构建APK手册.md)
-**最后更新**: 2026-10-29(新增 §3.1.1 Win10 19044 装不了当前 Docker Desktop → WSL2 内装
+**最后更新**: 2026-11-05（第十一轮 = **统一修改轮** #53~#60 + **0.0.10 出包**：`apksigner verify --print-certs`
+补进 §12.11 末尾 —— 0.0.10 仍是 `ae1ceedb…38c3e` 同一把证书、**只有 v2 scheme**（v1/v3/v3.1/v4 全 false），
+容器内要写全路径 `/opt/android-sdk/build-tools/34.0.0/apksigner`；新增 **§12.12「判 C++ 改的文案进没进包」**
+—— `apk_rcc_probe.py` 解的是 rcc 资源段，**只盖 QML**，`src/` 里 `fail()`/`Err<T>()` 的中文串编译进主 `.so`
+且 `QStringLiteral` 出的是 **UTF-16LE**（本轮同一份 `.so` 上量出 `knot_progress` utf-8 8 / utf-16 0，
+`本机数据库没打开` utf-8 0 / utf-16 1），所以判 src 侧必须**双编码数主 `.so` 字节**；这条口径 0.0.10 包侧已实跑
+（3 条 must-hit 全在、6 条旧串全 0），**但仍未固化成常驻脚本**。包侧 rcc 反查本轮实测：329 个压缩块 / 解出 33 块，
+10 条 needle 的命中数与源码 `grep` **逐条相等**（含对照串 `clip: true` = 35，防"一块都没解出来"集体假绿）。
+耗时口径改在 08-全代码索引 §18.3：0.0.10 实测 **15m45s**（STAGE 1 1s / 2 10m1s / 3 5m37s / 4 6s），
+比 0.0.7 那次"跨多目录 ≈20 min"低 ⇒ **真正的变量是动没动 `.h`，不是动了几个目录**。）
+
+**上一轮**: 2026-11-04（第九轮 #48/#49/#42 第二半 + **0.0.9 出包**：新增 **§12.11「一次只跑一个构建」**
+—— 实测并发两轮构建会让 A 造出的 `versionCode=8` 包被按 `v0.0.9` 的名字放进 `dist/`（涨号在 STAGE 1 改文件、
+复制名在 STAGE 4 现读 `CMakeLists.txt`），规矩是**装机前用 `aapt2 dump badging` 读包里的真值，不引用日志"路径:"那行**，
+外加 `后台命令结尾 `; echo rc=$?` 会盖掉真实退出码`、同证书 0.0.6/0.0.7/0.0.9 SHA-256 逐字相同 = 覆盖装勿卸载；
+§12.7 补三处：**主机 `app/build/` 是空壳的成因 = `docker-compose.wsl.yml:26` 用命名卷 `android-build` 挂 `/project/build`**、
+数旧串的两条限定（注释里抄了旧写法会误报 / 新旧 needle 必须互不包含）、
+`grep` 卷里 `qmlcache/*_qml.cpp` 同样不含 QML 标识符明文（阴性一律不作数，只有解压流命中是证据）。
+本轮按 §12.7 的正解重做包侧反查：321 个压缩块 / 解出 33 个，三条改动的新写法各命中 1、旧写法各 0。
+新增 **§12.7.1** —— `apk_rcc_probe.py` 门禁化（`--must-hit` / `--must-be-zero` / 判错 exit 1 / 无对照 exit 2），
+**但它第一版的"期望 0"分支只数解压流、漏掉明文区，被 `--must-be-zero Z=pageHeadH` 反证当场抓出假绿**；
+修法是明文区与解压流**两边都按行去 `//` 注释再计数**，并记下口径：一次性取证脚本升级成门禁时，
+必须当场跑"它应该会 FAIL"的反证，正例 PASS 只证明脚本会打印绿，不证明它会变红。
+上一轮 2026-11-03（第七轮 #45/#46 + **0.0.7 出包**：§9.1 加 `arm64 0.0.7` 一行与包体独立复核口径
+（`versionCode=7` / `native-code` 仅 arm64-v8a / 84 个 .so / 证书 SHA-256 与 0.0.6 逐字相同 = 能覆盖安装），
+并记两条主机侧坑：`apksigner.bat` 要嵌套 JDK 路径、`--values` 是 aapt1 的口径而 build-tools 34 只有 aapt2、
+别在 WSL 里对 `/mnt/d` 跑 `find /`；§3.1.2 加第 8 条 —— **`$?` 在 Windows→wsl→docker exec 串里被提前展开**，
+由它误读过 `qml_load_check` 的退出码。上一轮 2026-10-29（新增 §3.1.1 Win10 19044 装不了当前 Docker Desktop → WSL2 内装
 Docker Engine 的具体路径; §9 补交付口径"只出 arm64-v8a"与 `Dockerfile.android` 注释 x86_64 kit 的后果。
 上一轮 2026-09-10: Q14 新增 qtquick3d-assimp 编译失败条目, 详见
-[09-讨论记录/06-qtquick3d-assimp构建修复.md](../09-讨论记录/06-qtquick3d-assimp构建修复.md))
+[09-讨论记录/06-qtquick3d-assimp构建修复.md](../09-讨论记录/06-qtquick3d-assimp构建修复.md)）
