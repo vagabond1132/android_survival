@@ -16,7 +16,7 @@
  * --card-2 底栏. 三条本地规则:
  *   ① 已答的路径留在上面. 救护现场会被打断 (人走开、换手), 回来要能看到
  *      "刚才答了什么", 而不是只剩最后一个问题.
- *   ② next_id 缺失或指向不存在的节点 → 明说"这条路库里没有下一步" (deadEnd),
+ *   ② next_id 缺失或指向不存在的节点 → 明说"这条路到这里没有下一步了" (deadEnd),
  *      绝不写成"按关键步骤操作"冒充结论. 库里没有的分支就是不存在的分支.
  *   ③ 拨 120 只在"走到结论"之后出现, 而且是 HoldConfirmRow 长按 2 秒 ——
  *      问题中途不需要电话, 真要到拨号那一步也不许一次误触就出去.
@@ -145,9 +145,9 @@ Page {
                 anchors.right: parent.right
                 anchors.top: parent.top
                 anchors.rightMargin: styles.pageMargin
-                anchors.topMargin: styles.spSm
-                width: 26
-                height: 26
+                anchors.topMargin: styles.spXs
+                width: styles.pageHeadBox
+                height: styles.pageHeadBox
                 color: CommonOptions.colorSurface
                 border.color: CommonOptions.colorText
                 border.width: styles.lineHair
@@ -159,7 +159,7 @@ Page {
                 }
                 MouseArea {
                     anchors.fill: parent
-                    anchors.margins: -9
+                    anchors.margins: -styles.pageHeadTapPad
                     cursorShape: Qt.PointingHandCursor
                     onClicked: decisionPage.goBack()
                 }
@@ -194,11 +194,11 @@ Page {
                     Layout.fillWidth: true
                     // 只报页面自己数得出来的东西: 答了几问 / 现在第几问 / 是否已到结论
                     text: {
-                        if (!decisionPage.hasTree) return "这条没有决策树 · 库里 0 个节点"
+                        if (!decisionPage.hasTree) return "这一条没有分步判断 · 按上面的步骤操作"
                         if (decisionPage.reachedTerminal)
                             return "已答 " + decisionPage._path.length + " 问 · 已到结论"
                         if (decisionPage.deadEnd)
-                            return "已答 " + decisionPage._path.length + " 问 · 这条路库里断了"
+                            return "已答 " + decisionPage._path.length + " 问 · 这条路走不下去了"
                         return "已答 " + decisionPage._path.length + " 问 · 当前第 "
                              + (decisionPage._path.length + 1) + " 问"
                     }
@@ -424,7 +424,7 @@ Page {
                             Layout.fillWidth: true
                             text: decisionPage.terminalAction.length > 0
                                   ? decisionPage.terminalAction
-                                  : "这个结论节点在库里没有写处理动作"
+                                  : "走到这一步, 但还没有写出具体处置"
                             font.pixelSize: styles.fsMd
                             color: CommonOptions.colorTextOnAccent
                             wrapMode: Text.WordWrap
@@ -464,7 +464,7 @@ Page {
 
                         Text {
                             Layout.fillWidth: true
-                            text: "这条路库里没有下一步"
+                            text: "这条路到这里没有下一步了"
                             font.pixelSize: styles.fsMd
                             font.bold: true
                             color: CommonOptions.colorHazard
@@ -522,8 +522,8 @@ Page {
             Layout.topMargin: styles.spXl * 2
             visible: !decisionPage.hasTree
             iconName: "firstaid"
-            text: "这条急救没有决策树"
-            hint: "entryId=" + decisionPage.entryId + " 在 firstaid_decision_nodes 里没有节点"
+            text: "这一条急救没有分步判断"
+            hint: "编号 " + decisionPage.entryId + " · 急救目录里没有分步判断"
             actionText: "返回急救详情"
             onActionTriggered: decisionPage.goBack()
         }

@@ -16,7 +16,7 @@
  *      字段本身. 库里没有"成功率""适用气温"这类字段, 所以这一屏只有那 4 格.
  *   ② 不假装有图. survival_items.json 的 video_url 15 条全有值, 但包里没有任何对应
  *      素材 (与绳结 knot_*.mp4 同一回事) → 不放播放入口, 并在读数带右侧坦白
- *      "本库无技能图示".
+ *      "这一条还没有技能图示".
  *   ③ 汉字不进等宽. 时长格拆成两个 Text: 数字走 monoFont, "分钟"走默认字体
  *      (见 [[qml-monofont-no-cjk]]).
  *   ④ 数据正文里的 "1. " 与 "⚠️ " 前缀一律走 CommonOptions.stripEntryMarker 剥掉 ——
@@ -212,9 +212,9 @@ Page {
                 anchors.right: parent.right
                 anchors.top: parent.top
                 anchors.rightMargin: styles.pageMargin
-                anchors.topMargin: styles.spSm
-                width: 26
-                height: 26
+                anchors.topMargin: styles.spXs
+                width: styles.pageHeadBox
+                height: styles.pageHeadBox
                 color: CommonOptions.colorSurface
                 border.color: CommonOptions.colorText
                 border.width: styles.lineHair
@@ -226,7 +226,7 @@ Page {
                 }
                 MouseArea {
                     anchors.fill: parent
-                    anchors.margins: -9
+                    anchors.margins: -styles.pageHeadTapPad
                     cursorShape: Qt.PointingHandCursor
                     onClicked: survivalDetail.goBack()
                 }
@@ -297,7 +297,7 @@ Page {
                     spacing: styles.spSm
                     Text {
                         Layout.alignment: Qt.AlignVCenter
-                        text: "技能读数"
+                        text: "本条统计"
                         font.pixelSize: styles.fsXs
                         color: CommonOptions.colorInk3
                     }
@@ -305,7 +305,7 @@ Page {
                     // 规则 ② 的坦白: 时长与难度是数据, 图示没有
                     Text {
                         Layout.alignment: Qt.AlignVCenter
-                        text: "本库无技能图示"
+                        text: "这一条还没有技能图示"
                         font.pixelSize: styles.fsXs
                         color: CommonOptions.colorInk3
                     }
@@ -596,7 +596,7 @@ Page {
             visible: (survivalDetail.entity.id || "").length === 0
             iconName: "shelter"
             text: "这项技能没有取到"
-            hint: "itemId=" + survivalDetail.itemId + " 不在野外生活库里"
+            hint: "编号 " + survivalDetail.itemId + " · 野外生活目录里没有这一条"
             actionText: "返回目录"
             onActionTriggered: survivalDetail.goBack()
         }

@@ -191,9 +191,9 @@ Page {
                 anchors.right: parent.right
                 anchors.top: parent.top
                 anchors.rightMargin: styles.pageMargin
-                anchors.topMargin: styles.spSm
-                width: 26
-                height: 26
+                anchors.topMargin: styles.spXs
+                width: styles.pageHeadBox
+                height: styles.pageHeadBox
                 color: CommonOptions.colorSurface
                 border.color: CommonOptions.colorText
                 border.width: styles.lineHair
@@ -205,7 +205,7 @@ Page {
                 }
                 MouseArea {
                     anchors.fill: parent
-                    anchors.margins: -9
+                    anchors.margins: -styles.pageHeadTapPad
                     cursorShape: Qt.PointingHandCursor
                     onClicked: firstAidDetail.goBack()
                 }
@@ -277,14 +277,14 @@ Page {
                     spacing: styles.spSm
                     Text {
                         Layout.alignment: Qt.AlignVCenter
-                        text: "急救读数"
+                        text: "本条统计"
                         font.pixelSize: styles.fsXs
                         color: CommonOptions.colorInk3
                     }
                     Item { Layout.fillWidth: true }
                     Text {
                         Layout.alignment: Qt.AlignVCenter
-                        text: "本库无操作图示"
+                        text: "这一条没有操作图示"
                         font.pixelSize: styles.fsXs
                         color: CommonOptions.colorInk3
                     }
@@ -591,7 +591,7 @@ Page {
                         model: firstAidDetail._species
                         delegate: Chip {
                             required property var modelData
-                            text: (modelData.enabled ? "咬伤源 · " : "库里没有 · ") + modelData.name
+                            text: (modelData.enabled ? "咬伤源 · " : "目录里没有 · ") + modelData.name
                             textSize: styles.fsSm
                             // 未命中的 id 不弹错也不跳空页: 禁用 + 半透明
                             enabled: modelData.enabled
@@ -639,7 +639,7 @@ Page {
             visible: (firstAidDetail.entity.id || "").length === 0
             iconName: "firstaid"
             text: "这条急救没有取到"
-            hint: "entryId=" + firstAidDetail.entryId + " 不在急救库里"
+            hint: "这一条在急救目录里没有收录 · 返回目录换一条"
             actionText: "返回目录"
             onActionTriggered: firstAidDetail.goBack()
         }
@@ -690,7 +690,7 @@ Page {
                     Layout.fillWidth: true
                     visible: !firstAidDetail._hasDecision
                              && (firstAidDetail.entity.id || "").length > 0
-                    text: "这条没有决策树 · 按上面步骤操作"
+                    text: "这一条没有分步判断 · 按上面的步骤操作"
                     font.pixelSize: styles.fsXs
                     color: CommonOptions.colorInk3
                     wrapMode: Text.WordWrap

@@ -284,9 +284,9 @@ Page {
                 anchors.right: parent.right
                 anchors.top: parent.top
                 anchors.rightMargin: styles.pageMargin
-                anchors.topMargin: styles.spSm
-                width: 26
-                height: 26
+                anchors.topMargin: styles.spXs
+                width: styles.pageHeadBox
+                height: styles.pageHeadBox
                 color: CommonOptions.colorSurface
                 border.color: CommonOptions.colorText
                 border.width: styles.lineHair
@@ -298,7 +298,7 @@ Page {
                 }
                 MouseArea {
                     anchors.fill: parent
-                    anchors.margins: -9
+                    anchors.margins: -styles.pageHeadTapPad
                     cursorShape: Qt.PointingHandCursor
                     onClicked: detailPage.goBack()
                 }
@@ -614,7 +614,7 @@ Page {
             visible: !detailPage.hasList
             iconName: "backpack"
             text: "这份清单没有取到"
-            hint: "listId=" + detailPage.listId + " 不在装备清单里"
+            hint: "编号 " + detailPage.listId + " · 装备目录里没有这一条"
             actionText: "回装备页"
             onActionTriggered: detailPage.navigateTo("EquipmentPage", {})
         }
@@ -700,6 +700,7 @@ Page {
                         onClicked: detailPage.exportList()
                     }
                     PrimaryButton {
+                        id: checkoffButton
                         Layout.fillWidth: true
                         Layout.preferredHeight: styles.btnHSm
                         Layout.alignment: Qt.AlignVCenter
@@ -707,10 +708,22 @@ Page {
                         iconName: "check"
                         tone: CommonOptions.colorAccent
                         textSize: styles.fsSm
+                        // L11: 空清单点不动, 得当场说清缺什么 (手机端没有 hover, ToolTip 出不来)。
+                        property string disabledHint: detailPage.totalItems > 0
+                                                      ? "" : "这一条清单还是空的, 先加几件再清点"
                         enabled: detailPage.totalItems > 0
                         onClicked: detailPage.navigateTo("ChecklistPage",
                                                          { listId: detailPage.listId })
                     }
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    visible: text.length > 0
+                    text: checkoffButton.disabledHint
+                    font.pixelSize: styles.fsXs
+                    color: CommonOptions.colorTextMuted
+                    wrapMode: Text.WordWrap
                 }
             }
         }
@@ -724,6 +737,7 @@ Page {
 
     Dialog {
         id: confirmDeleteDialog
+        modal: true   // L8 三件套之一: Qt6 的 Popup.modal 默认 false, 不写就是能点穿 (真机 F6)
         title: "删除清单"
         anchors.centerIn: parent
         width: Math.min(420, detailPage.width - 2 * styles.pageMargin)
@@ -733,15 +747,22 @@ Page {
         Material.foreground: CommonOptions.colorText
         standardButtons: Dialog.NoButton
 
-        contentItem: Text {
-            text: "确定要删除清单「" + (detailPage.entity.name || "")
-                  + "」吗？这份清单连同勾选记录一起从设备里去掉，不可撤销。"
-            color: CommonOptions.colorText
-            font.pixelSize: styles.fsMd
-            wrapMode: Text.WordWrap
+        // L15: Dialog 的 contentItem 是裸 Item, 不把宽度传给子项 —— 正文要有宽度约束才 wrap。
+        contentItem: ColumnLayout {
+            spacing: styles.spSm
+
+            Text {
+                Layout.fillWidth: true
+                text: "确定要删除清单「" + (detailPage.entity.name || "")
+                      + "」吗？这份清单连同勾选记录一起从设备里去掉，不可撤销。"
+                color: CommonOptions.colorText
+                font.pixelSize: styles.fsMd
+                wrapMode: Text.WordWrap
+            }
         }
 
         footer: DialogFooter {
+            kind: "danger"   // 真删存储: 显式写出来, 不靠 DialogFooter 的默认值兜
             cancelText: "留着"
             confirmText: "删除"
             confirmCode: "不可撤"

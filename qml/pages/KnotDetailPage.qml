@@ -275,10 +275,10 @@ Page {
             Rectangle {
                 anchors.right: parent.right
                 anchors.top: parent.top
-                anchors.rightMargin: styles.cardPad
-                anchors.topMargin: styles.cardPad
-                width: 26
-                height: 26
+                anchors.rightMargin: styles.pageMargin
+                anchors.topMargin: styles.spXs
+                width: styles.pageHeadBox
+                height: styles.pageHeadBox
                 color: CommonOptions.colorSurface
                 border.color: CommonOptions.colorText
                 border.width: styles.lineHair
@@ -290,7 +290,7 @@ Page {
                 }
                 MouseArea {
                     anchors.fill: parent
-                    anchors.margins: -9
+                    anchors.margins: -styles.pageHeadTapPad
                     cursorShape: Qt.PointingHandCursor
                     onClicked: knotDetail.goBack()
                 }
@@ -378,7 +378,7 @@ Page {
                     spacing: styles.spSm
                     Text {
                         Layout.alignment: Qt.AlignVCenter
-                        text: "绳结读数"
+                        text: "本条统计"
                         font.pixelSize: styles.fsXs
                         color: CommonOptions.colorInk3
                     }
@@ -386,7 +386,7 @@ Page {
                     // 规则 ② 的坦白: 中间那张图不是这个结的形状
                     Text {
                         Layout.alignment: Qt.AlignVCenter
-                        text: "示意图 · 单线画法 · 本库无结形图"
+                        text: "示意图是通用单线画法 · 这一条还没有结形图"
                         font.pixelSize: styles.fsXs
                         color: CommonOptions.colorInk3
                     }
@@ -635,7 +635,7 @@ Page {
                         model: knotDetail._related
                         delegate: Chip {
                             required property var modelData
-                            text: (modelData.enabled ? "相关 · " : "库里没有 · ") + modelData.name
+                            text: (modelData.enabled ? "相关 · " : "目录里没有 · ") + modelData.name
                             textSize: styles.fsSm
                             // 未命中的 id 不弹错也不跳空页: 禁用 + 半透明, 读起来是"目录里没这条"
                             enabled: modelData.enabled
@@ -657,7 +657,7 @@ Page {
             visible: (knotDetail.entity.id || "").length === 0
             iconName: "knot"
             text: "这条绳结没有取到"
-            hint: "knotId=" + knotDetail.knotId + " 不在绳结库里"
+            hint: "编号 " + knotDetail.knotId + " · 绳结目录里没有这一条"
             actionText: "返回目录"
             onActionTriggered: knotDetail.goBack()
         }

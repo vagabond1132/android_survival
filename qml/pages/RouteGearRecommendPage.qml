@@ -348,9 +348,9 @@ Page {
                 anchors.right: parent.right
                 anchors.top: parent.top
                 anchors.rightMargin: styles.pageMargin
-                anchors.topMargin: styles.spSm
-                width: 26
-                height: 26
+                anchors.topMargin: styles.spXs
+                width: styles.pageHeadBox
+                height: styles.pageHeadBox
                 color: CommonOptions.colorSurface
                 border.color: CommonOptions.colorText
                 border.width: styles.lineHair
@@ -362,7 +362,7 @@ Page {
                 }
                 MouseArea {
                     anchors.fill: parent
-                    anchors.margins: -9
+                    anchors.margins: -styles.pageHeadTapPad
                     cursorShape: Qt.PointingHandCursor
                     onClicked: gearPage.goBack()
                 }
@@ -841,8 +841,8 @@ Page {
                                 + " 出发前请看实时天气。湿度 "
                                 + gearPage.humidityNames[gearPage.climateRead.humidity]
                                 + " · 雨季 " + (gearPage.climateRead.isRainySeason ? "是" : "否")
-                              : ("这一带取不到往年读数 (省份「" + (entity.province || "未记")
-                                 + "」不在表内) —— 保暖档位只看温度, 缺读数时本页拒绝生成, "
+                              : ("这一带取不到往年天气 (省份「" + (entity.province || "未记")
+                                 + "」不在天气表内) —— 保暖档位只看温度, 取不到天气时本页拒绝生成, "
                                  + "不去猜一个把睡袋判没的温度。")
                         font.pixelSize: styles.fsXs
                         color: gearPage.hasClimate ? CommonOptions.colorTextMuted
@@ -852,7 +852,7 @@ Page {
 
                     Text {
                         Layout.fillWidth: true
-                        text: "营地海拔按 最高-200 m、最低按 最高-500 m 估 (库里没有营地高度); "
+                        text: "营地海拔按 最高-200 m、最低按 最高-500 m 估 (这条路线没有记录营地高度); "
                               + "≥2500 m 由引擎自动判为高原。沙漠 / 沿海两个地区标记本页不判 —— "
                               + "省一级的月均值说不出「这条线走不走沙漠」, 留假比硬猜诚实。"
                         font.pixelSize: styles.fsXs
@@ -973,7 +973,7 @@ Page {
             visible: !gearPage.hasEntity
             iconName: "backpack"
             text: "这一条路线没有取到"
-            hint: "routeId=" + gearPage.routeId + " 不在路线库里"
+            hint: "编号 " + gearPage.routeId + " · 路线目录里没有这一条"
             actionText: "返回"
             onActionTriggered: gearPage.goBack()
         }

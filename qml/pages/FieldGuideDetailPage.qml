@@ -749,18 +749,19 @@ Page {
                 label: detailPage._dangerLabel
             }
 
-            // 右上: 收藏 + 返回 (26px 方块视觉, 热区各扩 6px 到 38~44)
+            // 右上: 收藏 + 返回 —— 与其余九页同一个盒子 (pageHeadBox 26 + 热区扩 pageHeadTapPad 9 = 44)
             Row {
                 id: headButtons
                 anchors.right: parent.right
                 anchors.top: parent.top
-                anchors.rightMargin: styles.cardPad
-                anchors.topMargin: styles.cardPad
-                spacing: styles.spXs
+                anchors.rightMargin: styles.pageMargin
+                anchors.topMargin: styles.spXs
+                // 两格的热区都要扩 9px, 间距必须 >= 2×9, 否则后画的「返回」热区会压掉前一格的右边缘
+                spacing: styles.pageHeadTapPad * 2
 
                 Rectangle {
-                    width: 30
-                    height: 30
+                    width: styles.pageHeadBox
+                    height: styles.pageHeadBox
                     color: detailPage._fav ? CommonOptions.colorAmber
                                            : CommonOptions.colorSurface
                     border.color: CommonOptions.colorText
@@ -774,14 +775,14 @@ Page {
                     }
                     MouseArea {
                         anchors.fill: parent
-                        anchors.margins: -6
+                        anchors.margins: -styles.pageHeadTapPad
                         cursorShape: Qt.PointingHandCursor
                         onClicked: detailPage.toggleFavorite()
                     }
                 }
                 Rectangle {
-                    width: 30
-                    height: 30
+                    width: styles.pageHeadBox
+                    height: styles.pageHeadBox
                     color: CommonOptions.colorSurface
                     border.color: CommonOptions.colorText
                     border.width: styles.lineHair
@@ -793,7 +794,7 @@ Page {
                     }
                     MouseArea {
                         anchors.fill: parent
-                        anchors.margins: -6
+                        anchors.margins: -styles.pageHeadTapPad
                         cursorShape: Qt.PointingHandCursor
                         onClicked: detailPage.back()
                     }
@@ -1509,9 +1510,12 @@ Page {
         }
 
         // --- ④ 固定底栏 (mock 的 34px 按钮低于 44 触摸下限, 这里按 btnH 撑高) ---
+        //   定律 L11: 按钮点不动时必须当场说清为什么。这两枚都是"条件禁用"
+        //   (没标过点 / 手机没定位), 手机端没有 hover, ToolTip 永远出不来,
+        //   所以原因画在按钮下面一行; 两枚都能点时这一行收起, 底栏自己跟着变矮。
         Rectangle {
             Layout.fillWidth: true
-            Layout.preferredHeight: styles.btnH + 2 * styles.spSm
+            Layout.preferredHeight: bandCol.implicitHeight + 2 * styles.spSm
             color: CommonOptions.colorSurfaceAlt
 
             Rectangle {
@@ -1522,35 +1526,67 @@ Page {
                 color: CommonOptions.colorText
             }
 
-            RowLayout {
-                anchors.fill: parent
+            ColumnLayout {
+                id: bandCol
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
                 anchors.leftMargin: styles.pageMargin
                 anchors.rightMargin: styles.pageMargin
-                spacing: styles.spSm
+                anchors.topMargin: styles.spSm
+                spacing: styles.spXs
 
-                OutlineButton {
+                RowLayout {
                     Layout.fillWidth: true
                     Layout.preferredHeight: styles.btnH
-                    text: "带我过去"
-                    tone: detailPage._marks.length > 0 ? CommonOptions.colorWater
-                                                       : CommonOptions.colorTextDisabled
-                    textSize: styles.fsLg
-                    enabled: detailPage._marks.length > 0
-                    onClicked: {
-                        if (detailPage._marks.length === 0) return
-                        // 有定位就用最近的标注点, 没定位退到第一个标过的点
-                        var m = detailPage._nearest ? detailPage._nearest.mark : detailPage._marks[0]
-                        detailPage.openInMap(m.lat, m.lon)
+                    spacing: styles.spSm
+
+                    OutlineButton {
+                        id: gotoButton
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: styles.btnH
+                        // L11: 条件禁用要自带原因 (下面那行 Text 渲染它), 门禁按这个属性查。
+                        property string disabledHint: detailPage._marks.length === 0
+                                                      ? "「带我过去」要先在这一条里存过一个位置" : ""
+                        text: "带我过去"
+                        tone: detailPage._marks.length > 0 ? CommonOptions.colorWater
+                                                           : CommonOptions.colorTextDisabled
+                        textSize: styles.fsLg
+                        enabled: detailPage._marks.length > 0
+                        onClicked: {
+                            if (detailPage._marks.length === 0) return
+                            // 有定位就用最近的标注点, 没定位退到第一个标过的点
+                            var m = detailPage._nearest ? detailPage._nearest.mark : detailPage._marks[0]
+                            detailPage.openInMap(m.lat, m.lon)
+                        }
+                    }
+                    PrimaryButton {
+                        id: recordButton
+                        Layout.fillWidth: true
+                        property string disabledHint: !detailPage.hasFix
+                                                      ? "「记录位置」要等手机拿到定位"
+                                                      : (!entity.id ? "「记录位置」要等这一条读完" : "")
+                        text: "记录位置"
+                        iconName: "add"
+                        tone: CommonOptions.colorAccent
+                        textSize: styles.fsLg
+                        enabled: detailPage.hasFix && !!entity.id
+                        onClicked: detailPage.recordHere()
                     }
                 }
-                PrimaryButton {
+
+                Text {
                     Layout.fillWidth: true
-                    text: "记录位置"
-                    iconName: "add"
-                    tone: CommonOptions.colorAccent
-                    textSize: styles.fsLg
-                    enabled: detailPage.hasFix && !!entity.id
-                    onClicked: detailPage.recordHere()
+                    visible: text.length > 0
+                    text: {
+                        var why = []
+                        if (gotoButton.disabledHint.length > 0) why.push(gotoButton.disabledHint)
+                        if (recordButton.disabledHint.length > 0) why.push(recordButton.disabledHint)
+                        return why.join(" · ")
+                    }
+                    font.pixelSize: styles.fsXs
+                    color: CommonOptions.colorTextMuted
+                    wrapMode: Text.WordWrap
                 }
             }
         }
@@ -1561,6 +1597,7 @@ Page {
     //   文案里带上坐标, 让用户确认的正是他要删的那一条.
     Dialog {
         id: markDeleteDialog
+        modal: true   // L8 三件套之一: Qt6 的 Popup.modal 默认 false, 不写就是能点穿 (真机 F6)
         title: "删除这条标注?"
         anchors.centerIn: parent
         width: Math.min(360, detailPage.width - 2 * styles.pageMargin)
@@ -1570,16 +1607,23 @@ Page {
         padding: styles.spMd
         property var pending: null
 
-        Text {
-            text: markDeleteDialog.pending
-                  ? detailPage.markMonoText(markDeleteDialog.pending)
-                  : ""
-            color: CommonOptions.colorText
-            font.family: styles.monoFont
-            font.pixelSize: styles.fsSm
-            wrapMode: Text.WordWrap
+        // L15: Dialog 的 contentItem 是裸 Item, 不把宽度传给子项 —— 正文要有宽度约束才 wrap。
+        contentItem: ColumnLayout {
+            spacing: styles.spSm
+
+            Text {
+                Layout.fillWidth: true
+                text: markDeleteDialog.pending
+                      ? detailPage.markMonoText(markDeleteDialog.pending)
+                      : ""
+                color: CommonOptions.colorText
+                font.family: styles.monoFont
+                font.pixelSize: styles.fsSm
+                wrapMode: Text.WordWrap
+            }
         }
         footer: DialogFooter {
+            kind: "danger"   // 真删本机标注: 显式写出来, 不靠 DialogFooter 的默认值兜
             cancelText: "留着"
             confirmText: "删除"
             confirmCode: "不可撤"
@@ -1594,6 +1638,7 @@ Page {
 
     Dialog {
         id: markClearDialog
+        modal: true   // L8 三件套之一: Qt6 的 Popup.modal 默认 false, 不写就是能点穿 (真机 F6)
         title: "清空这个物种的标注?"
         anchors.centerIn: parent
         width: Math.min(360, detailPage.width - 2 * styles.pageMargin)
@@ -1602,14 +1647,21 @@ Page {
         Material.foreground: CommonOptions.colorText
         padding: styles.spMd
 
-        Text {
-            text: "共 " + detailPage._marks.length
-                  + " 条 · 删掉后方位条和「带我过去」也会跟着没了"
-            color: CommonOptions.colorText
-            font.pixelSize: styles.fsMd
-            wrapMode: Text.WordWrap
+        // L15: 同上 —— 裸 Text 子项拿不到宽度, wrapMode 会是死的。
+        contentItem: ColumnLayout {
+            spacing: styles.spSm
+
+            Text {
+                Layout.fillWidth: true
+                text: "共 " + detailPage._marks.length
+                      + " 条 · 删掉后方位条和「带我过去」也会跟着没了"
+                color: CommonOptions.colorText
+                font.pixelSize: styles.fsMd
+                wrapMode: Text.WordWrap
+            }
         }
         footer: DialogFooter {
+            kind: "danger"   // 这条「清空」逐条删文件, 与地图页那个只擦画线的「清空」不是一回事
             cancelText: "留着"
             confirmText: "清空"
             confirmCode: "不可撤"

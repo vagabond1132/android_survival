@@ -335,9 +335,9 @@ Page {
                 anchors.right: parent.right
                 anchors.top: parent.top
                 anchors.rightMargin: styles.pageMargin
-                anchors.topMargin: styles.spSm
-                width: 26
-                height: 26
+                anchors.topMargin: styles.spXs
+                width: styles.pageHeadBox
+                height: styles.pageHeadBox
                 color: CommonOptions.colorSurface
                 border.color: CommonOptions.colorText
                 border.width: styles.lineHair
@@ -349,7 +349,7 @@ Page {
                 }
                 MouseArea {
                     anchors.fill: parent
-                    anchors.margins: -9
+                    anchors.margins: -styles.pageHeadTapPad
                     cursorShape: Qt.PointingHandCursor
                     onClicked: routeDetail.goBack()
                 }
@@ -423,7 +423,7 @@ Page {
                     spacing: styles.spSm
                     Text {
                         Layout.alignment: Qt.AlignVCenter
-                        text: "路线读数"
+                        text: "本条统计"
                         font.pixelSize: styles.fsXs
                         color: CommonOptions.colorInk3
                     }
@@ -550,7 +550,7 @@ Page {
                                 // 原因用数据给的原文, 页面不替它编一句
                                 text: (entity.notRecommendedReason || "").length > 0
                                       ? String(entity.notRecommendedReason)
-                                      : "库里这条没有写原因"
+                                      : "这条路线没有写原因"
                                 font.pixelSize: styles.fsMd
                                 color: CommonOptions.colorText
                                 wrapMode: Text.WordWrap
@@ -622,7 +622,7 @@ Page {
                             bits.push("坐标来源: " + routeDetail._coordSourceText)
                         bits.push(routeDetail._waypointCount > 0
                                   ? "路径点 " + routeDetail._waypointCount + " 个 (图上按实测轨迹连线)"
-                                  : "库里没有路径点, 图上那条线是起终点直线示意")
+                                  : "这条路线没有记录路径点, 图上那条线是起终点直连的示意")
                         return bits.join("  ·  ")
                     }
                     font.pixelSize: styles.fsXs
@@ -665,7 +665,7 @@ Page {
                                 spacing: 2
                                 Text {
                                     Layout.fillWidth: true
-                                    text: modelData.name.length > 0 ? modelData.name : "库里未给名称"
+                                    text: modelData.name.length > 0 ? modelData.name : "没有记录名称"
                                     font.pixelSize: styles.fsMd
                                     font.bold: true
                                     color: CommonOptions.colorText
@@ -862,7 +862,7 @@ Page {
                     visible: routeDetail._detailRows.length > 0
                     text: "分项之和 " + routeDetail._detailSum
                           + (routeDetail._detailSum === routeDetail._score ? " = 总分"
-                             : " ≠ 总分 " + routeDetail._score + " (库里这条的口径不一致)")
+                             : " ≠ 总分 " + routeDetail._score + " (这条路线两处口径不一致)")
                     font.pixelSize: styles.fsXs
                     color: CommonOptions.colorInk3
                     elide: Text.ElideRight
@@ -871,7 +871,7 @@ Page {
                     Layout.fillWidth: true
                     Layout.leftMargin: styles.pageMargin
                     visible: routeDetail._score > 0 && routeDetail._detailRows.length === 0
-                    text: "库里这条只有总分, 没有分项"
+                    text: "这条路线只有总分, 没有分项评分"
                     font.pixelSize: styles.fsXs
                     color: CommonOptions.colorLegendAmber
                     wrapMode: Text.WordWrap
@@ -1044,7 +1044,7 @@ Page {
                         Layout.fillWidth: true
                         // 库里只有 40 条路线做了关联表, 空表说的是数据覆盖, 不是"这条没生物"
                         visible: routeDetail.assocList.length === 0
-                        text: "这一条没有沿途物种关联表 (库里只有部分路线做了这份表)"
+                        text: "这条路线没有沿途物种记录 (只有部分路线整理了这份内容)"
                         font.pixelSize: styles.fsXs
                         color: CommonOptions.colorInk3
                         wrapMode: Text.WordWrap
@@ -1189,7 +1189,7 @@ Page {
             visible: !routeDetail.hasEntity
             iconName: "map"
             text: "这一条路线没有取到"
-            hint: "routeId=" + routeDetail.routeId + " 不在路线库里"
+            hint: "编号 " + routeDetail.routeId + " · 路线目录里没有这一条"
             actionText: "返回目录"
             onActionTriggered: routeDetail.goBack()
         }

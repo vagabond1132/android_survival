@@ -240,9 +240,9 @@ Page {
                 anchors.right: parent.right
                 anchors.top: parent.top
                 anchors.rightMargin: styles.pageMargin
-                anchors.topMargin: styles.spSm
-                width: 26
-                height: 26
+                anchors.topMargin: styles.spXs
+                width: styles.pageHeadBox
+                height: styles.pageHeadBox
                 color: CommonOptions.colorSurface
                 border.color: CommonOptions.colorText
                 border.width: styles.lineHair
@@ -254,7 +254,7 @@ Page {
                 }
                 MouseArea {
                     anchors.fill: parent
-                    anchors.margins: -9
+                    anchors.margins: -styles.pageHeadTapPad
                     cursorShape: Qt.PointingHandCursor
                     onClicked: travelDetail.goBack()
                 }
@@ -330,7 +330,7 @@ Page {
                     spacing: styles.spSm
                     Text {
                         Layout.alignment: Qt.AlignVCenter
-                        text: "自驾读数"
+                        text: "本条统计"
                         font.pixelSize: styles.fsXs
                         color: CommonOptions.colorInk3
                     }
@@ -530,7 +530,7 @@ Page {
                     Layout.rightMargin: styles.pageMargin
                     visible: travelDetail._isLoop
                     text: (entity.coordSource === "city_center"
-                           ? "两端坐标是同一个城区中心点 (库里这条只给到城)"
+                           ? "两端坐标是同一个城区中心点 (这条路线只给到城区级)"
                            : "起终点是同一个位置 (环线)")
                           + " —— 全程规划只会得到一条 0 米的线, "
                           + "所以这里只给逐点导航; 要整条线的走向用下面的「在地图查看」。"
@@ -662,7 +662,7 @@ Page {
             visible: !travelDetail.hasEntity
             iconName: "car"
             text: "这一条自驾路线没有取到"
-            hint: "travelId=" + travelDetail.travelId + " 不在自驾库里"
+            hint: "编号 " + travelDetail.travelId + " · 自驾目录里没有这一条"
             actionText: "返回目录"
             onActionTriggered: travelDetail.goBack()
         }

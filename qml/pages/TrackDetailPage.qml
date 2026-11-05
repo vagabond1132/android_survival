@@ -319,9 +319,9 @@ Page {
                 anchors.right: parent.right
                 anchors.top: parent.top
                 anchors.rightMargin: styles.pageMargin
-                anchors.topMargin: styles.spSm
-                width: 26
-                height: 26
+                anchors.topMargin: styles.spXs
+                width: styles.pageHeadBox
+                height: styles.pageHeadBox
                 color: CommonOptions.colorSurface
                 border.color: CommonOptions.colorText
                 border.width: styles.lineHair
@@ -333,7 +333,7 @@ Page {
                 }
                 MouseArea {
                     anchors.fill: parent
-                    anchors.margins: -9
+                    anchors.margins: -styles.pageHeadTapPad
                     cursorShape: Qt.PointingHandCursor
                     onClicked: trackDetail.goBack()
                 }
@@ -406,7 +406,7 @@ Page {
                     spacing: styles.spSm
                     Text {
                         Layout.alignment: Qt.AlignVCenter
-                        text: "轨迹读数"
+                        text: "本条统计"
                         font.pixelSize: styles.fsXs
                         color: CommonOptions.colorInk3
                     }
@@ -499,6 +499,21 @@ Page {
                     font.pixelSize: styles.fsSm
                     color: CommonOptions.colorLegendAmber
                     wrapMode: Text.WordWrap
+                }
+
+                // 统计没算出来时②整条读数带不显示, 原来正文就只剩上面那一行琥珀字, 底下一片空白
+                //   (0.0.9 真机)。补「轨迹」Tab 同族空态: 图标 + 为什么没数 + 下一步做什么。
+                EmptyState {
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.topMargin: styles.spLg
+                    visible: !trackDetail.hasStats
+                    iconName: "timeline"
+                    text: "这条轨迹没有统计可读"
+                    hint: trackDetail._pts > 0
+                          ? "存了 " + trackDetail._pts + " 个点, 但凑不出里程与爬升"
+                          : "这条轨迹在本机一个点都没存下"
+                    actionText: "回地图"
+                    onActionTriggered: trackDetail.goBack()
                 }
 
                 // 海拔 / 速度 —— 各自还要看这一族有没有真读数 (见 _hasSpeedCurve)
@@ -613,7 +628,7 @@ Page {
                             Layout.alignment: Qt.AlignVCenter
                             // 行数随数据变 (无高程就少三行, 有精度读数多两行), 写死
                             //   "六格"会在纯 2D 轨迹上谎报格子数 —— 这是文案层的假读数.
-                            text: trackDetail.statRows.length + " 项读数"
+                            text: trackDetail.statRows.length + " 项统计"
                             font.pixelSize: styles.fsXs
                             color: CommonOptions.colorInk3
                         }
@@ -659,7 +674,7 @@ Page {
                     Text {
                         Layout.fillWidth: true
                         text: "卡路里按 65 kg 体重折算 —— 这是本页写死的常数, 不是你的体重; "
-                              + "轨迹库里没有体重, 这个数只能当量级看。"
+                              + "这条轨迹没记录体重, 这个数只能当量级看。"
                         font.pixelSize: styles.fsXs
                         color: CommonOptions.colorInk3
                         wrapMode: Text.WordWrap
@@ -866,7 +881,9 @@ Page {
                     iconName: "delete"
                     tone: CommonOptions.colorText
                     textSize: styles.fsSm
-                    enabled: trackDetail.hasTrack
+                    // L11: 手里没有这条轨迹 (比如从一个已经失效的入口进来) 就没有可删的东西,
+                    //   整枚收起, 不留一枚点不动的删除按钮让人以为程序卡了。
+                    visible: trackDetail.hasTrack
                     onClicked: deleteDialog.open()
                 }
             }
@@ -876,6 +893,7 @@ Page {
     // 不可逆动作先过确认 —— 按钮文案走中文 footer (#41 母版)
     Dialog {
         id: deleteDialog
+        modal: true   // L8 三件套之一: Qt6 的 Popup.modal 默认 false, 不写就是能点穿 (真机 F6)
         title: "删除这条轨迹?"
         anchors.centerIn: parent
         width: Math.min(360, trackDetail.width - 2 * styles.pageMargin)
@@ -884,16 +902,23 @@ Page {
         Material.foreground: CommonOptions.colorText
         padding: styles.spMd
 
-        Text {
-            text: "要删的是 " + (track.name || "未命名轨迹")
-                  + " —— 轨迹本体和 " + trackDetail._pts
-                  + " 个采样点一起从存储里去掉, 删完找不回来。"
-            color: CommonOptions.colorText
-            font.pixelSize: styles.fsMd
-            wrapMode: Text.WordWrap
+        // L15: 裸 Text 子项拿不到宽度, wrapMode 会是死的 (0.0.9 真机: 句尾「删完找不回来。」被裁)。
+        contentItem: ColumnLayout {
+            spacing: styles.spSm
+
+            Text {
+                Layout.fillWidth: true
+                text: "要删的是 " + (track.name || "未命名轨迹")
+                      + " —— 轨迹本体和 " + trackDetail._pts
+                      + " 个采样点一起从存储里去掉, 删完找不回来。"
+                color: CommonOptions.colorText
+                font.pixelSize: styles.fsMd
+                wrapMode: Text.WordWrap
+            }
         }
 
         footer: DialogFooter {
+            kind: "danger"   // 真删轨迹本体: 显式写出来, 不靠 DialogFooter 的默认值兜
             cancelText: "留着"
             confirmText: "删除"
             confirmCode: "不可撤"
